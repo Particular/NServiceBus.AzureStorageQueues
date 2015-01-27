@@ -228,7 +228,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj">
       <Project>{b6d6406f-f5a4-46d7-a882-4a831128065e}</Project>
-      <Name>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</Name>
+      <Name>NServiceBus.AzureStorageQueues</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
