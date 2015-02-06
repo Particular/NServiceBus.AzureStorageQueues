@@ -23,7 +23,7 @@
                 })))
                 .AllowExceptions(e => e.Message.Contains("Simulated exception"))
                 .Done(c => c.MessageSentToError)
-                .Run(TimeSpan.FromMinutes(5));
+                .Run(TimeSpan.FromMinutes(10));
 
             Assert.IsInstanceOf<MySpecialException>(context.MessageSentToErrorException);
         }
@@ -39,7 +39,7 @@
                 .WithEndpoint<SLREndpoint>()
                 .AllowExceptions(e => e.Message.Contains("Simulated exception"))
                 .Done(c => c.MessageSentToError)
-                .Run(TimeSpan.FromMinutes(5));
+                .Run(TimeSpan.FromMinutes(10));
 
             Assert.AreEqual(3*3, context.TotalNumberOfFLRTimesInvokedInHandler);
             Assert.AreEqual(3*3, context.TotalNumberOfFLRTimesInvoked);
