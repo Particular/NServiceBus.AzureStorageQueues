@@ -181,7 +181,9 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                     throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
                 }
 
-                return new TransportMessage(m.Id, m.Headers, Address.Parse(m.ReplyToAddress))
+                m.Headers[Headers.ReplyToAddress] = m.ReplyToAddress;
+
+                return new TransportMessage(m.Id, m.Headers)
                 {
                     Body = m.Body ?? new byte[0],
                     CorrelationId = m.CorrelationId,
