@@ -2,9 +2,13 @@ namespace NServiceBus.Config
 {
     using System.Configuration;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using NServiceBus.Logging;
 
     public class AzureQueueConfig : ConfigurationSection
     {
+        ILog logger = LogManager.GetLogger<AzureQueueConfig>();
+
+        [ObsoleteEx(RemoveInVersion = "8", TreatAsErrorFromVersion = "7", Replacement = "configuration.EndpointName(name)")]        
         [ConfigurationProperty("QueueName", IsRequired = false, DefaultValue = null)]
         public string QueueName
         {
@@ -14,6 +18,7 @@ namespace NServiceBus.Config
             }
             set
             {
+                logger.Warn("AzureQueueConfig.QueueName is deprecated and will be removed in version 8.0. Use `configuration.EndpointName(name)` instead to define endpoint and input queue names.");
                 this["QueueName"] = value;
             }
         }
@@ -96,6 +101,7 @@ namespace NServiceBus.Config
             }
         }
 
+        [ObsoleteEx(RemoveInVersion = "8", TreatAsErrorFromVersion = "7", Replacement = "configuration.ScaleOut().UniqueQueuePerEndpointInstance()")]        
         [ConfigurationProperty("QueuePerInstance", IsRequired = false, DefaultValue = AzureMessageQueueReceiver.DefaultQueuePerInstance)]
         public bool QueuePerInstance
         {
@@ -105,6 +111,7 @@ namespace NServiceBus.Config
             }
             set
             {
+                logger.Warn("AzureQueueConfig.QueuePerInstance is deprecated and will be removed in version 8.0. Use `configuration.ScaleOut().UniqueQueuePerEndpointInstance()` instead.");
                 this["QueuePerInstance"] = value;
             }
         }
