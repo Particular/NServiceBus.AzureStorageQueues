@@ -13,14 +13,22 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     /// <summary>
     /// A polling implementation of <see cref="IDequeueMessages"/>.
     /// </summary>
-    public class PollingDequeueStrategy : IDequeueMessages
+    public class PollingDequeueStrategy : IDequeueMessages, IDisposable
     {
+        static ILog Logger = LogManager.GetLogger(typeof (PollingDequeueStrategy));
+        RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
+        Func<TransportMessage, bool> tryProcessMessage;
+        CancellationTokenSource tokenSource;
+        Address addressToPoll;
+        TransactionSettings settings;
+        TransactionOptions transactionOptions;
+        Action<TransportMessage, Exception> endProcessMessage;
         AzureMessageQueueReceiver messageReceiver;
 
         public PollingDequeueStrategy(AzureMessageQueueReceiver messageReceiver, CriticalError criticalError)
         {
             this.messageReceiver = messageReceiver;
-            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStoragePollingDequeueStrategy", TimeSpan.FromSeconds(30), ex => criticalError.Raise(string.Format("Failed to receive message from Azure Storage Queue."), ex));
+            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStoragePollingDequeueStrategy", TimeSpan.FromSeconds(30), ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
         }
 
         /// <summary>
@@ -142,13 +150,12 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
-        Func<TransportMessage, bool> tryProcessMessage;
-        CancellationTokenSource tokenSource;
-        Address addressToPoll;
-        TransactionSettings settings;
-        TransactionOptions transactionOptions;
-        Action<TransportMessage, Exception> endProcessMessage;
-        static ILog Logger = LogManager.GetLogger(typeof (PollingDequeueStrategy));
+        /// <summary>
+        /// <see cref="IDisposable.Dispose"/>
+        /// </summary>
+        public void Dispose()
+        {
+            // injected by Janitor.Fody
+        }
     }
 }
