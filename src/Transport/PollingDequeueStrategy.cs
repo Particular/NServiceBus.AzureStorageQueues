@@ -13,8 +13,16 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     /// <summary>
     /// A polling implementation of <see cref="IDequeueMessages"/>.
     /// </summary>
-    public class PollingDequeueStrategy : IDequeueMessages
+    public class PollingDequeueStrategy : IDequeueMessages, IDisposable
     {
+        static ILog Logger = LogManager.GetLogger(typeof (PollingDequeueStrategy));
+        RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
+        Func<TransportMessage, bool> tryProcessMessage;
+        CancellationTokenSource tokenSource;
+        Address addressToPoll;
+        TransactionSettings settings;
+        TransactionOptions transactionOptions;
+        Action<TransportMessage, Exception> endProcessMessage;
         AzureMessageQueueReceiver messageReceiver;
 
         public PollingDequeueStrategy(AzureMessageQueueReceiver messageReceiver, CriticalError criticalError)
@@ -142,13 +150,12 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
-        Func<TransportMessage, bool> tryProcessMessage;
-        CancellationTokenSource tokenSource;
-        Address addressToPoll;
-        TransactionSettings settings;
-        TransactionOptions transactionOptions;
-        Action<TransportMessage, Exception> endProcessMessage;
-        static ILog Logger = LogManager.GetLogger(typeof (PollingDequeueStrategy));
+        /// <summary>
+        /// <see cref="IDisposable.Dispose"/>
+        /// </summary>
+        public void Dispose()
+        {
+            // injected by Janitor.Fody
+        }
     }
 }

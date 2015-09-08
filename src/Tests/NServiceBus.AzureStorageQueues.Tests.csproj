@@ -78,6 +78,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="When_naming_queues_on_azure_storage.cs" />
+    <Compile Include="When_parsing_connectionstrings.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
