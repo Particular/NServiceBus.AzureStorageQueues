@@ -1,7 +1,6 @@
 namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Transactions;
@@ -23,9 +22,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         ICreateQueueClients createQueueClients;
         ILog logger = LogManager.GetLogger(typeof(AzureMessageQueueSender));
 
-        static Dictionary<string, bool> rememberExistence = new Dictionary<string, bool>();
-
-        static object ExistenceLock = new Object();
+        static ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
 
         /// <summary>
         /// Gets or sets the message serializer
@@ -86,21 +83,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         bool Exists(CloudQueue sendQueue)
         {
             var key = sendQueue.Uri.ToString();
-            bool exists;
-            if (!rememberExistence.ContainsKey(key))
-            {
-                lock (ExistenceLock)
-                {
-                    exists = sendQueue.Exists();
-                    rememberExistence[key] = exists;
-                }
-            }
-            else
-            {
-                exists = rememberExistence[key];
-            }
-
-            return exists;
+            return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.Exists());
         }
 
         CloudQueueMessage SerializeMessage(TransportMessage message, SendOptions options)
