@@ -1,16 +1,24 @@
 ﻿namespace NServiceBus.Features
 {
     using System;
-    using Azure.Transports.WindowsAzureStorageQueues;
-    using Config;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using ObjectBuilder;
-    using Settings;
-    using Transports;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using NServiceBus.Config;
+    using NServiceBus.ObjectBuilder;
+    using NServiceBus.Settings;
 
     class AzureStorageQueueTransportConfiguration : ConfigureTransport
     {
+        protected override bool RequiresConnectionString
+        {
+            get { return false; }
+        }
+
+        protected override string ExampleConnectionStringForErrorMessage
+        {
+            get { return "todo - refactor the transport to use a connection string instead of a custom section"; }
+        }
 
         protected override void Configure(FeatureConfigurationContext context, string con)
         {
@@ -24,7 +32,7 @@
 
             if (string.IsNullOrEmpty(connectionString))
             {
-                queueClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudQueueClient();     
+                queueClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudQueueClient();
             }
             else
             {
@@ -32,13 +40,12 @@
 
                 try
                 {
-                    Address.OverrideDefaultMachine(connectionString);  
+                    Address.OverrideDefaultMachine(connectionString);
                 }
                 catch (InvalidOperationException)
                 {
                     //swallow till refactored
                 }
-                              
             }
 
             context.Container.RegisterSingleton(queueClient);
@@ -52,15 +59,14 @@
             if (configSection != null)
             {
                 context.Container.ConfigureProperty<AzureMessageQueueReceiver>(t => t.PurgeOnStartup, configSection.PurgeOnStartup);
-                context.Container.ConfigureProperty<AzureMessageQueueReceiver>(t => t.PurgeOnStartup, configSection.PurgeOnStartup);
                 context.Container.ConfigureProperty<AzureMessageQueueReceiver>(t => t.MaximumWaitTimeWhenIdle, configSection.MaximumWaitTimeWhenIdle);
                 context.Container.ConfigureProperty<AzureMessageQueueReceiver>(t => t.MessageInvisibleTime, configSection.MessageInvisibleTime);
                 context.Container.ConfigureProperty<AzureMessageQueueReceiver>(t => t.PeekInterval, configSection.PeekInterval);
                 context.Container.ConfigureProperty<AzureMessageQueueReceiver>(t => t.BatchSize, configSection.BatchSize);
             }
 
-            
-            context.Settings.ApplyTo<AzureMessageQueueReceiver>((IComponentConfig)receiverConfig);
+
+            context.Settings.ApplyTo<AzureMessageQueueReceiver>((IComponentConfig) receiverConfig);
         }
 
         protected override string GetLocalAddress(ReadOnlySettings settings)
@@ -82,17 +88,5 @@
 
             return connectionString;
         }
-
-        protected override bool RequiresConnectionString
-        {
-            get { return false; }
-        }
-
-        protected override string ExampleConnectionStringForErrorMessage
-        {
-            get { return "todo - refactor the transport to use a connection string instead of a custom section"; }
-        }
-
-
     }
 }

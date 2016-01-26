@@ -1,161 +1,185 @@
-namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     using System;
-    using System.Collections.Generic;
+    using System.Collections.Concurrent;
+    using System.Diagnostics;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Transactions;
-    using CircuitBreakers;
-    using Logging;
+    using NServiceBus.AzureServiceBus;
+    using NServiceBus.Extensibility;
+    using NServiceBus.Logging;
     using NServiceBus.Transports;
-    using Unicast.Transport;
 
-    /// <summary>
-    /// A polling implementation of <see cref="IDequeueMessages"/>.
-    /// </summary>
-    public class PollingDequeueStrategy : IDequeueMessages, IDisposable
+    class PollingDequeueStrategy : IPushMessages, IDisposable
     {
-        static ILog Logger = LogManager.GetLogger(typeof (PollingDequeueStrategy));
-        RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
-        Func<TransportMessage, bool> tryProcessMessage;
-        CancellationTokenSource tokenSource;
-        Address addressToPoll;
-        TransactionSettings settings;
-        TransactionOptions transactionOptions;
-        Action<TransportMessage, Exception> endProcessMessage;
-        AzureMessageQueueReceiver messageReceiver;
+        static readonly ILog Logger = LogManager.GetLogger(typeof(PollingDequeueStrategy));
+        static readonly TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
+        static readonly TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
 
-        public PollingDequeueStrategy(AzureMessageQueueReceiver messageReceiver, CriticalError criticalError)
+        readonly AzureMessageQueueReceiver messageReceiver;
+        CancellationToken cancellationToken;
+        CancellationTokenSource cancellationTokenSource;
+        RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
+        SemaphoreSlim concurrencyLimiter;
+
+        Task messagePumpTask;
+        RepeatedFailuresOverTimeCircuitBreaker peekCircuitBreaker;
+        Func<PushContext, Task> pipeline;
+        ConcurrentDictionary<Task, Task> runningReceiveTasks;
+
+        public PollingDequeueStrategy(AzureMessageQueueReceiver messageReceiver)
         {
             this.messageReceiver = messageReceiver;
-            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStoragePollingDequeueStrategy", TimeSpan.FromSeconds(30), ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
         }
 
-        /// <summary>
-        /// Initializes the <see cref="IDequeueMessages"/>.
-        /// </summary>
-        /// <param name="address">The address to listen on.</param>
-        /// <param name="transactionSettings">The <see cref="TransactionSettings"/> to be used by <see cref="IDequeueMessages"/>.</param>
-        /// <param name="tryProcessMessage">Called when a message has been dequeued and is ready for processing.</param>
-        /// <param name="endProcessMessage">Needs to be called by <see cref="IDequeueMessages"/> after the message has been processed regardless if the outcome was successful or not.</param>
-        public void Init(Address address, TransactionSettings transactionSettings, Func<TransportMessage, bool> tryProcessMessage, Action<TransportMessage, Exception> endProcessMessage)
+        public void Dispose()
         {
-            this.tryProcessMessage = tryProcessMessage;
-            this.endProcessMessage = endProcessMessage;
-
-            addressToPoll = address;
-            settings = transactionSettings;
-            transactionOptions = new TransactionOptions { IsolationLevel = transactionSettings.IsolationLevel, Timeout = transactionSettings.TransactionTimeout };
-
-            messageReceiver.Init(addressToPoll, settings.IsTransactional);
+            // Injected
         }
 
-        /// <summary>
-        /// Starts the dequeuing of message using the specified <paramref name="maximumConcurrencyLevel"/>.
-        /// </summary>
-        /// <param name="maximumConcurrencyLevel">Indicates the maximum concurrency level this <see cref="IDequeueMessages"/> is able to support.</param>
-        public void Start(int maximumConcurrencyLevel)
+        public Task Init(Func<PushContext, Task> pipe, CriticalError criticalError, PushSettings settings)
         {
-            tokenSource = new CancellationTokenSource();
+            pipeline = pipe;
+            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStoragePollingDequeueStrategy", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
+            peekCircuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStoragePollingDequeueStrategy-peek", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
 
-            for (var i = 0; i < maximumConcurrencyLevel; i++)
+            //    this.tryProcessMessage = tryProcessMessage;
+            //    this.endProcessMessage = endProcessMessage;
+
+            //    addressToPoll = address;
+            //    settings = transactionSettings;
+            //    transactionOptions = new TransactionOptions
+            //    {
+            //        IsolationLevel = transactionSettings.IsolationLevel,
+            //        Timeout = transactionSettings.TransactionTimeout
+            //    };
+            // TODO: dispatch the setting properly to indicate 
+
+            messageReceiver.Init(settings.InputQueue, false);
+            return Task.FromResult(0);
+        }
+
+        public void Start(PushRuntimeSettings limitations)
+        {
+            runningReceiveTasks = new ConcurrentDictionary<Task, Task>();
+            concurrencyLimiter = new SemaphoreSlim(limitations.MaxConcurrency);
+            cancellationTokenSource = new CancellationTokenSource();
+
+            cancellationToken = cancellationTokenSource.Token;
+            // ReSharper disable once ConvertClosureToMethodGroup
+            // LongRunning is useless combined with async/await
+            messagePumpTask = Task.Run(() => ProcessMessages(), CancellationToken.None);
+        }
+
+        public async Task Stop()
+        {
+            cancellationTokenSource.Cancel();
+
+            // ReSharper disable once MethodSupportsCancellation
+            var timeoutTask = Task.Delay(StoppingAllTasksTimeout);
+            var allTasks = runningReceiveTasks.Values.Concat(new[]
             {
-                StartThread();
+                messagePumpTask
+            });
+            var finishedTask = await Task.WhenAny(Task.WhenAll(allTasks), timeoutTask).ConfigureAwait(false);
+
+            if (finishedTask.Equals(timeoutTask))
+            {
+                Logger.Error("The message pump failed to stop with in the time allowed(30s)");
             }
+
+            concurrencyLimiter.Dispose();
+            runningReceiveTasks.Clear();
         }
 
-        /// <summary>
-        /// Stops the dequeuing of messages.
-        /// </summary>
-        public void Stop()
+        [DebuggerNonUserCode]
+        async Task ProcessMessages()
         {
-            tokenSource.Cancel();
-        }
-
-        void StartThread()
-        {
-            var token = tokenSource.Token;
-
-            Task.Factory
-                .StartNew(Action, token, token, TaskCreationOptions.LongRunning, TaskScheduler.Default)
-                .ContinueWith(t =>
-                    {
-                        t.Exception.Handle(ex =>
-                            {
-                                circuitBreaker.Failure(ex);
-                                return true;
-                            });
-
-                        StartThread();
-                    }, TaskContinuationOptions.OnlyOnFaulted);
-        }
-
-        void Action(object obj)
-        {
-            var cancellationToken = (CancellationToken)obj;
-
             while (!cancellationToken.IsCancellationRequested)
             {
-                Exception exception = null;
-                TransportMessage message = null;
-
                 try
                 {
-                    if (settings.IsTransactional)
-                    {
-                        using (var scope = new TransactionScope(TransactionScopeOption.Required, transactionOptions))
-                        {
-                            message = messageReceiver.Receive();
-
-                            if (message != null)
-                            {
-                                if (tryProcessMessage(message))
-                                {
-                                    scope.Complete();
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        message = messageReceiver.Receive();
-
-                        if (message != null)
-                        {
-                            tryProcessMessage(message);
-                        }
-                    }
-
-                    circuitBreaker.Success();
+                    await InnerProcessMessages().ConfigureAwait(false);
                 }
-                catch (EnvelopeDeserializationFailed ex)
+                catch (OperationCanceledException)
                 {
-                    //if we failed to deserialize the envlope there isn't much we can do so we just swallow the message to avoid a infinite loop
-                    message = new TransportMessage(ex.FailedMessage.Id,new Dictionary<string, string>());
-                    exception = ex;
-
-                    Logger.Error("Failed to deserialize the envelope of the incoming message. Message will be discarded. MessageId: " + ex.FailedMessage.Id,exception);
+                    // For graceful shutdown purposes
                 }
                 catch (Exception ex)
                 {
-                    exception = ex;
-                }
-                finally
-                {
-                    if (!cancellationToken.IsCancellationRequested && (message != null || exception != null))
-                    {
-                        endProcessMessage(message, exception);
-                    }
+                    Logger.Error("Polling Dequeue Strategy failed", ex);
+                    await circuitBreaker.Failure(ex).ConfigureAwait(false);
                 }
             }
         }
 
-        /// <summary>
-        /// <see cref="IDisposable.Dispose"/>
-        /// </summary>
-        public void Dispose()
+        async Task InnerProcessMessages()
         {
-            // injected by Janitor.Fody
+            while (!cancellationTokenSource.IsCancellationRequested)
+            {
+                IncomingMessage message;
+                try
+                {
+                    message = await messageReceiver.Receive(cancellationTokenSource.Token);
+                    if (message == null)
+                    {
+                    }
+                    peekCircuitBreaker.Success();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn("Receiving from the queue failed", ex);
+                    await peekCircuitBreaker.Failure(ex).ConfigureAwait(false);
+                    continue;
+                }
+
+                if (cancellationTokenSource.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                await concurrencyLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+                var tokenSource = new CancellationTokenSource();
+                var receiveTask = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using (var bodyStream = message.BodyStream)
+                        {
+                            var pushContext = new PushContext(message.MessageId, message.Headers, bodyStream, new TransportTransaction(), cancellationTokenSource, new ContextBag());
+                            await pipeline(pushContext).ConfigureAwait(false);
+                        }
+                        circuitBreaker.Success();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn("MSMQ receive operation failed", ex);
+                        await circuitBreaker.Failure(ex).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        concurrencyLimiter.Release();
+                    }
+                }, tokenSource.Token).ContinueWith(t => tokenSource.Dispose());
+
+                runningReceiveTasks.TryAdd(receiveTask, receiveTask);
+
+                // We insert the original task into the runningReceiveTasks because we want to await the completion
+                // of the running receives. ExecuteSynchronously is a request to execute the continuation as part of
+                // the transition of the antecedents completion phase. This means in most of the cases the continuation
+                // will be executed during this transition and the antecedent task goes into the completion state only 
+                // after the continuation is executed. This is not always the case. When the TPL thread handling the
+                // antecedent task is aborted the continuation will be scheduled. But in this case we don't need to await
+                // the continuation to complete because only really care about the receive operations. The final operation
+                // when shutting down is a clear of the running tasks anyway.
+                receiveTask.ContinueWith(t =>
+                {
+                    Task toBeRemoved;
+                    runningReceiveTasks.TryRemove(t, out toBeRemoved);
+                }, TaskContinuationOptions.ExecuteSynchronously);
+            }
         }
     }
 }

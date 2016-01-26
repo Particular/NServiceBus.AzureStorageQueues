@@ -44,7 +44,12 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             var sendQueue = sendClient.GetQueueReference(AzureMessageQueueUtils.GetQueueName(address));
 
             if (!Exists(sendQueue))
-                throw new QueueNotFoundException { Queue = address };
+            {
+                throw new QueueNotFoundException
+                {
+                    Queue = address
+                };
+            }
 
             var timeToBeReceived = options.TimeToBeReceived.HasValue && options.TimeToBeReceived < TimeSpan.MaxValue ? options.TimeToBeReceived : null;
             timeToBeReceived = timeToBeReceived ?? message.TimeToBeReceived;
@@ -77,7 +82,9 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                 sendQueue.AddMessage(rawMessage, timeToBeReceived);
             }
             else
+            {
                 Transaction.Current.EnlistVolatile(new SendResourceManager(sendQueue, rawMessage, timeToBeReceived), EnlistmentOptions.None);
+            }
         }
 
         bool Exists(CloudQueue sendQueue)
@@ -94,59 +101,21 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                 var replyToAddress = validation.Determine(config.Settings, message.ReplyToAddress ?? options.ReplyToAddress ?? config.LocalAddress, config.TransportConnectionString());
 
                 var toSend = new MessageWrapper
-                    {
-                        Id = message.Id,
-                        Body = message.Body,
-                        CorrelationId = message.CorrelationId ?? options.CorrelationId,
-                        Recoverable = message.Recoverable,
-                        ReplyToAddress = replyToAddress,
-                        TimeToBeReceived = options.TimeToBeReceived.HasValue ? options.TimeToBeReceived.Value : message.TimeToBeReceived,
-                        Headers = message.Headers,
-                        MessageIntent = message.MessageIntent
-                    };
+                {
+                    Id = message.Id,
+                    Body = message.Body,
+                    CorrelationId = message.CorrelationId ?? options.CorrelationId,
+                    Recoverable = message.Recoverable,
+                    ReplyToAddress = replyToAddress,
+                    TimeToBeReceived = options.TimeToBeReceived.HasValue ? options.TimeToBeReceived.Value : message.TimeToBeReceived,
+                    Headers = message.Headers,
+                    MessageIntent = message.MessageIntent
+                };
 
 
                 MessageSerializer.Serialize(toSend, stream);
                 return new CloudQueueMessage(stream.ToArray());
             }
-        }
-    }
-
-    public interface ICreateQueueClients
-    {
-        CloudQueueClient Create(string connectionString);
-    }
-
-    public class CreateQueueClients : ICreateQueueClients
-    {
-        ConcurrentDictionary<string, CloudQueueClient> destinationQueueClients = new ConcurrentDictionary<string, CloudQueueClient>();
-        Configure config;
-
-        public CreateQueueClients(Configure config)
-        {
-            this.config = config;
-        }
-
-        public CloudQueueClient Create(string connectionString)
-        {
-            return destinationQueueClients.GetOrAdd(connectionString, s =>
-            {
-                var validation = new DeterminesBestConnectionStringForStorageQueues();
-                if (!validation.IsPotentialStorageQueueConnectionString(connectionString))
-                {
-                    connectionString = validation.Determine(config.Settings, config.TransportConnectionString());
-                }
-
-                CloudQueueClient sendClient = null;
-                CloudStorageAccount account;
-
-                if (CloudStorageAccount.TryParse(connectionString, out account))
-                {
-                    sendClient = account.CreateCloudQueueClient();
-                }
-
-                return sendClient;
-            });
         }
     }
 }

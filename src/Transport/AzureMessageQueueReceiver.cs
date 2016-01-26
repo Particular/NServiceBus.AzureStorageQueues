@@ -1,21 +1,20 @@
 namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Runtime.Serialization;
     using System.Threading;
+    using System.Threading.Tasks;
     using System.Transactions;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using Serialization;
+    using NServiceBus.Serialization;
+    using NServiceBus.Transports;
 
     public class AzureMessageQueueReceiver
     {
-        IMessageSerializer messageSerializer;
-        CloudQueueClient client;
         public const int DefaultMessageInvisibleTime = 30000;
         public const int DefaultPeekInterval = 50;
         public const int DefaultMaximumWaitTimeWhenIdle = 1000;
@@ -25,37 +24,13 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public const bool DefaultQueuePerInstance = false;
 
         CloudQueue azureQueue;
+        Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
+        CloudQueueClient client;
+        IMessageSerializer messageSerializer;
         int timeToDelayNextPeek;
         bool useTransactions;
-        ConcurrentQueue<CloudQueueMessage> batchQueue = new ConcurrentQueue<CloudQueueMessage>();
 
-        /// <summary>
-        /// Sets the amount of time, in milliseconds, to add to the time to wait before checking for a new message
-        /// </summary>
-        public int PeekInterval { get; set; }
-
-        /// <summary>
-        /// Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
-        /// </summary>
-        public int MaximumWaitTimeWhenIdle { get; set; }
-
-        /// <summary>
-        /// Sets whether or not the transport should purge the input
-        /// queue when it is started.
-        /// </summary>
-        public bool PurgeOnStartup { get; set; }
-
-        /// <summary>
-        /// Controls how long messages should be invisible to other callers when receiving messages from the queue
-        /// </summary>
-        public int MessageInvisibleTime { get; set; }
-
-        /// <summary>
-        /// Controls the number of messages that will be read in bulk from the queue
-        /// </summary>
-        public int BatchSize { get; set; }
-
-        public AzureMessageQueueReceiver(IMessageSerializer messageSerializer, CloudQueueClient client, Configure configure)
+        public AzureMessageQueueReceiver(IMessageSerializer messageSerializer, CloudQueueClient client)
         {
             this.messageSerializer = messageSerializer;
             this.client = client;
@@ -63,16 +38,35 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             PeekInterval = DefaultPeekInterval;
             MaximumWaitTimeWhenIdle = DefaultMaximumWaitTimeWhenIdle;
             BatchSize = DefaultBatchSize;
-
-            PurgeOnStartup = configure.PurgeOnStartup();
         }
+
+        /// <summary>
+        ///     Sets the amount of time, in milliseconds, to add to the time to wait before checking for a new message
+        /// </summary>
+        public int PeekInterval { get; set; }
+
+        /// <summary>
+        ///     Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
+        /// </summary>
+        public int MaximumWaitTimeWhenIdle { get; set; }
+
+        /// <summary>
+        ///     Sets whether or not the transport should purge the input
+        ///     queue when it is started.
+        /// </summary>
+        public bool PurgeOnStartup { get; set; }
+
+        /// <summary>
+        ///     Controls how long messages should be invisible to other callers when receiving messages from the queue
+        /// </summary>
+        public int MessageInvisibleTime { get; set; }
+
+        /// <summary>
+        ///     Controls the number of messages that will be read in bulk from the queue
+        /// </summary>
+        public int BatchSize { get; set; }
 
         public void Init(string address, bool transactional)
-        {
-            Init(Address.Parse(address), transactional);
-        }
-
-        public void Init(Address address, bool transactional)
         {
             useTransactions = transactional;
 
@@ -87,20 +81,18 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        public TransportMessage Receive()
+        public async Task<IncomingMessage> Receive(CancellationToken token)
         {
-            var rawMessage = GetMessage();
+            var rawMessage = await GetMessage(token);
 
             if (rawMessage == null)
             {
-
                 if (timeToDelayNextPeek < MaximumWaitTimeWhenIdle)
                 {
                     timeToDelayNextPeek += PeekInterval;
                 }
 
-                Thread.Sleep(timeToDelayNextPeek);
-
+                await Task.Delay(timeToDelayNextPeek, token).ConfigureAwait(false);
                 return null;
             }
 
@@ -126,22 +118,21 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        CloudQueueMessage GetMessage()
+        async Task<CloudQueueMessage> GetMessage(CancellationToken token)
         {
-            CloudQueueMessage cloudQueueMessage;
-            if (batchQueue.TryDequeue(out cloudQueueMessage))
+            if (batchQueue.Count == 0)
             {
-                return cloudQueueMessage;
-            }
-            var callback = new AsyncCallback(ar =>
-            {
-                var receivedMessages = azureQueue.EndGetMessages(ar);
-                foreach (var receivedMessage in receivedMessages)
+                var messages = await azureQueue.GetMessagesAsync(BatchSize, TimeSpan.FromMilliseconds(MessageInvisibleTime), null, null, token);
+                foreach (var receivedMessage in messages)
                 {
                     batchQueue.Enqueue(receivedMessage);
                 }
-            });
-            azureQueue.BeginGetMessages(BatchSize, TimeSpan.FromMilliseconds(MessageInvisibleTime), null, null, callback, null);
+            }
+            if (batchQueue.Count > 0)
+            {
+                return batchQueue.Dequeue();
+            }
+
             return null;
         }
 
@@ -160,39 +151,37 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        TransportMessage DeserializeMessage(CloudQueueMessage rawMessage)
+        IncomingMessage DeserializeMessage(CloudQueueMessage rawMessage)
         {
-            using (var stream = new MemoryStream(rawMessage.AsBytes))
+            var stream = new MemoryStream(rawMessage.AsBytes);
+            object[] deserializedObjects;
+            try
             {
-                object[] deserializedObjects;
-                try
+                deserializedObjects = messageSerializer.Deserialize(stream, new List<Type>
                 {
-                    deserializedObjects = messageSerializer.Deserialize(stream, new List<Type> { typeof(MessageWrapper) });
-                }
-                catch (Exception)
-                {
-                    throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
-                }
-
-                var m = deserializedObjects.FirstOrDefault() as MessageWrapper;
-
-                if (m == null)
-                {
-                    throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
-                }
-
-                m.Headers[Headers.ReplyToAddress] = m.ReplyToAddress;
-
-                return new TransportMessage(m.Id, m.Headers)
-                {
-                    Body = m.Body ?? new byte[0],
-                    CorrelationId = m.CorrelationId,
-                    Recoverable = m.Recoverable,
-                    TimeToBeReceived = m.TimeToBeReceived,
-                    MessageIntent = m.MessageIntent
-                };
+                    typeof(MessageWrapper)
+                });
             }
-        }
+            catch (Exception)
+            {
+                throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
+            }
 
+            var m = deserializedObjects.FirstOrDefault() as MessageWrapper;
+
+            if (m == null)
+            {
+                throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
+            }
+
+            m.Headers[Headers.ReplyToAddress] = m.ReplyToAddress;
+            m.Headers[Headers.CorrelationId] = m.CorrelationId;
+            // TODO: headers proper assingment
+            //m.Headers[Headers.Recoverable] = m.Recoverable;
+            //m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived;
+            //m.Headers[Headers.MessageIntent] = m.MessageIntent;
+
+            return new IncomingMessage(m.Id, m.Headers, stream);
+        }
     }
 }
