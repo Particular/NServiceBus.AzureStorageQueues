@@ -21,7 +21,7 @@
 
         public async Task CreateQueueIfNecessary(QueueBindings queueBindings, string identity)
         {
-            // TODO: possibly Task.WhenAll ?
+            // possible usage of Task.WhenAll. The only thing is the limitation to 64 tasks being observed (as it's the limit from OS on WaitHandle)
 
             foreach (var address in queueBindings.ReceivingAddresses)
             {

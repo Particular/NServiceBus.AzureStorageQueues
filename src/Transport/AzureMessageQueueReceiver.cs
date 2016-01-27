@@ -176,10 +176,8 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
             m.Headers[Headers.ReplyToAddress] = m.ReplyToAddress;
             m.Headers[Headers.CorrelationId] = m.CorrelationId;
-            // TODO: headers proper assingment
-            //m.Headers[Headers.Recoverable] = m.Recoverable;
-            //m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived;
-            //m.Headers[Headers.MessageIntent] = m.MessageIntent;
+            m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived.ToString();
+            m.Headers[Headers.MessageIntent] = m.MessageIntent.ToString(); // message intent exztension method
 
             return new IncomingMessage(m.Id, m.Headers, stream);
         }

@@ -7,8 +7,10 @@ namespace NServiceBus
     using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NServiceBus.Config;
+    using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Routing;
     using NServiceBus.Serialization;
+    using NServiceBus.Serializers.Json;
     using NServiceBus.Settings;
     using NServiceBus.Transports;
 
@@ -17,40 +19,14 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition
     {
-        //public AzureStorageQueueTransport()
-        //{
-        //    HasSupportForDistributedTransactions = false;
-        //}
+        private static readonly IMessageSerializer Serializer = new JsonMessageSerializer(null);
 
-        ///// <summary>
-        ///// Gives implementations access to the <see cref="T:NServiceBus.BusConfiguration"/> instance at configuration time.
-        ///// </summary>
-        //protected override void Configure(BusConfiguration config)
-        //{
-        //    config.EnableFeature<AzureStorageQueueTransportConfiguration>();
-        //    config.EnableFeature<TimeoutManagerBasedDeferral>();
-
-        //    var settings = config.GetSettings();
-
-        //    settings.EnableFeatureByDefault<MessageDrivenSubscriptions>();
-        //    settings.EnableFeatureByDefault<StorageDrivenPublishing>();
-        //    settings.EnableFeatureByDefault<TimeoutManager>();
-
-        //    settings.SetDefault("SelectedSerializer", new JsonSerializer());
-
-        //    settings.SetDefault("ScaleOut.UseSingleBrokerQueue", true); // default to one queue for all instances
-        //    config.GetSettings().SetDefault("EndpointInstanceDiscriminator", QueueIndividualizer.Discriminator);
-
-        //}
-
-        // TODO: serializer initialization
-        private static readonly IMessageSerializer Serializer = default(IMessageSerializer);
-
-        public override string ExampleConnectionStringForErrorMessage { get; } = "DefaultEndpointsProtocol=[http|https];AccountName=myAccountName;AccountKey=myAccountKey";
+        public override string ExampleConnectionStringForErrorMessage { get; } =
+            "DefaultEndpointsProtocol=[http|https];AccountName=myAccountName;AccountKey=myAccountKey";
 
         protected override TransportReceivingConfigurationResult ConfigureForReceiving(TransportReceivingConfigurationContext context)
         {
-            var client = BuildClient(context.Settings);
+            var client = BuildClient(context.Settings, context.ConnectionString);
             var configSection = context.Settings.GetConfigSection<AzureQueueConfig>();
 
             return new TransportReceivingConfigurationResult(
@@ -72,14 +48,13 @@ namespace NServiceBus
                 () => Task.FromResult(StartupCheckResult.Success));
         }
 
-        static CloudQueueClient BuildClient(ReadOnlySettings settings)
+        static CloudQueueClient BuildClient(ReadOnlySettings settings, string connectionStringFromContext)
         {
             CloudQueueClient queueClient;
 
             var configSection = settings.GetConfigSection<AzureQueueConfig>();
 
-            // TODO: the default connection string should be passed
-            var connectionString = TryGetConnectionString(configSection, null);
+            var connectionString = TryGetConnectionString(configSection, connectionStringFromContext);
 
             if (string.IsNullOrEmpty(connectionString))
             {
@@ -108,52 +83,50 @@ namespace NServiceBus
             return connectionString;
         }
 
-        //protected override void Configure(FeatureConfigurationContext context, string con)
-        //{
-        //    context.Settings.Get<Conventions>().AddSystemMessagesConventions(t => typeof(MessageWrapper).IsAssignableFrom(t));
-
-        //    var receiverConfig = context.Container.ConfigureComponent<AzureMessageQueueReceiver>(DependencyLifecycle.InstancePerCall);
-        //    context.Container.ConfigureComponent<CreateQueueClients>(DependencyLifecycle.SingleInstance);
-        //    context.Container.ConfigureComponent<AzureMessageQueueSender>(DependencyLifecycle.InstancePerCall);
-        //    context.Container.ConfigureComponent<PollingDequeueStrategy>(DependencyLifecycle.InstancePerCall);
-        //    context.Container.ConfigureComponent<AzureMessageQueueCreator>(DependencyLifecycle.InstancePerCall);
-
-        //    context.Settings.ApplyTo<AzureMessageQueueReceiver>((IComponentConfig)receiverConfig);
-        //}
-
         protected override TransportSendingConfigurationResult ConfigureForSending(TransportSendingConfigurationContext context)
         {
-            throw new NotImplementedException();
+            var settings = context.Settings;
+            var connectionString = context.ConnectionString;
+            return new TransportSendingConfigurationResult(
+                () => new AzureMessageQueueSender(new CreateQueueClients(settings, connectionString), Serializer, settings, connectionString),
+                () => Task.FromResult(StartupCheckResult.Success));
         }
 
         public override IEnumerable<Type> GetSupportedDeliveryConstraints()
         {
-            throw new NotImplementedException();
+            return new[]
+            {
+                typeof(DiscardIfNotReceivedBefore),
+                typeof(NonDurableDelivery)
+            };
         }
 
         public override TransportTransactionMode GetSupportedTransactionMode()
         {
-            throw new NotImplementedException();
+            return TransportTransactionMode.None;
         }
 
         public override IManageSubscriptions GetSubscriptionManager()
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("Azure Storage Queue transport doesn't support native pub sub");
         }
 
         public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance, ReadOnlySettings settings)
         {
-            throw new NotImplementedException();
+            return new EndpointInstance(instance.Endpoint, QueueIndividualizer.Discriminator, instance.Properties);
         }
 
         public override string ToTransportAddress(LogicalAddress logicalAddress)
         {
+
+            return AzureQueueNamingConvention.Apply(settings);
             throw new NotImplementedException();
         }
 
         public override OutboundRoutingPolicy GetOutboundRoutingPolicy(ReadOnlySettings settings)
         {
-            throw new NotImplementedException();
+            // Azure Storage Queues does not support mulitcast, hence all the messages are sent with Unicast
+            return new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
         }
     }
 }

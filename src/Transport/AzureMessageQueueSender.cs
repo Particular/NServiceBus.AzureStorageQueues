@@ -1,46 +1,61 @@
-namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     using System;
+    using System.Collections.Concurrent;
     using System.IO;
     using System.Linq;
+    using System.Threading.Tasks;
     using System.Transactions;
-    using NServiceBus.Logging;
-    using NServiceBus.Serialization;
-    using System.Collections.Concurrent;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
+    using NServiceBus.DeliveryConstraints;
+    using NServiceBus.Extensibility;
+    using NServiceBus.Logging;
+    using NServiceBus.Performance.TimeToBeReceived;
+    using NServiceBus.Serialization;
+    using NServiceBus.Settings;
     using NServiceBus.Transports;
-    using Unicast;
-    using Unicast.Queuing;
+    using NServiceBus.Unicast.Queuing;
 
-    /// <summary>
-    /// 
-    /// </summary>
-    public class AzureMessageQueueSender : ISendMessages
+    public class AzureMessageQueueSender : IDispatchMessages
     {
-        Configure config;
-        ICreateQueueClients createQueueClients;
-        ILog logger = LogManager.GetLogger(typeof(AzureMessageQueueSender));
+        static readonly ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
+        readonly ICreateQueueClients createQueueClients;
+        readonly ILog logger = LogManager.GetLogger(typeof(AzureMessageQueueSender));
+        readonly IMessageSerializer messageSerializer;
+        private readonly bool transactionsEnabled;
+        readonly DeterminesBestConnectionStringForStorageQueues validation;
 
-        static ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
-
-        /// <summary>
-        /// Gets or sets the message serializer
-        /// </summary>
-        public IMessageSerializer MessageSerializer { get; set; }
-
-        public AzureMessageQueueSender(Configure config, ICreateQueueClients createQueueClients)
+        public AzureMessageQueueSender(ICreateQueueClients createQueueClients, IMessageSerializer messageSerializer, ReadOnlySettings settings
+            , string defaultConnectionString)
         {
-            this.config = config;
             this.createQueueClients = createQueueClients;
+            this.messageSerializer = messageSerializer;
+            validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
+            transactionsEnabled = settings.Get<bool>("Transactions.Enabled");
         }
 
-        public void Send(TransportMessage message, SendOptions options)
+        public Task Dispatch(TransportOperations outgoingMessages, ContextBag context)
         {
-            var address = options.Destination;
+            if (outgoingMessages.MulticastTransportOperations.Any())
+            {
+                throw new Exception("The Azure Storage Queue transport only supports unicast transport operations.");
+            }
 
-            var sendClient = createQueueClients.Create(address.Machine);
+            foreach (var unicastTransportOperation in outgoingMessages.UnicastTransportOperations)
+            {
+                Send(unicastTransportOperation);
+            }
 
+            return Task.FromResult(0);
+        }
+
+        private void Send(UnicastTransportOperation operation)
+        {
+            var address = operation.Destination;
+
+            // TODO: is it address or connection string?
+            var sendClient = createQueueClients.Create(address);
             var sendQueue = sendClient.GetQueueReference(AzureMessageQueueUtils.GetQueueName(address));
 
             if (!Exists(sendQueue))
@@ -51,22 +66,21 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                 };
             }
 
-            var timeToBeReceived = options.TimeToBeReceived.HasValue && options.TimeToBeReceived < TimeSpan.MaxValue ? options.TimeToBeReceived : null;
-            timeToBeReceived = timeToBeReceived ?? message.TimeToBeReceived;
+            var toBeReceived = operation.GetTimeToBeReceived();
+            var timeToBeReceived = toBeReceived.HasValue && toBeReceived.Value < TimeSpan.MaxValue ? toBeReceived : null;
 
-            if (timeToBeReceived.Value == TimeSpan.Zero)
+            if (timeToBeReceived != null && timeToBeReceived.Value == TimeSpan.Zero)
             {
-                var messageType = message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
-                logger.WarnFormat("TimeToBeReceived is set to zero for message of type '{0}'. Cannot send message.", messageType);
+                var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
+                logger.WarnFormat("TimeToBeReceived is set to zero for message of type '{0}'. Cannot send operation.", messageType);
                 return;
             }
 
             // user explicitly specified TimeToBeReceived that is not TimeSpan.MaxValue - fail
-            if (timeToBeReceived.Value > CloudQueueMessage.MaxTimeToLive && timeToBeReceived != TimeSpan.MaxValue)
+            if (timeToBeReceived != null && timeToBeReceived.Value > CloudQueueMessage.MaxTimeToLive && timeToBeReceived != TimeSpan.MaxValue)
             {
-                var messageType = message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
-                throw new InvalidOperationException(string.Format("TimeToBeReceived is set to more than 7 days (maximum for Azure Storage queue) for message type '{0}'.",
-                    messageType));
+                var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
+                throw new InvalidOperationException($"TimeToBeReceived is set to more than 7 days (maximum for Azure Storage queue) for message type '{messageType}'.");
             }
 
             // TimeToBeReceived was not specified on message - go for maximum set by SDK
@@ -75,9 +89,9 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                 timeToBeReceived = null;
             }
 
-            var rawMessage = SerializeMessage(message, options);
+            var rawMessage = SerializeMessage(operation, timeToBeReceived);
 
-            if (!config.Settings.Get<bool>("Transactions.Enabled") || Transaction.Current == null)
+            if (!transactionsEnabled || Transaction.Current == null)
             {
                 sendQueue.AddMessage(rawMessage, timeToBeReceived);
             }
@@ -93,29 +107,89 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.Exists());
         }
 
-        CloudQueueMessage SerializeMessage(TransportMessage message, SendOptions options)
+        CloudQueueMessage SerializeMessage(IOutgoingTransportOperation operation, TimeSpan? timeToBeReceived)
         {
             using (var stream = new MemoryStream())
             {
-                var validation = new DeterminesBestConnectionStringForStorageQueues();
-                var replyToAddress = validation.Determine(config.Settings, message.ReplyToAddress ?? options.ReplyToAddress ?? config.LocalAddress, config.TransportConnectionString());
+                var msg = operation.Message;
+
+                // TODO: validate assumptions
+                //var replyToAddress = validation.Determine(config.Settings, message.ReplyToAddress ?? options.ReplyToAddress ?? config.LocalAddress, config.TransportConnectionString());
+                var replyToAddress = validation.Determine(msg.Headers[Headers.ReplyToAddress]);
+
+                var messageIntent = default(MessageIntentEnum);
+                string messageIntentString;
+                if (msg.Headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
+                {
+                    Enum.TryParse(messageIntentString, true, out messageIntent);
+                }
 
                 var toSend = new MessageWrapper
                 {
-                    Id = message.Id,
-                    Body = message.Body,
-                    CorrelationId = message.CorrelationId ?? options.CorrelationId,
-                    Recoverable = message.Recoverable,
+                    Id = msg.MessageId,
+                    Body = msg.Body,
+                    CorrelationId = msg.Headers[Headers.CorrelationId],
+                    Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
                     ReplyToAddress = replyToAddress,
-                    TimeToBeReceived = options.TimeToBeReceived.HasValue ? options.TimeToBeReceived.Value : message.TimeToBeReceived,
-                    Headers = message.Headers,
-                    MessageIntent = message.MessageIntent
+                    TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
+                    Headers = msg.Headers,
+                    MessageIntent = messageIntent
                 };
 
-
-                MessageSerializer.Serialize(toSend, stream);
+                messageSerializer.Serialize(toSend, stream);
                 return new CloudQueueMessage(stream.ToArray());
             }
         }
+    }
+
+    internal static class TransportOperationExtensions
+    {
+        public static TimeSpan? GetTimeToBeReceived(this UnicastTransportOperation operation)
+        {
+            return operation.GetDeliveryConstraint<DiscardIfNotReceivedBefore>()?.MaxTime;
+        }
+
+        public static T GetDeliveryConstraint<T>(this IOutgoingTransportOperation operation)
+            where T : DeliveryConstraint
+        {
+            return operation.DeliveryConstraints.OfType<T>().FirstOrDefault();
+        }
+    }
+
+    public class CreateQueueClients : ICreateQueueClients
+    {
+        readonly ConcurrentDictionary<string, CloudQueueClient> destinationQueueClients = new ConcurrentDictionary<string, CloudQueueClient>();
+        readonly DeterminesBestConnectionStringForStorageQueues validation;
+
+        public CreateQueueClients(ReadOnlySettings settings, string defaultConnectionString)
+        {
+            validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
+        }
+
+        public CloudQueueClient Create(string connectionString)
+        {
+            return destinationQueueClients.GetOrAdd(connectionString, s =>
+            {
+                if (!validation.IsPotentialStorageQueueConnectionString(connectionString))
+                {
+                    connectionString = validation.Determine();
+                }
+
+                CloudQueueClient sendClient = null;
+                CloudStorageAccount account;
+
+                if (CloudStorageAccount.TryParse(connectionString, out account))
+                {
+                    sendClient = account.CreateCloudQueueClient();
+                }
+
+                return sendClient;
+            });
+        }
+    }
+
+    public interface ICreateQueueClients
+    {
+        CloudQueueClient Create(string connectionString);
     }
 }
