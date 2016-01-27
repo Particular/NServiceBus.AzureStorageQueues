@@ -54,10 +54,10 @@
             //        IsolationLevel = transactionSettings.IsolationLevel,
             //        Timeout = transactionSettings.TransactionTimeout
             //    };
-            // TODO: dispatch the setting properly to indicate 
+            // TODO: should these settings be pushed down? What about transaction options
 
             messageReceiver.Init(settings.InputQueue, false);
-            return Task.FromResult(0);
+            return TaskEx.CompletedTask;
         }
 
         public void Start(PushRuntimeSettings limitations)
@@ -178,7 +178,8 @@
                 {
                     Task toBeRemoved;
                     runningReceiveTasks.TryRemove(t, out toBeRemoved);
-                }, TaskContinuationOptions.ExecuteSynchronously);
+                }, TaskContinuationOptions.ExecuteSynchronously)
+                    .Ignore();
             }
         }
     }

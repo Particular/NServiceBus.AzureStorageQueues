@@ -47,7 +47,7 @@
                 Send(unicastTransportOperation);
             }
 
-            return Task.FromResult(0);
+            return TaskEx.CompletedTask;
         }
 
         private void Send(UnicastTransportOperation operation)
