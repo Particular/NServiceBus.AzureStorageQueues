@@ -16,6 +16,7 @@
         static readonly ILog Logger = LogManager.GetLogger(typeof(PollingDequeueStrategy));
         static readonly TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static readonly TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
+        static readonly TimeSpan NoMessageSleep = TimeSpan.FromMilliseconds(100);
 
         readonly AzureMessageQueueReceiver messageReceiver;
         CancellationToken cancellationToken;
@@ -124,7 +125,10 @@
                     message = await messageReceiver.Receive(cancellationTokenSource.Token);
                     if (message == null)
                     {
+                        await Task.Delay(NoMessageSleep);
+                        continue;
                     }
+
                     peekCircuitBreaker.Success();
                 }
                 catch (Exception ex)
@@ -155,7 +159,7 @@
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn("MSMQ receive operation failed", ex);
+                        Logger.Warn("Azure Storage Queue receive operation failed", ex);
                         await circuitBreaker.Failure(ex).ConfigureAwait(false);
                     }
                     finally

@@ -101,6 +101,8 @@
     <Compile Include="AzureMessageQueueSender.cs" />
     <Compile Include="AzureMessageQueueUtils.cs" />
     <Compile Include="AzureStorageQueueTransport.cs" />
+    <Compile Include="CreateQueueClients.cs" />
+    <Compile Include="ICreateQueueClients.cs" />
     <Compile Include="RepeatedFailuresOverTimeCircuitBreaker.cs" />
     <Compile Include="Config\AzureQueueConfig.cs" />
     <Compile Include="Config\AzureStorageTransportExtensions.cs" />
@@ -119,6 +121,7 @@
     <Compile Include="ReceiveResourceManager.cs" />
     <Compile Include="SendResourceManager.cs" />
     <Compile Include="TaskEx.cs" />
+    <Compile Include="TransportOperationExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

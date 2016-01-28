@@ -7,6 +7,7 @@ namespace NServiceBus
     using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NServiceBus.Config;
+    using NServiceBus.MessageInterfaces.MessageMapper.Reflection;
     using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Routing;
     using NServiceBus.Serialization;
@@ -19,7 +20,17 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition
     {
-        private static readonly IMessageSerializer Serializer = new JsonMessageSerializer(null);
+        readonly IMessageSerializer Serializer;
+
+        public AzureStorageQueueTransport()
+        {
+            var mapper = new MessageMapper();
+            mapper.Initialize(new[]
+            {
+                typeof(MessageWrapper)
+            });
+            Serializer = new JsonMessageSerializer(mapper);
+        }
 
         public override string ExampleConnectionStringForErrorMessage { get; } =
             "DefaultEndpointsProtocol=[http|https];AccountName=myAccountName;AccountKey=myAccountKey";
@@ -113,14 +124,13 @@ namespace NServiceBus
 
         public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance, ReadOnlySettings settings)
         {
-            return new EndpointInstance(instance.Endpoint, QueueIndividualizer.Discriminator, instance.Properties);
+            var endpointBoundToLocalEndpoint = new EndpointInstance(instance.Endpoint, null, instance.Properties);
+            return endpointBoundToLocalEndpoint;
         }
 
         public override string ToTransportAddress(LogicalAddress logicalAddress)
         {
-
-            return AzureQueueNamingConvention.Apply(settings);
-            throw new NotImplementedException();
+            return logicalAddress.ToString();
         }
 
         public override OutboundRoutingPolicy GetOutboundRoutingPolicy(ReadOnlySettings settings)

@@ -6,12 +6,9 @@
     using System.Linq;
     using System.Threading.Tasks;
     using System.Transactions;
-    using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.DeliveryConstraints;
     using NServiceBus.Extensibility;
     using NServiceBus.Logging;
-    using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Serialization;
     using NServiceBus.Settings;
     using NServiceBus.Transports;
@@ -21,9 +18,10 @@
     {
         static readonly ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
         readonly ICreateQueueClients createQueueClients;
+        readonly string defaultConnectionString;
         readonly ILog logger = LogManager.GetLogger(typeof(AzureMessageQueueSender));
         readonly IMessageSerializer messageSerializer;
-        private readonly bool transactionsEnabled;
+        readonly bool transactionsEnabled;
         readonly DeterminesBestConnectionStringForStorageQueues validation;
 
         public AzureMessageQueueSender(ICreateQueueClients createQueueClients, IMessageSerializer messageSerializer, ReadOnlySettings settings
@@ -31,11 +29,14 @@
         {
             this.createQueueClients = createQueueClients;
             this.messageSerializer = messageSerializer;
+            this.defaultConnectionString = defaultConnectionString;
             validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
-            transactionsEnabled = settings.Get<bool>("Transactions.Enabled");
+
+            // TODO: should we drop this? According to the notes for v6 it's core responsibility now, right?
+            transactionsEnabled = settings.GetOrDefault<bool>("Transactions.Enabled");
         }
 
-        public Task Dispatch(TransportOperations outgoingMessages, ContextBag context)
+        public async Task Dispatch(TransportOperations outgoingMessages, ContextBag context)
         {
             if (outgoingMessages.MulticastTransportOperations.Any())
             {
@@ -44,25 +45,24 @@
 
             foreach (var unicastTransportOperation in outgoingMessages.UnicastTransportOperations)
             {
-                Send(unicastTransportOperation);
+                await Send(unicastTransportOperation);
             }
-
-            return TaskEx.CompletedTask;
         }
 
-        private void Send(UnicastTransportOperation operation)
+        private async Task Send(UnicastTransportOperation operation)
         {
-            var address = operation.Destination;
+            // The Destination will be just a queue name.
+            var queueName = operation.Destination;
 
-            // TODO: is it address or connection string?
-            var sendClient = createQueueClients.Create(address);
-            var sendQueue = sendClient.GetQueueReference(AzureMessageQueueUtils.GetQueueName(address));
+            var connectionString = GiveMeConnectionStringForTheQueue(queueName);
+            var sendClient = createQueueClients.Create(connectionString);
+            var sendQueue = sendClient.GetQueueReference(AzureMessageQueueUtils.GetQueueName(queueName));
 
             if (!Exists(sendQueue))
             {
                 throw new QueueNotFoundException
                 {
-                    Queue = address
+                    Queue = queueName
                 };
             }
 
@@ -93,12 +93,20 @@
 
             if (!transactionsEnabled || Transaction.Current == null)
             {
-                sendQueue.AddMessage(rawMessage, timeToBeReceived);
+                await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null);
             }
             else
             {
                 Transaction.Current.EnlistVolatile(new SendResourceManager(sendQueue, rawMessage, timeToBeReceived), EnlistmentOptions.None);
             }
+        }
+
+        // TODO: consider providing a more advanced mapping, providing ability to host queues in different storage accounts, without explicit sending the message to another one
+        // This could improve throughput enabling to a separate account for high-volume queueus. Additionally, one could come up with idea sharding the queue across different accounts.
+        // This could be done with a modified message pump pulling from different queues.
+        private string GiveMeConnectionStringForTheQueue(string queueName)
+        {
+            return defaultConnectionString;
         }
 
         bool Exists(CloudQueue sendQueue)
@@ -140,56 +148,5 @@
                 return new CloudQueueMessage(stream.ToArray());
             }
         }
-    }
-
-    internal static class TransportOperationExtensions
-    {
-        public static TimeSpan? GetTimeToBeReceived(this UnicastTransportOperation operation)
-        {
-            return operation.GetDeliveryConstraint<DiscardIfNotReceivedBefore>()?.MaxTime;
-        }
-
-        public static T GetDeliveryConstraint<T>(this IOutgoingTransportOperation operation)
-            where T : DeliveryConstraint
-        {
-            return operation.DeliveryConstraints.OfType<T>().FirstOrDefault();
-        }
-    }
-
-    public class CreateQueueClients : ICreateQueueClients
-    {
-        readonly ConcurrentDictionary<string, CloudQueueClient> destinationQueueClients = new ConcurrentDictionary<string, CloudQueueClient>();
-        readonly DeterminesBestConnectionStringForStorageQueues validation;
-
-        public CreateQueueClients(ReadOnlySettings settings, string defaultConnectionString)
-        {
-            validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
-        }
-
-        public CloudQueueClient Create(string connectionString)
-        {
-            return destinationQueueClients.GetOrAdd(connectionString, s =>
-            {
-                if (!validation.IsPotentialStorageQueueConnectionString(connectionString))
-                {
-                    connectionString = validation.Determine();
-                }
-
-                CloudQueueClient sendClient = null;
-                CloudStorageAccount account;
-
-                if (CloudStorageAccount.TryParse(connectionString, out account))
-                {
-                    sendClient = account.CreateCloudQueueClient();
-                }
-
-                return sendClient;
-            });
-        }
-    }
-
-    public interface ICreateQueueClients
-    {
-        CloudQueueClient Create(string connectionString);
     }
 }

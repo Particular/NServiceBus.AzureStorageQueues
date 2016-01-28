@@ -41,15 +41,18 @@
 
         public string Determine(string replyToAddress)
         {
-            var replyQueue = replyToAddress.Queue;
-            var connectionString = replyToAddress.Machine;
+            // TODO: handling reply address, should be dicussed
+            //var replyQueue = replyToAddress.Queue;
+            //var connectionString = replyToAddress.Machine;
 
-            if (!IsPotentialStorageQueueConnectionString(connectionString))
-            {
-                connectionString = Determine();
-            }
+            //if (!IsPotentialStorageQueueConnectionString(connectionString))
+            //{
+            //    connectionString = Determine();
+            //}
 
-            return replyQueue + "@" + connectionString;
+            //return replyQueue + "@" + connectionString;
+
+            return replyToAddress;
         }
     }
 }
