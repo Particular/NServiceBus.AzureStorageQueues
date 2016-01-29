@@ -15,18 +15,18 @@
     using NServiceBus.Transports;
     using NServiceBus.Unicast.Queuing;
 
-    public class AzureMessageQueueSender : IDispatchMessages
+    public class Dispatcher : IDispatchMessages
     {
         static readonly ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
         private static readonly UTF8Encoding NoBomUtf8Encoding = new UTF8Encoding(false);
         readonly ICreateQueueClients createQueueClients;
         readonly string defaultConnectionString;
-        readonly ILog logger = LogManager.GetLogger(typeof(AzureMessageQueueSender));
+        readonly ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         readonly JsonSerializer messageSerializer;
         readonly bool transactionsEnabled;
         readonly DeterminesBestConnectionStringForStorageQueues validation;
 
-        public AzureMessageQueueSender(ICreateQueueClients createQueueClients, JsonSerializer messageSerializer, ReadOnlySettings settings
+        public Dispatcher(ICreateQueueClients createQueueClients, JsonSerializer messageSerializer, ReadOnlySettings settings
             , string defaultConnectionString)
         {
             this.createQueueClients = createQueueClients;

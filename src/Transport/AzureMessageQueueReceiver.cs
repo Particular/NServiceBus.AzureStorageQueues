@@ -10,7 +10,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
-    using NServiceBus.Transports;
 
     public class AzureMessageQueueReceiver
     {
@@ -80,7 +79,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        public async Task<IncomingMessage> Receive(CancellationToken token)
+        internal async Task<MessageWrapper> Receive(CancellationToken token)
         {
             var rawMessage = await GetMessage(token).ConfigureAwait(false);
 
@@ -150,7 +149,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        IncomingMessage DeserializeMessage(CloudQueueMessage rawMessage)
+        MessageWrapper DeserializeMessage(CloudQueueMessage rawMessage)
         {
             MessageWrapper m;
             using (var stream = new MemoryStream(rawMessage.AsBytes))
@@ -175,7 +174,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived.ToString();
             m.Headers[Headers.MessageIntent] = m.MessageIntent.ToString(); // message intent exztension method
 
-            return new IncomingMessage(m.Id, m.Headers, new MemoryStream(m.Body));
+            return m;
         }
     }
 }

@@ -42,6 +42,21 @@
                 var queue = client.GetQueueReference(queueName);
                 await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
             }
+            catch (StorageException ex)
+            {
+                // https://msdn.microsoft.com/en-us/library/azure/dd179446.aspx
+                var info = ex.RequestInformation;
+
+                if (info.HttpStatusCode == 409)
+                {
+                    if (info.HttpStatusMessage == "QueueAlreadyExists")
+                    {
+                        await TaskEx.CompletedTask;
+                    }
+                }
+
+                throw new StorageException($"Failed to create queue: {queueName}, because {info.HttpStatusCode}-{info.HttpStatusMessage}.", ex);
+            }
             catch (Exception ex)
             {
                 throw new StorageException($"Failed to create queue: {queueName}, because {ex.Message}.", ex);

@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Concurrent;
     using System.Diagnostics;
+    using System.IO;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -119,16 +120,10 @@
         {
             while (!cancellationTokenSource.IsCancellationRequested)
             {
-                IncomingMessage message;
+                MessageWrapper message;
                 try
                 {
                     message = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
-                    if (message == null)
-                    {
-                        await Task.Delay(NoMessageSleep).ConfigureAwait(false);
-                        continue;
-                    }
-
                     peekCircuitBreaker.Success();
                 }
                 catch (Exception ex)
@@ -150,11 +145,8 @@
                 {
                     try
                     {
-                        using (var bodyStream = message.BodyStream)
-                        {
-                            var pushContext = new PushContext(message.MessageId, message.Headers, bodyStream, new TransportTransaction(), cancellationTokenSource, new ContextBag());
-                            await pipeline(pushContext).ConfigureAwait(false);
-                        }
+                        var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), cancellationTokenSource, new ContextBag());
+                        await pipeline(pushContext).ConfigureAwait(false);
                         circuitBreaker.Success();
                     }
                     catch (Exception ex)

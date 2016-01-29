@@ -98,7 +98,7 @@
   <ItemGroup>
     <Compile Include="AzureMessageQueueCreator.cs" />
     <Compile Include="AzureMessageQueueReceiver.cs" />
-    <Compile Include="AzureMessageQueueSender.cs" />
+    <Compile Include="Dispatcher.cs" />
     <Compile Include="AzureMessageQueueUtils.cs" />
     <Compile Include="AzureStorageQueueTransport.cs" />
     <Compile Include="CreateQueueClients.cs" />

@@ -91,7 +91,7 @@ namespace NServiceBus
             var settings = context.Settings;
             var connectionString = context.ConnectionString;
             return new TransportSendingConfigurationResult(
-                () => new AzureMessageQueueSender(new CreateQueueClients(settings, connectionString), Serializer, settings, connectionString),
+                () => new Dispatcher(new CreateQueueClients(settings, connectionString), Serializer, settings, connectionString),
                 () => Task.FromResult(StartupCheckResult.Success));
         }
 
