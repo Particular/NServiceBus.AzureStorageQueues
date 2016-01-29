@@ -82,7 +82,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         public async Task<IncomingMessage> Receive(CancellationToken token)
         {
-            var rawMessage = await GetMessage(token);
+            var rawMessage = await GetMessage(token).ConfigureAwait(false);
 
             if (rawMessage == null)
             {
@@ -121,7 +121,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         {
             if (batchQueue.Count == 0)
             {
-                var messages = await azureQueue.GetMessagesAsync(BatchSize, TimeSpan.FromMilliseconds(MessageInvisibleTime), null, null, token);
+                var messages = await azureQueue.GetMessagesAsync(BatchSize, TimeSpan.FromMilliseconds(MessageInvisibleTime), null, null, token).ConfigureAwait(false);
                 foreach (var receivedMessage in messages)
                 {
                     batchQueue.Enqueue(receivedMessage);

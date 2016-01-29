@@ -25,12 +25,12 @@
 
             foreach (var address in queueBindings.ReceivingAddresses)
             {
-                await CreateQueue(address);
+                await CreateQueue(address).ConfigureAwait(false);
             }
 
             foreach (var address in queueBindings.SendingAddresses)
             {
-                await CreateQueue(address);
+                await CreateQueue(address).ConfigureAwait(false);
             }
         }
 

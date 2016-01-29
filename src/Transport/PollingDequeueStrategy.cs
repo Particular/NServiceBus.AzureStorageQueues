@@ -122,10 +122,10 @@
                 IncomingMessage message;
                 try
                 {
-                    message = await messageReceiver.Receive(cancellationTokenSource.Token);
+                    message = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
                     if (message == null)
                     {
-                        await Task.Delay(NoMessageSleep);
+                        await Task.Delay(NoMessageSleep).ConfigureAwait(false);
                         continue;
                     }
 

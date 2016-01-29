@@ -18,13 +18,13 @@
     public class AzureMessageQueueSender : IDispatchMessages
     {
         static readonly ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
+        private static readonly UTF8Encoding NoBomUtf8Encoding = new UTF8Encoding(false);
         readonly ICreateQueueClients createQueueClients;
         readonly string defaultConnectionString;
         readonly ILog logger = LogManager.GetLogger(typeof(AzureMessageQueueSender));
         readonly JsonSerializer messageSerializer;
         readonly bool transactionsEnabled;
         readonly DeterminesBestConnectionStringForStorageQueues validation;
-        private static readonly UTF8Encoding NoBomUtf8Encoding = new UTF8Encoding(false);
 
         public AzureMessageQueueSender(ICreateQueueClients createQueueClients, JsonSerializer messageSerializer, ReadOnlySettings settings
             , string defaultConnectionString)
@@ -47,7 +47,7 @@
 
             foreach (var unicastTransportOperation in outgoingMessages.UnicastTransportOperations)
             {
-                await Send(unicastTransportOperation);
+                await Send(unicastTransportOperation).ConfigureAwait(false);
             }
         }
 
@@ -95,7 +95,7 @@
 
             if (!transactionsEnabled || Transaction.Current == null)
             {
-                await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null);
+                await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
             }
             else
             {
