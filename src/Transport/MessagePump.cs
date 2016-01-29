@@ -122,6 +122,10 @@
                 try
                 {
                     message = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
+                    if (message == null)
+                    {
+                        continue;
+                    }
                     peekCircuitBreaker.Success();
                 }
                 catch (Exception ex)

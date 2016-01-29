@@ -122,14 +122,14 @@
             using (var stream = new MemoryStream())
             {
                 var msg = operation.Message;
+                var headers = msg.Headers;
 
-                // TODO: validate assumptions
-                //var replyToAddress = validation.Determine(config.Settings, message.ReplyToAddress ?? options.ReplyToAddress ?? config.LocalAddress, config.TransportConnectionString());
-                var replyToAddress = validation.Determine(msg.Headers[Headers.ReplyToAddress]);
+                // TODO: investigate the way how the function suppose to work
+                var replyToAddress = validation.Determine(headers.GetValueOrDefault(Headers.ReplyToAddress));
 
                 var messageIntent = default(MessageIntentEnum);
                 string messageIntentString;
-                if (msg.Headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
+                if (headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
                 {
                     Enum.TryParse(messageIntentString, true, out messageIntent);
                 }
@@ -138,11 +138,11 @@
                 {
                     Id = msg.MessageId,
                     Body = msg.Body,
-                    CorrelationId = msg.Headers[Headers.CorrelationId],
+                    CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
                     Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
                     ReplyToAddress = replyToAddress,
                     TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
-                    Headers = msg.Headers,
+                    Headers = headers,
                     MessageIntent = messageIntent
                 };
 

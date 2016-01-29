@@ -41,6 +41,11 @@
 
         public string Determine(string replyToAddress)
         {
+            if (replyToAddress == null)
+            {
+                return null;
+            }
+
             // TODO: handling reply address, should be dicussed
             //var replyQueue = replyToAddress.Queue;
             //var connectionString = replyToAddress.Machine;

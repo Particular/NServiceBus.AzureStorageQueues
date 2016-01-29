@@ -169,7 +169,10 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                 throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
             }
 
-            m.Headers[Headers.ReplyToAddress] = m.ReplyToAddress;
+            if (m.ReplyToAddress != null)
+            {
+                m.Headers[Headers.ReplyToAddress] = m.ReplyToAddress;
+            }
             m.Headers[Headers.CorrelationId] = m.CorrelationId;
             m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived.ToString();
             m.Headers[Headers.MessageIntent] = m.MessageIntent.ToString(); // message intent exztension method
