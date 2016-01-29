@@ -4,12 +4,13 @@
     using System.Collections.Concurrent;
     using System.IO;
     using System.Linq;
+    using System.Text;
     using System.Threading.Tasks;
     using System.Transactions;
     using Microsoft.WindowsAzure.Storage.Queue;
+    using Newtonsoft.Json;
     using NServiceBus.Extensibility;
     using NServiceBus.Logging;
-    using NServiceBus.Serialization;
     using NServiceBus.Settings;
     using NServiceBus.Transports;
     using NServiceBus.Unicast.Queuing;
@@ -20,11 +21,12 @@
         readonly ICreateQueueClients createQueueClients;
         readonly string defaultConnectionString;
         readonly ILog logger = LogManager.GetLogger(typeof(AzureMessageQueueSender));
-        readonly IMessageSerializer messageSerializer;
+        readonly JsonSerializer messageSerializer;
         readonly bool transactionsEnabled;
         readonly DeterminesBestConnectionStringForStorageQueues validation;
+        private static readonly UTF8Encoding NoBomUtf8Encoding = new UTF8Encoding(false);
 
-        public AzureMessageQueueSender(ICreateQueueClients createQueueClients, IMessageSerializer messageSerializer, ReadOnlySettings settings
+        public AzureMessageQueueSender(ICreateQueueClients createQueueClients, JsonSerializer messageSerializer, ReadOnlySettings settings
             , string defaultConnectionString)
         {
             this.createQueueClients = createQueueClients;
@@ -144,7 +146,11 @@
                     MessageIntent = messageIntent
                 };
 
-                messageSerializer.Serialize(toSend, stream);
+                using (var streamWriter = new StreamWriter(stream, NoBomUtf8Encoding))
+                {
+                    messageSerializer.Serialize(new JsonTextWriter(streamWriter), toSend);
+                    streamWriter.Flush();
+                }
                 return new CloudQueueMessage(stream.ToArray());
             }
         }

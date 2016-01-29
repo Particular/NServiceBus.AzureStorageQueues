@@ -7,11 +7,8 @@ namespace NServiceBus
     using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NServiceBus.Config;
-    using NServiceBus.MessageInterfaces.MessageMapper.Reflection;
     using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Routing;
-    using NServiceBus.Serialization;
-    using NServiceBus.Serializers.Json;
     using NServiceBus.Settings;
     using NServiceBus.Transports;
 
@@ -20,16 +17,11 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition
     {
-        readonly IMessageSerializer Serializer;
+        readonly Newtonsoft.Json.JsonSerializer Serializer;
 
         public AzureStorageQueueTransport()
         {
-            var mapper = new MessageMapper();
-            mapper.Initialize(new[]
-            {
-                typeof(MessageWrapper)
-            });
-            Serializer = new JsonMessageSerializer(mapper);
+            Serializer = new Newtonsoft.Json.JsonSerializer();
         }
 
         public override string ExampleConnectionStringForErrorMessage { get; } =
@@ -124,8 +116,7 @@ namespace NServiceBus
 
         public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance, ReadOnlySettings settings)
         {
-            var endpointBoundToLocalEndpoint = new EndpointInstance(instance.Endpoint, null, instance.Properties);
-            return endpointBoundToLocalEndpoint;
+            return instance;
         }
 
         public override string ToTransportAddress(LogicalAddress logicalAddress)

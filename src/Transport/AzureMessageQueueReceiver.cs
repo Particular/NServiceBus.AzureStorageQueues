@@ -3,14 +3,13 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
     using System.Transactions;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Serialization;
+    using Newtonsoft.Json;
     using NServiceBus.Transports;
 
     public class AzureMessageQueueReceiver
@@ -26,11 +25,11 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         CloudQueue azureQueue;
         Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
         CloudQueueClient client;
-        IMessageSerializer messageSerializer;
+        JsonSerializer messageSerializer;
         int timeToDelayNextPeek;
         bool useTransactions;
 
-        public AzureMessageQueueReceiver(IMessageSerializer messageSerializer, CloudQueueClient client)
+        public AzureMessageQueueReceiver(JsonSerializer messageSerializer, CloudQueueClient client)
         {
             this.messageSerializer = messageSerializer;
             this.client = client;
@@ -153,21 +152,18 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         IncomingMessage DeserializeMessage(CloudQueueMessage rawMessage)
         {
-            var stream = new MemoryStream(rawMessage.AsBytes);
-            object[] deserializedObjects;
-            try
+            MessageWrapper m;
+            using (var stream = new MemoryStream(rawMessage.AsBytes))
             {
-                deserializedObjects = messageSerializer.Deserialize(stream, new List<Type>
+                try
                 {
-                    typeof(MessageWrapper)
-                });
+                    m = messageSerializer.Deserialize<MessageWrapper>(new JsonTextReader(new StreamReader(stream)));
+                }
+                catch (Exception)
+                {
+                    throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
+                }
             }
-            catch (Exception)
-            {
-                throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
-            }
-
-            var m = deserializedObjects.FirstOrDefault() as MessageWrapper;
 
             if (m == null)
             {
@@ -179,7 +175,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived.ToString();
             m.Headers[Headers.MessageIntent] = m.MessageIntent.ToString(); // message intent exztension method
 
-            return new IncomingMessage(m.Id, m.Headers, stream);
+            return new IncomingMessage(m.Id, m.Headers, new MemoryStream(m.Body));
         }
     }
 }
