@@ -114,7 +114,7 @@
     <Compile Include="DeterministicGuidBuilder.cs" />
     <Compile Include="EnvelopeDeserializationFailed.cs" />
     <Compile Include="IsHostedIn.cs" />
-    <Compile Include="PollingDequeueStrategy.cs" />
+    <Compile Include="MessagePump.cs" />
     <Compile Include="MessageWrapper.cs" />
     <Compile Include="NamingConventions\AzureQueueNamingConvention.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -7,17 +7,15 @@
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using NServiceBus.AzureServiceBus;
     using NServiceBus.Extensibility;
     using NServiceBus.Logging;
     using NServiceBus.Transports;
 
-    class PollingDequeueStrategy : IPushMessages, IDisposable
+    class MessagePump : IPushMessages, IDisposable
     {
-        static readonly ILog Logger = LogManager.GetLogger(typeof(PollingDequeueStrategy));
+        static readonly ILog Logger = LogManager.GetLogger(typeof(MessagePump));
         static readonly TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static readonly TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
-        static readonly TimeSpan NoMessageSleep = TimeSpan.FromMilliseconds(100);
 
         readonly AzureMessageQueueReceiver messageReceiver;
         CancellationToken cancellationToken;
@@ -30,7 +28,7 @@
         Func<PushContext, Task> pipeline;
         ConcurrentDictionary<Task, Task> runningReceiveTasks;
 
-        public PollingDequeueStrategy(AzureMessageQueueReceiver messageReceiver)
+        public MessagePump(AzureMessageQueueReceiver messageReceiver)
         {
             this.messageReceiver = messageReceiver;
         }

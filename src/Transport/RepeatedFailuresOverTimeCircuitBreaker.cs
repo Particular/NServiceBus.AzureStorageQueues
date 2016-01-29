@@ -1,12 +1,22 @@
-﻿namespace NServiceBus.AzureServiceBus
+﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using Logging;
+    using NServiceBus.Logging;
 
     class RepeatedFailuresOverTimeCircuitBreaker : IDisposable
     {
+        static TimeSpan NoPeriodicTriggering = TimeSpan.FromMilliseconds(-1);
+        static ILog Logger = LogManager.GetLogger<RepeatedFailuresOverTimeCircuitBreaker>();
+        long failureCount;
+        Exception lastException;
+
+        string name;
+        Timer timer;
+        TimeSpan timeToWaitBeforeTriggering;
+        Action<Exception> triggerAction;
+
         public RepeatedFailuresOverTimeCircuitBreaker(string name, TimeSpan timeToWaitBeforeTriggering, Action<Exception> triggerAction)
         {
             this.name = name;
@@ -14,6 +24,11 @@
             this.timeToWaitBeforeTriggering = timeToWaitBeforeTriggering;
 
             timer = new Timer(CircuitBreakerTriggered);
+        }
+
+        public void Dispose()
+        {
+            //Injected
         }
 
         public void Success()
@@ -43,11 +58,6 @@
             return Task.Delay(TimeSpan.FromSeconds(1));
         }
 
-        public void Dispose()
-        {
-            //Injected
-        }
-
         void CircuitBreakerTriggered(object state)
         {
             if (Interlocked.Read(ref failureCount) > 0)
@@ -56,15 +66,5 @@
                 triggerAction(lastException);
             }
         }
-
-        static TimeSpan NoPeriodicTriggering = TimeSpan.FromMilliseconds(-1);
-        static ILog Logger = LogManager.GetLogger<RepeatedFailuresOverTimeCircuitBreaker>();
-
-        string name;
-        TimeSpan timeToWaitBeforeTriggering;
-        Timer timer;
-        Action<Exception> triggerAction;
-        long failureCount;
-        Exception lastException;
     }
 }

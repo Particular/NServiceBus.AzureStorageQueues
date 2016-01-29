@@ -45,7 +45,7 @@ namespace NServiceBus
                         receiver.BatchSize = configSection.BatchSize;
                     }
 
-                    return new PollingDequeueStrategy(receiver);
+                    return new MessagePump(receiver);
                 },
                 () => new AzureMessageQueueCreator(client),
                 () => Task.FromResult(StartupCheckResult.Success));
@@ -106,7 +106,7 @@ namespace NServiceBus
 
         public override TransportTransactionMode GetSupportedTransactionMode()
         {
-            return TransportTransactionMode.None;
+            return TransportTransactionMode.ReceiveOnly;
         }
 
         public override IManageSubscriptions GetSubscriptionManager()
