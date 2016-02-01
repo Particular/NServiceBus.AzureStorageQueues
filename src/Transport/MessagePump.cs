@@ -24,7 +24,6 @@
         SemaphoreSlim concurrencyLimiter;
 
         Task messagePumpTask;
-        RepeatedFailuresOverTimeCircuitBreaker peekCircuitBreaker;
         Func<PushContext, Task> pipeline;
         ConcurrentDictionary<Task, Task> runningReceiveTasks;
 
@@ -41,8 +40,7 @@
         public Task Init(Func<PushContext, Task> pipe, CriticalError criticalError, PushSettings settings)
         {
             pipeline = pipe;
-            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStoragePollingDequeueStrategy", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
-            peekCircuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStoragePollingDequeueStrategy-peek", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
+            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
 
             //    this.tryProcessMessage = tryProcessMessage;
             //    this.endProcessMessage = endProcessMessage;
@@ -109,7 +107,6 @@
                 catch (Exception ex)
                 {
                     Logger.Error("Polling Dequeue Strategy failed", ex);
-                    await circuitBreaker.Failure(ex).ConfigureAwait(false);
                 }
             }
         }
@@ -126,12 +123,12 @@
                     {
                         continue;
                     }
-                    peekCircuitBreaker.Success();
+                    circuitBreaker.Success();
                 }
                 catch (Exception ex)
                 {
                     Logger.Warn("Receiving from the queue failed", ex);
-                    await peekCircuitBreaker.Failure(ex).ConfigureAwait(false);
+                    await circuitBreaker.Failure(ex).ConfigureAwait(false);
                     continue;
                 }
 
@@ -149,12 +146,10 @@
                     {
                         var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), cancellationTokenSource, new ContextBag());
                         await pipeline(pushContext).ConfigureAwait(false);
-                        circuitBreaker.Success();
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn("Azure Storage Queue receive operation failed", ex);
-                        await circuitBreaker.Failure(ex).ConfigureAwait(false);
+                        Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
                     }
                     finally
                     {

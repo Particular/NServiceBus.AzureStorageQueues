@@ -300,6 +300,7 @@
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-unstable1423\Versioning\When_multiple_versions_of_a_message_is_published.cs" />
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-unstable1423\Volatile\When_sending_to_non_durable_endpoint.cs" />
     <Compile Include="ConfigureAzureStorageQueueTransport.cs" />
+    <Compile Include="NamespaceSetUp.cs" />
     <Compile Include="NServiceBusAcceptanceTest.cs" />
     <Compile Include="Sending\When_message_is_sent_with_time_to_be_received_set_to_more_than_7_days.cs" />
     <Compile Include="Sending\When_message_is_sent_with_time_to_be_received_set_to_zero.cs" />
