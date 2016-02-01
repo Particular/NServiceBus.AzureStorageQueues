@@ -174,7 +174,11 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                 m.Headers[Headers.ReplyToAddress] = m.ReplyToAddress;
             }
             m.Headers[Headers.CorrelationId] = m.CorrelationId;
-            m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived.ToString();
+
+            if (m.TimeToBeReceived != TimeSpan.MaxValue)
+            {
+                m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived.ToString();
+            }
             m.Headers[Headers.MessageIntent] = m.MessageIntent.ToString(); // message intent exztension method
 
             return m;
