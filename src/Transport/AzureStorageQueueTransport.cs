@@ -29,8 +29,9 @@ namespace NServiceBus
 
         protected override TransportReceivingConfigurationResult ConfigureForReceiving(TransportReceivingConfigurationContext context)
         {
-            var client = BuildClient(context.Settings, context.ConnectionString);
-            var configSection = context.Settings.GetConfigSection<AzureQueueConfig>();
+            var settings = context.Settings;
+            var client = BuildClient(settings, context.ConnectionString);
+            var configSection = settings.GetConfigSection<AzureQueueConfig>();
 
             return new TransportReceivingConfigurationResult(
                 () =>
@@ -44,6 +45,11 @@ namespace NServiceBus
                         receiver.PeekInterval = configSection.PeekInterval;
                         receiver.BatchSize = configSection.BatchSize;
                     }
+
+                    settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverMaximumWaitTimeWhenIdle, v => { receiver.MaximumWaitTimeWhenIdle = v; });
+                    settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverMessageInvisibleTime, v => { receiver.MessageInvisibleTime = v; });
+                    settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverPeekInterval, v => { receiver.PeekInterval = v; });
+                    settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverBatchSize, v => { receiver.BatchSize = v; });
 
                     return new MessagePump(receiver);
                 },

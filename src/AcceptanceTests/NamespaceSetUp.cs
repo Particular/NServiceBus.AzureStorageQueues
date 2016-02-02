@@ -4,24 +4,16 @@ using NUnit.Framework;
 [SetUpFixture]
 public class NamespaceSetUp
 {
-    static string connectionString;
+    public static string ConnectionString { get; set; }
 
     [TearDown]
     public void TearDown()
     {
-        var storage = CloudStorageAccount.Parse(connectionString);
+        var storage = CloudStorageAccount.Parse(ConnectionString);
         var queues = storage.CreateCloudQueueClient();
         foreach (var queue in queues.ListQueues())
         {
             queue.DeleteIfExists();
-        }
-    }
-
-    public static void SetConnection(string conString)
-    {
-        if (connectionString == null)
-        {
-            connectionString = conString;
         }
     }
 }

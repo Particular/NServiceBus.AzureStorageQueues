@@ -20,6 +20,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public const bool DefaultPurgeOnStartup = false;
         public const string DefaultConnectionString = "UseDevelopmentStorage=true";
         public const bool DefaultQueuePerInstance = false;
+        static readonly Action EmptyAction = () => { };
 
         CloudQueue azureQueue;
         Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
@@ -79,7 +80,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        internal async Task<MessageWrapper> Receive(CancellationToken token)
+        internal async Task<MessageRetrieved> Receive(CancellationToken token)
         {
             var rawMessage = await GetMessage(token).ConfigureAwait(false);
 
@@ -97,22 +98,21 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             timeToDelayNextPeek = 0;
             try
             {
-                return DeserializeMessage(rawMessage);
-            }
-            catch (Exception ex)
-            {
-                throw new EnvelopeDeserializationFailed(rawMessage, ex);
-            }
-            finally
-            {
+                var complete = EmptyAction;
                 if (!useTransactions || Transaction.Current == null)
                 {
-                    DeleteMessage(rawMessage);
+                    complete = () => DeleteMessage(rawMessage);
                 }
                 else
                 {
                     Transaction.Current.EnlistVolatile(new ReceiveResourceManager(azureQueue, rawMessage), EnlistmentOptions.None);
                 }
+
+                return new MessageRetrieved(DeserializeMessage(rawMessage), complete);
+            }
+            catch (Exception ex)
+            {
+                throw new EnvelopeDeserializationFailed(rawMessage, ex);
             }
         }
 

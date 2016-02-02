@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
@@ -8,8 +9,11 @@ class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
     public Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
     {
         var connectionString = settings["Transport.ConnectionString"];
-        NamespaceSetUp.SetConnection(connectionString);
-        configuration.UseTransport<AzureStorageQueueTransport>().ConnectionString(connectionString);
+        NamespaceSetUp.ConnectionString = connectionString;
+        configuration.UseTransport<AzureStorageQueueTransport>()
+            .ConnectionString(connectionString)
+            .MessageInvisibleTime(TimeSpan.FromSeconds(5));
+
         return Task.FromResult(0);
     }
 

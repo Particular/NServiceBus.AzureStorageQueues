@@ -115,11 +115,11 @@
         {
             while (!cancellationTokenSource.IsCancellationRequested)
             {
-                MessageWrapper message;
+                MessageRetrieved retrieved;
                 try
                 {
-                    message = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
-                    if (message == null)
+                    retrieved = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
+                    if (retrieved == null)
                     {
                         continue;
                     }
@@ -144,8 +144,10 @@
                 {
                     try
                     {
+                        var message = retrieved.Wrapper;
                         var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), cancellationTokenSource, new ContextBag());
                         await pipeline(pushContext).ConfigureAwait(false);
+                        retrieved.CompleteProcessing();
                     }
                     catch (Exception ex)
                     {
