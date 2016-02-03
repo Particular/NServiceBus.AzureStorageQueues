@@ -147,10 +147,11 @@
                         var message = retrieved.Wrapper;
                         var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), cancellationTokenSource, new ContextBag());
                         await pipeline(pushContext).ConfigureAwait(false);
-                        retrieved.CompleteProcessing();
+                        await retrieved.Ack();
                     }
                     catch (Exception ex)
                     {
+                        await retrieved.Nack();
                         Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
                     }
                     finally

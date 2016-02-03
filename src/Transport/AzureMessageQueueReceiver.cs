@@ -7,7 +7,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using System.Transactions;
-    using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
 
@@ -98,17 +97,14 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             timeToDelayNextPeek = 0;
             try
             {
-                var complete = EmptyAction;
+                var wrapper = DeserializeMessage(rawMessage);
                 if (!useTransactions || Transaction.Current == null)
                 {
-                    complete = () => DeleteMessage(rawMessage);
-                }
-                else
-                {
-                    Transaction.Current.EnlistVolatile(new ReceiveResourceManager(azureQueue, rawMessage), EnlistmentOptions.None);
+                    return new MessageRetrieved(wrapper, rawMessage, azureQueue, true);
                 }
 
-                return new MessageRetrieved(DeserializeMessage(rawMessage), complete);
+                Transaction.Current.EnlistVolatile(new ReceiveResourceManager(azureQueue, rawMessage), EnlistmentOptions.None);
+                return new MessageRetrieved(wrapper, null, null, false);
             }
             catch (Exception ex)
             {
@@ -132,21 +128,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
 
             return null;
-        }
-
-        void DeleteMessage(CloudQueueMessage message)
-        {
-            try
-            {
-                azureQueue.DeleteMessage(message);
-            }
-            catch (StorageException ex)
-            {
-                if (ex.RequestInformation.HttpStatusCode != 404)
-                {
-                    throw;
-                }
-            }
         }
 
         MessageWrapper DeserializeMessage(CloudQueueMessage rawMessage)
