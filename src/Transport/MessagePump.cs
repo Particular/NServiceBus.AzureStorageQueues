@@ -145,13 +145,21 @@
                     try
                     {
                         var message = retrieved.Wrapper;
-                        var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), cancellationTokenSource, new ContextBag());
+                        var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), tokenSource, new ContextBag());
                         await pipeline(pushContext).ConfigureAwait(false);
-                        await retrieved.Ack();
+
+                        if (tokenSource.IsCancellationRequested == false)
+                        {
+                            await retrieved.Ack().ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await retrieved.Nack().ConfigureAwait(false);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        await retrieved.Nack();
+                        await retrieved.Nack().ConfigureAwait(false);
                         Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
                     }
                     finally
