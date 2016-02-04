@@ -1,30 +1,65 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     using System;
+    using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.Transports;
 
     /// <summary>
-    /// Creates the queues. Note that this class will only be invoked when running the windows host and not when running in the fabric
+    ///     Creates the queues. Note that this class will only be invoked when running the windows host and not when running in
+    ///     the fabric
     /// </summary>
     public class AzureMessageQueueCreator : ICreateQueues
     {
-        public CloudQueueClient Client { get; set; }
+        readonly CloudQueueClient client;
 
-        public void CreateQueueIfNecessary(Address address, string account)
+        public AzureMessageQueueCreator(CloudQueueClient client)
+        {
+            this.client = client;
+        }
+
+        public async Task CreateQueueIfNecessary(QueueBindings queueBindings, string identity)
+        {
+            // possible usage of Task.WhenAll. The only thing is the limitation to 64 tasks being observed (as it's the limit from OS on WaitHandle)
+
+            foreach (var address in queueBindings.ReceivingAddresses)
+            {
+                await CreateQueue(address).ConfigureAwait(false);
+            }
+
+            foreach (var address in queueBindings.SendingAddresses)
+            {
+                await CreateQueue(address).ConfigureAwait(false);
+            }
+        }
+
+        private async Task CreateQueue(string address)
         {
             var queueName = AzureMessageQueueUtils.GetQueueName(address);
-
             try
             {
-                var queue = Client.GetQueueReference(queueName);
+                var queue = client.GetQueueReference(queueName);
+                await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
+            }
+            catch (StorageException ex)
+            {
+                // https://msdn.microsoft.com/en-us/library/azure/dd179446.aspx
+                var info = ex.RequestInformation;
 
-                queue.CreateIfNotExists();
+                if (info.HttpStatusCode == 409)
+                {
+                    if (info.HttpStatusMessage == "QueueAlreadyExists")
+                    {
+                        await TaskEx.CompletedTask;
+                    }
+                }
+
+                throw new StorageException($"Failed to create queue: {queueName}, because {info.HttpStatusCode}-{info.HttpStatusMessage}.", ex);
             }
             catch (Exception ex)
             {
-                throw new StorageException(string.Format("Failed to create queue: {0}, because {1}.", queueName, ex.Message), ex);
+                throw new StorageException($"Failed to create queue: {queueName}, because {ex.Message}.", ex);
             }
         }
     }

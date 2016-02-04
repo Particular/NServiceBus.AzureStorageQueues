@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</RootNamespace>
     <AssemblyName>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <SignAssembly>true</SignAssembly>
@@ -73,9 +73,9 @@
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="NServiceBus.Core, Version=5.0.0.0, Culture=neutral, PublicKeyToken=9fc386479f8a226c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NServiceBus.5.2.0\lib\net45\NServiceBus.Core.dll</HintPath>
+    <Reference Include="NServiceBus.Core, Version=6.0.0.0, Culture=neutral, PublicKeyToken=9fc386479f8a226c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NServiceBus.6.0.0-unstable1436\lib\net452\NServiceBus.Core.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Obsolete, Version=3.1.0.0, Culture=neutral, PublicKeyToken=1ca091877d12ca03, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -98,28 +98,33 @@
   <ItemGroup>
     <Compile Include="AzureMessageQueueCreator.cs" />
     <Compile Include="AzureMessageQueueReceiver.cs" />
-    <Compile Include="AzureMessageQueueSender.cs" />
+    <Compile Include="DictionaryExtensions.cs" />
+    <Compile Include="Dispatcher.cs" />
     <Compile Include="AzureMessageQueueUtils.cs" />
     <Compile Include="AzureStorageQueueTransport.cs" />
+    <Compile Include="CreateQueueClients.cs" />
+    <Compile Include="ICreateQueueClients.cs" />
+    <Compile Include="MessageRetrieved.cs" />
+    <Compile Include="RepeatedFailuresOverTimeCircuitBreaker.cs" />
     <Compile Include="Config\AzureQueueConfig.cs" />
-    <Compile Include="Config\AzureStorageQueueTransportConfiguration.cs" />
     <Compile Include="Config\AzureStorageTransportExtensions.cs" />
-    <Compile Include="Config\ConfigureAzureMessageQueue.cs" />
     <Compile Include="Config\ConnectionStringParser.cs" />
     <Compile Include="Config\DeterminesBestConnectionStringForStorageQueues.cs" />
-    <Compile Include="Config\QueueAutoCreation.cs" />
     <Compile Include="Config\QueueIndividualizer.cs" />
     <Compile Include="Config\RoleEnvironmentUnavailableException.cs" />
     <Compile Include="Config\SafeRoleEnvironment.cs" />
     <Compile Include="DeterministicGuidBuilder.cs" />
     <Compile Include="EnvelopeDeserializationFailed.cs" />
     <Compile Include="IsHostedIn.cs" />
+    <Compile Include="MessagePump.cs" />
     <Compile Include="MessageWrapper.cs" />
     <Compile Include="NamingConventions\AzureQueueNamingConvention.cs" />
-    <Compile Include="PollingDequeueStrategy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReceiveResourceManager.cs" />
     <Compile Include="SendResourceManager.cs" />
+    <Compile Include="SettingsExtensions.cs" />
+    <Compile Include="TaskEx.cs" />
+    <Compile Include="TransportOperationExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

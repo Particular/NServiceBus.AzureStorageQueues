@@ -1,5 +1,6 @@
 ﻿namespace NServiceBus.Azure.QuickTests
 {
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NUnit.Framework;
 
     [TestFixture]
@@ -11,7 +12,7 @@
         {
             const string connectionstring = "myqueue@DefaultEndpointsProtocol=https;AccountName=nservicebus;AccountKey=4CBm0byd405DrwMlNGQcHntKDgAQCjaxHNX4mmjMx0p3mNaxrg4Y9zdTVVy0MBzKjQtRKd1M6DF5CwQseBTw/g==";
 
-            var queueName = new Azure.Transports.WindowsAzureStorageQueues.ConnectionStringParser().ParseQueueNameFrom(connectionstring);
+            var queueName = new ConnectionStringParser().ParseQueueNameFrom(connectionstring);
 
             Assert.AreEqual(queueName, "myqueue");
         }
@@ -21,7 +22,7 @@
         {
             const string connectionstring = "myqueue@DefaultEndpointsProtocol=https;AccountName=nservicebus;AccountKey=4CBm0byd405DrwMlNGQcHntKDgAQCjaxHNX4mmjMx0p3mNaxrg4Y9zdTVVy0MBzKjQtRKd1M6DF5CwQseBTw/g==";
 
-            var @namespace = new Azure.Transports.WindowsAzureStorageQueues.ConnectionStringParser().ParseNamespaceFrom(connectionstring);
+            var @namespace = new ConnectionStringParser().ParseNamespaceFrom(connectionstring);
 
             Assert.AreEqual(@namespace, "DefaultEndpointsProtocol=https;AccountName=nservicebus;AccountKey=4CBm0byd405DrwMlNGQcHntKDgAQCjaxHNX4mmjMx0p3mNaxrg4Y9zdTVVy0MBzKjQtRKd1M6DF5CwQseBTw/g==");
         }
@@ -31,7 +32,7 @@
         {
             const string connectionstring = "myqueue_1";
 
-            var index = new Azure.Transports.WindowsAzureStorageQueues.ConnectionStringParser().ParseIndexFrom(connectionstring);
+            var index = new ConnectionStringParser().ParseIndexFrom(connectionstring);
 
             Assert.AreEqual(index, 1);
         }
