@@ -12,7 +12,8 @@ class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
         NamespaceSetUp.ConnectionString = connectionString;
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
-            .MessageInvisibleTime(TimeSpan.FromSeconds(5));
+            .MessageInvisibleTime(TimeSpan.FromSeconds(5))
+            .SerializeMessageWrapperWithJson();
 
         return Task.FromResult(0);
     }

@@ -1,8 +1,10 @@
 namespace NServiceBus
 {
     using System;
+    using System.IO;
     using System.Linq;
     using System.Reflection;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NServiceBus.Configuration.AdvanceExtensibility;
 
     public static class AzureStorageTransportExtensions
@@ -66,11 +68,48 @@ namespace NServiceBus
             return config;
         }
 
+        /// <summary>
+        ///     Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
+        ///     from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
+        /// </summary>
+        /// <returns></returns>
+        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(this TransportExtensions<AzureStorageQueueTransport> config, Action<MessageWrapper, Stream> serialize, Func<Stream, MessageWrapper> deserialize)
+        {
+            return SerializeMessageWrapperWith(config, new MessageWrapperSerializer(serialize, deserialize));
+        }
+
+        /// <summary>
+        ///     Sets serialization for <see cref="MessageWrapper" /> to JSON.
+        /// </summary>
+        /// <returns></returns>
+        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWithJson(this TransportExtensions<AzureStorageQueueTransport> config)
+        {
+            config.GetSettings().Set(MessageWrapperSerializerKey, MessageWrapperSerializer.Json.Value);
+            return config;
+        }
+
+        /// <summary>
+        ///     Sets serialization for <see cref="MessageWrapper" /> to Xml.
+        /// </summary>
+        /// <returns></returns>
+        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWithXml(this TransportExtensions<AzureStorageQueueTransport> config)
+        {
+            config.GetSettings().Set(MessageWrapperSerializerKey, MessageWrapperSerializer.Xml.Value);
+            return config;
+        }
+
+        private static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(TransportExtensions<AzureStorageQueueTransport> config, MessageWrapperSerializer serializer)
+        {
+            config.GetSettings().Set(MessageWrapperSerializerKey, serializer);
+            return config;
+        }
+
         // ReSharper disable ConvertToConstant.Global
         internal static readonly string ReceiverPeekInterval = "";
         internal static readonly string ReceiverMaximumWaitTimeWhenIdle = "";
         internal static readonly string ReceiverMessageInvisibleTime = "";
         internal static readonly string ReceiverBatchSize = "";
+        internal static readonly string MessageWrapperSerializerKey = "";
 
         static AzureStorageTransportExtensions()
         {

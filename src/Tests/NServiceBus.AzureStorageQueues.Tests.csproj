@@ -86,6 +86,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="When_naming_queues_on_azure_storage.cs" />
     <Compile Include="When_parsing_connectionstrings.cs" />
+    <Compile Include="When_using_xml_serialization.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -96,6 +97,9 @@
       <Project>{B6D6406F-F5A4-46D7-A882-4A831128065E}</Project>
       <Name>NServiceBus.AzureStorageQueues</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MessageWrapper.v6.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

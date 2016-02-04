@@ -7,24 +7,23 @@
     using System.Text;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using Newtonsoft.Json;
     using NServiceBus.Extensibility;
     using NServiceBus.Logging;
     using NServiceBus.Settings;
     using NServiceBus.Transports;
     using NServiceBus.Unicast.Queuing;
 
-    public class Dispatcher : IDispatchMessages
+    internal class Dispatcher : IDispatchMessages
     {
         static readonly ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
         private static readonly UTF8Encoding NoBomUtf8Encoding = new UTF8Encoding(false);
         readonly ICreateQueueClients createQueueClients;
         readonly string defaultConnectionString;
         readonly ILog logger = LogManager.GetLogger(typeof(Dispatcher));
-        readonly JsonSerializer messageSerializer;
+        readonly MessageWrapperSerializer messageSerializer;
         readonly DeterminesBestConnectionStringForStorageQueues validation;
 
-        public Dispatcher(ICreateQueueClients createQueueClients, JsonSerializer messageSerializer, ReadOnlySettings settings
+        public Dispatcher(ICreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, ReadOnlySettings settings
             , string defaultConnectionString)
         {
             this.createQueueClients = createQueueClients;
@@ -129,15 +128,11 @@
                     Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
                     ReplyToAddress = replyToAddress,
                     TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
-                    Headers = headers,
+                    Headers = new HeadersCollection(headers),
                     MessageIntent = messageIntent
                 };
 
-                using (var streamWriter = new StreamWriter(stream, NoBomUtf8Encoding))
-                {
-                    messageSerializer.Serialize(new JsonTextWriter(streamWriter), toSend);
-                    streamWriter.Flush();
-                }
+                messageSerializer.Serialize(toSend, stream);
                 return new CloudQueueMessage(stream.ToArray());
             }
         }

@@ -7,9 +7,8 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using Newtonsoft.Json;
 
-    public class AzureMessageQueueReceiver
+    internal class AzureMessageQueueReceiver
     {
         public const int DefaultMessageInvisibleTime = 30000;
         public const int DefaultPeekInterval = 50;
@@ -22,10 +21,10 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         CloudQueue azureQueue;
         Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
         CloudQueueClient client;
-        JsonSerializer messageSerializer;
+        MessageWrapperSerializer messageSerializer;
         int timeToDelayNextPeek;
 
-        public AzureMessageQueueReceiver(JsonSerializer messageSerializer, CloudQueueClient client)
+        public AzureMessageQueueReceiver(MessageWrapperSerializer messageSerializer, CloudQueueClient client)
         {
             this.messageSerializer = messageSerializer;
             this.client = client;
@@ -126,7 +125,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             {
                 try
                 {
-                    m = messageSerializer.Deserialize<MessageWrapper>(new JsonTextReader(new StreamReader(stream)));
+                    m = messageSerializer.Deserialize(stream);
                 }
                 catch (Exception)
                 {
