@@ -6,7 +6,6 @@
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-    using System.Transactions;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
     using NServiceBus.Extensibility;
@@ -23,7 +22,6 @@
         readonly string defaultConnectionString;
         readonly ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         readonly JsonSerializer messageSerializer;
-        readonly bool transactionsEnabled;
         readonly DeterminesBestConnectionStringForStorageQueues validation;
 
         public Dispatcher(ICreateQueueClients createQueueClients, JsonSerializer messageSerializer, ReadOnlySettings settings
@@ -33,9 +31,6 @@
             this.messageSerializer = messageSerializer;
             this.defaultConnectionString = defaultConnectionString;
             validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
-
-            // TODO: should we drop this? According to the notes for v6 it's core responsibility now, right?
-            transactionsEnabled = settings.GetOrDefault<bool>("Transactions.Enabled");
         }
 
         public async Task Dispatch(TransportOperations outgoingMessages, ContextBag context)
@@ -92,15 +87,7 @@
             }
 
             var rawMessage = SerializeMessage(operation, timeToBeReceived);
-
-            if (!transactionsEnabled || Transaction.Current == null)
-            {
-                await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
-            }
-            else
-            {
-                Transaction.Current.EnlistVolatile(new SendResourceManager(sendQueue, rawMessage, timeToBeReceived), EnlistmentOptions.None);
-            }
+            await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
         }
 
         // TODO: consider providing a more advanced mapping, providing ability to host queues in different storage accounts, without explicit sending the message to another one

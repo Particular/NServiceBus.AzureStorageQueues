@@ -6,7 +6,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Transactions;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
 
@@ -19,14 +18,12 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public const bool DefaultPurgeOnStartup = false;
         public const string DefaultConnectionString = "UseDevelopmentStorage=true";
         public const bool DefaultQueuePerInstance = false;
-        static readonly Action EmptyAction = () => { };
 
         CloudQueue azureQueue;
         Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
         CloudQueueClient client;
         JsonSerializer messageSerializer;
         int timeToDelayNextPeek;
-        bool useTransactions;
 
         public AzureMessageQueueReceiver(JsonSerializer messageSerializer, CloudQueueClient client)
         {
@@ -64,10 +61,8 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         /// </summary>
         public int BatchSize { get; set; }
 
-        public void Init(string address, bool transactional)
+        public void Init(string address)
         {
-            useTransactions = transactional;
-
             var queueName = AzureMessageQueueUtils.GetQueueName(address);
 
             azureQueue = client.GetQueueReference(queueName);
@@ -98,13 +93,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             try
             {
                 var wrapper = DeserializeMessage(rawMessage);
-                if (!useTransactions || Transaction.Current == null)
-                {
-                    return new MessageRetrieved(wrapper, rawMessage, azureQueue, true);
-                }
-
-                Transaction.Current.EnlistVolatile(new ReceiveResourceManager(azureQueue, rawMessage), EnlistmentOptions.None);
-                return new MessageRetrieved(wrapper, null, null, false);
+                return new MessageRetrieved(wrapper, rawMessage, azureQueue, true);
             }
             catch (Exception ex)
             {
