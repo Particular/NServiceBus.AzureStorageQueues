@@ -41,20 +41,7 @@
         {
             pipeline = pipe;
             circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
-
-            //    this.tryProcessMessage = tryProcessMessage;
-            //    this.endProcessMessage = endProcessMessage;
-
-            //    addressToPoll = address;
-            //    settings = transactionSettings;
-            //    transactionOptions = new TransactionOptions
-            //    {
-            //        IsolationLevel = transactionSettings.IsolationLevel,
-            //        Timeout = transactionSettings.TransactionTimeout
-            //    };
-            // TODO: should these settings be pushed down? What about transaction options
-
-            messageReceiver.Init(settings.InputQueue, false);
+            messageReceiver.Init(settings.InputQueue);
             return TaskEx.CompletedTask;
         }
 
