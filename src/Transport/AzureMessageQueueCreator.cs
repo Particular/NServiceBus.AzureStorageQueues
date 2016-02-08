@@ -28,10 +28,7 @@
                 await CreateQueue(address).ConfigureAwait(false);
             }
 
-            foreach (var address in queueBindings.SendingAddresses)
-            {
-                await CreateQueue(address).ConfigureAwait(false);
-            }
+            // the addresses that messages are sent to, should be created on its own, or by the receivers
         }
 
         private async Task CreateQueue(string address)
