@@ -86,10 +86,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="When_naming_queues_on_azure_storage.cs" />
     <Compile Include="When_parsing_connectionstrings.cs" />
-    <Compile Include="When_using_xml_serialization.cs" />
+    <Compile Include="When_serializing_message_wrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <EmbeddedResource Include="CoreV5SerializedWrapper\MessageWrapper.v6.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -99,7 +100,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="MessageWrapper.v6.xml" />
+    <EmbeddedResource Include="CoreV5SerializedWrapper\MessageWrapper.v6.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

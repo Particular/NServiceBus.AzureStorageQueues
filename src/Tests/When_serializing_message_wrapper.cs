@@ -1,21 +1,18 @@
 ﻿namespace NServiceBus.Azure.QuickTests
 {
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Text;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NUnit.Framework;
 
-    public class When_using_xml_serialization
+    public class When_serializing_message_wrapper
     {
-        [Test]
-        public void Serializing_from_corev5_and_serializing_back_should_provide_equal_messages()
+        [TestCaseSource(nameof(GetCorev5SerializationTestCase))]
+        public void Serialization_should_be_backward_compatible_with_corev5_serializer(MemoryStream stream, MessageWrapperSerializer serializer)
         {
-            var stream = GetContent();
             var message = Stringify(stream);
-
-            var serializer = MessageWrapperSerializer.Xml.Value;
-
             var wrapper = serializer.Deserialize(stream);
 
             // serialize back
@@ -28,10 +25,17 @@
             Assert.AreEqual(message, serialized);
         }
 
-        private static MemoryStream GetContent()
+        // ReSharper disable once UnusedMethodReturnValue.Global
+        public IEnumerable<ITestCaseData> GetCorev5SerializationTestCase()
         {
-            var asm = typeof(When_using_xml_serialization).Assembly;
-            var name = asm.GetManifestResourceNames().Single(n => n.Contains("MessageWrapper.v6.xml"));
+            yield return new TestCaseData(GetContent("MessageWrapper.v6.xml"), MessageWrapperSerializer.Xml.Value).SetName("Xml");
+            yield return new TestCaseData(GetContent("MessageWrapper.v6.json"), MessageWrapperSerializer.Json.Value).SetName("JSON");
+        }
+
+        private static MemoryStream GetContent(string dataFileName)
+        {
+            var asm = typeof(When_serializing_message_wrapper).Assembly;
+            var name = asm.GetManifestResourceNames().Single(n => n.Contains(dataFileName));
             var stream = new MemoryStream();
             using (var resource = asm.GetManifestResourceStream(name))
             {

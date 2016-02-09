@@ -17,7 +17,7 @@
 //        {
 //            address = new Address(queueName, "UseDevelopmentStorage=true");
 
-//            Assert.DoesNotThrow(() => AzureMessageQueueUtils.GetQueueName(address));
+//            Assert.DoesNotThrow(() => QueueAddressGenerator.GetQueueName(address));
 //        }
 
 //        [TestCase("Test_Queue")]
@@ -28,7 +28,7 @@
 //        {
 //            address = new Address(queueName, "UseDevelopmentStorage=true");
 
-//            Assert.DoesNotThrow(() => AzureMessageQueueUtils.GetQueueName(address));
+//            Assert.DoesNotThrow(() => QueueAddressGenerator.GetQueueName(address));
 //        }
 
 //    }

@@ -3,7 +3,7 @@ namespace NServiceBus.AcceptanceTests
     using NUnit.Framework;
 
     /// <summary>
-    /// Base class for all the NSB test that sets up our conventions
+    ///     Base class for all the NSB test that sets up our conventions
     /// </summary>
     [TestFixture]
 // ReSharper disable once PartialTypeWithSinglePart
@@ -12,7 +12,6 @@ namespace NServiceBus.AcceptanceTests
         [TearDown]
         public void TearDown()
         {
-           
         }
     }
 }

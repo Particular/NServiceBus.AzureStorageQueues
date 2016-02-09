@@ -4,7 +4,6 @@
     using System.Collections.Concurrent;
     using System.IO;
     using System.Linq;
-    using System.Text;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.Extensibility;
@@ -16,7 +15,7 @@
     internal class Dispatcher : IDispatchMessages
     {
         static readonly ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
-        private static readonly UTF8Encoding NoBomUtf8Encoding = new UTF8Encoding(false);
+        readonly QueueAddressGenerator addressGenerator;
         readonly ICreateQueueClients createQueueClients;
         readonly string defaultConnectionString;
         readonly ILog logger = LogManager.GetLogger(typeof(Dispatcher));
@@ -24,11 +23,12 @@
         readonly DeterminesBestConnectionStringForStorageQueues validation;
 
         public Dispatcher(ICreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, ReadOnlySettings settings
-            , string defaultConnectionString)
+            , string defaultConnectionString, QueueAddressGenerator addressGenerator)
         {
             this.createQueueClients = createQueueClients;
             this.messageSerializer = messageSerializer;
             this.defaultConnectionString = defaultConnectionString;
+            this.addressGenerator = addressGenerator;
             validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
         }
 
@@ -52,7 +52,7 @@
 
             var connectionString = GiveMeConnectionStringForTheQueue(queueName);
             var sendClient = createQueueClients.Create(connectionString);
-            var sendQueue = sendClient.GetQueueReference(AzureMessageQueueUtils.GetQueueName(queueName));
+            var sendQueue = sendClient.GetQueueReference(addressGenerator.GetQueueName(queueName));
 
             if (!Exists(sendQueue))
             {

@@ -33,7 +33,7 @@ namespace NServiceBus
             return new TransportReceivingConfigurationResult(
                 () =>
                 {
-                    var receiver = new AzureMessageQueueReceiver(GetSerializer(settings), client);
+                    var receiver = new AzureMessageQueueReceiver(GetSerializer(settings), client, GetAddressGenerator(settings));
                     if (configSection != null)
                     {
                         receiver.PurgeOnStartup = configSection.PurgeOnStartup;
@@ -50,8 +50,13 @@ namespace NServiceBus
 
                     return new MessagePump(receiver);
                 },
-                () => new AzureMessageQueueCreator(client),
+                () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings), settings.GetOrDefault<bool>(AzureStorageTransportExtensions.TransportCreateSendingQueues)),
                 () => Task.FromResult(StartupCheckResult.Success));
+        }
+
+        private static QueueAddressGenerator GetAddressGenerator(ReadOnlySettings settings)
+        {
+            return new QueueAddressGenerator();
         }
 
         protected override TransportSendingConfigurationResult ConfigureForSending(TransportSendingConfigurationContext context)
@@ -59,7 +64,7 @@ namespace NServiceBus
             var settings = context.Settings;
             var connectionString = context.ConnectionString;
             return new TransportSendingConfigurationResult(
-                () => new Dispatcher(new CreateQueueClients(settings, connectionString), GetSerializer(settings), settings, connectionString),
+                () => new Dispatcher(new CreateQueueClients(settings, connectionString), GetSerializer(settings), settings, connectionString, GetAddressGenerator(settings)),
                 () => Task.FromResult(StartupCheckResult.Success));
         }
 

@@ -79,22 +79,12 @@ namespace NServiceBus
         }
 
         /// <summary>
-        ///     Sets serialization for <see cref="MessageWrapper" /> to JSON.
+        ///     Makes the transport create sending queues as well. This is a non-default behavior as sending queues are created by
+        ///     receivers.
         /// </summary>
-        /// <returns></returns>
-        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWithJson(this TransportExtensions<AzureStorageQueueTransport> config)
+        public static TransportExtensions<AzureStorageQueueTransport> CreateSendingQueues(this TransportExtensions<AzureStorageQueueTransport> config)
         {
-            config.GetSettings().Set(MessageWrapperSerializerKey, MessageWrapperSerializer.Json.Value);
-            return config;
-        }
-
-        /// <summary>
-        ///     Sets serialization for <see cref="MessageWrapper" /> to Xml.
-        /// </summary>
-        /// <returns></returns>
-        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWithXml(this TransportExtensions<AzureStorageQueueTransport> config)
-        {
-            config.GetSettings().Set(MessageWrapperSerializerKey, MessageWrapperSerializer.Xml.Value);
+            config.GetSettings().Set(TransportCreateSendingQueues, true);
             return config;
         }
 
@@ -110,6 +100,7 @@ namespace NServiceBus
         internal static readonly string ReceiverMessageInvisibleTime = "";
         internal static readonly string ReceiverBatchSize = "";
         internal static readonly string MessageWrapperSerializerKey = "";
+        internal static readonly string TransportCreateSendingQueues = "";
 
         static AzureStorageTransportExtensions()
         {

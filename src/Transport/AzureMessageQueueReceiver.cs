@@ -17,6 +17,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public const bool DefaultPurgeOnStartup = false;
         public const string DefaultConnectionString = "UseDevelopmentStorage=true";
         public const bool DefaultQueuePerInstance = false;
+        readonly QueueAddressGenerator addressGenerator;
 
         CloudQueue azureQueue;
         Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
@@ -24,10 +25,11 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         MessageWrapperSerializer messageSerializer;
         int timeToDelayNextPeek;
 
-        public AzureMessageQueueReceiver(MessageWrapperSerializer messageSerializer, CloudQueueClient client)
+        public AzureMessageQueueReceiver(MessageWrapperSerializer messageSerializer, CloudQueueClient client, QueueAddressGenerator addressGenerator)
         {
             this.messageSerializer = messageSerializer;
             this.client = client;
+            this.addressGenerator = addressGenerator;
             MessageInvisibleTime = DefaultMessageInvisibleTime;
             PeekInterval = DefaultPeekInterval;
             MaximumWaitTimeWhenIdle = DefaultMaximumWaitTimeWhenIdle;
@@ -62,7 +64,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         public void Init(string address)
         {
-            var queueName = AzureMessageQueueUtils.GetQueueName(address);
+            var queueName = addressGenerator.GetQueueName(address);
 
             azureQueue = client.GetQueueReference(queueName);
             azureQueue.CreateIfNotExists();
