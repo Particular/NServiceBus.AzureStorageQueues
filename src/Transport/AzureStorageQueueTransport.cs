@@ -111,9 +111,10 @@ namespace NServiceBus
             }
 
             MessageWrapperSerializer s;
-            if (settings.TryGet(AzureStorageTransportExtensions.MessageWrapperSerializerKey, out s) == false)
+            if (settings.TryGet(AzureStorageTransportExtensions.MessageWrapperSerializer, out s) == false)
             {
-                s = MessageWrapperSerializer.TryBuild(settings.GetOrDefault<SerializationDefinition>());
+                s = MessageWrapperSerializer.TryBuild(settings.GetOrDefault<SerializationDefinition>(), 
+                    settings.GetOrDefault<Func<SerializationDefinition, MessageWrapperSerializer>>(AzureStorageTransportExtensions.MessageWrapperSerializerFactory));
                 if (s == null)
                 {
                     throw new ConfigurationErrorsException($"The bus is configured using different {typeof(SerializationDefinition).Name} than defaults provided by the NServiceBus. " +

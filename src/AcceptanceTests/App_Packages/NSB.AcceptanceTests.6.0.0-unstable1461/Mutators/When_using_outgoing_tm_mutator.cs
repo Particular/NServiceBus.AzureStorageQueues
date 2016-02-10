@@ -39,7 +39,7 @@
                 {
                     context.OutgoingHeaders["HeaderSetByMutator"] = "some value";
                     context.OutgoingHeaders[Headers.EnclosedMessageTypes] = typeof(MessageThatMutatorChangesTo).FullName;
-                    context.OutgoingBody = Encoding.UTF8.GetBytes("<MessageThatMutatorChangesTo/>");
+                    //context.OutgoingBody = Encoding.UTF8.GetBytes("<MessageThatMutatorChangesTo/>");
                     return Task.FromResult(0);
                 }
 

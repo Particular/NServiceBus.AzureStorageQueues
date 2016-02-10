@@ -6,6 +6,7 @@ namespace NServiceBus
     using System.Reflection;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NServiceBus.Configuration.AdvanceExtensibility;
+    using NServiceBus.Serialization;
 
     public static class AzureStorageTransportExtensions
     {
@@ -79,6 +80,17 @@ namespace NServiceBus
         }
 
         /// <summary>
+        ///     Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
+        ///     from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
+        /// </summary>
+        /// <returns></returns>
+        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<SerializationDefinition, MessageWrapperSerializer> serializerFactory)
+        {
+            config.GetSettings().Set(MessageWrapperSerializerFactory, serializerFactory);
+            return config;
+        }
+
+        /// <summary>
         ///     Makes the transport create sending queues as well. This is a non-default behavior as sending queues are created by
         ///     receivers.
         /// </summary>
@@ -90,7 +102,7 @@ namespace NServiceBus
 
         private static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(TransportExtensions<AzureStorageQueueTransport> config, MessageWrapperSerializer serializer)
         {
-            config.GetSettings().Set(MessageWrapperSerializerKey, serializer);
+            config.GetSettings().Set(MessageWrapperSerializer, serializer);
             return config;
         }
 
@@ -99,7 +111,8 @@ namespace NServiceBus
         internal static readonly string ReceiverMaximumWaitTimeWhenIdle = "";
         internal static readonly string ReceiverMessageInvisibleTime = "";
         internal static readonly string ReceiverBatchSize = "";
-        internal static readonly string MessageWrapperSerializerKey = "";
+        internal static readonly string MessageWrapperSerializer = "";
+        internal static readonly string MessageWrapperSerializerFactory = "";
         internal static readonly string TransportCreateSendingQueues = "";
 
         static AzureStorageTransportExtensions()
@@ -111,7 +124,7 @@ namespace NServiceBus
 
             foreach (var key in keys)
             {
-                key.SetValue(null, key.Name);
+                key.SetValue(null, "Transport.AzureStorageQueue." + key.Name);
             }
         }
 

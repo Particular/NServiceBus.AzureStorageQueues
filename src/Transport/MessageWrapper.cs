@@ -7,7 +7,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
     [Serializable]
     [DataContract(Namespace = "http://tempuri.net/NServiceBus.Azure.Transports.WindowsAzureStorageQueues")]
-    public class MessageWrapper
+    public class MessageWrapper : IMessage
     {
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
         [DataMember(Order = 1, EmitDefaultValue = false)]

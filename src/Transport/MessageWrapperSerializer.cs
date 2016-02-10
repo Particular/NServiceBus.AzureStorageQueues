@@ -48,8 +48,13 @@
             this.deserialize = deserialize;
         }
 
-        public static MessageWrapperSerializer TryBuild(SerializationDefinition definition)
+        internal static MessageWrapperSerializer TryBuild(SerializationDefinition definition, Func<SerializationDefinition, MessageWrapperSerializer> factory)
         {
+            if (factory != null)
+            {
+                return factory(definition);
+            }
+
             if (definition is XmlSerializer)
             {
                 return Xml.Value;

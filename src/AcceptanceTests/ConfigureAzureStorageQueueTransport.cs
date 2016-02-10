@@ -5,6 +5,7 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
+using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
 
 class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
 {
@@ -12,15 +13,12 @@ class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
 
     public Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
     {
-        // queues names need to be unique to not collide between tests
-        // removal of a single takes time and as it won't be visible for clients, you cannot create another one with the same name:
-        // https://msdn.microsoft.com/en-us/library/azure/dd179436.aspx
-
         connectionString = settings["Transport.ConnectionString"];
         configuration.UseSerialization<JsonSerializer>();
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(5))
+            .SerializeMessageWrapperWith(defintion => MessageWrapperSerializer.Json.Value)
             .CreateSendingQueues();
 
         return Task.FromResult(0);
