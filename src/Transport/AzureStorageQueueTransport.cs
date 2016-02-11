@@ -2,6 +2,7 @@ namespace NServiceBus
 {
     using System;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -9,6 +10,7 @@ namespace NServiceBus
     using NServiceBus.Config;
     using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Routing;
+    using NServiceBus.Serialization;
     using NServiceBus.Settings;
     using NServiceBus.Transports;
 
@@ -17,12 +19,7 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition
     {
-        readonly Newtonsoft.Json.JsonSerializer Serializer;
-
-        public AzureStorageQueueTransport()
-        {
-            Serializer = new Newtonsoft.Json.JsonSerializer();
-        }
+        private MessageWrapperSerializer serializer;
 
         public override string ExampleConnectionStringForErrorMessage { get; } =
             "DefaultEndpointsProtocol=[http|https];AccountName=myAccountName;AccountKey=myAccountKey";
@@ -36,7 +33,7 @@ namespace NServiceBus
             return new TransportReceivingConfigurationResult(
                 () =>
                 {
-                    var receiver = new AzureMessageQueueReceiver(Serializer, client);
+                    var receiver = new AzureMessageQueueReceiver(GetSerializer(settings), client, GetAddressGenerator(settings));
                     if (configSection != null)
                     {
                         receiver.PurgeOnStartup = configSection.PurgeOnStartup;
@@ -53,43 +50,13 @@ namespace NServiceBus
 
                     return new MessagePump(receiver);
                 },
-                () => new AzureMessageQueueCreator(client),
+                () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings), settings.GetOrDefault<bool>(AzureStorageTransportExtensions.TransportCreateSendingQueues)),
                 () => Task.FromResult(StartupCheckResult.Success));
         }
 
-        static CloudQueueClient BuildClient(ReadOnlySettings settings, string connectionStringFromContext)
+        private static QueueAddressGenerator GetAddressGenerator(ReadOnlySettings settings)
         {
-            CloudQueueClient queueClient;
-
-            var configSection = settings.GetConfigSection<AzureQueueConfig>();
-
-            var connectionString = TryGetConnectionString(configSection, connectionStringFromContext);
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                queueClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudQueueClient();
-            }
-            else
-            {
-                queueClient = CloudStorageAccount.Parse(connectionString).CreateCloudQueueClient();
-            }
-
-            return queueClient;
-        }
-
-        static string TryGetConnectionString(AzureQueueConfig configSection, string defaultConnectionString)
-        {
-            var connectionString = defaultConnectionString;
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                if (configSection != null)
-                {
-                    connectionString = configSection.ConnectionString;
-                }
-            }
-
-            return connectionString;
+            return new QueueAddressGenerator();
         }
 
         protected override TransportSendingConfigurationResult ConfigureForSending(TransportSendingConfigurationContext context)
@@ -97,7 +64,7 @@ namespace NServiceBus
             var settings = context.Settings;
             var connectionString = context.ConnectionString;
             return new TransportSendingConfigurationResult(
-                () => new Dispatcher(new CreateQueueClients(settings, connectionString), Serializer, settings, connectionString),
+                () => new Dispatcher(new CreateQueueClients(settings, connectionString), GetSerializer(settings), settings, connectionString, GetAddressGenerator(settings)),
                 () => Task.FromResult(StartupCheckResult.Success));
         }
 
@@ -134,6 +101,64 @@ namespace NServiceBus
         {
             // Azure Storage Queues does not support mulitcast, hence all the messages are sent with Unicast
             return new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
+        }
+
+        MessageWrapperSerializer GetSerializer(ReadOnlySettings settings)
+        {
+            if (serializer != null)
+            {
+                return serializer;
+            }
+
+            serializer = BuildSerializer(settings);
+            return serializer;
+        }
+
+        static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
+        {
+            MessageWrapperSerializer serializer;
+            if (settings.TryGet(AzureStorageTransportExtensions.MessageWrapperSerializer, out serializer) == false)
+            {
+                serializer = MessageWrapperSerializer.TryBuild(settings.GetOrDefault<SerializationDefinition>(),
+                    settings.GetOrDefault<Func<SerializationDefinition, MessageWrapperSerializer>>(AzureStorageTransportExtensions.MessageWrapperSerializerFactory));
+                if (serializer == null)
+                {
+                    throw new ConfigurationErrorsException($"The bus is configured using different {typeof(SerializationDefinition).Name} than defaults provided by the NServiceBus. " +
+                                                           $"Register a custom serialization with {typeof(AzureStorageTransportExtensions).Name}.SerializeMessageWrapperWith()");
+                }
+            }
+            return serializer;
+        }
+
+        static CloudQueueClient BuildClient(ReadOnlySettings settings, string connectionStringFromContext)
+        {
+            var configSection = settings.GetConfigSection<AzureQueueConfig>();
+
+            var connectionString = TryGetConnectionString(configSection, connectionStringFromContext);
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new ConfigurationErrorsException(
+                    "Provide connection string for the storage account. " +
+                    "If you use it for development purposes, use 'devstoreaccount1' according to https://azure.microsoft.com/en-us/documentation/articles/storage-use-emulator/.");
+            }
+
+            return CloudStorageAccount.Parse(connectionString).CreateCloudQueueClient();
+        }
+
+        static string TryGetConnectionString(AzureQueueConfig configSection, string defaultConnectionString)
+        {
+            var connectionString = defaultConnectionString;
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                if (configSection != null)
+                {
+                    connectionString = configSection.ConnectionString;
+                }
+            }
+
+            return connectionString;
         }
     }
 }
