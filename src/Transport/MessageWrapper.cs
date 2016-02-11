@@ -62,5 +62,9 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public HeadersCollection(IDictionary<string, string> dictionary) : base(dictionary)
         {
         }
+
+        protected HeadersCollection(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

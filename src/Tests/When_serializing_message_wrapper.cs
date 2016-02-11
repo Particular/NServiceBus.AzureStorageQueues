@@ -9,7 +9,7 @@
 
     public class When_serializing_message_wrapper
     {
-        [TestCaseSource(nameof(GetCorev5SerializationTestCase))]
+        [TestCaseSource(nameof(GetAsqTransportV6TestCases))]
         public void Serialization_should_be_backward_compatible_with_corev5_serializer(MemoryStream stream, MessageWrapperSerializer serializer)
         {
             var message = Stringify(stream);
@@ -26,7 +26,7 @@
         }
 
         // ReSharper disable once UnusedMethodReturnValue.Global
-        public IEnumerable<ITestCaseData> GetCorev5SerializationTestCase()
+        public IEnumerable<ITestCaseData> GetAsqTransportV6TestCases()
         {
             yield return new TestCaseData(GetContent("MessageWrapper.v6.xml"), MessageWrapperSerializer.Xml.Value).SetName("Xml");
             yield return new TestCaseData(GetContent("MessageWrapper.v6.json"), MessageWrapperSerializer.Json.Value).SetName("JSON");

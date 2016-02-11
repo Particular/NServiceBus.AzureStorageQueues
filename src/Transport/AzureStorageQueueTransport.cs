@@ -110,39 +110,40 @@ namespace NServiceBus
                 return serializer;
             }
 
-            MessageWrapperSerializer s;
-            if (settings.TryGet(AzureStorageTransportExtensions.MessageWrapperSerializer, out s) == false)
+            serializer = BuildSerializer(settings);
+            return serializer;
+        }
+
+        static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
+        {
+            MessageWrapperSerializer serializer;
+            if (settings.TryGet(AzureStorageTransportExtensions.MessageWrapperSerializer, out serializer) == false)
             {
-                s = MessageWrapperSerializer.TryBuild(settings.GetOrDefault<SerializationDefinition>(), 
+                serializer = MessageWrapperSerializer.TryBuild(settings.GetOrDefault<SerializationDefinition>(),
                     settings.GetOrDefault<Func<SerializationDefinition, MessageWrapperSerializer>>(AzureStorageTransportExtensions.MessageWrapperSerializerFactory));
-                if (s == null)
+                if (serializer == null)
                 {
                     throw new ConfigurationErrorsException($"The bus is configured using different {typeof(SerializationDefinition).Name} than defaults provided by the NServiceBus. " +
-                                                           $"Register serialization for cloud message wrappers with {typeof(AzureStorageTransportExtensions).Name} methods starting with SerializeMessageWrapperWith");
+                                                           $"Register a custom serialization with {typeof(AzureStorageTransportExtensions).Name}.SerializeMessageWrapperWith()");
                 }
             }
-            serializer = s;
             return serializer;
         }
 
         static CloudQueueClient BuildClient(ReadOnlySettings settings, string connectionStringFromContext)
         {
-            CloudQueueClient queueClient;
-
             var configSection = settings.GetConfigSection<AzureQueueConfig>();
 
             var connectionString = TryGetConnectionString(configSection, connectionStringFromContext);
 
             if (string.IsNullOrEmpty(connectionString))
             {
-                queueClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudQueueClient();
-            }
-            else
-            {
-                queueClient = CloudStorageAccount.Parse(connectionString).CreateCloudQueueClient();
+                throw new ConfigurationErrorsException(
+                    "Provide connection string for the storage account. " +
+                    "If you use it for development purposes, use 'devstoreaccount1' according to https://azure.microsoft.com/en-us/documentation/articles/storage-use-emulator/.");
             }
 
-            return queueClient;
+            return CloudStorageAccount.Parse(connectionString).CreateCloudQueueClient();
         }
 
         static string TryGetConnectionString(AzureQueueConfig configSection, string defaultConnectionString)

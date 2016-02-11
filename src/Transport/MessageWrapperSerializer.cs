@@ -72,26 +72,25 @@
             var serializer = new DataContractSerializer(typeof(MessageWrapper));
             Action<MessageWrapper, Stream> serialize = (wrapper, stream) =>
             {
-                using (var sw = new StringWriter())
+                var sw = new StringWriter();
+                string content;
+                using (var writer = new XmlTextWriter(sw))
                 {
-                    using (var writer = new XmlTextWriter(sw))
-                    {
-                        writer.Formatting = Formatting.Indented;
-                        serializer.WriteObject(writer, wrapper);
-                        writer.Flush();
-                    }
+                    writer.Formatting = Formatting.Indented;
+                    serializer.WriteObject(writer, wrapper);
+                    writer.Flush();
+                    content = sw.ToString();
+                }
 
-                    var content = sw.ToString();
-                    foreach (var core2dataContract in CoreV5XmlToDataContractSerializer)
-                    {
-                        content = content.Replace(core2dataContract.Value, core2dataContract.Key);
-                    }
+                foreach (var core2dataContract in CoreV5XmlToDataContractSerializer)
+                {
+                    content = content.Replace(core2dataContract.Value, core2dataContract.Key);
+                }
 
-                    using (var streamWriter = WriterFrom(stream))
-                    {
-                        streamWriter.Write(content);
-                        streamWriter.Flush();
-                    }
+                using (var streamWriter = WriterFrom(stream))
+                {
+                    streamWriter.Write(content);
+                    streamWriter.Flush();
                 }
             };
 
@@ -139,13 +138,10 @@
         {
             Action<MessageWrapper, Stream> serializeFunc = (wrapper, stream) =>
             {
-                using (var streamWriter = WriterFrom(stream))
+                using (var jsonWriter = new JsonTextWriter(WriterFrom(stream)))
                 {
-                    using (var jsonWriter = new JsonTextWriter(streamWriter))
-                    {
-                        jsonSerializer.Serialize(jsonWriter, wrapper);
-                        jsonWriter.Flush();
-                    }
+                    jsonSerializer.Serialize(jsonWriter, wrapper);
+                    jsonWriter.Flush();
                 }
             };
             return serializeFunc;
@@ -155,12 +151,9 @@
         {
             Func<Stream, MessageWrapper> deserializeFunc = stream =>
             {
-                using (var reader = ReaderFrom(stream))
+                using (var jsonReader = new JsonTextReader(ReaderFrom(stream)))
                 {
-                    using (var jsonReader = new JsonTextReader(reader))
-                    {
-                        return jsonSerializer.Deserialize<MessageWrapper>(jsonReader);
-                    }
+                    return jsonSerializer.Deserialize<MessageWrapper>(jsonReader);
                 }
             };
             return deserializeFunc;
