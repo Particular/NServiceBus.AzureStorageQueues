@@ -305,6 +305,7 @@
     <Compile Include="NServiceBusAcceptanceTest.cs" />
     <Compile Include="Sending\When_message_is_sent_with_time_to_be_received_set_to_more_than_7_days.cs" />
     <Compile Include="Sending\When_message_is_sent_with_time_to_be_received_set_to_zero.cs" />
+    <Compile Include="TestIndependenceSkipBehavior.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Packages\NServiceBus.AcceptanceTests.5.0.0\**\*.cs" />
