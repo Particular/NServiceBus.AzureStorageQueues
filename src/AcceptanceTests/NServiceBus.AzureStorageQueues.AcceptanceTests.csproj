@@ -303,6 +303,7 @@
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-unstable1461\Volatile\When_sending_to_non_durable_endpoint.cs" />
     <Compile Include="ConfigureAzureStorageQueueTransport.cs" />
     <Compile Include="NServiceBusAcceptanceTest.cs" />
+    <Compile Include="Sending\When_dispatch_fails.cs" />
     <Compile Include="Sending\When_message_is_sent_with_time_to_be_received_set_to_more_than_7_days.cs" />
     <Compile Include="Sending\When_message_is_sent_with_time_to_be_received_set_to_zero.cs" />
   </ItemGroup>
@@ -319,8 +320,6 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Serialization\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

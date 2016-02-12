@@ -86,7 +86,17 @@
             }
 
             var rawMessage = SerializeMessage(operation, timeToBeReceived);
-            await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
+            try
+            {
+                await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                throw new UnableToDispatchException(ex)
+                {
+                    Queue = queueName
+                };
+            }
         }
 
         // TODO: consider providing a more advanced mapping, providing ability to host queues in different storage accounts, without explicit sending the message to another one

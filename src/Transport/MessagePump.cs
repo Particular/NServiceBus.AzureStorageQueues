@@ -10,6 +10,7 @@
     using NServiceBus.Extensibility;
     using NServiceBus.Logging;
     using NServiceBus.Transports;
+    using NServiceBus.Unicast.Queuing;
 
     class MessagePump : IPushMessages, IDisposable
     {
@@ -111,6 +112,18 @@
                         continue;
                     }
                     circuitBreaker.Success();
+                }
+                catch (QueueNotFoundException ex)
+                {
+                    Logger.Error($"The queue '{ex.Queue}' was not found. Create the queue.", ex);
+                    await circuitBreaker.Failure(ex).ConfigureAwait(false);
+                    continue;
+                }
+                catch (UnableToDispatchException ex)
+                {
+                    Logger.Error($"The dispach failed at sending a message to the following queue: '{ex.Queue}'", ex);
+                    await circuitBreaker.Failure(ex).ConfigureAwait(false);
+                    continue;
                 }
                 catch (Exception ex)
                 {
