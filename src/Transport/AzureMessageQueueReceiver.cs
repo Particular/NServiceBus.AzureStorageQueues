@@ -7,9 +7,8 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using Newtonsoft.Json;
 
-    public class AzureMessageQueueReceiver
+    internal class AzureMessageQueueReceiver
     {
         public const int DefaultMessageInvisibleTime = 30000;
         public const int DefaultPeekInterval = 50;
@@ -18,17 +17,19 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public const bool DefaultPurgeOnStartup = false;
         public const string DefaultConnectionString = "UseDevelopmentStorage=true";
         public const bool DefaultQueuePerInstance = false;
+        readonly QueueAddressGenerator addressGenerator;
 
         CloudQueue azureQueue;
         Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
         CloudQueueClient client;
-        JsonSerializer messageSerializer;
+        MessageWrapperSerializer messageSerializer;
         int timeToDelayNextPeek;
 
-        public AzureMessageQueueReceiver(JsonSerializer messageSerializer, CloudQueueClient client)
+        public AzureMessageQueueReceiver(MessageWrapperSerializer messageSerializer, CloudQueueClient client, QueueAddressGenerator addressGenerator)
         {
             this.messageSerializer = messageSerializer;
             this.client = client;
+            this.addressGenerator = addressGenerator;
             MessageInvisibleTime = DefaultMessageInvisibleTime;
             PeekInterval = DefaultPeekInterval;
             MaximumWaitTimeWhenIdle = DefaultMaximumWaitTimeWhenIdle;
@@ -63,7 +64,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         public void Init(string address)
         {
-            var queueName = AzureMessageQueueUtils.GetQueueName(address);
+            var queueName = addressGenerator.GetQueueName(address);
 
             azureQueue = client.GetQueueReference(queueName);
             azureQueue.CreateIfNotExists();
@@ -126,7 +127,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             {
                 try
                 {
-                    m = messageSerializer.Deserialize<MessageWrapper>(new JsonTextReader(new StreamReader(stream)));
+                    m = messageSerializer.Deserialize(stream);
                 }
                 catch (Exception)
                 {

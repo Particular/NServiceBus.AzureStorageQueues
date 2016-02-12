@@ -8,9 +8,9 @@
     /// <summary>
     ///     Helper class
     /// </summary>
-    public class AzureMessageQueueUtils
+    public class QueueAddressGenerator
     {
-        public static string GetQueueName(string address)
+        public string GetQueueName(string address)
         {
             var name = SanitizeQueueName(address.ToLowerInvariant());
             var guidinput = address.Replace('.', '-').ToLowerInvariant(); // this string was used in the past to calculate guid, should stay backward compat

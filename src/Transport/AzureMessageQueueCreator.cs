@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     using System;
+    using System.Linq;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -12,28 +13,31 @@
     /// </summary>
     public class AzureMessageQueueCreator : ICreateQueues
     {
+        readonly QueueAddressGenerator addressGenerator;
         readonly CloudQueueClient client;
+        readonly bool shouldCreateSendingQueues;
 
-        public AzureMessageQueueCreator(CloudQueueClient client)
+        public AzureMessageQueueCreator(CloudQueueClient client, QueueAddressGenerator addressGenerator, bool shouldCreateSendingQueues)
         {
             this.client = client;
+            this.addressGenerator = addressGenerator;
+            this.shouldCreateSendingQueues = shouldCreateSendingQueues;
         }
 
         public async Task CreateQueueIfNecessary(QueueBindings queueBindings, string identity)
         {
-            // possible usage of Task.WhenAll. The only thing is the limitation to 64 tasks being observed (as it's the limit from OS on WaitHandle)
-
-            foreach (var address in queueBindings.ReceivingAddresses)
+            var addresses = queueBindings.ReceivingAddresses.ToArray();
+            if (shouldCreateSendingQueues)
             {
-                await CreateQueue(address).ConfigureAwait(false);
+                addresses = addresses.Concat(queueBindings.SendingAddresses).ToArray();
             }
 
-            // the addresses that messages are sent to, should be created on its own, or by the receivers
+            await Task.WhenAll(addresses.Select(CreateQueue)).ConfigureAwait(false);
         }
 
         private async Task CreateQueue(string address)
         {
-            var queueName = AzureMessageQueueUtils.GetQueueName(address);
+            var queueName = addressGenerator.GetQueueName(address);
             try
             {
                 var queue = client.GetQueueReference(queueName);
