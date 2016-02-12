@@ -62,16 +62,16 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         /// </summary>
         public int BatchSize { get; set; }
 
-        public void Init(string address)
+        public async Task Init(string address)
         {
             var queueName = addressGenerator.GetQueueName(address);
 
             azureQueue = client.GetQueueReference(queueName);
-            azureQueue.CreateIfNotExists();
+            await azureQueue.CreateIfNotExistsAsync().ConfigureAwait(false);
 
             if (PurgeOnStartup)
             {
-                azureQueue.Clear();
+                await azureQueue.ClearAsync().ConfigureAwait(false);
             }
         }
 

@@ -37,12 +37,12 @@
             // Injected
         }
 
-        public Task Init(Func<PushContext, Task> pipe, CriticalError criticalError, PushSettings settings)
+        public async Task Init(Func<PushContext, Task> pipe, CriticalError criticalError, PushSettings settings)
         {
             pipeline = pipe;
             circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
-            messageReceiver.Init(settings.InputQueue);
-            return TaskEx.CompletedTask;
+            messageReceiver.PurgeOnStartup = settings.PurgeOnStartup;
+            await messageReceiver.Init(settings.InputQueue).ConfigureAwait(false);
         }
 
         public void Start(PushRuntimeSettings limitations)
