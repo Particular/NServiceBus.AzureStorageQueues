@@ -56,7 +56,7 @@ namespace NServiceBus
 
         private static QueueAddressGenerator GetAddressGenerator(ReadOnlySettings settings)
         {
-            return new QueueAddressGenerator();
+            return new QueueAddressGenerator(settings);
         }
 
         protected override TransportSendingConfigurationResult ConfigureForSending(TransportSendingConfigurationContext context)

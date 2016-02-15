@@ -100,6 +100,13 @@ namespace NServiceBus
             return config;
         }
 
+        public static TransportExtensions<AzureStorageQueueTransport> UseSha1ForShortening(this TransportExtensions<AzureStorageQueueTransport> config)
+        {
+            config.GetSettings().Set(Sha1Shortener, true);
+            return config;
+        }
+
+
         private static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(TransportExtensions<AzureStorageQueueTransport> config, MessageWrapperSerializer serializer)
         {
             config.GetSettings().Set(MessageWrapperSerializer, serializer);
@@ -114,6 +121,7 @@ namespace NServiceBus
         internal static readonly string MessageWrapperSerializer = "";
         internal static readonly string MessageWrapperSerializerFactory = "";
         internal static readonly string TransportCreateSendingQueues = "";
+        internal static readonly string Sha1Shortener = "";
 
         static AzureStorageTransportExtensions()
         {

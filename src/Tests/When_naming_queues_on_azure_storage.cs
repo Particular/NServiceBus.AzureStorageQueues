@@ -1,35 +1,40 @@
-﻿//namespace NServiceBus.Azure.QuickTests.Transports.AzureStorage
-//{
-//    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-//    using NUnit.Framework;
+﻿namespace NServiceBus.Azure.QuickTests.Transports.AzureStorage
+{
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using NServiceBus.Settings;
+    using NUnit.Framework;
 
-//    [TestFixture]
-//    [Category("Azure")]
-//    public class When_naming_queues_on_azure_storage
-//    {
-//        Address address;
+    [TestFixture]
+    [Category("Azure")]
+    public class When_naming_queues_on_azure_storage
+    {
+        [TestCase("Test1234Queue", "test1234queue", false)]
+        [TestCase("Test.Queue", "test-queue", false)]
+        [TestCase("TestQueueTestQueueTestQueueTestQueueTestQueueTestQueueTestQueue", "testqueuetestqueuetestqueuetestqueuetestqueuetestqueuetestqueue", false)]
+        [TestCase("Test1234Queue", "test1234queue", false)]
+        public void Should_fix_queue_name_when_upper_case_letters_are_used_dots_or_longer_than_63_characters(string queueName, string expected, bool useSha1)
+        {
+            var generator = BuildGenerator(useSha1);
+            var name = generator.GetQueueName(queueName);
+            Assert.AreEqual(expected, name);
+        }
 
-//        [TestCase("TestQueue")]
-//        [TestCase("Test.Queue")]
-//        [TestCase("TestQueueTestQueueTestQueueTestQueueTestQueueTestQueueTestQueue")]
-//        [TestCase("Test1234Queue")]
-//        public void Should_fix_queue_name_when_upper_case_letters_are_used_dots_or_longer_than_63_characters(string queueName)
-//        {
-//            address = new Address(queueName, "UseDevelopmentStorage=true");
+        [TestCase("Test_Queue", "test-queue", false)]
+        [TestCase("-TestQueue", "-testqueue", false)]
+        [TestCase("TestQueue-", "testqueue-", false)]
+        [TestCase("TQ", "tq", false)]
+        public void Should_fix_queue_name_when_invalid(string queueName, string expected, bool useSha1)
+        {
+            var generator = BuildGenerator(useSha1);
+            var name = generator.GetQueueName(queueName);
+            Assert.AreEqual(expected, name);
+        }
 
-//            Assert.DoesNotThrow(() => QueueAddressGenerator.GetQueueName(address));
-//        }
-
-//        [TestCase("Test_Queue")]
-//        [TestCase("-TestQueue")]
-//        [TestCase("TestQueue-")]
-//        [TestCase("TQ")]
-//        public void Should_fix_queue_name_when_invalid(string queueName)
-//        {
-//            address = new Address(queueName, "UseDevelopmentStorage=true");
-
-//            Assert.DoesNotThrow(() => QueueAddressGenerator.GetQueueName(address));
-//        }
-
-//    }
-//}
+        static QueueAddressGenerator BuildGenerator(bool useSha1ForShortening)
+        {
+            var holder = new SettingsHolder();
+            holder.Set("UseSha1ForShortening", useSha1ForShortening);
+            return new QueueAddressGenerator(holder);
+        }
+    }
+}

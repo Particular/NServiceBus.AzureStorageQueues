@@ -1,6 +1,5 @@
 ﻿namespace NServiceBus.AcceptanceTests.Mutators
 {
-    using System.Text;
     using System.Threading.Tasks;
     using NServiceBus.AcceptanceTesting;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
