@@ -122,12 +122,11 @@
     <Compile Include="Config\QueueIndividualizer.cs" />
     <Compile Include="Config\RoleEnvironmentUnavailableException.cs" />
     <Compile Include="Config\SafeRoleEnvironment.cs" />
-    <Compile Include="DeterministicGuidBuilder.cs" />
+    <Compile Include="Shortener.cs" />
     <Compile Include="EnvelopeDeserializationFailed.cs" />
     <Compile Include="IsHostedIn.cs" />
     <Compile Include="MessagePump.cs" />
     <Compile Include="MessageWrapper.cs" />
-    <Compile Include="NamingConventions\AzureQueueNamingConvention.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnableToDispatchException.cs" />
     <Compile Include="SettingsExtensions.cs" />
