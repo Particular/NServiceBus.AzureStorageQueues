@@ -106,6 +106,9 @@
   <ItemGroup>
     <Compile Include="AzureMessageQueueCreator.cs" />
     <Compile Include="AzureMessageQueueReceiver.cs" />
+    <Compile Include="Config\Extensions\AzureStorageAddressingSettings.cs" />
+    <Compile Include="Config\Extensions\AzureStorageTransportAddressingExtensions.cs" />
+    <Compile Include="Config\Extensions\IAzureStorageNamespacePartitioningSettings.cs" />
     <Compile Include="DictionaryExtensions.cs" />
     <Compile Include="Dispatcher.cs" />
     <Compile Include="QueueAddressGenerator.cs" />

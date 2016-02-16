@@ -7,13 +7,12 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     {
         public static string Individualize(string queueName)
         {
-            var parser = new ConnectionStringParser();
             var individualQueueName = queueName;
             if (SafeRoleEnvironment.IsAvailable)
             {
-                var index = parser.ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
+                var index = ConnectionStringParser.ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
 
-                var currentQueue = parser.ParseQueueNameFrom(queueName);
+                var currentQueue = ConnectionStringParser.ParseQueueNameFrom(queueName);
                 if (!currentQueue.EndsWith("-" + index.ToString(CultureInfo.InvariantCulture))) //individualize can be applied multiple times
                 {
                     individualQueueName = currentQueue
@@ -21,18 +20,18 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                                           + (index > 0 ? index.ToString(CultureInfo.InvariantCulture) : "");
 
                     if (queueName.Contains("@"))
-                        individualQueueName += "@" + parser.ParseNamespaceFrom(queueName);
+                        individualQueueName += "@" + ConnectionStringParser.ParseNamespaceFrom(queueName);
                 }
             }
             else
             {
-                var currentQueue = parser.ParseQueueNameFrom(queueName);
+                var currentQueue = ConnectionStringParser.ParseQueueNameFrom(queueName);
                 if (!currentQueue.EndsWith("-" + RuntimeEnvironment.MachineName)) //individualize can be applied multiple times
                 {
                     individualQueueName = currentQueue + "-" + RuntimeEnvironment.MachineName;
 
                     if (queueName.Contains("@"))
-                        individualQueueName += "@" + parser.ParseNamespaceFrom(queueName);
+                        individualQueueName += "@" + ConnectionStringParser.ParseNamespaceFrom(queueName);
                 }
             }
 
@@ -42,10 +41,9 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public static string Discriminator {
             get
             {
-                var parser = new ConnectionStringParser();
                 if (SafeRoleEnvironment.IsAvailable)
                 {
-                    var index = parser.ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
+                    var index = ConnectionStringParser.ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
 
                     return "-" + index.ToString(CultureInfo.InvariantCulture);
                 }

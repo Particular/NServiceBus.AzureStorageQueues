@@ -12,7 +12,7 @@
         {
             const string connectionstring = "myqueue@DefaultEndpointsProtocol=https;AccountName=nservicebus;AccountKey=4CBm0byd405DrwMlNGQcHntKDgAQCjaxHNX4mmjMx0p3mNaxrg4Y9zdTVVy0MBzKjQtRKd1M6DF5CwQseBTw/g==";
 
-            var queueName = new ConnectionStringParser().ParseQueueNameFrom(connectionstring);
+            var queueName = ConnectionStringParser.ParseQueueNameFrom(connectionstring);
 
             Assert.AreEqual(queueName, "myqueue");
         }
@@ -22,7 +22,7 @@
         {
             const string connectionstring = "myqueue@DefaultEndpointsProtocol=https;AccountName=nservicebus;AccountKey=4CBm0byd405DrwMlNGQcHntKDgAQCjaxHNX4mmjMx0p3mNaxrg4Y9zdTVVy0MBzKjQtRKd1M6DF5CwQseBTw/g==";
 
-            var @namespace = new ConnectionStringParser().ParseNamespaceFrom(connectionstring);
+            var @namespace = ConnectionStringParser.ParseNamespaceFrom(connectionstring);
 
             Assert.AreEqual(@namespace, "DefaultEndpointsProtocol=https;AccountName=nservicebus;AccountKey=4CBm0byd405DrwMlNGQcHntKDgAQCjaxHNX4mmjMx0p3mNaxrg4Y9zdTVVy0MBzKjQtRKd1M6DF5CwQseBTw/g==");
         }
@@ -32,7 +32,7 @@
         {
             const string connectionstring = "myqueue_1";
 
-            var index = new ConnectionStringParser().ParseIndexFrom(connectionstring);
+            var index = ConnectionStringParser.ParseIndexFrom(connectionstring);
 
             Assert.AreEqual(index, 1);
         }

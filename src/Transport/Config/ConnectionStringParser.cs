@@ -1,18 +1,32 @@
 namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
-    public class ConnectionStringParser
+    using System;
+
+    public static class ConnectionStringParser
     {
-        public string ParseNamespaceFrom(string inputQueue)
+        public static bool TryParseNamespaceFrom(string inputQueue, out string @namespace)
         {
-            return inputQueue.Contains("@") ? inputQueue.Substring(inputQueue.IndexOf("@", System.StringComparison.Ordinal) + 1) : string.Empty;
+            if (inputQueue.Contains("@") == false)
+            {
+                @namespace = null;
+                return false;
+            }
+            @namespace = inputQueue.Substring(inputQueue.IndexOf("@", StringComparison.Ordinal) + 1);
+            return true;
         }
 
-        public string ParseQueueNameFrom(string inputQueue)
+        public static string ParseNamespaceFrom(string inputQueue)
         {
-            return inputQueue.Contains("@") ? inputQueue.Substring(0, inputQueue.IndexOf("@", System.StringComparison.Ordinal)) : inputQueue;
+            string @namespace;
+            return TryParseNamespaceFrom(inputQueue, out @namespace) ? @namespace : string.Empty;
         }
 
-        public int ParseIndexFrom(string id)
+        public static string ParseQueueNameFrom(string inputQueue)
+        {
+            return inputQueue.Contains("@") ? inputQueue.Substring(0, inputQueue.IndexOf("@", StringComparison.Ordinal)) : inputQueue;
+        }
+
+        public static int ParseIndexFrom(string id)
         {
             var idArray = id.Split('.');
             int index;

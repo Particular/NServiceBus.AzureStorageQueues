@@ -16,6 +16,7 @@
     {
         static readonly ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
         readonly QueueAddressGenerator addressGenerator;
+        readonly AzureStorageAddressingSettings addressing;
         readonly ICreateQueueClients createQueueClients;
         readonly string defaultConnectionString;
         readonly ILog logger = LogManager.GetLogger(typeof(Dispatcher));
@@ -23,12 +24,13 @@
         readonly DeterminesBestConnectionStringForStorageQueues validation;
 
         public Dispatcher(ICreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, ReadOnlySettings settings
-            , string defaultConnectionString, QueueAddressGenerator addressGenerator)
+            , string defaultConnectionString, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
         {
             this.createQueueClients = createQueueClients;
             this.messageSerializer = messageSerializer;
             this.defaultConnectionString = defaultConnectionString;
             this.addressGenerator = addressGenerator;
+            this.addressing = addressing;
             validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
         }
 
@@ -47,18 +49,21 @@
 
         private async Task Send(UnicastTransportOperation operation)
         {
-            // The Destination will be just a queue name.
-            var queueName = operation.Destination;
+            // The destination might be in a queue@destination format
+            var destination = operation.Destination;
 
-            var connectionString = GiveMeConnectionStringForTheQueue(queueName);
+            var queue = ConnectionStringParser.ParseQueueNameFrom(destination);
+            var connectionString = GetConnectionString(destination);
+
             var sendClient = createQueueClients.Create(connectionString);
-            var sendQueue = sendClient.GetQueueReference(addressGenerator.GetQueueName(queueName));
+            var q = addressGenerator.GetQueueName(queue);
+            var sendQueue = sendClient.GetQueueReference(q);
 
             if (!Exists(sendQueue))
             {
                 throw new QueueNotFoundException
                 {
-                    Queue = queueName
+                    Queue = destination
                 };
             }
 
@@ -94,17 +99,26 @@
             {
                 throw new UnableToDispatchException(ex)
                 {
-                    Queue = queueName
+                    Queue = queue
                 };
             }
         }
 
-        // TODO: consider providing a more advanced mapping, providing ability to host queues in different storage accounts, without explicit sending the message to another one
-        // This could improve throughput enabling to a separate account for high-volume queueus. Additionally, one could come up with idea sharding the queue across different accounts.
-        // This could be done with a modified message pump pulling from different queues.
-        private string GiveMeConnectionStringForTheQueue(string queueName)
+        // TODO: Potentially extract elsewhere, to close in a component responsible for mapping between 
+        private string GetConnectionString(string destination)
         {
-            return defaultConnectionString;
+            string @namespace;
+            if (ConnectionStringParser.TryParseNamespaceFrom(destination, out @namespace) == false)
+            {
+                @namespace = null;
+            }
+
+            string connectionString;
+            if (addressing.TryMapNamespace(@namespace, out connectionString) == false)
+            {
+                connectionString = defaultConnectionString;
+            }
+            return connectionString;
         }
 
         bool Exists(CloudQueue sendQueue)

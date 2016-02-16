@@ -64,7 +64,13 @@ namespace NServiceBus
             var settings = context.Settings;
             var connectionString = context.ConnectionString;
             return new TransportSendingConfigurationResult(
-                () => new Dispatcher(new CreateQueueClients(settings, connectionString), GetSerializer(settings), settings, connectionString, GetAddressGenerator(settings)),
+                () =>
+                {
+                    var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
+                    var queueCreator = new CreateQueueClients(settings, connectionString);
+                    var addressRetriever = GetAddressGenerator(settings);
+                    return new Dispatcher(queueCreator, GetSerializer(settings), settings, connectionString, addressRetriever, addressing);
+                },
                 () => Task.FromResult(StartupCheckResult.Success));
         }
 
