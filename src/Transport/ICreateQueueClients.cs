@@ -4,6 +4,6 @@
 
     public interface ICreateQueueClients
     {
-        CloudQueueClient Create(string nameOrConnectionString);
+        CloudQueueClient Create(string connectionStringValue);
     }
 }

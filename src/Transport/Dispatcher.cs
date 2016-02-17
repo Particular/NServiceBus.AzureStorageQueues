@@ -48,7 +48,7 @@
             var destination = operation.Destination;
 
             var queue = QueueAtAccount.Parse(destination);
-            var connectionString = GetConnectionString(queue);
+            var connectionString = addressing.MapAccountToConnectionString(queue.StorageAccount);
 
             var sendClient = createQueueClients.Create(connectionString);
             var q = addressGenerator.GetQueueName(queue.QueueName);
@@ -58,7 +58,7 @@
             {
                 throw new QueueNotFoundException
                 {
-                    Queue = destination
+                    Queue = queue.ToString(),
                 };
             }
 
@@ -99,16 +99,6 @@
             }
         }
 
-        private string GetConnectionString(QueueAtAccount destination)
-        {
-            string connectionString;
-            if (addressing.TryMapAccount(destination.StorageAccount, out connectionString) == false)
-            {
-                connectionString = destination.StorageAccount;
-            }
-            return connectionString;
-        }
-
         bool Exists(CloudQueue sendQueue)
         {
             var key = sendQueue.Uri.ToString();
@@ -121,15 +111,6 @@
             {
                 var msg = operation.Message;
                 var headers = msg.Headers;
-
-                string replyToAddress;
-                if (headers.TryGetValue(Headers.ReplyToAddress, out replyToAddress))
-                {
-                    var q = QueueAtAccount.Parse(replyToAddress);
-                    var connectionString = GetConnectionString(q);
-                    replyToAddress = new QueueAtAccount(q.QueueName, connectionString).ToString();
-                }
-
                 var messageIntent = default(MessageIntentEnum);
                 string messageIntentString;
                 if (headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
@@ -143,7 +124,7 @@
                     Body = msg.Body,
                     CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
                     Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
-                    ReplyToAddress = replyToAddress,
+                    ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
                     TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
                     Headers = new HeadersCollection(headers),
                     MessageIntent = messageIntent

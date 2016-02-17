@@ -1,8 +1,11 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Sending
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
     using NServiceBus.AcceptanceTesting;
+    using NServiceBus.AcceptanceTesting.Support;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.AcceptanceTests.ScenarioDescriptors;
@@ -14,9 +17,11 @@
         public static readonly string MainNamespaceConnectionString = Transports.Default.Settings["Transport.ConnectionString"];
 
         [Test]
-        public async Task Connection_string_should_be_respected()
+        public void Connection_string_should_throw()
         {
-            await RunTest(MainNamespaceConnectionString);
+            var ex = Assert.Throws<AggregateException>(async () => await RunTest(MainNamespaceConnectionString));
+
+            Assert.IsInstanceOf<KeyNotFoundException>(ex.InnerExceptions.Cast<ScenarioException>().Single().InnerException);
         }
 
         [Test]

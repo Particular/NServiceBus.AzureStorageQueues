@@ -20,19 +20,17 @@
         }
 
         /// <summary>
-        ///     Tries to map the namespace to a connection string.
+        /// Maps the account name to a connection string, throwing when no mapping found.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="connectionString"></param>
-        /// <returns></returns>
-        internal bool TryMapAccount(string name, out string connectionString)
+        internal string MapAccountToConnectionString(string name)
         {
-            if (name == null)
+            string connectionString;
+            if (_accounts.TryGetValue(name, out connectionString) == false)
             {
-                connectionString = null;
-                return false;
+                throw new KeyNotFoundException($"No account was mapped under following name '{name}'. Please map it using AddStorageAccount method.");
             }
-            return _accounts.TryGetValue(name, out connectionString);
+
+            return connectionString;
         }
 
         internal void SetDefaultAccountConnectionString(string connectionString)
