@@ -1,10 +1,8 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Sending
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
     using NServiceBus.AcceptanceTesting;
-    using NServiceBus.AcceptanceTesting.Support;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.AcceptanceTests.ScenarioDescriptors;
@@ -56,8 +54,13 @@
         {
             public Endpoint()
             {
-                EndpointSetup<DefaultServer>()
-                    .AddMapping<MyMessage>(typeof(Receiver));
+                EndpointSetup<DefaultServer>(configuration =>
+                {
+                    configuration.UseTransport<AzureStorageQueueTransport>()
+                        .Addressing()
+                        .Partitioning()
+                        .AddStorageAccount(MainNamespaceName, Transports.Default.Settings["Transport.ConnectionString"]);
+                }).AddMapping<MyMessage>(typeof(Receiver));
             }
         }
 
@@ -83,24 +86,6 @@
         [Serializable]
         public class MyMessage : ICommand
         {
-        }
-
-        public class Configuration : IConfigureTestExecution
-        {
-            public Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
-            {
-                configuration.UseTransport<AzureStorageQueueTransport>()
-                    .Addressing()
-                    .Partitioning()
-                    .AddStorageAccount(MainNamespaceName, Transports.Default.Settings["Transport.ConnectionString"]);
-
-                return Task.FromResult(0);
-            }
-
-            public Task Cleanup()
-            {
-                return Task.FromResult(0);
-            }
         }
     }
 }
