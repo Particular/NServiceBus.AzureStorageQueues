@@ -6,9 +6,9 @@
     using System.Linq;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using NServiceBus.Extensibility;
     using NServiceBus.Logging;
-    using NServiceBus.Settings;
     using NServiceBus.Transports;
     using NServiceBus.Unicast.Queuing;
 
@@ -18,20 +18,15 @@
         readonly QueueAddressGenerator addressGenerator;
         readonly AzureStorageAddressingSettings addressing;
         readonly ICreateQueueClients createQueueClients;
-        readonly string defaultConnectionString;
         readonly ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         readonly MessageWrapperSerializer messageSerializer;
-        readonly DeterminesBestConnectionStringForStorageQueues validation;
 
-        public Dispatcher(ICreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, ReadOnlySettings settings
-            , string defaultConnectionString, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
+        public Dispatcher(ICreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
         {
             this.createQueueClients = createQueueClients;
             this.messageSerializer = messageSerializer;
-            this.defaultConnectionString = defaultConnectionString;
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
-            validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
         }
 
         public async Task Dispatch(TransportOperations outgoingMessages, ContextBag context)
@@ -52,11 +47,11 @@
             // The destination might be in a queue@destination format
             var destination = operation.Destination;
 
-            var queue = ConnectionStringParser.ParseQueueNameFrom(destination);
-            var connectionString = GetConnectionString(destination);
+            var queue = QueueAtAccount.Parse(destination);
+            var connectionString = GetConnectionString(queue);
 
             var sendClient = createQueueClients.Create(connectionString);
-            var q = addressGenerator.GetQueueName(queue);
+            var q = addressGenerator.GetQueueName(queue.QueueName);
             var sendQueue = sendClient.GetQueueReference(q);
 
             if (!Exists(sendQueue))
@@ -99,24 +94,17 @@
             {
                 throw new UnableToDispatchException(ex)
                 {
-                    Queue = queue
+                    Queue = queue.QueueName
                 };
             }
         }
 
-        // TODO: Potentially extract elsewhere, to close in a component responsible for mapping between 
-        private string GetConnectionString(string destination)
+        private string GetConnectionString(QueueAtAccount destination)
         {
-            string @namespace;
-            if (ConnectionStringParser.TryParseNamespaceFrom(destination, out @namespace) == false)
-            {
-                @namespace = null;
-            }
-
             string connectionString;
-            if (addressing.TryMapNamespace(@namespace, out connectionString) == false)
+            if (addressing.TryMapAccount(destination.StorageAccount, out connectionString) == false)
             {
-                connectionString = defaultConnectionString;
+                connectionString = destination.StorageAccount;
             }
             return connectionString;
         }
@@ -134,8 +122,13 @@
                 var msg = operation.Message;
                 var headers = msg.Headers;
 
-                // TODO: investigate the way how the function suppose to work
-                var replyToAddress = validation.Determine(headers.GetValueOrDefault(Headers.ReplyToAddress));
+                string replyToAddress;
+                if (headers.TryGetValue(Headers.ReplyToAddress, out replyToAddress))
+                {
+                    var q = QueueAtAccount.Parse(replyToAddress);
+                    var connectionString = GetConnectionString(q);
+                    replyToAddress = new QueueAtAccount(q.QueueName, connectionString).ToString();
+                }
 
                 var messageIntent = default(MessageIntentEnum);
                 string messageIntentString;

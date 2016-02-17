@@ -3,37 +3,40 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System.Collections.Concurrent;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Settings;
 
     public class CreateQueueClients : ICreateQueueClients
     {
+        private readonly AzureStorageAddressingSettings addressing;
         readonly ConcurrentDictionary<string, CloudQueueClient> destinationQueueClients = new ConcurrentDictionary<string, CloudQueueClient>();
-        readonly DeterminesBestConnectionStringForStorageQueues validation;
 
-        public CreateQueueClients(ReadOnlySettings settings, string defaultConnectionString)
+        public CreateQueueClients(AzureStorageAddressingSettings addressing)
         {
-            validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
+            this.addressing = addressing;
         }
 
-        public CloudQueueClient Create(string connectionString)
+        public CloudQueueClient Create(string nameOrConnectionString)
         {
-            return destinationQueueClients.GetOrAdd(connectionString, s =>
+            return destinationQueueClients.GetOrAdd(nameOrConnectionString, BuildClient);
+        }
+
+        private CloudQueueClient BuildClient(string nameOrConnectionString)
+        {
+            CloudStorageAccount account;
+            if (CloudStorageAccount.TryParse(nameOrConnectionString, out account))
             {
-                if (!validation.IsPotentialStorageQueueConnectionString(connectionString))
-                {
-                    connectionString = validation.Determine();
-                }
+                return account.CreateCloudQueueClient();
+            }
 
-                CloudQueueClient sendClient = null;
-                CloudStorageAccount account;
-
+            string connectionString;
+            if (addressing.TryMapAccount(nameOrConnectionString, out connectionString))
+            {
                 if (CloudStorageAccount.TryParse(connectionString, out account))
                 {
-                    sendClient = account.CreateCloudQueueClient();
+                    return account.CreateCloudQueueClient();
                 }
+            }
 
-                return sendClient;
-            });
+            return null;
         }
     }
 }

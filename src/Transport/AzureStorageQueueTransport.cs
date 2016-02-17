@@ -67,9 +67,11 @@ namespace NServiceBus
                 () =>
                 {
                     var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-                    var queueCreator = new CreateQueueClients(settings, connectionString);
+                    addressing.SetDefaultAccountConnectionString(connectionString);
+
+                    var queueCreator = new CreateQueueClients(addressing);
                     var addressRetriever = GetAddressGenerator(settings);
-                    return new Dispatcher(queueCreator, GetSerializer(settings), settings, connectionString, addressRetriever, addressing);
+                    return new Dispatcher(queueCreator, GetSerializer(settings), addressRetriever, addressing);
                 },
                 () => Task.FromResult(StartupCheckResult.Success));
         }

@@ -17,7 +17,7 @@ namespace NServiceBus
             return settings;
         }
 
-        public static IAzureStorageNamespacePartitioningSettings NamespacePartitioning(this AzureStorageAddressingSettings addressingSettings)
+        public static IAzureStoragePartitioningSettings Partitioning(this AzureStorageAddressingSettings addressingSettings)
         {
             return addressingSettings;
         }

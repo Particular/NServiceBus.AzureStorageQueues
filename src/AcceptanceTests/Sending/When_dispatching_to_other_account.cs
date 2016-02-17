@@ -1,10 +1,11 @@
-﻿namespace NServiceBus.AcceptanceTests.Sending
+﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Sending
 {
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using NServiceBus.AcceptanceTesting;
     using NServiceBus.AcceptanceTesting.Support;
+    using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.AcceptanceTests.ScenarioDescriptors;
     using NUnit.Framework;
@@ -90,8 +91,8 @@
             {
                 configuration.UseTransport<AzureStorageQueueTransport>()
                     .Addressing()
-                    .NamespacePartitioning()
-                    .AddNamespace(MainNamespaceName, Transports.Default.Settings["Transport.ConnectionString"]);
+                    .Partitioning()
+                    .AddStorageAccount(MainNamespaceName, Transports.Default.Settings["Transport.ConnectionString"]);
 
                 return Task.FromResult(0);
             }
