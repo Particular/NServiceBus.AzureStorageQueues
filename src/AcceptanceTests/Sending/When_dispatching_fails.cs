@@ -10,7 +10,7 @@
     using NServiceBus.AcceptanceTests.ScenarioDescriptors;
     using NUnit.Framework;
 
-    public class When_dispatch_fails : NServiceBusAcceptanceTest
+    public class When_dispatching_fails : NServiceBusAcceptanceTest
     {
         [Test]
         public void Should_log_send_related_error()

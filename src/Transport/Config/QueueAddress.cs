@@ -2,7 +2,7 @@
 {
     using System;
 
-    public sealed class QueueAtAccount : IEquatable<QueueAtAccount>
+    public sealed class QueueAddress : IEquatable<QueueAddress>
     {
         public const string DefaultStorageAccountName = "";
         public const string Separator = "@";
@@ -10,7 +10,7 @@
         public string QueueName { get; }
         public string StorageAccount { get; }
 
-        public QueueAtAccount(string queueName, string storageAccount)
+        public QueueAddress(string queueName, string storageAccount)
         {
             if (string.IsNullOrWhiteSpace(queueName))
             {
@@ -26,9 +26,9 @@
             StorageAccount = storageAccount;
         }
 
-        public static QueueAtAccount Parse(string value)
+        public static QueueAddress Parse(string value)
         {
-            QueueAtAccount q;
+            QueueAddress q;
             if (TryParse(value, out q) == false)
             {
                 throw new ArgumentException("Value cannot be parsed", nameof(value));
@@ -37,20 +37,20 @@
             return q;
         }
 
-        public static bool TryParse(string inputQueue, out QueueAtAccount queue)
+        public static bool TryParse(string inputQueue, out QueueAddress queue)
         {
             var index = inputQueue.IndexOf(Separator, StringComparison.Ordinal);
             if (index < 0)
             {
-                queue = new QueueAtAccount(inputQueue, DefaultStorageAccountName);
+                queue = new QueueAddress(inputQueue, DefaultStorageAccountName);
                 return true;
             }
             
-            queue = new QueueAtAccount(inputQueue.Substring(0, index), inputQueue.Substring(index+1));
+            queue = new QueueAddress(inputQueue.Substring(0, index), inputQueue.Substring(index+1));
             return true;
         }
 
-        public bool Equals(QueueAtAccount other)
+        public bool Equals(QueueAddress other)
         {
             if (ReferenceEquals(null, other))
             {
@@ -73,7 +73,7 @@
             {
                 return true;
             }
-            return obj is QueueAtAccount && Equals((QueueAtAccount) obj);
+            return obj is QueueAddress && Equals((QueueAddress) obj);
         }
 
         public override int GetHashCode()

@@ -19,6 +19,7 @@
         static readonly TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
 
         readonly AzureMessageQueueReceiver messageReceiver;
+        readonly AzureStorageAddressingSettings addressing;
         CancellationToken cancellationToken;
         CancellationTokenSource cancellationTokenSource;
         RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
@@ -28,9 +29,10 @@
         Func<PushContext, Task> pipeline;
         ConcurrentDictionary<Task, Task> runningReceiveTasks;
 
-        public MessagePump(AzureMessageQueueReceiver messageReceiver)
+        public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing)
         {
             this.messageReceiver = messageReceiver;
+            this.addressing = addressing;
         }
 
         public void Dispose()
@@ -145,6 +147,9 @@
                     try
                     {
                         var message = retrieved.Wrapper;
+
+                        addressing.ApplyMappingToLogicalName(message.Headers);
+
                         var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), tokenSource, new ContextBag());
                         await pipeline(pushContext).ConfigureAwait(false);
 

@@ -33,6 +33,7 @@ namespace NServiceBus
             return new TransportReceivingConfigurationResult(
                 () =>
                 {
+                    var addressing = GetAddressing(settings, context.ConnectionString);
                     var receiver = new AzureMessageQueueReceiver(GetSerializer(settings), client, GetAddressGenerator(settings));
                     if (configSection != null)
                     {
@@ -48,7 +49,7 @@ namespace NServiceBus
                     settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverPeekInterval, v => { receiver.PeekInterval = v; });
                     settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverBatchSize, v => { receiver.BatchSize = v; });
 
-                    return new MessagePump(receiver);
+                    return new MessagePump(receiver, addressing);
                 },
                 () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings), settings.GetOrDefault<bool>(AzureStorageTransportExtensions.TransportCreateSendingQueues)),
                 () => Task.FromResult(StartupCheckResult.Success));
@@ -66,14 +67,20 @@ namespace NServiceBus
             return new TransportSendingConfigurationResult(
                 () =>
                 {
-                    var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-                    addressing.SetDefaultAccountConnectionString(connectionString);
+                    var addressing = GetAddressing(settings, connectionString);
 
                     var queueCreator = new CreateQueueClients();
                     var addressRetriever = GetAddressGenerator(settings);
                     return new Dispatcher(queueCreator, GetSerializer(settings), addressRetriever, addressing);
                 },
                 () => Task.FromResult(StartupCheckResult.Success));
+        }
+
+        private static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
+        {
+            var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
+            addressing.SetDefaultAccountConnectionString(connectionString);
+            return addressing;
         }
 
         public override IEnumerable<Type> GetSupportedDeliveryConstraints()

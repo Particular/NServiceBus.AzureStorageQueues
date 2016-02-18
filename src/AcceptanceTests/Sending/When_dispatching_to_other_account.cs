@@ -13,7 +13,7 @@
 
     public class When_dispatching_to_another_account : NServiceBusAcceptanceTest
     {
-        private const string MainNamespaceName = "MainNamespaceName";
+        private const string AnotherAccountName = "AnotherAccountName";
         public static readonly string MainNamespaceConnectionString = Transports.Default.Settings["Transport.ConnectionString"];
 
         [Test]
@@ -27,7 +27,7 @@
         [Test]
         public async Task Namespace_mapped_should_be_respected()
         {
-            await RunTest(MainNamespaceName);
+            await RunTest(AnotherAccountName);
         }
 
         private static async Task RunTest(string connectionStringOrName)
@@ -64,7 +64,7 @@
                     configuration.UseTransport<AzureStorageQueueTransport>()
                         .Addressing()
                         .Partitioning()
-                        .AddStorageAccount(MainNamespaceName, Transports.Default.Settings["Transport.ConnectionString"]);
+                        .AddStorageAccount(AnotherAccountName, Transports.Default.Settings["Transport.ConnectionString"]);
                 }).AddMapping<MyMessage>(typeof(Receiver));
             }
         }

@@ -47,8 +47,8 @@
             // The destination might be in a queue@destination format
             var destination = operation.Destination;
 
-            var queue = QueueAtAccount.Parse(destination);
-            var connectionString = addressing.MapAccountToConnectionString(queue.StorageAccount);
+            var queue = QueueAddress.Parse(destination);
+            var connectionString = addressing.Map(queue.StorageAccount);
 
             var sendClient = createQueueClients.Create(connectionString);
             var q = addressGenerator.GetQueueName(queue.QueueName);
@@ -110,7 +110,9 @@
             using (var stream = new MemoryStream())
             {
                 var msg = operation.Message;
-                var headers = msg.Headers;
+                var headers = new HeadersCollection(msg.Headers);
+                addressing.ApplyMappingOnOutgoingHeaders(headers);
+
                 var messageIntent = default(MessageIntentEnum);
                 string messageIntentString;
                 if (headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
@@ -126,7 +128,7 @@
                     Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
                     ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
                     TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
-                    Headers = new HeadersCollection(headers),
+                    Headers = headers,
                     MessageIntent = messageIntent
                 };
 

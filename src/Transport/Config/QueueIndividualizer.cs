@@ -10,7 +10,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public static string Individualize(string queueName)
         {
             var individualQueueName = queueName;
-            var queue = QueueAtAccount.Parse(queueName);
+            var queue = QueueAddress.Parse(queueName);
             var currentQueue = queue.QueueName;
             var account = queue.StorageAccount;
 
@@ -24,8 +24,8 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                                           + (index > 0 ? "-" : "")
                                           + (index > 0 ? index.ToString(CultureInfo.InvariantCulture) : "");
 
-                    if (queueName.Contains(QueueAtAccount.Separator))
-                        individualQueueName += QueueAtAccount.Separator + account;
+                    if (queueName.Contains(QueueAddress.Separator))
+                        individualQueueName += QueueAddress.Separator + account;
                 }
             }
             else
@@ -34,8 +34,8 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                 {
                     individualQueueName = currentQueue + "-" + RuntimeEnvironment.MachineName;
 
-                    if (queueName.Contains(QueueAtAccount.Separator))
-                        individualQueueName += QueueAtAccount.Separator + account;
+                    if (queueName.Contains(QueueAddress.Separator))
+                        individualQueueName += QueueAddress.Separator + account;
                 }
             }
 
