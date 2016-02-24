@@ -48,11 +48,6 @@
             return connectionString;
         }
 
-        internal void SetDefaultAccountConnectionString(string connectionString)
-        {
-            Add(QueueAddress.DefaultStorageAccountName, connectionString, false);
-        }
-
         /// <summary>
         ///     Transforms all the <see cref="QueueAddress" /> in <see cref="headersToApplyNameMapping" /> to use logical names.
         /// </summary>
@@ -111,7 +106,7 @@
             return _connectionString2name.TryGetValue(connectionString, out name);
         }
 
-        private void Add(string name, string connectionString, bool add = true)
+        internal void Add(string name, string connectionString, bool add = true)
         {
             var value = new ConnectionString(connectionString);
             if (add)

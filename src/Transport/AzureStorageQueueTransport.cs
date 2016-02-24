@@ -7,6 +7,7 @@ namespace NServiceBus
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using NServiceBus.Config;
     using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Routing;
@@ -79,7 +80,9 @@ namespace NServiceBus
         private static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-            addressing.SetDefaultAccountConnectionString(connectionString);
+
+            addressing.Add(QueueAddress.DefaultStorageAccountName, connectionString, false);
+
             return addressing;
         }
 
