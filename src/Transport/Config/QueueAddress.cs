@@ -12,7 +12,7 @@
 
         public QueueAddress(string queueName, string storageAccount)
         {
-            if (string.IsNullOrWhiteSpace(queueName))
+            if (IsQueueNameValid(queueName) == false)
             {
                 throw new ArgumentException("Queue name cannot be null nor empty", nameof(queueName));
             }
@@ -24,6 +24,11 @@
 
             QueueName = queueName;
             StorageAccount = storageAccount;
+        }
+
+        private static bool IsQueueNameValid(string queueName)
+        {
+            return string.IsNullOrWhiteSpace(queueName) == false;
         }
 
         public static QueueAddress Parse(string value)
@@ -39,14 +44,35 @@
 
         public static bool TryParse(string inputQueue, out QueueAddress queue)
         {
+            if (inputQueue == null)
+            {
+                queue = null;
+                return false;
+            }
+
             var index = inputQueue.IndexOf(Separator, StringComparison.Ordinal);
             if (index < 0)
             {
+                if (IsQueueNameValid(inputQueue) == false)
+                {
+                    queue = null;
+                    return false;
+                }
+
                 queue = new QueueAddress(inputQueue, DefaultStorageAccountName);
                 return true;
             }
-            
-            queue = new QueueAddress(inputQueue.Substring(0, index), inputQueue.Substring(index+1));
+
+            var queueName = inputQueue.Substring(0, index);
+
+            if (IsQueueNameValid(queueName) == false)
+            {
+                queue = null;
+                return false;
+            }
+
+            var storageAccount = inputQueue.Substring(index+1);
+            queue = new QueueAddress(queueName, storageAccount);
             return true;
         }
 

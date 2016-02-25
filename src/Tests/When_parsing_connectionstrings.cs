@@ -26,6 +26,16 @@
             Assert.AreEqual(q.StorageAccount, "DefaultEndpointsProtocol=https;AccountName=nservicebus;AccountKey=4CBm0byd405DrwMlNGQcHntKDgAQCjaxHNX4mmjMx0p3mNaxrg4Y9zdTVVy0MBzKjQtRKd1M6DF5CwQseBTw/g==");
         }
 
+        [TestCase("@accountName")]
+        [TestCase("  @accountName")]
+        [TestCase(default(string))]
+        public void Should_not_parse_whitespace_queue_name(string name)
+        {
+            QueueAddress queue;
+            Assert.IsFalse(QueueAddress.TryParse(name, out queue));
+            Assert.IsNull(queue);
+        }
+
         [Test]
         public void Should_parse_queueindex_from_queuename_using_underscores() // azure queuestorage transport will replace dots by underscores
         {
