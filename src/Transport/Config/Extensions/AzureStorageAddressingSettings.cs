@@ -28,7 +28,7 @@
             return this;
         }
 
-        public IAzureStoragePartitioningSettings UseLogicalQueueAddresses()
+        public IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings()
         {
             logicalQueueAddresses = true;
             return this;
