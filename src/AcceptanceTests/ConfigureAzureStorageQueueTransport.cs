@@ -7,13 +7,18 @@ using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
 
-class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
+public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupportedScenariosForTestExecution
+{
+    public IEnumerable<Type> UnsupportedScenarioDescriptorTypes { get; } = new List<Type>();
+}
+
+public class ConfigureAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
     string connectionString;
 
-    public Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
+    public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings)
     {
-        connectionString = settings["Transport.ConnectionString"];
+        connectionString = settings.Get<string>("Transport.ConnectionString");
         configuration.UseSerialization<JsonSerializer>();
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
