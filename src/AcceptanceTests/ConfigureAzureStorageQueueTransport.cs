@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Queue;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+using NServiceBus.Configuration.AdvanceExtensibility;
+using NServiceBus.Transports;
 
 class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
 {
+    BusConfiguration busConfiguration;
     string connectionString;
 
     public Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
@@ -21,6 +24,8 @@ class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
             .SerializeMessageWrapperWith(defintion => MessageWrapperSerializer.Json.Value)
             .CreateSendingQueues();
 
+        busConfiguration = configuration;
+
         return Task.FromResult(0);
     }
 
@@ -28,22 +33,23 @@ class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
     {
         var storage = CloudStorageAccount.Parse(connectionString);
         var queues = storage.CreateCloudQueueClient();
-        var cloudQueues = new Queue<CloudQueue>(queues.ListQueues());
 
-        while (cloudQueues.Count > 0)
+        var queuesNames = GetTestRelatedQueueNames();
+
+        foreach (var queuesName in queuesNames)
         {
-            const int batchSize = 32;
-            var tasks = new List<Task>();
-            for (var i = 0; i < batchSize; i++)
+            var queue = queues.GetQueueReference(queuesName);
+            if (await queue.ExistsAsync())
             {
-                if (cloudQueues.Count > 0)
-                {
-                    var queue = cloudQueues.Dequeue();
-                    tasks.Add(queue.ClearAsync());
-                }
+                await queue.ClearAsync();
             }
-
-            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
+    }
+
+    private IEnumerable<string> GetTestRelatedQueueNames()
+    {
+        var bindings = busConfiguration.GetSettings().Get<QueueBindings>();
+        var generator = new QueueAddressGenerator(busConfiguration.GetSettings());
+        return bindings.ReceivingAddresses.Concat(bindings.SendingAddresses).Select(queue => generator.GetQueueName(queue));
     }
 }
