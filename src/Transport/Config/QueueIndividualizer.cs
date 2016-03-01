@@ -1,38 +1,41 @@
 namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
+    using System;
     using System.Globalization;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using Support;
 
-    class QueueIndividualizer
+    public class QueueIndividualizer
     {
         public static string Individualize(string queueName)
         {
-            var parser = new ConnectionStringParser();
             var individualQueueName = queueName;
+            var queue = QueueAddress.Parse(queueName);
+            var currentQueue = queue.QueueName;
+            var account = queue.StorageAccount;
+
             if (SafeRoleEnvironment.IsAvailable)
             {
-                var index = parser.ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
+                var index = ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
 
-                var currentQueue = parser.ParseQueueNameFrom(queueName);
                 if (!currentQueue.EndsWith("-" + index.ToString(CultureInfo.InvariantCulture))) //individualize can be applied multiple times
                 {
                     individualQueueName = currentQueue
                                           + (index > 0 ? "-" : "")
                                           + (index > 0 ? index.ToString(CultureInfo.InvariantCulture) : "");
 
-                    if (queueName.Contains("@"))
-                        individualQueueName += "@" + parser.ParseNamespaceFrom(queueName);
+                    if (queueName.Contains(QueueAddress.Separator))
+                        individualQueueName += QueueAddress.Separator + account;
                 }
             }
             else
             {
-                var currentQueue = parser.ParseQueueNameFrom(queueName);
                 if (!currentQueue.EndsWith("-" + RuntimeEnvironment.MachineName)) //individualize can be applied multiple times
                 {
                     individualQueueName = currentQueue + "-" + RuntimeEnvironment.MachineName;
 
-                    if (queueName.Contains("@"))
-                        individualQueueName += "@" + parser.ParseNamespaceFrom(queueName);
+                    if (queueName.Contains(QueueAddress.Separator))
+                        individualQueueName += QueueAddress.Separator + account;
                 }
             }
 
@@ -42,10 +45,9 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public static string Discriminator {
             get
             {
-                var parser = new ConnectionStringParser();
                 if (SafeRoleEnvironment.IsAvailable)
                 {
-                    var index = parser.ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
+                    var index = ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
 
                     return "-" + index.ToString(CultureInfo.InvariantCulture);
                 }
@@ -54,6 +56,18 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                     return "-" + RuntimeEnvironment.MachineName;
                 }
             }
+        }
+
+        public static int ParseIndexFrom(string id)
+        {
+            var idArray = id.Split('.');
+            int index;
+            if (!Int32.TryParse((idArray[idArray.Length - 1]), out index))
+            {
+                idArray = id.Split('_');
+                index = Int32.Parse((idArray[idArray.Length - 1]));
+            }
+            return index;
         }
     }
 }

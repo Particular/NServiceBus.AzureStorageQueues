@@ -58,11 +58,11 @@
                 public Task Handle(Response message, IMessageHandlerContext context)
                 {
                     var messageHeader = context.MessageHeaders[Headers.ReplyToAddress];
-                    if (messageHeader.Contains("Receiver") && messageHeader.Contains("1"))
+                    if (messageHeader.Contains("Receiver-1"))
                     {
                         Context.Receiver1TimesCalled++;
                     }
-                    else if (messageHeader.Contains("Receiver") && messageHeader.Contains("2"))
+                    else if (messageHeader.Contains("Receiver-2"))
                     {
                         Context.Receiver2TimesCalled++;
                     }

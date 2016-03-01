@@ -90,7 +90,6 @@
     <Compile Include="When_serializing_message_wrapper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <EmbeddedResource Include="ASQ_V6_serialized_wrapper\MessageWrapper.v6.json" />
     <None Include="packages.config" />
   </ItemGroup>

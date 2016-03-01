@@ -52,7 +52,7 @@
                 {
                     if (info.HttpStatusMessage == "QueueAlreadyExists")
                     {
-                        await TaskEx.CompletedTask.ConfigureAwait(false);
+                        return;
                     }
                 }
 

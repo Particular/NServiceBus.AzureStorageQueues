@@ -7,6 +7,7 @@ namespace NServiceBus
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using NServiceBus.Config;
     using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Routing;
@@ -33,6 +34,7 @@ namespace NServiceBus
             return new TransportReceivingConfigurationResult(
                 () =>
                 {
+                    var addressing = GetAddressing(settings, context.ConnectionString);
                     var receiver = new AzureMessageQueueReceiver(GetSerializer(settings), client, GetAddressGenerator(settings));
                     if (configSection != null)
                     {
@@ -48,7 +50,7 @@ namespace NServiceBus
                     settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverPeekInterval, v => { receiver.PeekInterval = v; });
                     settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverBatchSize, v => { receiver.BatchSize = v; });
 
-                    return new MessagePump(receiver);
+                    return new MessagePump(receiver, addressing);
                 },
                 () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings), settings.GetOrDefault<bool>(AzureStorageTransportExtensions.TransportCreateSendingQueues)),
                 () => Task.FromResult(StartupCheckResult.Success));
@@ -64,8 +66,24 @@ namespace NServiceBus
             var settings = context.Settings;
             var connectionString = context.ConnectionString;
             return new TransportSendingConfigurationResult(
-                () => new Dispatcher(new CreateQueueClients(settings, connectionString), GetSerializer(settings), settings, connectionString, GetAddressGenerator(settings)),
+                () =>
+                {
+                    var addressing = GetAddressing(settings, connectionString);
+
+                    var queueCreator = new CreateQueueClients();
+                    var addressRetriever = GetAddressGenerator(settings);
+                    return new Dispatcher(queueCreator, GetSerializer(settings), addressRetriever, addressing);
+                },
                 () => Task.FromResult(StartupCheckResult.Success));
+        }
+
+        private static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
+        {
+            var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
+
+            addressing.Add(QueueAddress.DefaultStorageAccountName, connectionString, false);
+
+            return addressing;
         }
 
         public override IEnumerable<Type> GetSupportedDeliveryConstraints()

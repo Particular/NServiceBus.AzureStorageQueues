@@ -3,37 +3,25 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System.Collections.Concurrent;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Settings;
 
     public class CreateQueueClients : ICreateQueueClients
     {
-        readonly ConcurrentDictionary<string, CloudQueueClient> destinationQueueClients = new ConcurrentDictionary<string, CloudQueueClient>();
-        readonly DeterminesBestConnectionStringForStorageQueues validation;
+        readonly ConcurrentDictionary<ConnectionString, CloudQueueClient> destinationQueueClients = new ConcurrentDictionary<ConnectionString, CloudQueueClient>();
 
-        public CreateQueueClients(ReadOnlySettings settings, string defaultConnectionString)
+        public CloudQueueClient Create(ConnectionString connectionString)
         {
-            validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
+            return destinationQueueClients.GetOrAdd(connectionString, BuildClient);
         }
 
-        public CloudQueueClient Create(string connectionString)
+        private CloudQueueClient BuildClient(ConnectionString connectionString)
         {
-            return destinationQueueClients.GetOrAdd(connectionString, s =>
+            CloudStorageAccount account;
+            if (CloudStorageAccount.TryParse(connectionString.Value, out account))
             {
-                if (!validation.IsPotentialStorageQueueConnectionString(connectionString))
-                {
-                    connectionString = validation.Determine();
-                }
+                return account.CreateCloudQueueClient();
+            }
 
-                CloudQueueClient sendClient = null;
-                CloudStorageAccount account;
-
-                if (CloudStorageAccount.TryParse(connectionString, out account))
-                {
-                    sendClient = account.CreateCloudQueueClient();
-                }
-
-                return sendClient;
-            });
+            return null;
         }
     }
 }

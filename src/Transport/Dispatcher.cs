@@ -6,9 +6,9 @@
     using System.Linq;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using NServiceBus.Extensibility;
     using NServiceBus.Logging;
-    using NServiceBus.Settings;
     using NServiceBus.Transports;
     using NServiceBus.Unicast.Queuing;
 
@@ -16,20 +16,17 @@
     {
         static readonly ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
         readonly QueueAddressGenerator addressGenerator;
+        readonly AzureStorageAddressingSettings addressing;
         readonly ICreateQueueClients createQueueClients;
-        readonly string defaultConnectionString;
         readonly ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         readonly MessageWrapperSerializer messageSerializer;
-        readonly DeterminesBestConnectionStringForStorageQueues validation;
 
-        public Dispatcher(ICreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, ReadOnlySettings settings
-            , string defaultConnectionString, QueueAddressGenerator addressGenerator)
+        public Dispatcher(ICreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
         {
             this.createQueueClients = createQueueClients;
             this.messageSerializer = messageSerializer;
-            this.defaultConnectionString = defaultConnectionString;
             this.addressGenerator = addressGenerator;
-            validation = new DeterminesBestConnectionStringForStorageQueues(settings, defaultConnectionString);
+            this.addressing = addressing;
         }
 
         public async Task Dispatch(TransportOperations outgoingMessages, ContextBag context)
@@ -47,18 +44,21 @@
 
         private async Task Send(UnicastTransportOperation operation)
         {
-            // The Destination will be just a queue name.
-            var queueName = operation.Destination;
+            // The destination might be in a queue@destination format
+            var destination = operation.Destination;
 
-            var connectionString = GiveMeConnectionStringForTheQueue(queueName);
+            var queue = QueueAddress.Parse(destination);
+            var connectionString = addressing.Map(queue.StorageAccount);
+
             var sendClient = createQueueClients.Create(connectionString);
-            var sendQueue = sendClient.GetQueueReference(addressGenerator.GetQueueName(queueName));
+            var q = addressGenerator.GetQueueName(queue.QueueName);
+            var sendQueue = sendClient.GetQueueReference(q);
 
             if (!Exists(sendQueue))
             {
                 throw new QueueNotFoundException
                 {
-                    Queue = queueName
+                    Queue = queue.ToString(),
                 };
             }
 
@@ -94,17 +94,9 @@
             {
                 throw new UnableToDispatchException(ex)
                 {
-                    Queue = queueName
+                    Queue = queue.QueueName
                 };
             }
-        }
-
-        // TODO: consider providing a more advanced mapping, providing ability to host queues in different storage accounts, without explicit sending the message to another one
-        // This could improve throughput enabling to a separate account for high-volume queueus. Additionally, one could come up with idea sharding the queue across different accounts.
-        // This could be done with a modified message pump pulling from different queues.
-        private string GiveMeConnectionStringForTheQueue(string queueName)
-        {
-            return defaultConnectionString;
         }
 
         bool Exists(CloudQueue sendQueue)
@@ -118,10 +110,8 @@
             using (var stream = new MemoryStream())
             {
                 var msg = operation.Message;
-                var headers = msg.Headers;
-
-                // TODO: investigate the way how the function suppose to work
-                var replyToAddress = validation.Determine(headers.GetValueOrDefault(Headers.ReplyToAddress));
+                var headers = new HeadersCollection(msg.Headers);
+                addressing.ApplyMappingOnOutgoingHeaders(headers);
 
                 var messageIntent = default(MessageIntentEnum);
                 string messageIntentString;
@@ -136,9 +126,9 @@
                     Body = msg.Body,
                     CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
                     Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
-                    ReplyToAddress = replyToAddress,
+                    ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
                     TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
-                    Headers = new HeadersCollection(headers),
+                    Headers = headers,
                     MessageIntent = messageIntent
                 };
 
