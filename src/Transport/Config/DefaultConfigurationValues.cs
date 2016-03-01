@@ -1,0 +1,35 @@
+﻿namespace NServiceBus.AzureStorageQueues
+{
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
+    using NServiceBus.Settings;
+
+    class DefaultConfigurationValues
+    {
+        // These are here only for the ConfigSection, can be removed in V7
+        const int DefaultMessageInvisibleTime = 30000;
+        const int DefaultPeekInterval = 50;
+        const int DefaultMaximumWaitTimeWhenIdle = 1000;
+        const int DefaultBatchSize = 10;
+        const bool DefaultPurgeOnStartup = false;
+        const string DefaultConnectionString = "UseDevelopmentStorage=true";
+        const bool DefaultQueuePerInstance = false;
+
+        public void Apply(SettingsHolder settings)
+        {
+            ApplyDefaults(settings);
+        }
+
+        private void ApplyDefaults(SettingsHolder settings)
+        {
+            settings.SetDefault(WellKnownConfigurationKeys.ReceiverConnectionString, DefaultConnectionString);
+            settings.SetDefault(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, DefaultMessageInvisibleTime);
+            settings.SetDefault(WellKnownConfigurationKeys.ReceiverPeekInterval, DefaultPeekInterval);
+            settings.SetDefault(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, DefaultMaximumWaitTimeWhenIdle);
+            settings.SetDefault(WellKnownConfigurationKeys.ReceiverBatchSize, DefaultBatchSize);
+            //TODO: What to do with these?
+            //settings.SetDefault(WellKnownConfigurationKeys.MessageWrapperSerializer, somevalue);
+            //settings.SetDefault(WellKnownConfigurationKeys.MessageWrapperSerializerFactory, somevalue);
+            //settings.SetDefault(WellKnownConfigurationKeys.TransportCreateSendingQueues, somevalue);
+        }
+    }
+}

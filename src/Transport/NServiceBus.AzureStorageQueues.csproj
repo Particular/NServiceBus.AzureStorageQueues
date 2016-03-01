@@ -106,10 +106,13 @@
   <ItemGroup>
     <Compile Include="AzureMessageQueueCreator.cs" />
     <Compile Include="AzureMessageQueueReceiver.cs" />
+    <Compile Include="Config\AzureStorageQueuesTransportConfigurator.cs" />
+    <Compile Include="Config\DefaultConfigurationValues.cs" />
     <Compile Include="Config\Extensions\AzureStorageAddressingSettings.cs" />
     <Compile Include="Config\Extensions\AzureStorageTransportAddressingExtensions.cs" />
     <Compile Include="Config\Extensions\IAzureStoragePartitioningSettings.cs" />
     <Compile Include="Config\QueueAddress.cs" />
+    <Compile Include="Config\WellKnownConfigurationKeys.cs" />
     <Compile Include="ConnectionString.cs" />
     <Compile Include="DictionaryExtensions.cs" />
     <Compile Include="Dispatcher.cs" />
@@ -120,7 +123,6 @@
     <Compile Include="MessageRetrieved.cs" />
     <Compile Include="MessageWrapperSerializer.cs" />
     <Compile Include="RepeatedFailuresOverTimeCircuitBreaker.cs" />
-    <Compile Include="Config\AzureQueueConfig.cs" />
     <Compile Include="Config\AzureStorageTransportExtensions.cs" />
     <Compile Include="Config\QueueIndividualizer.cs" />
     <Compile Include="Config\RoleEnvironmentUnavailableException.cs" />

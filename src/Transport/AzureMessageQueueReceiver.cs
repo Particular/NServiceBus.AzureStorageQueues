@@ -10,13 +10,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
     internal class AzureMessageQueueReceiver
     {
-        public const int DefaultMessageInvisibleTime = 30000;
-        public const int DefaultPeekInterval = 50;
-        public const int DefaultMaximumWaitTimeWhenIdle = 1000;
-        public const int DefaultBatchSize = 10;
-        public const bool DefaultPurgeOnStartup = false;
-        public const string DefaultConnectionString = "UseDevelopmentStorage=true";
-        public const bool DefaultQueuePerInstance = false;
         readonly QueueAddressGenerator addressGenerator;
 
         CloudQueue azureQueue;
@@ -30,10 +23,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             this.messageSerializer = messageSerializer;
             this.client = client;
             this.addressGenerator = addressGenerator;
-            MessageInvisibleTime = DefaultMessageInvisibleTime;
-            PeekInterval = DefaultPeekInterval;
-            MaximumWaitTimeWhenIdle = DefaultMaximumWaitTimeWhenIdle;
-            BatchSize = DefaultBatchSize;
         }
 
         /// <summary>

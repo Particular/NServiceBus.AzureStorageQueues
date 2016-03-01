@@ -7,7 +7,7 @@ namespace NServiceBus
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-    using NServiceBus.Config;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Routing;
     using NServiceBus.Serialization;
@@ -27,31 +27,27 @@ namespace NServiceBus
         protected override TransportReceivingConfigurationResult ConfigureForReceiving(TransportReceivingConfigurationContext context)
         {
             var settings = context.Settings;
-            var client = BuildClient(settings, context.ConnectionString);
-            var configSection = settings.GetConfigSection<AzureQueueConfig>();
+            var connectionString = settings.Get<string>(WellKnownConfigurationKeys.ReceiverConnectionString);
+            // TODO: Deze vervangen door CreateQueueClients.CreateReceiver(connectionstring)?
+            var client = BuildClient(connectionString);
 
             return new TransportReceivingConfigurationResult(
                 () =>
                 {
-                    var addressing = GetAddressing(settings, context.ConnectionString);
-                    var receiver = new AzureMessageQueueReceiver(GetSerializer(settings), client, GetAddressGenerator(settings));
-                    if (configSection != null)
+                    // TODO: Klopt deze connectionString? Dat was context.ConnectionString
+                    var addressing = GetAddressing(settings, connectionString);
+                    var receiver = new AzureMessageQueueReceiver(GetSerializer(settings), client, GetAddressGenerator(settings))
                     {
-                        receiver.PurgeOnStartup = configSection.PurgeOnStartup;
-                        receiver.MaximumWaitTimeWhenIdle = configSection.MaximumWaitTimeWhenIdle;
-                        receiver.MessageInvisibleTime = configSection.MessageInvisibleTime;
-                        receiver.PeekInterval = configSection.PeekInterval;
-                        receiver.BatchSize = configSection.BatchSize;
-                    }
-
-                    settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverMaximumWaitTimeWhenIdle, v => { receiver.MaximumWaitTimeWhenIdle = v; });
-                    settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverMessageInvisibleTime, v => { receiver.MessageInvisibleTime = v; });
-                    settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverPeekInterval, v => { receiver.PeekInterval = v; });
-                    settings.TryApplyValue<int>(AzureStorageTransportExtensions.ReceiverBatchSize, v => { receiver.BatchSize = v; });
+                        PurgeOnStartup = settings.Get<bool>(WellKnownConfigurationKeys.PurgeOnStartup),
+                        MaximumWaitTimeWhenIdle = settings.Get<int>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
+                        MessageInvisibleTime = settings.Get<int>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
+                        PeekInterval = settings.Get<int>(WellKnownConfigurationKeys.ReceiverPeekInterval),
+                        BatchSize = settings.Get<int>(WellKnownConfigurationKeys.ReceiverBatchSize)
+                    };
 
                     return new MessagePump(receiver, addressing);
                 },
-                () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings), settings.GetOrDefault<bool>(AzureStorageTransportExtensions.TransportCreateSendingQueues)),
+                () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings), settings.GetOrDefault<bool>(WellKnownConfigurationKeys.TransportCreateSendingQueues)),
                 () => Task.FromResult(StartupCheckResult.Success));
         }
 
@@ -132,10 +128,10 @@ namespace NServiceBus
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
         {
             MessageWrapperSerializer serializer;
-            if (settings.TryGet(AzureStorageTransportExtensions.MessageWrapperSerializer, out serializer) == false)
+            if (settings.TryGet(WellKnownConfigurationKeys.MessageWrapperSerializer, out serializer) == false)
             {
                 serializer = MessageWrapperSerializer.TryBuild(settings.GetOrDefault<SerializationDefinition>(),
-                    settings.GetOrDefault<Func<SerializationDefinition, MessageWrapperSerializer>>(AzureStorageTransportExtensions.MessageWrapperSerializerFactory));
+                    settings.GetOrDefault<Func<SerializationDefinition, MessageWrapperSerializer>>(WellKnownConfigurationKeys.MessageWrapperSerializerFactory));
                 if (serializer == null)
                 {
                     throw new ConfigurationErrorsException($"The bus is configured using different {typeof(SerializationDefinition).Name} than defaults provided by the NServiceBus. " +
@@ -145,12 +141,9 @@ namespace NServiceBus
             return serializer;
         }
 
-        static CloudQueueClient BuildClient(ReadOnlySettings settings, string connectionStringFromContext)
+        static CloudQueueClient BuildClient(string connectionString)
         {
-            var configSection = settings.GetConfigSection<AzureQueueConfig>();
-
-            var connectionString = TryGetConnectionString(configSection, connectionStringFromContext);
-
+            // TODO: Move this to front so that we know while setting up config
             if (string.IsNullOrEmpty(connectionString))
             {
                 throw new ConfigurationErrorsException(
@@ -159,21 +152,6 @@ namespace NServiceBus
             }
 
             return CloudStorageAccount.Parse(connectionString).CreateCloudQueueClient();
-        }
-
-        static string TryGetConnectionString(AzureQueueConfig configSection, string defaultConnectionString)
-        {
-            var connectionString = defaultConnectionString;
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                if (configSection != null)
-                {
-                    connectionString = configSection.ConnectionString;
-                }
-            }
-
-            return connectionString;
         }
     }
 }

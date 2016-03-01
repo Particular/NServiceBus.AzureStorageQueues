@@ -5,6 +5,7 @@ namespace NServiceBus
     using System.Linq;
     using System.Reflection;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using NServiceBus.Configuration.AdvanceExtensibility;
     using NServiceBus.Serialization;
 
@@ -18,7 +19,22 @@ namespace NServiceBus
         /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> PeekInterval(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
-            config.GetSettings().Set(ReceiverPeekInterval, value);
+            config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverPeekInterval, value);
+            return config;
+        }
+
+        /// <summary>
+        ///     Sets the connectionstring to Azure Storage
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static TransportExtensions<AzureStorageQueueTransport> ConnectionString(this TransportExtensions<AzureStorageQueueTransport> config, string value)
+        {
+            config.ConnectionString(() =>
+            {
+                return value;
+            });
             return config;
         }
 
@@ -30,7 +46,7 @@ namespace NServiceBus
         /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
-            config.GetSettings().Set(ReceiverMaximumWaitTimeWhenIdle, value);
+            config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, value);
             return config;
         }
 
@@ -42,7 +58,7 @@ namespace NServiceBus
         /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
-            config.GetSettings().Set(ReceiverMessageInvisibleTime, value);
+            config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, value);
             return config;
         }
 
@@ -65,7 +81,7 @@ namespace NServiceBus
         /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> BatchSize(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
-            config.GetSettings().Set(ReceiverBatchSize, value);
+            config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverBatchSize, value);
             return config;
         }
 
@@ -86,7 +102,7 @@ namespace NServiceBus
         /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<SerializationDefinition, MessageWrapperSerializer> serializerFactory)
         {
-            config.GetSettings().Set(MessageWrapperSerializerFactory, serializerFactory);
+            config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializerFactory, serializerFactory);
             return config;
         }
 
@@ -96,46 +112,21 @@ namespace NServiceBus
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> CreateSendingQueues(this TransportExtensions<AzureStorageQueueTransport> config)
         {
-            config.GetSettings().Set(TransportCreateSendingQueues, true);
+            config.GetSettings().Set(WellKnownConfigurationKeys.TransportCreateSendingQueues, true);
             return config;
         }
 
         public static TransportExtensions<AzureStorageQueueTransport> UseSha1ForShortening(this TransportExtensions<AzureStorageQueueTransport> config)
         {
-            config.GetSettings().Set(Sha1Shortener, true);
+            config.GetSettings().Set(WellKnownConfigurationKeys.Sha1Shortener, true);
             return config;
         }
 
 
         private static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(TransportExtensions<AzureStorageQueueTransport> config, MessageWrapperSerializer serializer)
         {
-            config.GetSettings().Set(MessageWrapperSerializer, serializer);
+            config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializer, serializer);
             return config;
         }
-
-        // ReSharper disable ConvertToConstant.Global
-        internal static readonly string ReceiverPeekInterval = "";
-        internal static readonly string ReceiverMaximumWaitTimeWhenIdle = "";
-        internal static readonly string ReceiverMessageInvisibleTime = "";
-        internal static readonly string ReceiverBatchSize = "";
-        internal static readonly string MessageWrapperSerializer = "";
-        internal static readonly string MessageWrapperSerializerFactory = "";
-        internal static readonly string TransportCreateSendingQueues = "";
-        internal static readonly string Sha1Shortener = "";
-
-        static AzureStorageTransportExtensions()
-        {
-            // setup keys with their own names
-            var keys = typeof(AzureStorageTransportExtensions)
-                .GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(fi => fi.FieldType == typeof(string));
-
-            foreach (var key in keys)
-            {
-                key.SetValue(null, "Transport.AzureStorageQueue." + key.Name);
-            }
-        }
-
-        // ReSharper restore ConvertToConstant.Global
     }
 }
