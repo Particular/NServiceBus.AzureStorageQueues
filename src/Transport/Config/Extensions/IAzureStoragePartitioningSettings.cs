@@ -10,6 +10,6 @@
         /// <summary>
         /// Configures this endpoint as one, using logical names of the accounts instead of connection strings when sending.
         /// </summary>
-        IAzureStoragePartitioningSettings UseLogicalQueueAddresses();
+        IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings();
     }
 }

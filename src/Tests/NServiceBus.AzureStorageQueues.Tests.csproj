@@ -90,7 +90,6 @@
     <Compile Include="When_serializing_message_wrapper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <EmbeddedResource Include="ASQ_V6_serialized_wrapper\MessageWrapper.v6.json" />
     <None Include="packages.config" />
   </ItemGroup>
@@ -102,6 +101,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ASQ_V6_serialized_wrapper\MessageWrapper.v6.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

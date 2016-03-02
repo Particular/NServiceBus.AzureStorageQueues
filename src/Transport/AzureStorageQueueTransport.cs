@@ -27,7 +27,7 @@ namespace NServiceBus
         protected override TransportReceivingConfigurationResult ConfigureForReceiving(TransportReceivingConfigurationContext context)
         {
             var settings = context.Settings;
-            var connectionString = settings.Get<string>(WellKnownConfigurationKeys.ReceiverConnectionString);
+            var connectionString = context.ConnectionString;
             // TODO: Deze vervangen door CreateQueueClients.CreateReceiver(connectionstring)?
             var client = BuildClient(connectionString);
 
@@ -75,7 +75,9 @@ namespace NServiceBus
         private static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-            addressing.SetDefaultAccountConnectionString(connectionString);
+
+            addressing.Add(QueueAddress.DefaultStorageAccountName, connectionString, false);
+
             return addressing;
         }
 

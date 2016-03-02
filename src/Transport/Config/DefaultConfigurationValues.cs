@@ -26,6 +26,9 @@
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverPeekInterval, DefaultPeekInterval);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, DefaultMaximumWaitTimeWhenIdle);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverBatchSize, DefaultBatchSize);
+            // TODO: Als deze niet gezet is, krijgen we hele gekke error! :)
+            settings.SetDefault(WellKnownConfigurationKeys.PurgeOnStartup, DefaultPurgeOnStartup);
+            settings.SetDefault(WellKnownConfigurationKeys.DefaultQueuePerInstance, DefaultQueuePerInstance);
             //TODO: What to do with these?
             //settings.SetDefault(WellKnownConfigurationKeys.MessageWrapperSerializer, somevalue);
             //settings.SetDefault(WellKnownConfigurationKeys.MessageWrapperSerializerFactory, somevalue);

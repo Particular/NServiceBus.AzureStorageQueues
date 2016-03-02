@@ -52,7 +52,6 @@
         {
             var foundTransportDefinitions = TypeScanner.GetAllTypesAssignableTo<TransportDefinition>();
 
-            
             foreach (var transportDefinitionType in foundTransportDefinitions)
             {
                 var key = transportDefinitionType.Name;
@@ -72,12 +71,11 @@
                 if (string.IsNullOrEmpty(connectionString) && DefaultConnectionStrings.ContainsKey(key))
                     connectionString = DefaultConnectionStrings[key];
 
+                if (string.IsNullOrEmpty(connectionString))
+                    throw new InvalidOperationException($"Cannot find connectionstring for {key}");
 
-                if (!string.IsNullOrEmpty(connectionString))
-                {
-                    runDescriptor.Settings.Add("Transport.ConnectionString", connectionString);
-                    yield return runDescriptor;
-                }
+                runDescriptor.Settings.Add("Transport.ConnectionString", connectionString);
+                yield return runDescriptor;
             }
         }
 
