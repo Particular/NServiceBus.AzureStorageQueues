@@ -11,7 +11,7 @@
         const int DefaultMaximumWaitTimeWhenIdle = 1000;
         const int DefaultBatchSize = 10;
         const bool DefaultPurgeOnStartup = false;
-        const string DefaultConnectionString = "UseDevelopmentStorage=true";
+        const string DefaultConnectionString = "";
         const bool DefaultQueuePerInstance = false;
 
         public void Apply(SettingsHolder settings)
@@ -26,13 +26,8 @@
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverPeekInterval, DefaultPeekInterval);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, DefaultMaximumWaitTimeWhenIdle);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverBatchSize, DefaultBatchSize);
-            // TODO: Als deze niet gezet is, krijgen we hele gekke error! :)
             settings.SetDefault(WellKnownConfigurationKeys.PurgeOnStartup, DefaultPurgeOnStartup);
             settings.SetDefault(WellKnownConfigurationKeys.DefaultQueuePerInstance, DefaultQueuePerInstance);
-            //TODO: What to do with these?
-            //settings.SetDefault(WellKnownConfigurationKeys.MessageWrapperSerializer, somevalue);
-            //settings.SetDefault(WellKnownConfigurationKeys.MessageWrapperSerializerFactory, somevalue);
-            //settings.SetDefault(WellKnownConfigurationKeys.TransportCreateSendingQueues, somevalue);
         }
     }
 }

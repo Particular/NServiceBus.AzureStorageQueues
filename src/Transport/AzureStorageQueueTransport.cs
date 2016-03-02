@@ -4,8 +4,6 @@ namespace NServiceBus
     using System.Collections.Generic;
     using System.Configuration;
     using System.Threading.Tasks;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using NServiceBus.Performance.TimeToBeReceived;
@@ -27,15 +25,13 @@ namespace NServiceBus
         protected override TransportReceivingConfigurationResult ConfigureForReceiving(TransportReceivingConfigurationContext context)
         {
             var settings = context.Settings;
-            var connectionString = context.ConnectionString;
-            // TODO: Deze vervangen door CreateQueueClients.CreateReceiver(connectionstring)?
-            var client = BuildClient(connectionString);
+            var connectionString = new ConnectionString(context.ConnectionString);
+            var client = new CreateQueueClients().CreateRecevier(connectionString);
 
             return new TransportReceivingConfigurationResult(
                 () =>
                 {
-                    // TODO: Klopt deze connectionString? Dat was context.ConnectionString
-                    var addressing = GetAddressing(settings, connectionString);
+                    var addressing = GetAddressing(settings, connectionString.Value);
                     var receiver = new AzureMessageQueueReceiver(GetSerializer(settings), client, GetAddressGenerator(settings))
                     {
                         PurgeOnStartup = settings.Get<bool>(WellKnownConfigurationKeys.PurgeOnStartup),
@@ -141,19 +137,6 @@ namespace NServiceBus
                 }
             }
             return serializer;
-        }
-
-        static CloudQueueClient BuildClient(string connectionString)
-        {
-            // TODO: Move this to front so that we know while setting up config
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new ConfigurationErrorsException(
-                    "Provide connection string for the storage account. " +
-                    "If you use it for development purposes, use 'devstoreaccount1' according to https://azure.microsoft.com/en-us/documentation/articles/storage-use-emulator/.");
-            }
-
-            return CloudStorageAccount.Parse(connectionString).CreateCloudQueueClient();
         }
     }
 }

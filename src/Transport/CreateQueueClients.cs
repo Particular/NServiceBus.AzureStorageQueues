@@ -13,6 +13,11 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             return destinationQueueClients.GetOrAdd(connectionString, BuildClient);
         }
 
+        public CloudQueueClient CreateRecevier(ConnectionString connectionString)
+        {
+            return BuildClient(connectionString);
+        }
+
         private CloudQueueClient BuildClient(ConnectionString connectionString)
         {
             CloudStorageAccount account;
