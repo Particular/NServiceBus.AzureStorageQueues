@@ -2,8 +2,6 @@ namespace NServiceBus
 {
     using System;
     using System.IO;
-    using System.Linq;
-    using System.Reflection;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using NServiceBus.Configuration.AdvanceExtensibility;

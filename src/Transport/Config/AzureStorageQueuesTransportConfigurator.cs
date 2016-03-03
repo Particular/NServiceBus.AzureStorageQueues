@@ -1,10 +1,7 @@
 ﻿namespace NServiceBus.AzureStorageQueues
 {
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
-    using NServiceBus.Config;
     using NServiceBus.Features;
     using NServiceBus.Logging;
-    using NServiceBus.Settings;
 
     public class AzureStorageQueuesTransportConfigurator : Feature
     {
