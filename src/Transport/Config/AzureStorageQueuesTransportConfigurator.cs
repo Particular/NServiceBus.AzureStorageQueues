@@ -1,28 +1,25 @@
 ﻿namespace NServiceBus.AzureStorageQueues
 {
-    using NServiceBus.Features;
-    using NServiceBus.Logging;
+    //public class AzureStorageQueuesTransportConfigurator : Feature
+    //{
+    //    ILog logger = LogManager.GetLogger<AzureStorageQueuesTransportConfigurator>();
 
-    public class AzureStorageQueuesTransportConfigurator : Feature
-    {
-        ILog logger = LogManager.GetLogger<AzureStorageQueuesTransportConfigurator>();
+    //    public AzureStorageQueuesTransportConfigurator()
+    //    {
+    //        EnableByDefault();
 
-        public AzureStorageQueuesTransportConfigurator()
-        {
-            EnableByDefault();
+    //        Defaults(settings =>
+    //        {
+    //            settings.SetDefault("Transactions.DoNotWrapHandlersExecutionInATransactionScope", true);
+    //            settings.SetDefault("Transactions.SuppressDistributedTransactions", true);
+    //            new DefaultConfigurationValues().Apply(settings);
 
-            Defaults(settings =>
-            {
-                settings.SetDefault("Transactions.DoNotWrapHandlersExecutionInATransactionScope", true);
-                settings.SetDefault("Transactions.SuppressDistributedTransactions", true);
-                new DefaultConfigurationValues().Apply(settings);
+    //        });
 
-            });
+    //    }
 
-        }
-
-        protected override void Setup(FeatureConfigurationContext context)
-        {
-        }
-    }
+    //    protected override void Setup(FeatureConfigurationContext context)
+    //    {
+    //    }
+    //}
 }
