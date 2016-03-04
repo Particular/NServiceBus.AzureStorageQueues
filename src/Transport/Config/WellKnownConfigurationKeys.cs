@@ -10,7 +10,6 @@
         public const string MessageWrapperSerializer = "Transport.AzureStorageQueue.MessageWrapperSerializer";
         public const string MessageWrapperSerializerFactory = "Transport.AzureStorageQueue.MessageWrapperSerializerFactory";
         public const string Sha1Shortener = "Transport.AzureStorageQueue.Sha1Shortener";
-        public const string TransportCreateSendingQueues = "Transport.AzureStorageQueue.TransportCreateSendingQueues";
         public const string PurgeOnStartup = "Transport.AzureStorageQueue.PurgeOnStartup";
         public const string DefaultQueuePerInstance = "Transport.AzureStorageQueue.DefaultQueuePerInstance";
     }

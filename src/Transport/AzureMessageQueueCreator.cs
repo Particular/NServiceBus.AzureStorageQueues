@@ -15,22 +15,16 @@
     {
         readonly QueueAddressGenerator addressGenerator;
         readonly CloudQueueClient client;
-        readonly bool shouldCreateSendingQueues;
 
-        public AzureMessageQueueCreator(CloudQueueClient client, QueueAddressGenerator addressGenerator, bool shouldCreateSendingQueues)
+        public AzureMessageQueueCreator(CloudQueueClient client, QueueAddressGenerator addressGenerator)
         {
             this.client = client;
             this.addressGenerator = addressGenerator;
-            this.shouldCreateSendingQueues = shouldCreateSendingQueues;
         }
 
         public async Task CreateQueueIfNecessary(QueueBindings queueBindings, string identity)
         {
             var addresses = queueBindings.ReceivingAddresses.ToArray();
-            if (shouldCreateSendingQueues)
-            {
-                addresses = addresses.Concat(queueBindings.SendingAddresses).ToArray();
-            }
 
             await Task.WhenAll(addresses.Select(CreateQueue)).ConfigureAwait(false);
         }

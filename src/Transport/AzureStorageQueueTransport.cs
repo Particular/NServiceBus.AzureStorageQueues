@@ -43,7 +43,7 @@ namespace NServiceBus
 
                     return new MessagePump(receiver, addressing);
                 },
-                () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings), settings.GetOrDefault<bool>(WellKnownConfigurationKeys.TransportCreateSendingQueues)),
+                () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings)),
                 () => Task.FromResult(StartupCheckResult.Success));
         }
 

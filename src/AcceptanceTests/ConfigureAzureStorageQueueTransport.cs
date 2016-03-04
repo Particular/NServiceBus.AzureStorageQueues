@@ -21,8 +21,7 @@ class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(5))
-            .SerializeMessageWrapperWith(defintion => MessageWrapperSerializer.Json.Value)
-            .CreateSendingQueues();
+            .SerializeMessageWrapperWith(defintion => MessageWrapperSerializer.Json.Value);
 
         busConfiguration = configuration;
 

@@ -104,16 +104,6 @@ namespace NServiceBus
             return config;
         }
 
-        /// <summary>
-        ///     Makes the transport create sending queues as well. This is a non-default behavior as sending queues are created by
-        ///     receivers.
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> CreateSendingQueues(this TransportExtensions<AzureStorageQueueTransport> config)
-        {
-            config.GetSettings().Set(WellKnownConfigurationKeys.TransportCreateSendingQueues, true);
-            return config;
-        }
-
         public static TransportExtensions<AzureStorageQueueTransport> UseSha1ForShortening(this TransportExtensions<AzureStorageQueueTransport> config)
         {
             config.GetSettings().Set(WellKnownConfigurationKeys.Sha1Shortener, true);
