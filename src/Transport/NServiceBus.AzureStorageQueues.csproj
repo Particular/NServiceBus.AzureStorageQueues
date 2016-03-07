@@ -113,7 +113,6 @@
     <Compile Include="MessagePump.cs" />
     <Compile Include="RepeatedFailuresOverTimeCircuitBreaker.cs" />
     <Compile Include="AzureMessageQueueReceiver.cs" />
-    <Compile Include="Config\AzureStorageQueuesTransportConfigurator.cs" />
     <Compile Include="Config\DefaultConfigurationValues.cs" />
     <Compile Include="Config\Extensions\AzureStorageAddressingSettings.cs" />
     <Compile Include="Config\Extensions\AzureStorageTransportAddressingExtensions.cs" />

@@ -41,14 +41,15 @@
                 .Run());
         }
 
-        private static async Task Send(IBusSession bus)
+        //private static async Task Send(IEndpointInstance messageSession)
+        private static async Task Send(IMessageSession messageSession)
         {
-            await bus.Send(new MyMessage()).ConfigureAwait(false);
+            await messageSession.Send(new MyMessage()).ConfigureAwait(false);
             var prev = WebRequest.DefaultWebProxy;
             WebRequest.DefaultWebProxy = new ThrowingProxy();
             try
             {
-                await bus.Send(new MyMessage());
+                await messageSession.Send(new MyMessage());
             }
             finally
             {

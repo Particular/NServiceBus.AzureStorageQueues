@@ -14,7 +14,8 @@
     public class When_dispatching_to_another_account : NServiceBusAcceptanceTest
     {
         private const string AnotherAccountName = "AnotherAccountName";
-        public static readonly string MainNamespaceConnectionString = Transports.Default.Settings["Transport.ConnectionString"];
+        public static readonly string MainNamespaceConnectionString = Transports.Default.Settings.Get<string>("Transport.ConnectionString");
+
 
         [Test]
         public void Connection_string_should_throw()
@@ -64,7 +65,7 @@
                     configuration.UseTransport<AzureStorageQueueTransport>()
                         .Addressing()
                         .Partitioning()
-                        .AddStorageAccount(AnotherAccountName, Transports.Default.Settings["Transport.ConnectionString"]);
+                        .AddStorageAccount(AnotherAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString"));
                 }).AddMapping<MyMessage>(typeof(Receiver));
             }
         }
