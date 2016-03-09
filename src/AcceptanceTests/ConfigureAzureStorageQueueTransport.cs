@@ -28,11 +28,11 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
     public Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
     {
         connectionString = settings.Get<string>("Transport.ConnectionString");
-        configuration.UseSerialization<JsonSerializer>();
+        configuration.UseSerialization<XmlSerializer>();
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(5))
-            .SerializeMessageWrapperWith(definition => MessageWrapperSerializer.Json.Value);
+            .SerializeMessageWrapperWith(definition => MessageWrapperSerializer.Xml.Value);
 
         endpointConfiguration = configuration;
 
