@@ -28,6 +28,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
     public Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
     {
         connectionString = settings.Get<string>("Transport.ConnectionString");
+        //connectionString = "UseDevelopmentStorage=true;";
         configuration.UseSerialization<XmlSerializer>();
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)

@@ -29,6 +29,9 @@ namespace NServiceBus
         /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> ConnectionString(this TransportExtensions<AzureStorageQueueTransport> config, string value)
         {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentNullException(nameof(value));
+
             config.ConnectionString(() =>
             {
                 return value;
@@ -44,6 +47,9 @@ namespace NServiceBus
         /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
+            if (value < 100 || value > 60000)
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be between 100ms and 60 seconds.");
+
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, value);
             return config;
         }
@@ -56,6 +62,9 @@ namespace NServiceBus
         /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
+            if (value < 1000 || value > 604800000)
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be between 1 second and 7 days.");
+
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, value);
             return config;
         }
@@ -79,6 +88,9 @@ namespace NServiceBus
         /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> BatchSize(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
+            if (value < 1 || value > 32)
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Batchsize must be between 1 and 32 messages.");
+
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverBatchSize, value);
             return config;
         }
@@ -103,7 +115,10 @@ namespace NServiceBus
             config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializerFactory, serializerFactory);
             return config;
         }
-
+        /// <summary>
+        ///     Overrides default Md5 shortener for creating queue names with Sha1 shortener.
+        /// </summary>
+        /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> UseSha1ForShortening(this TransportExtensions<AzureStorageQueueTransport> config)
         {
             config.GetSettings().Set(WellKnownConfigurationKeys.Sha1Shortener, true);
