@@ -11,29 +11,29 @@ using NServiceBus.Transports;
 
 class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
 {
-    BusConfiguration busConfiguration;
-    string connectionString;
-
-    public Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
+    public async Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
     {
-        connectionString = settings["Transport.ConnectionString"];
+        var connectionString = settings["Transport.ConnectionString"];
         configuration.UseSerialization<JsonSerializer>();
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(5))
             .SerializeMessageWrapperWith(defintion => MessageWrapperSerializer.Json.Value);
 
-        busConfiguration = configuration;
+        await CleanQueuesUsedByTest(connectionString, configuration);
+    }
 
+    public Task Cleanup()
+    {
         return Task.FromResult(0);
     }
 
-    public async Task Cleanup()
+    private static async Task CleanQueuesUsedByTest(string connectionString, BusConfiguration configuration)
     {
         var storage = CloudStorageAccount.Parse(connectionString);
         var queues = storage.CreateCloudQueueClient();
 
-        var queuesNames = GetTestRelatedQueueNames();
+        var queuesNames = GetTestRelatedQueueNames(configuration);
 
         foreach (var queuesName in queuesNames)
         {
@@ -45,10 +45,10 @@ class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
         }
     }
 
-    private IEnumerable<string> GetTestRelatedQueueNames()
+    private static IEnumerable<string> GetTestRelatedQueueNames(BusConfiguration configuration)
     {
-        var bindings = busConfiguration.GetSettings().Get<QueueBindings>();
-        var generator = new QueueAddressGenerator(busConfiguration.GetSettings());
+        var bindings = configuration.GetSettings().Get<QueueBindings>();
+        var generator = new QueueAddressGenerator(configuration.GetSettings());
         return bindings.ReceivingAddresses.Concat(bindings.SendingAddresses).Select(queue => generator.GetQueueName(queue));
     }
 }
