@@ -25,7 +25,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
     private EndpointConfiguration endpointConfiguration;
     string connectionString;
 
-    public Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
+    public async Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings)
     {
         connectionString = settings.Get<string>("Transport.ConnectionString");
         //connectionString = "UseDevelopmentStorage=true;";
@@ -45,7 +45,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         return Task.FromResult(0);
     }
 
-    private async Task CleanQueuesUsedByTest(string connectionString, BusConfiguration configuration)
+    private async Task CleanQueuesUsedByTest(string connectionString, EndpointConfiguration configuration)
     {
         var storage = CloudStorageAccount.Parse(connectionString);
         var queues = storage.CreateCloudQueueClient();
@@ -62,7 +62,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         }
     }
 
-    private IEnumerable<string> GetTestRelatedQueueNames(BusConfiguration configuration)
+    private IEnumerable<string> GetTestRelatedQueueNames(EndpointConfiguration configuration)
     {
         var bindings = endpointConfiguration.GetSettings().Get<QueueBindings>();
         var generator = new QueueAddressGenerator(endpointConfiguration.GetSettings());
