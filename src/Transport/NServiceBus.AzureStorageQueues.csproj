@@ -84,6 +84,9 @@
       <HintPath>..\packages\NServiceBus.6.0.0-unstable1461\lib\net452\NServiceBus.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="NuGetPackager">
+      <HintPath>..\packages\NuGetPackager.0.5.4\build\NuGetPackager.dll</HintPath>
+    </Reference>
     <Reference Include="Obsolete, Version=3.1.0.0, Culture=neutral, PublicKeyToken=1ca091877d12ca03, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Obsolete.Fody.3.1.0.0\Lib\NET35\Obsolete.dll</HintPath>
@@ -105,22 +108,25 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AzureMessageQueueCreator.cs" />
+    <Compile Include="Dispatcher.cs" />
+    <Compile Include="MessagePump.cs" />
+    <Compile Include="RepeatedFailuresOverTimeCircuitBreaker.cs" />
     <Compile Include="AzureMessageQueueReceiver.cs" />
+    <Compile Include="Config\AzureStorageQueuesTransportConfigurator.cs" />
+    <Compile Include="Config\DefaultConfigurationValues.cs" />
     <Compile Include="Config\Extensions\AzureStorageAddressingSettings.cs" />
     <Compile Include="Config\Extensions\AzureStorageTransportAddressingExtensions.cs" />
     <Compile Include="Config\Extensions\IAzureStoragePartitioningSettings.cs" />
     <Compile Include="Config\QueueAddress.cs" />
+    <Compile Include="Config\WellKnownConfigurationKeys.cs" />
     <Compile Include="ConnectionString.cs" />
     <Compile Include="DictionaryExtensions.cs" />
-    <Compile Include="Dispatcher.cs" />
     <Compile Include="QueueAddressGenerator.cs" />
     <Compile Include="AzureStorageQueueTransport.cs" />
     <Compile Include="CreateQueueClients.cs" />
     <Compile Include="ICreateQueueClients.cs" />
     <Compile Include="MessageRetrieved.cs" />
     <Compile Include="MessageWrapperSerializer.cs" />
-    <Compile Include="RepeatedFailuresOverTimeCircuitBreaker.cs" />
-    <Compile Include="Config\AzureQueueConfig.cs" />
     <Compile Include="Config\AzureStorageTransportExtensions.cs" />
     <Compile Include="Config\QueueIndividualizer.cs" />
     <Compile Include="Config\RoleEnvironmentUnavailableException.cs" />
@@ -128,7 +134,6 @@
     <Compile Include="Shortener.cs" />
     <Compile Include="EnvelopeDeserializationFailed.cs" />
     <Compile Include="IsHostedIn.cs" />
-    <Compile Include="MessagePump.cs" />
     <Compile Include="MessageWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnableToDispatchException.cs" />
@@ -145,17 +150,18 @@
   <ItemGroup>
     <Analyzer Include="..\packages\Particular.CodeRules.0.1.0\tools\..\analyzers\dotnet\cs\Particular.CodeRules.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\NuGetPackager.0.5.4\build\NuGetPackager.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NuGetPackager.0.5.4\build\NuGetPackager.targets'))" />
-    <Error Condition="!Exists('..\packages\GitVersionTask.2.0.1\Build\GitVersionTask.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\GitVersionTask.2.0.1\Build\GitVersionTask.targets'))" />
     <Error Condition="!Exists('..\packages\Fody.1.29.3\build\portable-net+sl+win+wpa+wp\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.1.29.3\build\portable-net+sl+win+wpa+wp\Fody.targets'))" />
     <Error Condition="!Exists('..\packages\Particular.CodeRules.0.1.0\build\Particular.CodeRules.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Particular.CodeRules.0.1.0\build\Particular.CodeRules.props'))" />
+    <Error Condition="!Exists('..\packages\NuGetPackager.0.5.5\build\NuGetPackager.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NuGetPackager.0.5.5\build\NuGetPackager.targets'))" />
+    <Error Condition="!Exists('..\packages\GitVersionTask.2.0.1\Build\GitVersionTask.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\GitVersionTask.2.0.1\Build\GitVersionTask.targets'))" />
   </Target>
-  <Import Project="..\packages\NuGetPackager.0.5.4\build\NuGetPackager.targets" Condition="Exists('..\packages\NuGetPackager.0.5.4\build\NuGetPackager.targets')" />
-  <Import Project="..\packages\GitVersionTask.2.0.1\Build\GitVersionTask.targets" Condition="Exists('..\packages\GitVersionTask.2.0.1\Build\GitVersionTask.targets')" />
   <Import Project="..\packages\Fody.1.29.3\build\portable-net+sl+win+wpa+wp\Fody.targets" Condition="Exists('..\packages\Fody.1.29.3\build\portable-net+sl+win+wpa+wp\Fody.targets')" />
+  <Import Project="..\packages\NuGetPackager.0.5.5\build\NuGetPackager.targets" Condition="Exists('..\packages\NuGetPackager.0.5.5\build\NuGetPackager.targets')" />
+  <Import Project="..\packages\GitVersionTask.2.0.1\Build\GitVersionTask.targets" Condition="Exists('..\packages\GitVersionTask.2.0.1\Build\GitVersionTask.targets')" />
 </Project>

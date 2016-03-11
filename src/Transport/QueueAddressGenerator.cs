@@ -2,6 +2,7 @@
 {
     using System;
     using System.Text.RegularExpressions;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using NServiceBus.Settings;
 
     /// <summary>
@@ -13,7 +14,7 @@
 
         public QueueAddressGenerator(ReadOnlySettings settings)
         {
-            if (settings.GetOrDefault<bool>(AzureStorageTransportExtensions.Sha1Shortener))
+            if (settings.GetOrDefault<bool>(WellKnownConfigurationKeys.Sha1Shortener))
             {
                 shortener = Shortener.Sha1;
             }

@@ -10,7 +10,7 @@
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new ArgumentException("Connection string cannot be null nor empty", nameof(value));
+                throw new ArgumentException("Connection string cannot be null nor empty.", nameof(value));
             }
 
             Value = value;
