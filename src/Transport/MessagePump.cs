@@ -20,6 +20,7 @@
 
         readonly AzureMessageQueueReceiver messageReceiver;
         readonly AzureStorageAddressingSettings addressing;
+        bool ackBeforeDispatch;
         CancellationToken cancellationToken;
         CancellationTokenSource cancellationTokenSource;
         RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
@@ -45,6 +46,20 @@
             pipeline = pipe;
             circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
             messageReceiver.PurgeOnStartup = settings.PurgeOnStartup;
+
+            switch (settings.RequiredTransactionMode)
+            {
+                case TransportTransactionMode.None:
+                    ackBeforeDispatch = true;
+                    break;
+                case TransportTransactionMode.ReceiveOnly:
+                    ackBeforeDispatch = false;
+                    break;
+                default:
+                    throw new NotSupportedException($"The TransportTransactionMode {settings.RequiredTransactionMode} is not supported");
+            }
+
+
             await messageReceiver.Init(settings.InputQueue).ConfigureAwait(false);
         }
 
@@ -113,6 +128,12 @@
                     {
                         continue;
                     }
+
+                    if (ackBeforeDispatch)
+                    {
+                        await retrieved.Ack().ConfigureAwait(false);
+                    }
+
                     circuitBreaker.Success();
                 }
                 catch (QueueNotFoundException ex)
@@ -153,13 +174,16 @@
                         var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), tokenSource, new ContextBag());
                         await pipeline(pushContext).ConfigureAwait(false);
 
-                        if (tokenSource.IsCancellationRequested == false)
+                        if (ackBeforeDispatch == false)
                         {
-                            await retrieved.Ack().ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            await retrieved.Nack().ConfigureAwait(false);
+                            if (tokenSource.IsCancellationRequested == false)
+                            {
+                                await retrieved.Ack().ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                await retrieved.Nack().ConfigureAwait(false);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -187,8 +211,7 @@
                 {
                     Task toBeRemoved;
                     runningReceiveTasks.TryRemove(t, out toBeRemoved);
-                }, TaskContinuationOptions.ExecuteSynchronously)
-                    .Ignore();
+                }, TaskContinuationOptions.ExecuteSynchronously).Ignore();
             }
         }
     }
