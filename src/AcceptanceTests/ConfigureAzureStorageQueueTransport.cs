@@ -5,20 +5,37 @@ using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
+using NServiceBus.AcceptanceTests.ScenarioDescriptors;
 using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
 using NServiceBus.Configuration.AdvanceExtensibility;
 using NServiceBus.Transports;
 
-class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
+public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupportedScenariosForTestExecution
 {
-    public async Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)
+    public IEnumerable<Type> UnsupportedScenarioDescriptorTypes { get; } = new[]
     {
-        var connectionString = settings["Transport.ConnectionString"];
-        configuration.UseSerialization<JsonSerializer>();
+        typeof(AllTransportsWithCentralizedPubSubSupport),
+        typeof(AllDtcTransports),
+        typeof(AllTransportsWithoutNativeDeferralAndWithAtomicSendAndReceive)
+    };
+}
+
+public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
+{
+    private EndpointConfiguration endpointConfiguration;
+    string connectionString;
+
+    public async Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings)
+    {
+        connectionString = settings.Get<string>("Transport.ConnectionString");
+        //connectionString = "UseDevelopmentStorage=true;";
+        configuration.UseSerialization<XmlSerializer>();
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(5))
-            .SerializeMessageWrapperWith(defintion => MessageWrapperSerializer.Json.Value);
+            .SerializeMessageWrapperWith(definition => MessageWrapperSerializer.Xml.Value);
+
+        endpointConfiguration = configuration;
 
         await CleanQueuesUsedByTest(connectionString, configuration);
     }
@@ -28,7 +45,7 @@ class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
         return Task.FromResult(0);
     }
 
-    private static async Task CleanQueuesUsedByTest(string connectionString, BusConfiguration configuration)
+    private async Task CleanQueuesUsedByTest(string connectionString, EndpointConfiguration configuration)
     {
         var storage = CloudStorageAccount.Parse(connectionString);
         var queues = storage.CreateCloudQueueClient();
@@ -45,10 +62,11 @@ class ConfigureAzureStorageQueueTransport : IConfigureTestExecution
         }
     }
 
-    private static IEnumerable<string> GetTestRelatedQueueNames(BusConfiguration configuration)
+    private IEnumerable<string> GetTestRelatedQueueNames(EndpointConfiguration configuration)
     {
-        var bindings = configuration.GetSettings().Get<QueueBindings>();
-        var generator = new QueueAddressGenerator(configuration.GetSettings());
+        var bindings = endpointConfiguration.GetSettings().Get<QueueBindings>();
+        var generator = new QueueAddressGenerator(endpointConfiguration.GetSettings());
         return bindings.ReceivingAddresses.Concat(bindings.SendingAddresses).Select(queue => generator.GetQueueName(queue));
+
     }
 }

@@ -70,10 +70,11 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
             if (rawMessage == null)
             {
-                if (timeToDelayNextPeek < MaximumWaitTimeWhenIdle)
+                if (timeToDelayNextPeek + PeekInterval < MaximumWaitTimeWhenIdle)
                 {
                     timeToDelayNextPeek += PeekInterval;
                 }
+                else timeToDelayNextPeek = MaximumWaitTimeWhenIdle;
 
                 await Task.Delay(timeToDelayNextPeek, token).ConfigureAwait(false);
                 return null;

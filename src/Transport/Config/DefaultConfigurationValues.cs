@@ -5,7 +5,6 @@
 
     class DefaultConfigurationValues
     {
-        // These are here only for the ConfigSection, can be removed in V7
         const int DefaultMessageInvisibleTime = 30000;
         const int DefaultPeekInterval = 50;
         const int DefaultMaximumWaitTimeWhenIdle = 1000;
