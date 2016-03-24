@@ -127,7 +127,7 @@
     <Compile Include="ICreateQueueClients.cs" />
     <Compile Include="MessageRetrieved.cs" />
     <Compile Include="MessageWrapperSerializer.cs" />
-    <Compile Include="Config\AzureStorageTransportExtensions.cs" />
+    <Compile Include="Config\ExtensionMethods\AzureStorageQueueTransportExtensions.cs" />
     <Compile Include="Config\QueueIndividualizer.cs" />
     <Compile Include="Config\RoleEnvironmentUnavailableException.cs" />
     <Compile Include="Config\SafeRoleEnvironment.cs" />

@@ -85,7 +85,7 @@
                 if (serializer == null)
                 {
                     throw new ConfigurationErrorsException($"The bus is configured using different {typeof(SerializationDefinition).Name} than defaults provided by the NServiceBus. " +
-                                                           $"Register a custom serialization with {typeof(AzureStorageTransportExtensions).Name}.SerializeMessageWrapperWith()");
+                                                           $"Register a custom serialization with {typeof(AzureStorageQueueTransportExtensions).Name}.SerializeMessageWrapperWith()");
                 }
             }
             return serializer;
