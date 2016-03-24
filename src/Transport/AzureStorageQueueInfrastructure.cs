@@ -4,7 +4,7 @@
     using System.Collections.Generic;
     using System.Configuration;
     using System.Threading.Tasks;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
+    using NServiceBus.AzureStorageQueues;
     using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Routing;
     using NServiceBus.Serialization;

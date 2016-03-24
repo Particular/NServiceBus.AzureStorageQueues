@@ -3,7 +3,7 @@ namespace NServiceBus
     using System;
     using System.IO;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
+    using NServiceBus.AzureStorageQueues;
     using NServiceBus.Configuration.AdvanceExtensibility;
     using NServiceBus.Serialization;
 

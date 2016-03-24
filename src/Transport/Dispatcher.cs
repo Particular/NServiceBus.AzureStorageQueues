@@ -6,7 +6,7 @@
     using System.Linq;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
+    using NServiceBus.AzureStorageQueues;
     using NServiceBus.Extensibility;
     using NServiceBus.Logging;
     using NServiceBus.Transports;

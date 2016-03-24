@@ -2,7 +2,7 @@
 {
     using System;
     using System.Text.RegularExpressions;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
+    using NServiceBus.AzureStorageQueues;
     using NServiceBus.Settings;
 
     /// <summary>

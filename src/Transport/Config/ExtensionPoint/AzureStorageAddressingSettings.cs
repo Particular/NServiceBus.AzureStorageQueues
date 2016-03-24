@@ -3,7 +3,7 @@
     using System;
     using System.Collections.Generic;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
+    using NServiceBus.AzureStorageQueues;
 
     public sealed class AzureStorageAddressingSettings : IAzureStoragePartitioningSettings
     {

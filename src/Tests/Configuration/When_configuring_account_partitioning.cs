@@ -2,7 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
+    using NServiceBus.AzureStorageQueues;
     using NServiceBus.AzureStorageQueue.Addressing;
     using NServiceBus.Settings;
     using NUnit.Framework;

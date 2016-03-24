@@ -1,6 +1,6 @@
 ﻿namespace NServiceBus
 {
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
+    using NServiceBus.AzureStorageQueues;
     using NServiceBus.AzureStorageQueue.Addressing;
     using NServiceBus.Configuration.AdvanceExtensibility;
     using NServiceBus.Settings;
