@@ -107,8 +107,11 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Addressing\Partitioning\IAccountPartitioningStrategy.cs" />
+    <Compile Include="Addressing\Partitioning\PartitioningIntent.cs" />
     <Compile Include="AzureMessageQueueCreator.cs" />
     <Compile Include="AzureStorageQueueInfrastructure.cs" />
+    <Compile Include="Config\ExtensionPoint\AzureStorageQueueAccountPartitioningSettings.cs" />
     <Compile Include="Dispatcher.cs" />
     <Compile Include="MessagePump.cs" />
     <Compile Include="RepeatedFailuresOverTimeCircuitBreaker.cs" />

@@ -83,6 +83,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration\When_configuring_account_partitioning.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ShortenerTests.cs" />
     <Compile Include="When_naming_queues_on_azure_storage.cs" />

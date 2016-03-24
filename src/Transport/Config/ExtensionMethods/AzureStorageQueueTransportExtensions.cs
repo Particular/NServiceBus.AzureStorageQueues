@@ -108,5 +108,11 @@ namespace NServiceBus
             var settings = transportExtensions.GetSettings();
             settings.Set(WellKnownConfigurationKeys.Sha1Shortener, true);
         }
+
+        public static AzureStorageQueueAccountPartitioningSettings Partitioning(this TransportExtensions<AzureStorageQueueTransport> transportExtensions)
+        {
+            var settings = transportExtensions.GetSettings();
+            return new AzureStorageQueueAccountPartitioningSettings(settings);
+        }
     }
 }
