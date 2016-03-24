@@ -8,7 +8,7 @@
     /// <summary>
     ///     Helper class
     /// </summary>
-    public class QueueAddressGenerator
+    internal class QueueAddressGenerator
     {
         readonly Func<string, string> shortener;
 

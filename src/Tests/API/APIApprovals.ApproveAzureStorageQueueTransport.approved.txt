@@ -1,22 +1,37 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config
 {
     
-    public class AzureMessageQueueCreator : NServiceBus.Transports.ICreateQueues
+    public sealed class QueueAddress : System.IEquatable<NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress>
     {
-        public AzureMessageQueueCreator(Microsoft.WindowsAzure.Storage.Queue.CloudQueueClient client, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.QueueAddressGenerator addressGenerator) { }
-        public async System.Threading.Tasks.Task CreateQueueIfNecessary(NServiceBus.Transports.QueueBindings queueBindings, string identity) { }
+        public const string DefaultStorageAccountName = "";
+        public const string Separator = "@";
+        public QueueAddress(string queueName, string storageAccount) { }
+        public string QueueName { get; }
+        public string StorageAccount { get; }
+        public bool Equals(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
+        public static NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress Parse(string value) { }
+        public override string ToString() { }
+        public static bool TryParse(string inputQueue, out NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress queue) { }
     }
-    public class AzureStorageQueueInfrastructure : NServiceBus.Transports.TransportInfrastructure
+    public class static WellKnownConfigurationKeys
     {
-        public override System.Collections.Generic.IEnumerable<System.Type> DeliveryConstraints { get; }
-        public override NServiceBus.Transports.OutboundRoutingPolicy OutboundRoutingPolicy { get; }
-        public override NServiceBus.TransportTransactionMode TransactionMode { get; }
-        public override NServiceBus.Routing.EndpointInstance BindToLocalEndpoint(NServiceBus.Routing.EndpointInstance instance) { }
-        public override NServiceBus.Transports.TransportReceiveInfrastructure ConfigureReceiveInfrastructure() { }
-        public override NServiceBus.Transports.TransportSendInfrastructure ConfigureSendInfrastructure() { }
-        public override NServiceBus.Transports.TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure() { }
-        public override string ToTransportAddress(NServiceBus.LogicalAddress logicalAddress) { }
+        public const string DefaultQueuePerInstance = "Transport.AzureStorageQueue.DefaultQueuePerInstance";
+        public const string MessageWrapperSerializer = "Transport.AzureStorageQueue.MessageWrapperSerializer";
+        public const string MessageWrapperSerializerFactory = "Transport.AzureStorageQueue.MessageWrapperSerializerFactory";
+        public const string PurgeOnStartup = "Transport.AzureStorageQueue.PurgeOnStartup";
+        public const string ReceiverBatchSize = "Transport.AzureStorageQueue.ReceiverBatchSize";
+        public const string ReceiverConnectionString = "Transport.ConnectionString";
+        public const string ReceiverMaximumWaitTimeWhenIdle = "Transport.AzureStorageQueue.ReceiverMaximumWaitTimeWhenIdle";
+        public const string ReceiverMessageInvisibleTime = "Transport.AzureStorageQueue.Settings.ReceiverMessageInvisibleTime";
+        public const string ReceiverPeekInterval = "Transport.AzureStorageQueue.ReceiverPeekInterval";
+        public const string Sha1Shortener = "Transport.AzureStorageQueue.Sha1Shortener";
     }
+}
+namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+{
+    
     public sealed class ConnectionString : System.IEquatable<NServiceBus.Azure.Transports.WindowsAzureStorageQueues.ConnectionString>
     {
         public readonly string Value;
@@ -25,16 +40,6 @@
         public override bool Equals(object obj) { }
         public override int GetHashCode() { }
         public override string ToString() { }
-    }
-    public class CreateQueueClients : NServiceBus.Azure.Transports.WindowsAzureStorageQueues.ICreateQueueClients
-    {
-        public CreateQueueClients() { }
-        public Microsoft.WindowsAzure.Storage.Queue.CloudQueueClient Create(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.ConnectionString connectionString) { }
-        public Microsoft.WindowsAzure.Storage.Queue.CloudQueueClient CreateRecevier(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.ConnectionString connectionString) { }
-    }
-    public class static DictionaryExtensions
-    {
-        public static TValue GetValueOrDefault<TKey, TValue>(this System.Collections.Generic.IDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue = null) { }
     }
     public class EnvelopeDeserializationFailed : System.Runtime.Serialization.SerializationException
     {
@@ -97,11 +102,6 @@
         public NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper Deserialize(System.IO.Stream stream) { }
         public void Serialize(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper wrapper, System.IO.Stream stream) { }
     }
-    public class QueueAddressGenerator
-    {
-        public QueueAddressGenerator(NServiceBus.Settings.ReadOnlySettings settings) { }
-        public string GetQueueName(string address) { }
-    }
     public class QueueIndividualizer
     {
         public QueueIndividualizer() { }
@@ -142,37 +142,6 @@
         public string Namespace { get; set; }
         public string Queue { get; set; }
         public override void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
-    }
-}
-namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config
-{
-    
-    public sealed class QueueAddress : System.IEquatable<NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress>
-    {
-        public const string DefaultStorageAccountName = "";
-        public const string Separator = "@";
-        public QueueAddress(string queueName, string storageAccount) { }
-        public string QueueName { get; }
-        public string StorageAccount { get; }
-        public bool Equals(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress other) { }
-        public override bool Equals(object obj) { }
-        public override int GetHashCode() { }
-        public static NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress Parse(string value) { }
-        public override string ToString() { }
-        public static bool TryParse(string inputQueue, out NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress queue) { }
-    }
-    public class static WellKnownConfigurationKeys
-    {
-        public const string DefaultQueuePerInstance = "Transport.AzureStorageQueue.DefaultQueuePerInstance";
-        public const string MessageWrapperSerializer = "Transport.AzureStorageQueue.MessageWrapperSerializer";
-        public const string MessageWrapperSerializerFactory = "Transport.AzureStorageQueue.MessageWrapperSerializerFactory";
-        public const string PurgeOnStartup = "Transport.AzureStorageQueue.PurgeOnStartup";
-        public const string ReceiverBatchSize = "Transport.AzureStorageQueue.ReceiverBatchSize";
-        public const string ReceiverConnectionString = "Transport.ConnectionString";
-        public const string ReceiverMaximumWaitTimeWhenIdle = "Transport.AzureStorageQueue.ReceiverMaximumWaitTimeWhenIdle";
-        public const string ReceiverMessageInvisibleTime = "Transport.AzureStorageQueue.Settings.ReceiverMessageInvisibleTime";
-        public const string ReceiverPeekInterval = "Transport.AzureStorageQueue.ReceiverPeekInterval";
-        public const string Sha1Shortener = "Transport.AzureStorageQueue.Sha1Shortener";
     }
 }
 namespace NServiceBus

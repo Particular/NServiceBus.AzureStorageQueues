@@ -11,7 +11,7 @@
     ///     Creates the queues. Note that this class will only be invoked when running the windows host and not when running in
     ///     the fabric
     /// </summary>
-    public class AzureMessageQueueCreator : ICreateQueues
+    internal class AzureMessageQueueCreator : ICreateQueues
     {
         readonly QueueAddressGenerator addressGenerator;
         readonly CloudQueueClient client;
