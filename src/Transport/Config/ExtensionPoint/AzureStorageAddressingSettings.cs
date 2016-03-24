@@ -5,7 +5,7 @@
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NServiceBus.AzureStorageQueues;
 
-    public sealed class AzureStorageAddressingSettings : IAzureStoragePartitioningSettings
+    public sealed class AzureStorageAddressingSettings 
     {
         private static readonly IEnumerable<string> headersToApplyNameMapping = new[]
         {
@@ -17,7 +17,7 @@
 
         bool logicalQueueAddresses;
 
-        IAzureStoragePartitioningSettings IAzureStoragePartitioningSettings.AddStorageAccount(string name, string connectionString)
+        public AzureStorageAddressingSettings AddStorageAccount(string name, string connectionString)
         {
             if (name == QueueAddress.DefaultStorageAccountName)
             {
@@ -28,7 +28,7 @@
             return this;
         }
 
-        public IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings()
+        public AzureStorageAddressingSettings UseAccountNamesInsteadOfConnectionStrings()
         {
             logicalQueueAddresses = true;
             return this;

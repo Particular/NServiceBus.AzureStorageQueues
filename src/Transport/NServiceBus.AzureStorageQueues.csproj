@@ -119,7 +119,6 @@
     <Compile Include="Config\DefaultConfigurationValues.cs" />
     <Compile Include="Config\ExtensionPoint\AzureStorageAddressingSettings.cs" />
     <Compile Include="Config\ExtensionPoint\AzureStorageTransportAddressingExtensions.cs" />
-    <Compile Include="Config\ExtensionPoint\IAzureStoragePartitioningSettings.cs" />
     <Compile Include="Config\QueueAddress.cs" />
     <Compile Include="Config\WellKnownConfigurationKeys.cs" />
     <Compile Include="ConnectionString.cs" />
