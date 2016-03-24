@@ -22,24 +22,6 @@ namespace NServiceBus
         }
 
         /// <summary>
-        ///     Sets the connectionstring to Azure Storage
-        /// </summary>
-        /// <param name="config"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static TransportExtensions<AzureStorageQueueTransport> ConnectionString(this TransportExtensions<AzureStorageQueueTransport> config, string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentNullException(nameof(value));
-
-            config.ConnectionString(() =>
-            {
-                return value;
-            });
-            return config;
-        }
-
-        /// <summary>
         ///     Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
         /// </summary>
         /// <param name="config"></param>
