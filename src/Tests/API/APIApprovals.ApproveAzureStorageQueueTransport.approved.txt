@@ -1,20 +1,6 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config
 {
     
-    public sealed class QueueAddress : System.IEquatable<NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress>
-    {
-        public const string DefaultStorageAccountName = "";
-        public const string Separator = "@";
-        public QueueAddress(string queueName, string storageAccount) { }
-        public string QueueName { get; }
-        public string StorageAccount { get; }
-        public bool Equals(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress other) { }
-        public override bool Equals(object obj) { }
-        public override int GetHashCode() { }
-        public static NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress Parse(string value) { }
-        public override string ToString() { }
-        public static bool TryParse(string inputQueue, out NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config.QueueAddress queue) { }
-    }
     public class static WellKnownConfigurationKeys
     {
         public const string DefaultQueuePerInstance = "Transport.AzureStorageQueue.DefaultQueuePerInstance";
@@ -56,11 +42,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     public interface ICreateQueueClients
     {
         Microsoft.WindowsAzure.Storage.Queue.CloudQueueClient Create(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.ConnectionString connectionStringValue);
-    }
-    public class static IsHostedIn
-    {
-        public static string HostProcessName;
-        public static bool ChildHostProcess() { }
     }
     [System.Runtime.Serialization.DataContractAttribute(Namespace="http://tempuri.net/NServiceBus.Azure.Transports.WindowsAzureStorageQueues")]
     public class MessageWrapper : NServiceBus.IMessage
@@ -115,18 +96,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public RoleEnvironmentUnavailableException(string message) { }
         public RoleEnvironmentUnavailableException(string message, System.Exception inner) { }
         protected RoleEnvironmentUnavailableException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
-    }
-    public class static SafeRoleEnvironment
-    {
-        public static string CurrentRoleInstanceId { get; }
-        public static string CurrentRoleName { get; }
-        public static string DeploymentId { get; }
-        public static bool IsAvailable { get; }
-        public static string GetConfigurationSettingValue(string name) { }
-        public static string GetRootPath(string name) { }
-        public static void RequestRecycle() { }
-        public static bool TryGetConfigurationSettingValue(string name, out string setting) { }
-        public static bool TryGetRootPath(string name, out string path) { }
     }
     public class Shortener
     {
