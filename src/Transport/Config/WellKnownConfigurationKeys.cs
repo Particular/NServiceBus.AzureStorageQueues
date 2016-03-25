@@ -17,6 +17,7 @@
         {
             public static class Partitioning
             {
+                public const string Accounts = "Transport.AzureStorageQueue.Addressing.Partitioning.Accounts";
                 public const string Strategy = "Transport.AzureStorageQueue.Addressing.Partitioning.Strategy";
             }
         }

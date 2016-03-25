@@ -1,6 +1,5 @@
 ﻿namespace NServiceBus.AzureStorageQueues
 {
-    using NServiceBus.AzureStorageQueues;
     using NServiceBus.Settings;
 
     class DefaultConfigurationValues
