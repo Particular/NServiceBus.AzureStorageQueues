@@ -1,6 +1,6 @@
 ﻿namespace NServiceBus.Azure.QuickTests.Transports.AzureStorage
 {
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using NServiceBus.AzureStorageQueues;
     using NServiceBus.Settings;
     using NUnit.Framework;
 

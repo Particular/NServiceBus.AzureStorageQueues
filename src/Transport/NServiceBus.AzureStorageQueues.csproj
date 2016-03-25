@@ -8,7 +8,7 @@
     <ProjectGuid>{B6D6406F-F5A4-46D7-A882-4A831128065E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</RootNamespace>
+    <RootNamespace>NServiceBus.AzureStorageQueues</RootNamespace>
     <AssemblyName>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

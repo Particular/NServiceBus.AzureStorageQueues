@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -6,7 +6,6 @@
     using System.Linq;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.AzureStorageQueues;
     using NServiceBus.Extensibility;
     using NServiceBus.Logging;
     using NServiceBus.Transports;

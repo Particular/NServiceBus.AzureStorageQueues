@@ -1,8 +1,7 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
     using System.Text.RegularExpressions;
-    using NServiceBus.AzureStorageQueues;
     using NServiceBus.Settings;
 
     /// <summary>

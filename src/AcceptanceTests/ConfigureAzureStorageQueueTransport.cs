@@ -6,7 +6,7 @@ using Microsoft.WindowsAzure.Storage;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.AcceptanceTests.ScenarioDescriptors;
-using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+using NServiceBus.AzureStorageQueues;
 using NServiceBus.Configuration.AdvanceExtensibility;
 using NServiceBus.Transports;
 
