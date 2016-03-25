@@ -110,7 +110,7 @@
     <Compile Include="Addressing\Partitioning\IAccountPartitioningStrategy.cs" />
     <Compile Include="Addressing\Partitioning\PartitioningIntent.cs" />
     <Compile Include="AzureMessageQueueCreator.cs" />
-    <Compile Include="AzureStorageQueueInfrastructure.cs" />
+    <Compile Include="Config\AzureStorageQueueInfrastructure.cs" />
     <Compile Include="Config\ExtensionPoint\AzureStorageQueueAccountPartitioningSettings.cs" />
     <Compile Include="Dispatcher.cs" />
     <Compile Include="MessagePump.cs" />
@@ -124,7 +124,7 @@
     <Compile Include="ConnectionString.cs" />
     <Compile Include="DictionaryExtensions.cs" />
     <Compile Include="QueueAddressGenerator.cs" />
-    <Compile Include="AzureStorageQueueTransport.cs" />
+    <Compile Include="Config\AzureStorageQueueTransport.cs" />
     <Compile Include="CreateQueueClients.cs" />
     <Compile Include="ICreateQueueClients.cs" />
     <Compile Include="MessageRetrieved.cs" />

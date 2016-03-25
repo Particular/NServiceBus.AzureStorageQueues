@@ -1,9 +1,10 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus
 {
     using System;
     using System.Collections.Generic;
     using System.Configuration;
     using System.Threading.Tasks;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NServiceBus.AzureStorageQueues;
     using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Routing;
@@ -11,7 +12,7 @@
     using NServiceBus.Settings;
     using NServiceBus.Transports;
 
-    public class AzureStorageQueueInfrastructure : TransportInfrastructure
+    class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
         private ReadOnlySettings settings;
         private string connectionString;
