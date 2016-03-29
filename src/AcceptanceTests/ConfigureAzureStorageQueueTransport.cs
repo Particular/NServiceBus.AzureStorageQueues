@@ -6,7 +6,7 @@ using Microsoft.WindowsAzure.Storage;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.AcceptanceTests.ScenarioDescriptors;
-using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+using NServiceBus.AzureStorageQueues;
 using NServiceBus.Configuration.AdvanceExtensibility;
 using NServiceBus.Transports;
 
@@ -30,10 +30,11 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         connectionString = settings.Get<string>("Transport.ConnectionString");
         //connectionString = "UseDevelopmentStorage=true;";
         configuration.UseSerialization<XmlSerializer>();
-        configuration.UseTransport<AzureStorageQueueTransport>()
-            .ConnectionString(connectionString)
-            .MessageInvisibleTime(TimeSpan.FromSeconds(5))
-            .SerializeMessageWrapperWith(definition => MessageWrapperSerializer.Xml.Value);
+        var extensions = configuration
+            .UseTransport<AzureStorageQueueTransport>()
+            .ConnectionString(connectionString);
+        extensions.MessageInvisibleTime(TimeSpan.FromSeconds(5));
+        extensions.SerializeMessageWrapperWith(definition => MessageWrapperSerializer.Xml.Value);
 
         endpointConfiguration = configuration;
 

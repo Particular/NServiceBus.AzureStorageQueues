@@ -1,6 +1,5 @@
 ﻿namespace NServiceBus.AzureStorageQueues
 {
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using NServiceBus.Settings;
 
     class DefaultConfigurationValues

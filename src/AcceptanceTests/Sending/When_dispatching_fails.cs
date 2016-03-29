@@ -8,6 +8,7 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.AcceptanceTests.ScenarioDescriptors;
+    using NServiceBus.AzureStorageQueues;
     using NUnit.Framework;
 
     public class When_dispatching_fails : NServiceBusAcceptanceTest

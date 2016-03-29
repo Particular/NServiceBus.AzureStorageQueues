@@ -8,7 +8,7 @@
     <ProjectGuid>{B6D6406F-F5A4-46D7-A882-4A831128065E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</RootNamespace>
+    <RootNamespace>NServiceBus.AzureStorageQueues</RootNamespace>
     <AssemblyName>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -107,27 +107,29 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Addressing\Partitioning\IAccountPartitioningStrategy.cs" />
+    <Compile Include="Addressing\Partitioning\PartitioningIntent.cs" />
     <Compile Include="AzureMessageQueueCreator.cs" />
-    <Compile Include="AzureStorageQueueInfrastructure.cs" />
+    <Compile Include="Config\AzureStorageQueueInfrastructure.cs" />
+    <Compile Include="Config\ExtensionPoint\AzureStorageQueueAccountPartitioningSettings.cs" />
     <Compile Include="Dispatcher.cs" />
     <Compile Include="MessagePump.cs" />
     <Compile Include="RepeatedFailuresOverTimeCircuitBreaker.cs" />
     <Compile Include="AzureMessageQueueReceiver.cs" />
     <Compile Include="Config\DefaultConfigurationValues.cs" />
-    <Compile Include="Config\Extensions\AzureStorageAddressingSettings.cs" />
-    <Compile Include="Config\Extensions\AzureStorageTransportAddressingExtensions.cs" />
-    <Compile Include="Config\Extensions\IAzureStoragePartitioningSettings.cs" />
+    <Compile Include="Config\ExtensionPoint\AzureStorageAddressingSettings.cs" />
+    <Compile Include="Config\ExtensionPoint\AzureStorageTransportAddressingExtensions.cs" />
     <Compile Include="Config\QueueAddress.cs" />
     <Compile Include="Config\WellKnownConfigurationKeys.cs" />
     <Compile Include="ConnectionString.cs" />
     <Compile Include="DictionaryExtensions.cs" />
     <Compile Include="QueueAddressGenerator.cs" />
-    <Compile Include="AzureStorageQueueTransport.cs" />
+    <Compile Include="Config\AzureStorageQueueTransport.cs" />
     <Compile Include="CreateQueueClients.cs" />
     <Compile Include="ICreateQueueClients.cs" />
     <Compile Include="MessageRetrieved.cs" />
     <Compile Include="MessageWrapperSerializer.cs" />
-    <Compile Include="Config\AzureStorageTransportExtensions.cs" />
+    <Compile Include="Config\ExtensionMethods\AzureStorageQueueTransportExtensions.cs" />
     <Compile Include="Config\QueueIndividualizer.cs" />
     <Compile Include="Config\RoleEnvironmentUnavailableException.cs" />
     <Compile Include="Config\SafeRoleEnvironment.cs" />

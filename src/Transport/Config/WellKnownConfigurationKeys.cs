@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config
+﻿namespace NServiceBus.AzureStorageQueues
 {
     public static class WellKnownConfigurationKeys
     {
@@ -12,5 +12,14 @@
         public const string Sha1Shortener = "Transport.AzureStorageQueue.Sha1Shortener";
         public const string PurgeOnStartup = "Transport.AzureStorageQueue.PurgeOnStartup";
         public const string DefaultQueuePerInstance = "Transport.AzureStorageQueue.DefaultQueuePerInstance";
+
+        public static class Addressing
+        {
+            public static class Partitioning
+            {
+                public const string Accounts = "Transport.AzureStorageQueue.Addressing.Partitioning.Accounts";
+                public const string Strategy = "Transport.AzureStorageQueue.Addressing.Partitioning.Strategy";
+            }
+        }
     }
 }
