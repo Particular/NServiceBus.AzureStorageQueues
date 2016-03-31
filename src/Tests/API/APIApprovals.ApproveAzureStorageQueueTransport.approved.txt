@@ -1,0 +1,153 @@
+﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config
+{
+    
+    public class static WellKnownConfigurationKeys
+    {
+        public const string DefaultQueuePerInstance = "Transport.AzureStorageQueue.DefaultQueuePerInstance";
+        public const string MessageWrapperSerializer = "Transport.AzureStorageQueue.MessageWrapperSerializer";
+        public const string MessageWrapperSerializerFactory = "Transport.AzureStorageQueue.MessageWrapperSerializerFactory";
+        public const string PurgeOnStartup = "Transport.AzureStorageQueue.PurgeOnStartup";
+        public const string ReceiverBatchSize = "Transport.AzureStorageQueue.ReceiverBatchSize";
+        public const string ReceiverConnectionString = "Transport.ConnectionString";
+        public const string ReceiverMaximumWaitTimeWhenIdle = "Transport.AzureStorageQueue.ReceiverMaximumWaitTimeWhenIdle";
+        public const string ReceiverMessageInvisibleTime = "Transport.AzureStorageQueue.Settings.ReceiverMessageInvisibleTime";
+        public const string ReceiverPeekInterval = "Transport.AzureStorageQueue.ReceiverPeekInterval";
+        public const string Sha1Shortener = "Transport.AzureStorageQueue.Sha1Shortener";
+    }
+}
+namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+{
+    
+    public sealed class ConnectionString : System.IEquatable<NServiceBus.Azure.Transports.WindowsAzureStorageQueues.ConnectionString>
+    {
+        public readonly string Value;
+        public ConnectionString(string value) { }
+        public bool Equals(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.ConnectionString other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
+        public override string ToString() { }
+    }
+    public class EnvelopeDeserializationFailed : System.Runtime.Serialization.SerializationException
+    {
+        public EnvelopeDeserializationFailed(Microsoft.WindowsAzure.Storage.Queue.CloudQueueMessage message, System.Exception ex) { }
+        public Microsoft.WindowsAzure.Storage.Queue.CloudQueueMessage FailedMessage { get; }
+    }
+    [System.Runtime.Serialization.CollectionDataContractAttribute(ItemName="NServiceBus.KeyValuePairOfStringAndString", KeyName="Key", Name="Headers", Namespace="", ValueName="Value")]
+    public class HeadersCollection : System.Collections.Generic.Dictionary<string, string>
+    {
+        public HeadersCollection() { }
+        public HeadersCollection(System.Collections.Generic.IDictionary<string, string> dictionary) { }
+        protected HeadersCollection(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+    }
+    public interface ICreateQueueClients
+    {
+        Microsoft.WindowsAzure.Storage.Queue.CloudQueueClient Create(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.ConnectionString connectionStringValue);
+    }
+    [System.Runtime.Serialization.DataContractAttribute(Namespace="http://tempuri.net/NServiceBus.Azure.Transports.WindowsAzureStorageQueues")]
+    public class MessageWrapper : NServiceBus.IMessage
+    {
+        public MessageWrapper() { }
+        [Newtonsoft.Json.JsonPropertyAttribute(DefaultValueHandling=Newtonsoft.Json.DefaultValueHandling.Include)]
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=7)]
+        public byte[] Body { get; set; }
+        [Newtonsoft.Json.JsonPropertyAttribute(DefaultValueHandling=Newtonsoft.Json.DefaultValueHandling.Include)]
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=8)]
+        public string CorrelationId { get; set; }
+        [Newtonsoft.Json.JsonPropertyAttribute(DefaultValueHandling=Newtonsoft.Json.DefaultValueHandling.Include)]
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=6)]
+        public NServiceBus.Azure.Transports.WindowsAzureStorageQueues.HeadersCollection Headers { get; set; }
+        [Newtonsoft.Json.JsonPropertyAttribute(DefaultValueHandling=Newtonsoft.Json.DefaultValueHandling.Include)]
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=2)]
+        public string Id { get; set; }
+        [Newtonsoft.Json.JsonPropertyAttribute(DefaultValueHandling=Newtonsoft.Json.DefaultValueHandling.Include)]
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=1)]
+        public string IdForCorrelation { get; set; }
+        [Newtonsoft.Json.JsonPropertyAttribute(DefaultValueHandling=Newtonsoft.Json.DefaultValueHandling.Include)]
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=3)]
+        public NServiceBus.MessageIntentEnum MessageIntent { get; set; }
+        [Newtonsoft.Json.JsonPropertyAttribute(DefaultValueHandling=Newtonsoft.Json.DefaultValueHandling.Include)]
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=9)]
+        public bool Recoverable { get; set; }
+        [Newtonsoft.Json.JsonPropertyAttribute(DefaultValueHandling=Newtonsoft.Json.DefaultValueHandling.Include)]
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=4)]
+        public string ReplyToAddress { get; set; }
+        [Newtonsoft.Json.JsonPropertyAttribute(DefaultValueHandling=Newtonsoft.Json.DefaultValueHandling.Include)]
+        [System.Runtime.Serialization.DataMemberAttribute(EmitDefaultValue=false, Order=5)]
+        public System.TimeSpan TimeToBeReceived { get; set; }
+    }
+    public class MessageWrapperSerializer
+    {
+        public static readonly System.Lazy<NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapperSerializer> Json;
+        public static readonly System.Lazy<NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapperSerializer> Xml;
+        public MessageWrapperSerializer(System.Action<NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper, System.IO.Stream> serialize, System.Func<System.IO.Stream, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> deserialize) { }
+        public NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper Deserialize(System.IO.Stream stream) { }
+        public void Serialize(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper wrapper, System.IO.Stream stream) { }
+    }
+    public class QueueIndividualizer
+    {
+        public QueueIndividualizer() { }
+        public static string Discriminator { get; }
+        public static string Individualize(string queueName) { }
+        public static int ParseIndexFrom(string id) { }
+    }
+    public class RoleEnvironmentUnavailableException : System.Exception
+    {
+        public RoleEnvironmentUnavailableException() { }
+        public RoleEnvironmentUnavailableException(string message) { }
+        public RoleEnvironmentUnavailableException(string message, System.Exception inner) { }
+        protected RoleEnvironmentUnavailableException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+    }
+    public class Shortener
+    {
+        public Shortener() { }
+        public static string Md5(string test) { }
+        public static string Sha1(string test) { }
+    }
+    public class UnableToDispatchException : System.Exception
+    {
+        public const string ExceptionMessage = "Message couldn\'t be dispatched";
+        public UnableToDispatchException(System.Exception ex) { }
+        protected UnableToDispatchException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+        public string Namespace { get; set; }
+        public string Queue { get; set; }
+        public override void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+    }
+}
+namespace NServiceBus
+{
+    
+    public sealed class AzureStorageAddressingSettings : NServiceBus.IAzureStoragePartitioningSettings
+    {
+        public AzureStorageAddressingSettings() { }
+        public NServiceBus.IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings() { }
+    }
+    public class AzureStorageQueueTransport : NServiceBus.Transports.TransportDefinition
+    {
+        public AzureStorageQueueTransport() { }
+        public override string ExampleConnectionStringForErrorMessage { get; }
+        public override bool RequiresConnectionString { get; }
+        protected override NServiceBus.Transports.TransportInfrastructure Initialize(NServiceBus.Settings.SettingsHolder settings, string connectionString) { }
+    }
+    public class static AzureStorageTransportAddressingExtensions
+    {
+        public static NServiceBus.AzureStorageAddressingSettings Addressing(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
+        public static NServiceBus.IAzureStoragePartitioningSettings Partitioning(this NServiceBus.AzureStorageAddressingSettings addressingSettings) { }
+    }
+    public class static AzureStorageTransportExtensions
+    {
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> BatchSize(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, int value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> ConnectionString(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, string value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, int value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MessageInvisibleTime(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, int value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MessageInvisibleTime(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> PeekInterval(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, int value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Action<NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper, System.IO.Stream> serialize, System.Func<System.IO.Stream, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> deserialize) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Func<NServiceBus.Serialization.SerializationDefinition, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapperSerializer> serializerFactory) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseSha1ForShortening(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
+    }
+    public interface IAzureStoragePartitioningSettings
+    {
+        NServiceBus.IAzureStoragePartitioningSettings AddStorageAccount(string name, string connectionString);
+        NServiceBus.IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings();
+    }
+}

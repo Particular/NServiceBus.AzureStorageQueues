@@ -11,7 +11,7 @@
     using NServiceBus.Settings;
     using NServiceBus.Transports;
 
-    public class AzureStorageQueueInfrastructure : TransportInfrastructure
+    internal class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
         private ReadOnlySettings settings;
         private string connectionString;

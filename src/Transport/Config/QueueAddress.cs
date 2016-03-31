@@ -2,7 +2,7 @@
 {
     using System;
 
-    public sealed class QueueAddress : IEquatable<QueueAddress>
+    internal sealed class QueueAddress : IEquatable<QueueAddress>
     {
         public const string DefaultStorageAccountName = "";
         public const string Separator = "@";
