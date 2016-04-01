@@ -321,6 +321,7 @@
       <Link>QueueAddressGenerator.cs</Link>
     </Compile>
     <Compile Include="ConfigureAzureStorageQueueTransport.cs" />
+    <Compile Include="NamespaceSetup.cs" />
     <Compile Include="NServiceBusAcceptanceTest.cs" />
     <Compile Include="Sending\When_dispatching_fails.cs" />
     <Compile Include="Sending\When_dispatching_to_other_account.cs" />
