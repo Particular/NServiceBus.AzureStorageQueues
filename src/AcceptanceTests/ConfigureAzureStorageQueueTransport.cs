@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Queue;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.AcceptanceTests.ScenarioDescriptors;
 using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-using NServiceBus.Configuration.AdvanceExtensibility;
-using NServiceBus.Transports;
 
 public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupportedScenariosForTestExecution
 {
@@ -22,22 +22,18 @@ public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupport
 
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
-    private EndpointConfiguration endpointConfiguration;
-    string connectionString;
-
-    public async Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings)
+    public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings)
     {
-        connectionString = settings.Get<string>("Transport.ConnectionString");
-        //connectionString = "UseDevelopmentStorage=true;";
+        var connectionString = settings.Get<string>("Transport.ConnectionString");
         configuration.UseSerialization<XmlSerializer>();
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(5))
             .SerializeMessageWrapperWith(definition => MessageWrapperSerializer.Xml.Value);
 
-        endpointConfiguration = configuration;
+        CleanQueuesUsedByTest(connectionString);
 
-        await CleanQueuesUsedByTest(connectionString, configuration);
+        return Task.FromResult(0);
     }
 
     public Task Cleanup()
@@ -45,28 +41,28 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         return Task.FromResult(0);
     }
 
-    private async Task CleanQueuesUsedByTest(string connectionString, EndpointConfiguration configuration)
+    private static void CleanQueuesUsedByTest(string connectionString)
     {
         var storage = CloudStorageAccount.Parse(connectionString);
-        var queues = storage.CreateCloudQueueClient();
+        var client = storage.CreateCloudQueueClient();
+        var queues = GetTestRelatedQueues(client).ToArray();
 
-        var queuesNames = GetTestRelatedQueueNames(configuration);
+        var countdown = new CountdownEvent(queues.Length);
 
-        foreach (var queuesName in queuesNames)
+        foreach (var queue in queues)
         {
-            var queue = queues.GetQueueReference(queuesName);
-            if (await queue.ExistsAsync())
-            {
-                await queue.ClearAsync();
-            }
+            queue.ClearAsync().ContinueWith(t => countdown.Signal());
+        }
+
+        if (countdown.Wait(TimeSpan.FromMinutes(1)) == false)
+        {
+            throw new TimeoutException("Waiting for cleaning queues took too much.");
         }
     }
 
-    private IEnumerable<string> GetTestRelatedQueueNames(EndpointConfiguration configuration)
+    private static IEnumerable<CloudQueue> GetTestRelatedQueues(CloudQueueClient queues)
     {
-        var bindings = endpointConfiguration.GetSettings().Get<QueueBindings>();
-        var generator = new QueueAddressGenerator(endpointConfiguration.GetSettings());
-        return bindings.ReceivingAddresses.Concat(bindings.SendingAddresses).Select(queue => generator.GetQueueName(queue));
-
+        // for now, return all
+        return queues.ListQueues();
     }
 }
