@@ -2,7 +2,7 @@
 {
     using System;
 
-    internal sealed class QueueAddress : IEquatable<QueueAddress>
+    sealed class QueueAddress : IEquatable<QueueAddress>
     {
         public const string DefaultStorageAccountName = "";
         public const string Separator = "@";
@@ -26,7 +26,7 @@
             StorageAccount = storageAccount;
         }
 
-        private static bool IsQueueNameValid(string queueName)
+        static bool IsQueueNameValid(string queueName)
         {
             return string.IsNullOrWhiteSpace(queueName) == false;
         }

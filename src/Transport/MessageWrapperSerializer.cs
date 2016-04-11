@@ -13,10 +13,10 @@
 
     public class MessageWrapperSerializer
     {
-        public static readonly Lazy<MessageWrapperSerializer> Json = new Lazy<MessageWrapperSerializer>(BuildJsonMessageWrapperSerializer);
-        public static readonly Lazy<MessageWrapperSerializer> Xml = new Lazy<MessageWrapperSerializer>(BuildXmlMessageWrapperSerializer);
+        public static Lazy<MessageWrapperSerializer> Json = new Lazy<MessageWrapperSerializer>(BuildJsonMessageWrapperSerializer);
+        public static Lazy<MessageWrapperSerializer> Xml = new Lazy<MessageWrapperSerializer>(BuildXmlMessageWrapperSerializer);
 
-        private static readonly Dictionary<string, string> CoreV5XmlToDataContractSerializer =
+        static Dictionary<string, string> CoreV5XmlToDataContractSerializer =
             new Dictionary<string, string>
             {
                 {"<NServiceBus.KeyValuePairOfStringAndString>", "<NServiceBus.KeyValuePairOfStringAndString xmlns=\"\">"},
@@ -26,11 +26,10 @@
                 }
             };
 
-        static readonly UTF8Encoding UTF8NoBOM =
-            new UTF8Encoding(false, true);
+        static UTF8Encoding UTF8NoBOM = new UTF8Encoding(false, true);
 
-        private readonly Func<Stream, MessageWrapper> deserialize;
-        private readonly Action<MessageWrapper, Stream> serialize;
+        Func<Stream, MessageWrapper> deserialize;
+        Action<MessageWrapper, Stream> serialize;
 
         public MessageWrapperSerializer(Action<MessageWrapper, Stream> serialize, Func<Stream, MessageWrapper> deserialize)
         {
@@ -134,7 +133,7 @@
             return deserialize(stream);
         }
 
-        private static Action<MessageWrapper, Stream> BuildJsonSerialize(JsonSerializer jsonSerializer)
+        static Action<MessageWrapper, Stream> BuildJsonSerialize(JsonSerializer jsonSerializer)
         {
             Action<MessageWrapper, Stream> serializeFunc = (wrapper, stream) =>
             {
@@ -147,7 +146,7 @@
             return serializeFunc;
         }
 
-        private static Func<Stream, MessageWrapper> BuildJsonDeserialize(JsonSerializer jsonSerializer)
+        static Func<Stream, MessageWrapper> BuildJsonDeserialize(JsonSerializer jsonSerializer)
         {
             Func<Stream, MessageWrapper> deserializeFunc = stream =>
             {
@@ -159,12 +158,12 @@
             return deserializeFunc;
         }
 
-        private static StreamWriter WriterFrom(Stream stream)
+        static StreamWriter WriterFrom(Stream stream)
         {
             return new StreamWriter(stream, UTF8NoBOM, 4096, true);
         }
 
-        private static StreamReader ReaderFrom(Stream stream)
+        static StreamReader ReaderFrom(Stream stream)
         {
             return new StreamReader(stream, UTF8NoBOM, false, 4096, true);
         }

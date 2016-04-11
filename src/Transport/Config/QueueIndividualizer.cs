@@ -1,6 +1,5 @@
 namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
-    using System;
     using System.Globalization;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using Support;
@@ -18,31 +17,37 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             {
                 var index = ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
 
-                if (!currentQueue.EndsWith("-" + index.ToString(CultureInfo.InvariantCulture))) //individualize can be applied multiple times
+                var indexAsString = index.ToString(CultureInfo.InvariantCulture);
+                if (!currentQueue.EndsWith("-" + indexAsString)) //individualize can be applied multiple times
                 {
                     individualQueueName = currentQueue
                                           + (index > 0 ? "-" : "")
-                                          + (index > 0 ? index.ToString(CultureInfo.InvariantCulture) : "");
+                                          + (index > 0 ? indexAsString : "");
 
                     if (queueName.Contains(QueueAddress.Separator))
+                    {
                         individualQueueName += QueueAddress.Separator + account;
+                    }
                 }
             }
             else
             {
                 if (!currentQueue.EndsWith("-" + RuntimeEnvironment.MachineName)) //individualize can be applied multiple times
                 {
-                    individualQueueName = currentQueue + "-" + RuntimeEnvironment.MachineName;
+                    individualQueueName = $"{currentQueue}-{RuntimeEnvironment.MachineName}";
 
                     if (queueName.Contains(QueueAddress.Separator))
+                    {
                         individualQueueName += QueueAddress.Separator + account;
+                    }
                 }
             }
 
             return individualQueueName;
         }
 
-        public static string Discriminator {
+        public static string Discriminator
+        {
             get
             {
                 if (SafeRoleEnvironment.IsAvailable)
@@ -51,10 +56,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
                     return "-" + index.ToString(CultureInfo.InvariantCulture);
                 }
-                else
-                {
-                    return "-" + RuntimeEnvironment.MachineName;
-                }
+                return "-" + RuntimeEnvironment.MachineName;
             }
         }
 
@@ -62,10 +64,10 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         {
             var idArray = id.Split('.');
             int index;
-            if (!Int32.TryParse((idArray[idArray.Length - 1]), out index))
+            if (!int.TryParse((idArray[idArray.Length - 1]), out index))
             {
                 idArray = id.Split('_');
-                index = Int32.Parse((idArray[idArray.Length - 1]));
+                index = int.Parse((idArray[idArray.Length - 1]));
             }
             return index;
         }

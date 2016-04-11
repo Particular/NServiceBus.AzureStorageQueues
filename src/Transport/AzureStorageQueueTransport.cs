@@ -10,8 +10,6 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition
     {
-        //private MessageWrapperSerializer serializer;
-
         protected override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
         {
             settings.SetDefault("Transactions.DoNotWrapHandlersExecutionInATransactionScope", true);

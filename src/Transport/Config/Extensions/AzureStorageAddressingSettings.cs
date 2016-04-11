@@ -7,13 +7,10 @@
 
     public sealed class AzureStorageAddressingSettings : IAzureStoragePartitioningSettings
     {
-        private static readonly IEnumerable<string> headersToApplyNameMapping = new[]
-        {
-            Headers.ReplyToAddress
-        };
+        static string[] headersToApplyNameMapping = {Headers.ReplyToAddress};
 
-        private readonly Dictionary<ConnectionString, string> _connectionString2name = new Dictionary<ConnectionString, string>();
-        private readonly Dictionary<string, ConnectionString> _name2connectionString = new Dictionary<string, ConnectionString>();
+        Dictionary<ConnectionString, string> connectionString2name = new Dictionary<ConnectionString, string>();
+        Dictionary<string, ConnectionString> name2connectionString = new Dictionary<string, ConnectionString>();
 
         bool logicalQueueAddresses;
 
@@ -40,7 +37,7 @@
         internal ConnectionString Map(string name)
         {
             ConnectionString connectionString;
-            if (_name2connectionString.TryGetValue(name, out connectionString) == false)
+            if (name2connectionString.TryGetValue(name, out connectionString) == false)
             {
                 throw new KeyNotFoundException($"No account was mapped under following name '{name}'. Please map it using AddStorageAccount method.");
             }
@@ -69,7 +66,7 @@
                     else
                     {
                         // it must be a logical name, try to find it, otherwise throw
-                        if (_name2connectionString.ContainsKey(name) == false)
+                        if (name2connectionString.ContainsKey(name) == false)
                         {
                             throw new KeyNotFoundException($"No account was mapped under following name '{name}'. Please map it using AddStorageAccount method.");
                         }
@@ -101,9 +98,9 @@
             }
         }
 
-        private bool TryMap(ConnectionString connectionString, out string name)
+        bool TryMap(ConnectionString connectionString, out string name)
         {
-            return _connectionString2name.TryGetValue(connectionString, out name);
+            return connectionString2name.TryGetValue(connectionString, out name);
         }
 
         internal void Add(string name, string connectionString, bool throwOnExisitingEntry = true)
@@ -111,13 +108,13 @@
             var value = new ConnectionString(connectionString);
             if (throwOnExisitingEntry)
             {
-                _name2connectionString.Add(name, value);
-                _connectionString2name.Add(value, name);
+                name2connectionString.Add(name, value);
+                connectionString2name.Add(value, name);
             }
             else
             {
-                _name2connectionString[name] = value;
-                _connectionString2name[value] = name;
+                name2connectionString[name] = value;
+                connectionString2name[value] = name;
             }
         }
     }

@@ -6,7 +6,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System.Reflection;
 
     [DebuggerNonUserCode]
-    internal static class SafeRoleEnvironment
+    static class SafeRoleEnvironment
     {
         static bool isAvailable = true;
         static Type roleEnvironmentType;
@@ -27,13 +27,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         }
 
-        public static bool IsAvailable
-        {
-            get
-            {
-                return isAvailable;
-            }
-        }
+        public static bool IsAvailable => isAvailable;
 
         public static string CurrentRoleInstanceId
         {
@@ -131,10 +125,16 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         static void TryLoadRoleEnvironment()
         {
             var serviceRuntimeAssembly = TryLoadServiceRuntimeAssembly();
-            if (!isAvailable) return;
+            if (!isAvailable)
+            {
+                return;
+            }
 
             TryGetRoleEnvironmentTypes(serviceRuntimeAssembly);
-            if (!isAvailable) return;
+            if (!isAvailable)
+            {
+                return;
+            }
 
             isAvailable = IsAvailableInternal();
 

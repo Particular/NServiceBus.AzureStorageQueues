@@ -12,9 +12,6 @@ namespace NServiceBus
         /// <summary>
         ///     Sets the amount of time, in milliseconds, to add to the time to wait before checking for a new message
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> PeekInterval(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverPeekInterval, value);
@@ -24,27 +21,18 @@ namespace NServiceBus
         /// <summary>
         ///     Sets the connectionstring to Azure Storage
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> ConnectionString(this TransportExtensions<AzureStorageQueueTransport> config, string value)
         {
             if (string.IsNullOrWhiteSpace(value))
                 throw new ArgumentNullException(nameof(value));
 
-            config.ConnectionString(() =>
-            {
-                return value;
-            });
+            config.ConnectionString(() => value);
             return config;
         }
 
         /// <summary>
         ///     Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
             if (value < 100 || value > 60000)
@@ -57,9 +45,6 @@ namespace NServiceBus
         /// <summary>
         ///     Controls how long messages should be invisible to other callers when receiving messages from the queue
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
             if (value < 1000 || value > 604800000)
@@ -72,9 +57,6 @@ namespace NServiceBus
         /// <summary>
         ///     Controls how long messages should be invisible to other callers when receiving messages from the queue
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
             return config.MessageInvisibleTime((int) value.TotalMilliseconds);
@@ -83,9 +65,6 @@ namespace NServiceBus
         /// <summary>
         ///     Controls how many messages should be read from the queue at once
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> BatchSize(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
             if (value < 1 || value > 32)
@@ -99,7 +78,6 @@ namespace NServiceBus
         ///     Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
         ///     from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
         /// </summary>
-        /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(this TransportExtensions<AzureStorageQueueTransport> config, Action<MessageWrapper, Stream> serialize, Func<Stream, MessageWrapper> deserialize)
         {
             return SerializeMessageWrapperWith(config, new MessageWrapperSerializer(serialize, deserialize));
@@ -109,7 +87,6 @@ namespace NServiceBus
         ///     Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
         ///     from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
         /// </summary>
-        /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<SerializationDefinition, MessageWrapperSerializer> serializerFactory)
         {
             config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializerFactory, serializerFactory);
@@ -118,7 +95,6 @@ namespace NServiceBus
         /// <summary>
         ///     Overrides default Md5 shortener for creating queue names with Sha1 shortener.
         /// </summary>
-        /// <returns></returns>
         public static TransportExtensions<AzureStorageQueueTransport> UseSha1ForShortening(this TransportExtensions<AzureStorageQueueTransport> config)
         {
             config.GetSettings().Set(WellKnownConfigurationKeys.Sha1Shortener, true);
@@ -126,7 +102,7 @@ namespace NServiceBus
         }
 
 
-        private static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(TransportExtensions<AzureStorageQueueTransport> config, MessageWrapperSerializer serializer)
+        static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(TransportExtensions<AzureStorageQueueTransport> config, MessageWrapperSerializer serializer)
         {
             config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializer, serializer);
             return config;
