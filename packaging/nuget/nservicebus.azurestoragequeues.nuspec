@@ -12,14 +12,10 @@
     <requireLicenseAcceptance>$requireLicenseAcceptance$</requireLicenseAcceptance>
     <description>NServiceBus Transport for the Windows Azure Storage Queues</description>
     <copyright>$copyright$</copyright>
-    <tags>nservicebus servicebus msmq cqrs publish subscribe</tags>
+    <tags>$tags$</tags>
     <dependencies>
-      <dependency id="WindowsAzure.Storage" version="[6.0.0, 7.0.0)" />
-      <dependency id="Microsoft.Data.Edm" version="[5.6.0, 6.0.0)" />
-      <dependency id="Microsoft.Data.OData" version="[5.6.4, 6.0.0)" />
+      <dependency id="WindowsAzure.Storage" version="[7.0.0, 8.0.0)" />
       <dependency id="NServiceBus" version="[6.0.0-beta, 7.0.0)" />
-      <dependency id="System.Spatial" version="[5.6.0.0, 6.0.0.0)" />
-      <dependency id="Microsoft.Azure.KeyVault.Core" version="[1.0.0, 2.0.0)" />
     </dependencies>
   </metadata>
   <files>
