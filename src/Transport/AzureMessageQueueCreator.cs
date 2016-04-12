@@ -11,10 +11,10 @@
     ///     Creates the queues. Note that this class will only be invoked when running the windows host and not when running in
     ///     the fabric
     /// </summary>
-    internal class AzureMessageQueueCreator : ICreateQueues
+    class AzureMessageQueueCreator : ICreateQueues
     {
-        readonly QueueAddressGenerator addressGenerator;
-        readonly CloudQueueClient client;
+        QueueAddressGenerator addressGenerator;
+        CloudQueueClient client;
 
         public AzureMessageQueueCreator(CloudQueueClient client, QueueAddressGenerator addressGenerator)
         {
@@ -29,7 +29,7 @@
             await Task.WhenAll(addresses.Select(CreateQueue)).ConfigureAwait(false);
         }
 
-        private async Task CreateQueue(string address)
+        async Task CreateQueue(string address)
         {
             var queueName = addressGenerator.GetQueueName(address);
             try

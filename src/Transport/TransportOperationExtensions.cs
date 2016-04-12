@@ -6,7 +6,7 @@
     using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Transports;
 
-    internal static class TransportOperationExtensions
+    static class TransportOperationExtensions
     {
         public static TimeSpan? GetTimeToBeReceived(this UnicastTransportOperation operation)
         {

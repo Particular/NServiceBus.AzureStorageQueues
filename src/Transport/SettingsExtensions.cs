@@ -3,7 +3,7 @@
     using System;
     using NServiceBus.Settings;
 
-    internal static class SettingsExtensions
+    static class SettingsExtensions
     {
         /// <summary>
         ///     Applies the settings value when present by invoking <paramref name="apply" />.

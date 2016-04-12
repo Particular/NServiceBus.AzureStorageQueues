@@ -12,14 +12,14 @@
     using NServiceBus.Transports;
     using NServiceBus.Unicast.Queuing;
 
-    internal class Dispatcher : IDispatchMessages
+    class Dispatcher : IDispatchMessages
     {
-        static readonly ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
-        readonly QueueAddressGenerator addressGenerator;
-        readonly AzureStorageAddressingSettings addressing;
-        readonly ICreateQueueClients createQueueClients;
-        readonly ILog logger = LogManager.GetLogger(typeof(Dispatcher));
-        readonly MessageWrapperSerializer messageSerializer;
+        static ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
+        QueueAddressGenerator addressGenerator;
+        AzureStorageAddressingSettings addressing;
+        ICreateQueueClients createQueueClients;
+        ILog logger = LogManager.GetLogger(typeof(Dispatcher));
+        MessageWrapperSerializer messageSerializer;
 
         public Dispatcher(ICreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
         {
@@ -42,7 +42,7 @@
             }
         }
 
-        private async Task Send(UnicastTransportOperation operation)
+        async Task Send(UnicastTransportOperation operation)
         {
             // The destination might be in a queue@destination format
             var destination = operation.Destination;

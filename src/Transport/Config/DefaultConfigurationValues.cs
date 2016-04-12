@@ -18,7 +18,7 @@
             ApplyDefaults(settings);
         }
 
-        private void ApplyDefaults(SettingsHolder settings)
+        void ApplyDefaults(SettingsHolder settings)
         {
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverConnectionString, DefaultConnectionString);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, DefaultMessageInvisibleTime);

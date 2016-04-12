@@ -2,7 +2,7 @@
 {
     using System.Collections.Generic;
 
-    internal static class DictionaryExtensions
+    static class DictionaryExtensions
     {
         public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue = default(TValue))
         {

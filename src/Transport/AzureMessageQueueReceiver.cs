@@ -8,9 +8,9 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
 
-    internal class AzureMessageQueueReceiver
+    class AzureMessageQueueReceiver
     {
-        readonly QueueAddressGenerator addressGenerator;
+        QueueAddressGenerator addressGenerator;
 
         CloudQueue azureQueue;
         Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();

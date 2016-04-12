@@ -11,12 +11,12 @@
     using NServiceBus.Settings;
     using NServiceBus.Transports;
 
-    internal class AzureStorageQueueInfrastructure : TransportInfrastructure
+    class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        private ReadOnlySettings settings;
-        private string connectionString;
+        ReadOnlySettings settings;
+        string connectionString;
 
-        private MessageWrapperSerializer serializer;
+        MessageWrapperSerializer serializer;
 
         internal AzureStorageQueueInfrastructure(ReadOnlySettings settings, string connectionString)
         {

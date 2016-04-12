@@ -4,9 +4,9 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
 
-    internal class CreateQueueClients : ICreateQueueClients
+    class CreateQueueClients : ICreateQueueClients
     {
-        readonly ConcurrentDictionary<ConnectionString, CloudQueueClient> destinationQueueClients = new ConcurrentDictionary<ConnectionString, CloudQueueClient>();
+        ConcurrentDictionary<ConnectionString, CloudQueueClient> destinationQueueClients = new ConcurrentDictionary<ConnectionString, CloudQueueClient>();
 
         public CloudQueueClient Create(ConnectionString connectionString)
         {
@@ -18,7 +18,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             return BuildClient(connectionString);
         }
 
-        private CloudQueueClient BuildClient(ConnectionString connectionString)
+        CloudQueueClient BuildClient(ConnectionString connectionString)
         {
             CloudStorageAccount account;
             if (CloudStorageAccount.TryParse(connectionString.Value, out account))

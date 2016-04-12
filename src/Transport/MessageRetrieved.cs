@@ -5,12 +5,12 @@
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
 
-    internal class MessageRetrieved
+    class MessageRetrieved
     {
-        static readonly byte[] EmptyContent = new byte[0];
-        readonly CloudQueue azureQueue;
-        readonly bool handleAckNack;
-        readonly CloudQueueMessage rawMessage;
+        static byte[] EmptyContent = new byte[0];
+        CloudQueue azureQueue;
+        bool handleAckNack;
+        CloudQueueMessage rawMessage;
 
         public MessageRetrieved(MessageWrapper wrapper, CloudQueueMessage rawMessage, CloudQueue azureQueue, bool handleAckNack)
         {
@@ -58,8 +58,7 @@
             try
             {
                 // the simplest solution to push the message back is to update its visibity timeout to 0 which is ok according to the API:
-                // https://msdn.microsoft.com/en-us/library/azure/hh452234.aspx 
-
+                // https://msdn.microsoft.com/en-us/library/azure/hh452234.aspx
                 rawMessage.SetMessageContent(EmptyContent);
                 await azureQueue.UpdateMessageAsync(rawMessage, TimeSpan.Zero, MessageUpdateFields.Visibility).ConfigureAwait(false);
             }

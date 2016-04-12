@@ -30,7 +30,7 @@
         }
 
         // ReSharper disable once SuggestBaseTypeForParameter
-        private static string ToChars(byte[] hashBytes)
+        static string ToChars(byte[] hashBytes)
         {
             var chars = new char[hashBytes.Length * 2];
             for (var i = 0; i < chars.Length; i += 2)
@@ -43,7 +43,7 @@
             return new string(chars);
         }
 
-        private static char HexToChar(byte a)
+        static char HexToChar(byte a)
         {
             a &= 15;
             return a > 9 ? (char)(a - 10 + 97) : (char)(a + 48);
