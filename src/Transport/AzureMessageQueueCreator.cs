@@ -24,7 +24,7 @@
 
         public async Task CreateQueueIfNecessary(QueueBindings queueBindings, string identity)
         {
-            var addresses = queueBindings.ReceivingAddresses.ToArray();
+            var addresses = queueBindings.ReceivingAddresses.Union(queueBindings.SendingAddresses).ToArray();
 
             await Task.WhenAll(addresses.Select(CreateQueue)).ConfigureAwait(false);
         }
