@@ -13,8 +13,8 @@
 
     public class MessageWrapperSerializer
     {
-        public static Lazy<MessageWrapperSerializer> Json = new Lazy<MessageWrapperSerializer>(BuildJsonMessageWrapperSerializer);
-        public static Lazy<MessageWrapperSerializer> Xml = new Lazy<MessageWrapperSerializer>(BuildXmlMessageWrapperSerializer);
+        public static readonly Lazy<MessageWrapperSerializer> Json = new Lazy<MessageWrapperSerializer>(BuildJsonMessageWrapperSerializer);
+        public static readonly Lazy<MessageWrapperSerializer> Xml = new Lazy<MessageWrapperSerializer>(BuildXmlMessageWrapperSerializer);
 
         static Dictionary<string, string> CoreV5XmlToDataContractSerializer =
             new Dictionary<string, string>
