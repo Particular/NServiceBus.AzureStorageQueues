@@ -72,7 +72,10 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                 {
                     timeToDelayNextPeek += PeekInterval;
                 }
-                else timeToDelayNextPeek = MaximumWaitTimeWhenIdle;
+                else
+                {
+                    timeToDelayNextPeek = MaximumWaitTimeWhenIdle;
+                }
 
                 await Task.Delay(timeToDelayNextPeek, token).ConfigureAwait(false);
             }

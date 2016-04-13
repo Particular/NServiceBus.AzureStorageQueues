@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
@@ -103,7 +104,7 @@
             using (var stream = new MemoryStream())
             {
                 var msg = operation.Message;
-                var headers = new HeadersCollection(msg.Headers);
+                var headers = new Dictionary<string, string>(msg.Headers);
                 addressing.ApplyMappingOnOutgoingHeaders(headers);
 
                 var messageIntent = default(MessageIntentEnum);
