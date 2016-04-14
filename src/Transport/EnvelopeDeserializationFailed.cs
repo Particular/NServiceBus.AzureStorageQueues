@@ -4,7 +4,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System.Runtime.Serialization;
     using Microsoft.WindowsAzure.Storage.Queue;
 
-    public class EnvelopeDeserializationFailed : SerializationException
+    class EnvelopeDeserializationFailed : SerializationException
     {
         public EnvelopeDeserializationFailed(CloudQueueMessage message, Exception ex)
             : base("Failed to deserialize message envelope", ex)

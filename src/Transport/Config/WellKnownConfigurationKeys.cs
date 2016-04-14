@@ -1,6 +1,6 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config
 {
-    public static class WellKnownConfigurationKeys
+    static class WellKnownConfigurationKeys
     {
         public const string ReceiverConnectionString = "Transport.ConnectionString";
         public const string ReceiverMaximumWaitTimeWhenIdle = "Transport.AzureStorageQueue.ReceiverMaximumWaitTimeWhenIdle";

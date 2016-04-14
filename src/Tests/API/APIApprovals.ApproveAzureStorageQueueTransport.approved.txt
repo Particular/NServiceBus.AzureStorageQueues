@@ -1,21 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config
-{
-    
-    public class static WellKnownConfigurationKeys
-    {
-        public const string DefaultQueuePerInstance = "Transport.AzureStorageQueue.DefaultQueuePerInstance";
-        public const string MessageWrapperSerializer = "Transport.AzureStorageQueue.MessageWrapperSerializer";
-        public const string MessageWrapperSerializerFactory = "Transport.AzureStorageQueue.MessageWrapperSerializerFactory";
-        public const string PurgeOnStartup = "Transport.AzureStorageQueue.PurgeOnStartup";
-        public const string ReceiverBatchSize = "Transport.AzureStorageQueue.ReceiverBatchSize";
-        public const string ReceiverConnectionString = "Transport.ConnectionString";
-        public const string ReceiverMaximumWaitTimeWhenIdle = "Transport.AzureStorageQueue.ReceiverMaximumWaitTimeWhenIdle";
-        public const string ReceiverMessageInvisibleTime = "Transport.AzureStorageQueue.Settings.ReceiverMessageInvisibleTime";
-        public const string ReceiverPeekInterval = "Transport.AzureStorageQueue.ReceiverPeekInterval";
-        public const string Sha1Shortener = "Transport.AzureStorageQueue.Sha1Shortener";
-    }
-}
-namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     
     public sealed class ConnectionString : System.IEquatable<NServiceBus.Azure.Transports.WindowsAzureStorageQueues.ConnectionString>
@@ -27,21 +10,12 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public override int GetHashCode() { }
         public override string ToString() { }
     }
-    public class EnvelopeDeserializationFailed : System.Runtime.Serialization.SerializationException
-    {
-        public EnvelopeDeserializationFailed(Microsoft.WindowsAzure.Storage.Queue.CloudQueueMessage message, System.Exception ex) { }
-        public Microsoft.WindowsAzure.Storage.Queue.CloudQueueMessage FailedMessage { get; }
-    }
     [System.Runtime.Serialization.CollectionDataContractAttribute(ItemName="NServiceBus.KeyValuePairOfStringAndString", KeyName="Key", Name="Headers", Namespace="", ValueName="Value")]
     public class HeadersCollection : System.Collections.Generic.Dictionary<string, string>
     {
         public HeadersCollection() { }
         public HeadersCollection(System.Collections.Generic.IDictionary<string, string> dictionary) { }
         protected HeadersCollection(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
-    }
-    public interface ICreateQueueClients
-    {
-        Microsoft.WindowsAzure.Storage.Queue.CloudQueueClient Create(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.ConnectionString connectionStringValue);
     }
     [System.Runtime.Serialization.DataContractAttribute(Namespace="http://tempuri.net/NServiceBus.Azure.Transports.WindowsAzureStorageQueues")]
     public class MessageWrapper : NServiceBus.IMessage
@@ -83,25 +57,12 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper Deserialize(System.IO.Stream stream) { }
         public void Serialize(NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper wrapper, System.IO.Stream stream) { }
     }
-    public class QueueIndividualizer
-    {
-        public QueueIndividualizer() { }
-        public static string Discriminator { get; }
-        public static string Individualize(string queueName) { }
-        public static int ParseIndexFrom(string id) { }
-    }
     public class RoleEnvironmentUnavailableException : System.Exception
     {
         public RoleEnvironmentUnavailableException() { }
         public RoleEnvironmentUnavailableException(string message) { }
         public RoleEnvironmentUnavailableException(string message, System.Exception inner) { }
         protected RoleEnvironmentUnavailableException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
-    }
-    public class Shortener
-    {
-        public Shortener() { }
-        public static string Md5(string test) { }
-        public static string Sha1(string test) { }
     }
     public class UnableToDispatchException : System.Exception
     {

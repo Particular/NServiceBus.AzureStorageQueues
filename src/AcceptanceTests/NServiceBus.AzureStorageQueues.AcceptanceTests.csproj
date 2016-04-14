@@ -96,9 +96,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Transport\QueueAddressGenerator.cs">
-      <Link>QueueAddressGenerator.cs</Link>
-    </Compile>
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-beta0001\ApiExtension\When_extending_sendoptions.cs" />
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-beta0001\ApiExtension\When_extending_the_publish_api.cs" />
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-beta0001\Audit\When_auditing.cs" />

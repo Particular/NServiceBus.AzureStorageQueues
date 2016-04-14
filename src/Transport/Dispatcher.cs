@@ -17,11 +17,11 @@
         static ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
         QueueAddressGenerator addressGenerator;
         AzureStorageAddressingSettings addressing;
-        ICreateQueueClients createQueueClients;
+        CreateQueueClients createQueueClients;
         ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         MessageWrapperSerializer messageSerializer;
 
-        public Dispatcher(ICreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
+        public Dispatcher(CreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
         {
             this.createQueueClients = createQueueClients;
             this.messageSerializer = messageSerializer;
