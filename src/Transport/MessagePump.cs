@@ -148,6 +148,10 @@
                     await circuitBreaker.Failure(ex).ConfigureAwait(false);
                     continue;
                 }
+                catch (TaskCanceledException)
+                {
+                    return;
+                }
                 catch (Exception ex)
                 {
                     Logger.Warn("Receiving from the queue failed", ex);
