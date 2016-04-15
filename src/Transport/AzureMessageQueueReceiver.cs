@@ -13,7 +13,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         QueueAddressGenerator addressGenerator;
 
         CloudQueue azureQueue;
-        Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
         CloudQueueClient client;
         MessageWrapperSerializer messageSerializer;
         int timeToDelayNextPeek;
@@ -64,11 +63,27 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        internal async Task<MessageRetrieved> Receive(CancellationToken token)
+        internal async Task<IEnumerable<MessageRetrieved>> Receive(CancellationToken token)
         {
-            var rawMessage = await GetMessage(token).ConfigureAwait(false);
+            var rawMessages = await azureQueue.GetMessagesAsync(BatchSize, TimeSpan.FromMilliseconds(MessageInvisibleTime), null, null, token).ConfigureAwait(false);
 
-            if (rawMessage == null)
+            bool messageFound = false;
+            var messages = new List<MessageRetrieved>();
+            foreach (var rawMessage in rawMessages)
+            {
+                messageFound = true;
+                try
+                {
+                    var wrapper = DeserializeMessage(rawMessage);
+                    messages.Add(new MessageRetrieved(wrapper, rawMessage, azureQueue, true));
+                }
+                catch (Exception ex)
+                {
+                    throw new EnvelopeDeserializationFailed(rawMessage, ex);
+                }
+            }
+
+            if (!messageFound)
             {
                 if (timeToDelayNextPeek + PeekInterval < MaximumWaitTimeWhenIdle)
                 {
@@ -77,37 +92,10 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                 else timeToDelayNextPeek = MaximumWaitTimeWhenIdle;
 
                 await Task.Delay(timeToDelayNextPeek, token).ConfigureAwait(false);
-                return null;
             }
 
             timeToDelayNextPeek = 0;
-            try
-            {
-                var wrapper = DeserializeMessage(rawMessage);
-                return new MessageRetrieved(wrapper, rawMessage, azureQueue, true);
-            }
-            catch (Exception ex)
-            {
-                throw new EnvelopeDeserializationFailed(rawMessage, ex);
-            }
-        }
-
-        async Task<CloudQueueMessage> GetMessage(CancellationToken token)
-        {
-            if (batchQueue.Count == 0)
-            {
-                var messages = await azureQueue.GetMessagesAsync(BatchSize, TimeSpan.FromMilliseconds(MessageInvisibleTime), null, null, token).ConfigureAwait(false);
-                foreach (var receivedMessage in messages)
-                {
-                    batchQueue.Enqueue(receivedMessage);
-                }
-            }
-            if (batchQueue.Count > 0)
-            {
-                return batchQueue.Dequeue();
-            }
-
-            return null;
+            return messages;
         }
 
         MessageWrapper DeserializeMessage(CloudQueueMessage rawMessage)
