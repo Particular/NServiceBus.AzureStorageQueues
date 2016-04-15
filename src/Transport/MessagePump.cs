@@ -10,7 +10,6 @@
     using Extensibility;
     using Logging;
     using NServiceBus.Transports;
-    using Unicast.Queuing;
 
     class MessagePump : IPushMessages, IDisposable
     {
@@ -150,16 +149,6 @@
 
                     circuitBreaker.Success();
                 }
-                catch (QueueNotFoundException ex)
-                {
-                    Logger.Error($"The queue '{ex.Queue}' was not found. Create the queue.", ex);
-                    await circuitBreaker.Failure(ex).ConfigureAwait(false);
-                }
-                catch (UnableToDispatchException ex)
-                {
-                    Logger.Error($"The dispach failed at sending a message to the following queue: '{ex.Queue}'", ex);
-                    await circuitBreaker.Failure(ex).ConfigureAwait(false);
-                }
                 catch (OperationCanceledException)
                 {
                     // For graceful shutdown purposes
@@ -207,8 +196,9 @@
                 }
                 catch (Exception ex)
                 {
-                    await retrieved.Nack().ConfigureAwait(false);
                     Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
+                    await circuitBreaker.Failure(ex).ConfigureAwait(false);
+                    await retrieved.Nack().ConfigureAwait(false);
                 }
                 finally
                 {

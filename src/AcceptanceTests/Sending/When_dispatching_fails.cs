@@ -18,7 +18,7 @@
             Assert.Throws<AggregateException>(async () => await Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((bus, c) => Send(bus)))
                 .WithEndpoint<Receiver>()
-                .Done(c => c.Logs.Any(li => li.Message.Contains(UnableToDispatchException.ExceptionMessage) && li.Level == "error"))
+                .Done(c => c.Logs.Any(li => li.Message.Contains("Fail on proxy") && li.Level == "error"))
                 .Repeat(r => r.For(Transports.Default))
                 .Run());
         }

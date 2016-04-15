@@ -39,6 +39,7 @@
             await Task.WhenAll(sends).ConfigureAwait(false);
         }
 
+
         async Task Send(UnicastTransportOperation operation)
         {
             // The destination might be in a queue@destination format
@@ -84,17 +85,7 @@
 
             var rawMessage = SerializeMessage(operation, timeToBeReceived);
 
-            try
-            {
-                await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                throw new UnableToDispatchException(ex)
-                {
-                    Queue = queue.QueueName
-                };
-            }
+            await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
         }
 
         Task<bool> ExistsAsync(CloudQueue sendQueue)
