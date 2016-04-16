@@ -190,7 +190,7 @@
                         await retrieved.Ack().ConfigureAwait(false);
                     }
 
-                    var message = retrieved.Unpack();
+                    var message = await Task.Run(() => retrieved.Unpack()).ConfigureAwait(false);
                     addressing.ApplyMappingToLogicalName(message.Headers);
 
                     using (var memoryStream = new MemoryStream(message.Body))
