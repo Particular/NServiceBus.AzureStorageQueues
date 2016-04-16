@@ -24,7 +24,7 @@
         RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
         SemaphoreSlim concurrencyLimiter;
 
-        Task messagePumpTask;
+        Task[] messagePumpTasks = new Task[32];
 
         AzureMessageQueueReceiver messageReceiver;
         Func<PushContext, Task> pipeline;
@@ -72,7 +72,10 @@
             cancellationToken = cancellationTokenSource.Token;
             // ReSharper disable once ConvertClosureToMethodGroup
             // LongRunning is useless combined with async/await
-            messagePumpTask = Task.Run(() => ProcessMessages(), CancellationToken.None);
+            for (int i = 0; i < Environment.ProcessorCount; i++)
+            {
+                messagePumpTasks[i] = Task.Run(() => ProcessMessages(), CancellationToken.None);
+            }
         }
 
         public async Task Stop()
@@ -81,10 +84,10 @@
 
             // ReSharper disable once MethodSupportsCancellation
             var timeoutTask = Task.Delay(StoppingAllTasksTimeout);
-            var allTasks = runningReceiveTasks.Values.Concat(new[]
-            {
-                messagePumpTask
-            });
+            var allTasks = runningReceiveTasks.Values.Concat(
+            
+                messagePumpTasks
+            );
             var finishedTask = await Task.WhenAny(Task.WhenAll(allTasks), timeoutTask).ConfigureAwait(false);
 
             if (finishedTask.Equals(timeoutTask))
