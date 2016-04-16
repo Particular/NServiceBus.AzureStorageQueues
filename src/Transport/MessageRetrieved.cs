@@ -7,15 +7,29 @@
 
     class MessageRetrieved
     {
-        public MessageRetrieved(MessageWrapper wrapper, CloudQueueMessage rawMessage, CloudQueue azureQueue, bool handleAckNack)
+        public MessageRetrieved(MessageEnvelopeUnwrapper unpacker, CloudQueueMessage rawMessage, CloudQueue azureQueue, bool handleAckNack = true)
         {
-            Wrapper = wrapper;
+            this.unpacker = unpacker;
             this.rawMessage = rawMessage;
             this.azureQueue = azureQueue;
             this.handleAckNack = handleAckNack;
         }
 
-        public MessageWrapper Wrapper { get; }
+        /// <summary>
+        /// Unwraps the raw message.
+        /// </summary>
+        /// <returns>Returns the message wrapper.</returns>
+        public MessageWrapper Unwrap()
+        {
+            try
+            {
+                return unpacker.Unwrap(rawMessage);
+            }
+            catch (Exception ex)
+            {
+                throw new EnvelopeDeserializationFailed(rawMessage, ex);
+            }
+        }
 
         /// <summary>
         /// Acknowledes the successful processing of the message.
@@ -65,6 +79,8 @@
                 }
             }
         }
+
+        MessageEnvelopeUnwrapper unpacker;
 
         CloudQueue azureQueue;
         bool handleAckNack;

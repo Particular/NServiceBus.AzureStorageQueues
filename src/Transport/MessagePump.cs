@@ -14,9 +14,6 @@
 
     class MessagePump : IPushMessages, IDisposable
     {
-        AzureStorageAddressingSettings addressing;
-
-        AzureMessageQueueReceiver messageReceiver;
         public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing)
         {
             this.messageReceiver = messageReceiver;
@@ -151,7 +148,7 @@
                     Logger.Error($"The dispach failed at sending a message to the following queue: '{ex.Queue}'", ex);
                     await circuitBreaker.Failure(ex).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException)
+                catch (TaskCanceledException)
                 {
                     return;
                 }
@@ -174,12 +171,14 @@
                         await retrieved.Ack().ConfigureAwait(false);
                     }
 
-                    var message = retrieved.Wrapper;
-
+                    var message = retrieved.Unwrap();
                     addressing.ApplyMappingToLogicalName(message.Headers);
 
-                    var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), tokenSource, new ContextBag());
-                    await pipeline(pushContext).ConfigureAwait(false);
+                    using (var memoryStream = new MemoryStream(message.Body))
+                    {
+                        var pushContext = new PushContext(message.Id, message.Headers, memoryStream, new TransportTransaction(), tokenSource, new ContextBag());
+                        await pipeline(pushContext).ConfigureAwait(false);
+                    }
 
                     if (ackBeforeDispatch == false)
                     {
@@ -205,8 +204,10 @@
             }
         }
 
-        AzureMessageQueueReceiver messageReceiver;
         AzureStorageAddressingSettings addressing;
+
+        AzureMessageQueueReceiver messageReceiver;
+
         bool ackBeforeDispatch;
         CancellationToken cancellationToken;
         CancellationTokenSource cancellationTokenSource;

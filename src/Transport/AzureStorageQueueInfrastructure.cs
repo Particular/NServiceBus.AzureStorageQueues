@@ -37,7 +37,8 @@
                 () =>
                 {
                     var addressing = GetAddressing(settings, connectionString);
-                    var receiver = new AzureMessageQueueReceiver(GetSerializer(settings), client, GetAddressGenerator(settings))
+                    var unwrapper = new MessageEnvelopeUnwrapper(GetSerializer(settings));
+                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, GetAddressGenerator(settings))
                     {
                         PurgeOnStartup = settings.Get<bool>(WellKnownConfigurationKeys.PurgeOnStartup),
                         MaximumWaitTimeWhenIdle = settings.Get<int>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
