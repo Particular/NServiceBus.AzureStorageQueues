@@ -187,12 +187,14 @@
                         await retrieved.Ack().ConfigureAwait(false);
                     }
 
-                    var message = retrieved.Wrapper;
-
+                    var message = retrieved.Unpack();
                     addressing.ApplyMappingToLogicalName(message.Headers);
 
-                    var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), tokenSource, new ContextBag());
-                    await pipeline(pushContext).ConfigureAwait(false);
+                    using (var memoryStream = new MemoryStream(message.Body))
+                    {
+                        var pushContext = new PushContext(message.Id, message.Headers, memoryStream, new TransportTransaction(), tokenSource, new ContextBag());
+                        await pipeline(pushContext).ConfigureAwait(false);
+                    }
 
                     if (ackBeforeDispatch == false)
                     {
