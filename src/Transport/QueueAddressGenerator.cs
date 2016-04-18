@@ -42,7 +42,7 @@
         {
             //rules for naming queues can be found at http://msdn.microsoft.com/en-us/library/windowsazure/dd179349.aspx"
             var invalidCharacters = new Regex(@"[^a-zA-Z0-9\-]");
-            var sanitized = invalidCharacters.Replace(queueName, "-"); // this can lead to multiple - occurences in a row
+            var sanitized = invalidCharacters.Replace(queueName, "-"); // this can lead to multiple - occurrences in a row
             var multipleDashes = new Regex(@"\-+");
             sanitized = multipleDashes.Replace(sanitized, "-");
             return sanitized;

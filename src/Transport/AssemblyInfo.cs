@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("NServiceBus.Azure.Transports.WindowsAzureStorageQueues")]
-[assembly: AssemblyDescription("")]
 [assembly: AssemblyCopyright("Copyright NServiceBus. All rights reserved")]
 [assembly: AssemblyProduct("NServiceBus.Azure.Transports.WindowsAzureStorageQueues")]
 [assembly: AssemblyCompany("NServiceBus Ltd.")]

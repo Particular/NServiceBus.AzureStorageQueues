@@ -27,7 +27,7 @@
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
             var connectionObject = new ConnectionString(this.connectionString);
-            var client = new CreateQueueClients().CreateRecevier(connectionObject);
+            var client = new CreateQueueClients().CreateReceiver(connectionObject);
 
             return new TransportReceiveInfrastructure(
                 () =>
