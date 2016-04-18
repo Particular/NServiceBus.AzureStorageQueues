@@ -103,6 +103,7 @@
     <Compile Include="AzureMessageQueueCreator.cs" />
     <Compile Include="AzureStorageQueueInfrastructure.cs" />
     <Compile Include="Dispatcher.cs" />
+    <Compile Include="MessageEnvelopUnpacker.cs" />
     <Compile Include="MessagePump.cs" />
     <Compile Include="RepeatedFailuresOverTimeCircuitBreaker.cs" />
     <Compile Include="AzureMessageQueueReceiver.cs" />
