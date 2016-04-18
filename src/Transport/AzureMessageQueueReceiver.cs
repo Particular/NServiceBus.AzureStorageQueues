@@ -140,7 +140,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             {
                 m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived.ToString();
             }
-            m.Headers[Headers.MessageIntent] = m.MessageIntent.ToString(); // message intent exztension method
+            m.Headers[Headers.MessageIntent] = m.MessageIntent.ToString(); // message intent extension method
 
             return m;
         }
