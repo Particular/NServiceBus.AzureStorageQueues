@@ -4,7 +4,7 @@
     using System.Security.Cryptography;
     using System.Text;
 
-    public class Shortener
+    class Shortener
     {
         public static string Md5(string test)
         {

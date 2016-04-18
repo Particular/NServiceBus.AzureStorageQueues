@@ -33,10 +33,18 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         {
             get
             {
-                if (!IsAvailable) throw new RoleEnvironmentUnavailableException("Role environment is not available, please check IsAvailable before calling this property!");
+                ThrowExceptionWhenRoleEnvironmentIsNotAvailable();
 
                 var instance = roleEnvironmentType.GetProperty("CurrentRoleInstance").GetValue(null, null);
                 return (string)roleInstanceType.GetProperty("Id").GetValue(instance, null);
+            }
+        }
+
+        private static void ThrowExceptionWhenRoleEnvironmentIsNotAvailable()
+        {
+            if (!IsAvailable)
+            {
+                throw new RoleEnvironmentUnavailableException("Role environment is not available, please check IsAvailable before calling this property!");
             }
         }
 
@@ -44,7 +52,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         {
             get
             {
-                if (!IsAvailable) throw new RoleEnvironmentUnavailableException("Role environment is not available, please check IsAvailable before calling this property!");
+                ThrowExceptionWhenRoleEnvironmentIsNotAvailable();
 
                 return (string)roleEnvironmentType.GetProperty("DeploymentId").GetValue(null, null);
             }
@@ -53,7 +61,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         {
             get
             {
-                if (!IsAvailable) throw new RoleEnvironmentUnavailableException("Role environment is not available, please check IsAvailable before calling this property!");
+                ThrowExceptionWhenRoleEnvironmentIsNotAvailable();
 
                 var instance = roleEnvironmentType.GetProperty("CurrentRoleInstance").GetValue(null, null);
                 var role = roleInstanceType.GetProperty("Role").GetValue(instance, null);
@@ -63,14 +71,14 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         public static string GetConfigurationSettingValue(string name)
         {
-            if (!IsAvailable) throw new RoleEnvironmentUnavailableException("Role environment is not available, please check IsAvailable before calling this method!");
+            ThrowExceptionWhenRoleEnvironmentIsNotAvailable();
 
             return (string)roleEnvironmentType.GetMethod("GetConfigurationSettingValue").Invoke(null, new object[] { name });
         }
 
         public static bool TryGetConfigurationSettingValue(string name, out string setting)
         {
-            if (!IsAvailable) throw new RoleEnvironmentUnavailableException("Role environment is not available, please check IsAvailable before calling this method!");
+            ThrowExceptionWhenRoleEnvironmentIsNotAvailable();
 
             setting = string.Empty;
             bool result;
@@ -89,14 +97,14 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         public static void RequestRecycle()
         {
-            if (!IsAvailable) throw new RoleEnvironmentUnavailableException("Role environment is not available, please check IsAvailable before calling this method!");
+            ThrowExceptionWhenRoleEnvironmentIsNotAvailable();
 
             roleEnvironmentType.GetMethod("RequestRecycle").Invoke(null, null);
         }
 
         public static string GetRootPath(string name)
         {
-            if (!IsAvailable) throw new RoleEnvironmentUnavailableException("Role environment is not available, please check IsAvailable before calling this method!");
+            ThrowExceptionWhenRoleEnvironmentIsNotAvailable();
 
             var o = roleEnvironmentType.GetMethod("GetLocalResource").Invoke(null, new object[] { name });
             return (string)localResourceType.GetProperty("RootPath").GetValue(o, null);
@@ -104,7 +112,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         public static bool TryGetRootPath(string name, out string path)
         {
-            if (!IsAvailable) throw new RoleEnvironmentUnavailableException("Role environment is not available, please check IsAvailable before calling this method!");
+            ThrowExceptionWhenRoleEnvironmentIsNotAvailable();
 
             bool result;
             path = string.Empty;

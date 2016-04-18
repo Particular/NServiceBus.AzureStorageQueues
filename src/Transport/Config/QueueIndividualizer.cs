@@ -4,7 +4,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
     using Support;
 
-    public class QueueIndividualizer
+    class QueueIndividualizer
     {
         public static string Individualize(string queueName)
         {

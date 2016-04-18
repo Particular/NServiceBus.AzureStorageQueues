@@ -117,7 +117,6 @@
     <Compile Include="QueueAddressGenerator.cs" />
     <Compile Include="AzureStorageQueueTransport.cs" />
     <Compile Include="CreateQueueClients.cs" />
-    <Compile Include="ICreateQueueClients.cs" />
     <Compile Include="MessageRetrieved.cs" />
     <Compile Include="MessageWrapperSerializer.cs" />
     <Compile Include="Config\AzureStorageTransportExtensions.cs" />
