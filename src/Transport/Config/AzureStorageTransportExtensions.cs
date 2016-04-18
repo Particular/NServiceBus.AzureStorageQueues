@@ -1,7 +1,6 @@
 namespace NServiceBus
 {
     using System;
-    using System.IO;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Azure.Transports.WindowsAzureStorageQueues.Config;
     using Configuration.AdvanceExtensibility;
@@ -24,7 +23,9 @@ namespace NServiceBus
         public static TransportExtensions<AzureStorageQueueTransport> ConnectionString(this TransportExtensions<AzureStorageQueueTransport> config, string value)
         {
             if (string.IsNullOrWhiteSpace(value))
+            {
                 throw new ArgumentNullException(nameof(value));
+            }
 
             config.ConnectionString(() => value);
             return config;
@@ -36,7 +37,9 @@ namespace NServiceBus
         public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
             if (value < 100 || value > 60000)
+            {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be between 100ms and 60 seconds.");
+            }
 
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, value);
             return config;
@@ -48,7 +51,9 @@ namespace NServiceBus
         public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
             if (value < 1000 || value > 604800000)
+            {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be between 1 second and 7 days.");
+            }
 
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, value);
             return config;
@@ -68,7 +73,9 @@ namespace NServiceBus
         public static TransportExtensions<AzureStorageQueueTransport> BatchSize(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
             if (value < 1 || value > 32)
+            {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Batchsize must be between 1 and 32 messages.");
+            }
 
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverBatchSize, value);
             return config;
@@ -78,18 +85,10 @@ namespace NServiceBus
         /// Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
         /// from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
         /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(this TransportExtensions<AzureStorageQueueTransport> config, Action<MessageWrapper, Stream> serialize, Func<Stream, MessageWrapper> deserialize)
+        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this TransportExtensions<AzureStorageQueueTransport> config)
+            where TSerializationDefinition : SerializationDefinition, new()
         {
-            return SerializeMessageWrapperWith(config, new MessageWrapperSerializer(serialize, deserialize));
-        }
-
-        /// <summary>
-        /// Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
-        /// from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<SerializationDefinition, MessageWrapperSerializer> serializerFactory)
-        {
-            config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializerFactory, serializerFactory);
+            config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, new TSerializationDefinition());
             return config;
         }
 
@@ -99,13 +98,6 @@ namespace NServiceBus
         public static TransportExtensions<AzureStorageQueueTransport> UseSha1ForShortening(this TransportExtensions<AzureStorageQueueTransport> config)
         {
             config.GetSettings().Set(WellKnownConfigurationKeys.Sha1Shortener, true);
-            return config;
-        }
-
-
-        static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(TransportExtensions<AzureStorageQueueTransport> config, MessageWrapperSerializer serializer)
-        {
-            config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializer, serializer);
             return config;
         }
     }

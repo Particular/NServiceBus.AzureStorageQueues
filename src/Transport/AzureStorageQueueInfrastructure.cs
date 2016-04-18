@@ -81,18 +81,20 @@
 
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
         {
-            MessageWrapperSerializer serializer;
-            if (settings.TryGet(WellKnownConfigurationKeys.MessageWrapperSerializer, out serializer) == false)
+            var definition = settings.GetOrDefault<SerializationDefinition>(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition);
+            if (definition == null)
             {
-                serializer = MessageWrapperSerializer.TryBuild(settings.GetOrDefault<SerializationDefinition>(),
-                    settings.GetOrDefault<Func<SerializationDefinition, MessageWrapperSerializer>>(WellKnownConfigurationKeys.MessageWrapperSerializerFactory));
-                if (serializer == null)
-                {
-                    throw new ConfigurationErrorsException($"The bus is configured using different {typeof(SerializationDefinition).Name} than defaults provided by the NServiceBus. " +
-                                                           $"Register a custom serialization with {typeof(AzureStorageTransportExtensions).Name}.SerializeMessageWrapperWith()");
-                }
+                definition = settings.GetOrDefault<SerializationDefinition>();
             }
-            return serializer;
+
+            if (definition == null)
+            {
+                var name = typeof(SerializationDefinition).Name;
+                throw new ConfigurationErrorsException($"There's no {name} configured either for the Azure Storage Queue transport or the bus itself. " +
+                                                       "Use either endpointConfiguration.UseSerialization() or .UseTransport<AzureStorageQueueTransport>().SerializeMessageWrapperWith() to provide one.");
+            }
+
+            return new MessageWrapperSerializer(definition.Configure(settings));
         }
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()
@@ -126,7 +128,6 @@
 
         ReadOnlySettings settings;
         string connectionString;
-
         MessageWrapperSerializer serializer;
     }
 }

@@ -43,7 +43,7 @@
 
             class BlowUpAfterDispatchBehavior : Behavior<IBatchDispatchContext>
             {
-                public async override Task Invoke(IBatchDispatchContext context, Func<Task> next)
+                public override async Task Invoke(IBatchDispatchContext context, Func<Task> next)
                 {
                     if (!context.Operations.Any(op => op.Message.Headers[Headers.EnclosedMessageTypes].Contains(typeof(PlaceOrder).Name)))
                     {

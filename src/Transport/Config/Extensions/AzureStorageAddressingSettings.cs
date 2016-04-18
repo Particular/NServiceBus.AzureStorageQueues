@@ -41,7 +41,7 @@
         /// <summary>
         /// Transforms all the <see cref="QueueAddress" /> in <see cref="headersToApplyNameMapping" /> to use logical names.
         /// </summary>
-        internal void ApplyMappingToLogicalName(HeadersCollection headers)
+        internal void ApplyMappingToLogicalName(Dictionary<string, string> headers)
         {
             foreach (var header in headersToApplyNameMapping)
             {
@@ -72,7 +72,7 @@
         /// Transforms all the <see cref="QueueAddress" /> in <see cref="headersToApplyNameMapping" /> to connection string
         /// values to maintain backward compatibility.
         /// </summary>
-        internal void ApplyMappingOnOutgoingHeaders(HeadersCollection headers)
+        internal void ApplyMappingOnOutgoingHeaders(Dictionary<string, string> headers)
         {
             if (logicalQueueAddresses)
             {
