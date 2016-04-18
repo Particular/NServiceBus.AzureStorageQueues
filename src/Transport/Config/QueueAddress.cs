@@ -4,12 +4,6 @@
 
     sealed class QueueAddress : IEquatable<QueueAddress>
     {
-        public const string DefaultStorageAccountName = "";
-        public const string Separator = "@";
-
-        public string QueueName { get; }
-        public string StorageAccount { get; }
-
         public QueueAddress(string queueName, string storageAccount)
         {
             if (IsQueueNameValid(queueName) == false)
@@ -24,6 +18,22 @@
 
             QueueName = queueName;
             StorageAccount = storageAccount;
+        }
+
+        public string QueueName { get; }
+        public string StorageAccount { get; }
+
+        public bool Equals(QueueAddress other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+            return string.Equals(QueueName, other.QueueName) && string.Equals(StorageAccount, other.StorageAccount);
         }
 
         static bool IsQueueNameValid(string queueName)
@@ -71,22 +81,9 @@
                 return false;
             }
 
-            var storageAccount = inputQueue.Substring(index+1);
+            var storageAccount = inputQueue.Substring(index + 1);
             queue = new QueueAddress(queueName, storageAccount);
             return true;
-        }
-
-        public bool Equals(QueueAddress other)
-        {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-            return string.Equals(QueueName, other.QueueName) && string.Equals(StorageAccount, other.StorageAccount);
         }
 
         public override bool Equals(object obj)
@@ -114,5 +111,8 @@
         {
             return $"{QueueName}@{StorageAccount}";
         }
+
+        public const string DefaultStorageAccountName = "";
+        public const string Separator = "@";
     }
 }

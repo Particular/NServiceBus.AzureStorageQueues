@@ -6,8 +6,6 @@
     [Serializable]
     public class UnableToDispatchException : Exception
     {
-        public const string ExceptionMessage = "Message couldn't be dispatched";
-
         public UnableToDispatchException(Exception ex)
             : base(ExceptionMessage, ex)
         {
@@ -16,26 +14,22 @@
         protected UnableToDispatchException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
-            if (info == null)
-            {
-                return;
-            }
             Queue = info.GetString(nameof(Queue));
             Namespace = info.GetString(nameof(Namespace));
         }
 
         /// <summary>
-        ///     The queue name dispatch was sending a message to.
+        /// The queue name dispatch was sending a message to.
         /// </summary>
         public string Queue { get; set; }
 
         /// <summary>
-        ///     The queue namemespace dispatch was sending a message to.
+        /// The queue namemespace dispatch was sending a message to.
         /// </summary>
         public string Namespace { get; set; }
 
         /// <summary>
-        ///     Gets the object data for serialization purposes.
+        /// Gets the object data for serialization purposes.
         /// </summary>
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
@@ -43,5 +37,7 @@
             info.AddValue(nameof(Queue), Queue);
             info.AddValue(nameof(Namespace), Namespace);
         }
+
+        public const string ExceptionMessage = "Message couldn't be dispatched";
     }
 }

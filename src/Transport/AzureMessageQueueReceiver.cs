@@ -10,14 +10,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
     class AzureMessageQueueReceiver
     {
-        QueueAddressGenerator addressGenerator;
-
-        CloudQueue azureQueue;
-        Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
-        CloudQueueClient client;
-        MessageWrapperSerializer messageSerializer;
-        int timeToDelayNextPeek;
-
         public AzureMessageQueueReceiver(MessageWrapperSerializer messageSerializer, CloudQueueClient client, QueueAddressGenerator addressGenerator)
         {
             this.messageSerializer = messageSerializer;
@@ -26,28 +18,28 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         }
 
         /// <summary>
-        ///     Sets the amount of time, in milliseconds, to add to the time to wait before checking for a new message
+        /// Sets the amount of time, in milliseconds, to add to the time to wait before checking for a new message
         /// </summary>
         public int PeekInterval { get; set; }
 
         /// <summary>
-        ///     Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
+        /// Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
         /// </summary>
         public int MaximumWaitTimeWhenIdle { get; set; }
 
         /// <summary>
-        ///     Sets whether or not the transport should purge the input
-        ///     queue when it is started.
+        /// Sets whether or not the transport should purge the input
+        /// queue when it is started.
         /// </summary>
         public bool PurgeOnStartup { get; set; }
 
         /// <summary>
-        ///     Controls how long messages should be invisible to other callers when receiving messages from the queue
+        /// Controls how long messages should be invisible to other callers when receiving messages from the queue
         /// </summary>
         public int MessageInvisibleTime { get; set; }
 
         /// <summary>
-        ///     Controls the number of messages that will be read in bulk from the queue
+        /// Controls the number of messages that will be read in bulk from the queue
         /// </summary>
         public int BatchSize { get; set; }
 
@@ -144,5 +136,13 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
             return m;
         }
+
+        QueueAddressGenerator addressGenerator;
+
+        CloudQueue azureQueue;
+        Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
+        CloudQueueClient client;
+        MessageWrapperSerializer messageSerializer;
+        int timeToDelayNextPeek;
     }
 }

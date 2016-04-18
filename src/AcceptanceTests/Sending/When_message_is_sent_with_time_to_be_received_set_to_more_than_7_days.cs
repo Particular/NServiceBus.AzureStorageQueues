@@ -2,7 +2,7 @@
 {
     using System;
     using System.Threading.Tasks;
-    using NServiceBus.AcceptanceTesting;
+    using AcceptanceTesting;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -33,12 +33,12 @@
 
         public class ReceiverEndPoint : EndpointConfigurationBuilder
         {
-            public Context Context { get; set; }
-
             public ReceiverEndPoint()
             {
                 EndpointSetup<DefaultServer>();
             }
+
+            public Context Context { get; set; }
         }
 
         [TimeToBeReceived("7.00:00:01")]

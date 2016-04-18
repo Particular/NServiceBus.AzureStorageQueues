@@ -8,14 +8,11 @@
     using NServiceBus.Transports;
 
     /// <summary>
-    ///     Creates the queues. Note that this class will only be invoked when running the windows host and not when running in
-    ///     the fabric
+    /// Creates the queues. Note that this class will only be invoked when running the windows host and not when running in
+    /// the fabric
     /// </summary>
     class AzureMessageQueueCreator : ICreateQueues
     {
-        QueueAddressGenerator addressGenerator;
-        CloudQueueClient client;
-
         public AzureMessageQueueCreator(CloudQueueClient client, QueueAddressGenerator addressGenerator)
         {
             this.client = client;
@@ -57,5 +54,8 @@
                 throw new StorageException($"Failed to create queue: {queueName}, because {ex.Message}.", ex);
             }
         }
+
+        QueueAddressGenerator addressGenerator;
+        CloudQueueClient client;
     }
 }

@@ -7,29 +7,13 @@
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using NServiceBus.Extensibility;
-    using NServiceBus.Logging;
+    using Extensibility;
+    using Logging;
     using NServiceBus.Transports;
-    using NServiceBus.Unicast.Queuing;
+    using Unicast.Queuing;
 
     class MessagePump : IPushMessages, IDisposable
     {
-        static ILog Logger = LogManager.GetLogger(typeof(MessagePump));
-        static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
-        static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
-
-        AzureMessageQueueReceiver messageReceiver;
-        AzureStorageAddressingSettings addressing;
-        bool ackBeforeDispatch;
-        CancellationToken cancellationToken;
-        CancellationTokenSource cancellationTokenSource;
-        RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
-        SemaphoreSlim concurrencyLimiter;
-
-        Task messagePumpTask;
-        Func<PushContext, Task> pipeline;
-        ConcurrentDictionary<Task, Task> runningReceiveTasks;
-
         public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing)
         {
             this.messageReceiver = messageReceiver;
@@ -218,5 +202,20 @@
                 }, TaskContinuationOptions.ExecuteSynchronously).Ignore();
             }
         }
+
+        AzureMessageQueueReceiver messageReceiver;
+        AzureStorageAddressingSettings addressing;
+        bool ackBeforeDispatch;
+        CancellationToken cancellationToken;
+        CancellationTokenSource cancellationTokenSource;
+        RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
+        SemaphoreSlim concurrencyLimiter;
+
+        Task messagePumpTask;
+        Func<PushContext, Task> pipeline;
+        ConcurrentDictionary<Task, Task> runningReceiveTasks;
+        static ILog Logger = LogManager.GetLogger(typeof(MessagePump));
+        static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
+        static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
     }
 }

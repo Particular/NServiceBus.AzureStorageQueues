@@ -1,12 +1,10 @@
 ﻿namespace NServiceBus.Azure.QuickTests
 {
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using NUnit.Framework;
 
     public class ShortenerTests
     {
-        private const string TestName = "test me";
-
         [Test]
         public void Md5()
         {
@@ -18,5 +16,7 @@
         {
             Assert.AreEqual("e5bc909de4c00a5266878bdea494203b9936328c", Shortener.Sha1(TestName));
         }
+
+        const string TestName = "test me";
     }
 }

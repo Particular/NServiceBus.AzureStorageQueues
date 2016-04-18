@@ -5,22 +5,15 @@
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using Config;
+    using Extensibility;
+    using Logging;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
-    using NServiceBus.Extensibility;
-    using NServiceBus.Logging;
     using NServiceBus.Transports;
-    using NServiceBus.Unicast.Queuing;
+    using Unicast.Queuing;
 
     class Dispatcher : IDispatchMessages
     {
-        static ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
-        QueueAddressGenerator addressGenerator;
-        AzureStorageAddressingSettings addressing;
-        CreateQueueClients createQueueClients;
-        ILog logger = LogManager.GetLogger(typeof(Dispatcher));
-        MessageWrapperSerializer messageSerializer;
-
         public Dispatcher(CreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
         {
             this.createQueueClients = createQueueClients;
@@ -58,7 +51,7 @@
             {
                 throw new QueueNotFoundException
                 {
-                    Queue = queue.ToString(),
+                    Queue = queue.ToString()
                 };
             }
 
@@ -136,5 +129,12 @@
                 return new CloudQueueMessage(stream.ToArray());
             }
         }
+
+        QueueAddressGenerator addressGenerator;
+        AzureStorageAddressingSettings addressing;
+        CreateQueueClients createQueueClients;
+        ILog logger = LogManager.GetLogger(typeof(Dispatcher));
+        MessageWrapperSerializer messageSerializer;
+        static ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
     }
 }

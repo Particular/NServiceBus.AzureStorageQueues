@@ -7,11 +7,6 @@
 
     class MessageRetrieved
     {
-        static byte[] EmptyContent = new byte[0];
-        CloudQueue azureQueue;
-        bool handleAckNack;
-        CloudQueueMessage rawMessage;
-
         public MessageRetrieved(MessageWrapper wrapper, CloudQueueMessage rawMessage, CloudQueue azureQueue, bool handleAckNack)
         {
             Wrapper = wrapper;
@@ -23,7 +18,7 @@
         public MessageWrapper Wrapper { get; }
 
         /// <summary>
-        ///     Acknowledes the successful processing of the message.
+        /// Acknowledes the successful processing of the message.
         /// </summary>
         public async Task Ack()
         {
@@ -46,7 +41,7 @@
         }
 
         /// <summary>
-        ///     Rejects the message requeueing it in the queue.
+        /// Rejects the message requeueing it in the queue.
         /// </summary>
         public async Task Nack()
         {
@@ -70,5 +65,10 @@
                 }
             }
         }
+
+        CloudQueue azureQueue;
+        bool handleAckNack;
+        CloudQueueMessage rawMessage;
+        static byte[] EmptyContent = new byte[0];
     }
 }

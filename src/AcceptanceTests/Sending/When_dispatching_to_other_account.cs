@@ -4,8 +4,8 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using NServiceBus.AcceptanceTesting;
-    using NServiceBus.AcceptanceTesting.Support;
+    using AcceptanceTesting;
+    using AcceptanceTesting.Support;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.AcceptanceTests.ScenarioDescriptors;
@@ -13,10 +13,6 @@
 
     public class When_dispatching_to_another_account : NServiceBusAcceptanceTest
     {
-        private const string AnotherAccountName = "AnotherAccountName";
-        public static readonly string MainNamespaceConnectionString = Transports.Default.Settings.Get<string>("Transport.ConnectionString");
-
-
         [Test]
         public void Connection_string_should_throw()
         {
@@ -31,7 +27,7 @@
             await RunTest(AnotherAccountName);
         }
 
-        private static async Task RunTest(string connectionStringOrName)
+        static async Task RunTest(string connectionStringOrName)
         {
             var context = await Scenario.Define<Context>()
                 .WithEndpoint<Endpoint>(b =>
@@ -49,6 +45,9 @@
 
             Assert.IsTrue(context.WasCalled);
         }
+
+        const string AnotherAccountName = "AnotherAccountName";
+        public static readonly string MainNamespaceConnectionString = Transports.Default.Settings.Get<string>("Transport.ConnectionString");
 
         public class Context : ScenarioContext
         {
