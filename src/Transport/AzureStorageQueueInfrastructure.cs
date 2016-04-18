@@ -4,29 +4,33 @@
     using System.Collections.Generic;
     using System.Configuration;
     using System.Threading.Tasks;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
-    using NServiceBus.Performance.TimeToBeReceived;
-    using NServiceBus.Routing;
-    using NServiceBus.Serialization;
-    using NServiceBus.Settings;
+    using Config;
     using NServiceBus.Transports;
+    using Performance.TimeToBeReceived;
+    using Routing;
+    using Serialization;
+    using Settings;
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        ReadOnlySettings settings;
-        string connectionString;
-
-        MessageWrapperSerializer serializer;
-
         internal AzureStorageQueueInfrastructure(ReadOnlySettings settings, string connectionString)
         {
             this.settings = settings;
             this.connectionString = connectionString;
         }
 
+        public override IEnumerable<Type> DeliveryConstraints { get; } = new[]
+        {
+            typeof(DiscardIfNotReceivedBefore),
+            typeof(NonDurableDelivery)
+        };
+
+        public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
+        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
+
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
-            var connectionObject = new ConnectionString(this.connectionString);
+            var connectionObject = new ConnectionString(connectionString);
             var client = new CreateQueueClients().CreateRecevier(connectionObject);
 
             return new TransportReceiveInfrastructure(
@@ -46,8 +50,7 @@
                 },
                 () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings)),
                 () => Task.FromResult(StartupCheckResult.Success)
-            );
-
+                );
         }
 
         private static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
@@ -103,7 +106,6 @@
                     return new Dispatcher(queueCreator, GetSerializer(settings), addressRetriever, addressing);
                 },
                 () => Task.FromResult(StartupCheckResult.Success));
-
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -121,13 +123,9 @@
             return logicalAddress.ToString();
         }
 
-        public override IEnumerable<Type> DeliveryConstraints { get; } = new[]
-            {
-                typeof(DiscardIfNotReceivedBefore),
-                typeof(NonDurableDelivery)
-            };
+        ReadOnlySettings settings;
+        string connectionString;
 
-        public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
-        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
+        MessageWrapperSerializer serializer;
     }
 }

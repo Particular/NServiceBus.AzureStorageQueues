@@ -2,15 +2,15 @@ namespace NServiceBus
 {
     using System;
     using System.IO;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
-    using NServiceBus.Configuration.AdvanceExtensibility;
-    using NServiceBus.Serialization;
+    using Azure.Transports.WindowsAzureStorageQueues;
+    using Azure.Transports.WindowsAzureStorageQueues.Config;
+    using Configuration.AdvanceExtensibility;
+    using Serialization;
 
     public static class AzureStorageTransportExtensions
     {
         /// <summary>
-        ///     Sets the amount of time, in milliseconds, to add to the time to wait before checking for a new message
+        /// Sets the amount of time, in milliseconds, to add to the time to wait before checking for a new message
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> PeekInterval(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
@@ -19,7 +19,7 @@ namespace NServiceBus
         }
 
         /// <summary>
-        ///     Sets the connectionstring to Azure Storage
+        /// Sets the connectionstring to Azure Storage
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> ConnectionString(this TransportExtensions<AzureStorageQueueTransport> config, string value)
         {
@@ -31,7 +31,7 @@ namespace NServiceBus
         }
 
         /// <summary>
-        ///     Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
+        /// Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
@@ -43,7 +43,7 @@ namespace NServiceBus
         }
 
         /// <summary>
-        ///     Controls how long messages should be invisible to other callers when receiving messages from the queue
+        /// Controls how long messages should be invisible to other callers when receiving messages from the queue
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
@@ -55,7 +55,7 @@ namespace NServiceBus
         }
 
         /// <summary>
-        ///     Controls how long messages should be invisible to other callers when receiving messages from the queue
+        /// Controls how long messages should be invisible to other callers when receiving messages from the queue
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
@@ -63,7 +63,7 @@ namespace NServiceBus
         }
 
         /// <summary>
-        ///     Controls how many messages should be read from the queue at once
+        /// Controls how many messages should be read from the queue at once
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> BatchSize(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
@@ -75,8 +75,8 @@ namespace NServiceBus
         }
 
         /// <summary>
-        ///     Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
-        ///     from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
+        /// Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
+        /// from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(this TransportExtensions<AzureStorageQueueTransport> config, Action<MessageWrapper, Stream> serialize, Func<Stream, MessageWrapper> deserialize)
         {
@@ -84,16 +84,17 @@ namespace NServiceBus
         }
 
         /// <summary>
-        ///     Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
-        ///     from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
+        /// Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
+        /// from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<SerializationDefinition, MessageWrapperSerializer> serializerFactory)
         {
             config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializerFactory, serializerFactory);
             return config;
         }
+
         /// <summary>
-        ///     Overrides default Md5 shortener for creating queue names with Sha1 shortener.
+        /// Overrides default Md5 shortener for creating queue names with Sha1 shortener.
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> UseSha1ForShortening(this TransportExtensions<AzureStorageQueueTransport> config)
         {

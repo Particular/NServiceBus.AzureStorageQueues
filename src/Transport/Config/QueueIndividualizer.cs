@@ -1,11 +1,25 @@
 namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     using System.Globalization;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
+    using Config;
     using Support;
 
     class QueueIndividualizer
     {
+        public static string Discriminator
+        {
+            get
+            {
+                if (SafeRoleEnvironment.IsAvailable)
+                {
+                    var index = ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
+
+                    return "-" + index.ToString(CultureInfo.InvariantCulture);
+                }
+                return "-" + RuntimeEnvironment.MachineName;
+            }
+        }
+
         public static string Individualize(string queueName)
         {
             var individualQueueName = queueName;
@@ -44,20 +58,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
 
             return individualQueueName;
-        }
-
-        public static string Discriminator
-        {
-            get
-            {
-                if (SafeRoleEnvironment.IsAvailable)
-                {
-                    var index = ParseIndexFrom(SafeRoleEnvironment.CurrentRoleInstanceId);
-
-                    return "-" + index.ToString(CultureInfo.InvariantCulture);
-                }
-                return "-" + RuntimeEnvironment.MachineName;
-            }
         }
 
         public static int ParseIndexFrom(string id)

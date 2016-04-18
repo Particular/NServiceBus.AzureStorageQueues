@@ -4,7 +4,7 @@
     using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
-    using NServiceBus.AcceptanceTesting;
+    using AcceptanceTesting;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.AcceptanceTests.ScenarioDescriptors;
@@ -59,8 +59,6 @@
 
         private class ThrowingProxy : IWebProxy
         {
-            public readonly static Exception ThrownException = new Exception("Fail on proxy");
-
             public Uri GetProxy(Uri destination)
             {
                 throw ThrownException;
@@ -72,6 +70,7 @@
             }
 
             public ICredentials Credentials { get; set; }
+            public readonly static Exception ThrownException = new Exception("Fail on proxy");
         }
 
         public class Context : ScenarioContext

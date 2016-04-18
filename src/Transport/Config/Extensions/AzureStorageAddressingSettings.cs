@@ -2,18 +2,11 @@
 {
     using System;
     using System.Collections.Generic;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
+    using Azure.Transports.WindowsAzureStorageQueues;
+    using Azure.Transports.WindowsAzureStorageQueues.Config;
 
     public sealed class AzureStorageAddressingSettings : IAzureStoragePartitioningSettings
     {
-        static string[] headersToApplyNameMapping = {Headers.ReplyToAddress};
-
-        Dictionary<ConnectionString, string> connectionString2name = new Dictionary<ConnectionString, string>();
-        Dictionary<string, ConnectionString> name2connectionString = new Dictionary<string, ConnectionString>();
-
-        bool logicalQueueAddresses;
-
         IAzureStoragePartitioningSettings IAzureStoragePartitioningSettings.AddStorageAccount(string name, string connectionString)
         {
             if (name == QueueAddress.DefaultStorageAccountName)
@@ -32,7 +25,7 @@
         }
 
         /// <summary>
-        ///     Maps the account name to a connection string, throwing when no mapping found.
+        /// Maps the account name to a connection string, throwing when no mapping found.
         /// </summary>
         internal ConnectionString Map(string name)
         {
@@ -46,7 +39,7 @@
         }
 
         /// <summary>
-        ///     Transforms all the <see cref="QueueAddress" /> in <see cref="headersToApplyNameMapping" /> to use logical names.
+        /// Transforms all the <see cref="QueueAddress" /> in <see cref="headersToApplyNameMapping" /> to use logical names.
         /// </summary>
         internal void ApplyMappingToLogicalName(HeadersCollection headers)
         {
@@ -76,8 +69,8 @@
         }
 
         /// <summary>
-        ///     Transforms all the <see cref="QueueAddress" /> in <see cref="headersToApplyNameMapping" /> to connection string
-        ///     values to maintain backward compatibility.
+        /// Transforms all the <see cref="QueueAddress" /> in <see cref="headersToApplyNameMapping" /> to connection string
+        /// values to maintain backward compatibility.
         /// </summary>
         internal void ApplyMappingOnOutgoingHeaders(HeadersCollection headers)
         {
@@ -117,5 +110,15 @@
                 connectionString2name[value] = name;
             }
         }
+
+        Dictionary<ConnectionString, string> connectionString2name = new Dictionary<ConnectionString, string>();
+        Dictionary<string, ConnectionString> name2connectionString = new Dictionary<string, ConnectionString>();
+
+        bool logicalQueueAddresses;
+
+        static string[] headersToApplyNameMapping =
+        {
+            Headers.ReplyToAddress
+        };
     }
 }

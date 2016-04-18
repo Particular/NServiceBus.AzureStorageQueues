@@ -7,30 +7,12 @@
     using System.Text;
     using System.Xml;
     using Newtonsoft.Json;
-    using NServiceBus.Serialization;
+    using Serialization;
     using Formatting = System.Xml.Formatting;
     using JSON = JsonSerializer;
 
     public class MessageWrapperSerializer
     {
-        public static readonly Lazy<MessageWrapperSerializer> Json = new Lazy<MessageWrapperSerializer>(BuildJsonMessageWrapperSerializer);
-        public static readonly Lazy<MessageWrapperSerializer> Xml = new Lazy<MessageWrapperSerializer>(BuildXmlMessageWrapperSerializer);
-
-        static Dictionary<string, string> CoreV5XmlToDataContractSerializer =
-            new Dictionary<string, string>
-            {
-                {"<NServiceBus.KeyValuePairOfStringAndString>", "<NServiceBus.KeyValuePairOfStringAndString xmlns=\"\">"},
-                {
-                    "<?xml version=\"1.0\" ?>\r\n<MessageWrapper xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"",
-                    "<MessageWrapper xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\""
-                }
-            };
-
-        static UTF8Encoding UTF8NoBOM = new UTF8Encoding(false, true);
-
-        Func<Stream, MessageWrapper> deserialize;
-        Action<MessageWrapper, Stream> serialize;
-
         public MessageWrapperSerializer(Action<MessageWrapper, Stream> serialize, Func<Stream, MessageWrapper> deserialize)
         {
             if (serialize == null)
@@ -167,5 +149,22 @@
         {
             return new StreamReader(stream, UTF8NoBOM, false, 4096, true);
         }
+
+        Func<Stream, MessageWrapper> deserialize;
+        Action<MessageWrapper, Stream> serialize;
+        public static readonly Lazy<MessageWrapperSerializer> Json = new Lazy<MessageWrapperSerializer>(BuildJsonMessageWrapperSerializer);
+        public static readonly Lazy<MessageWrapperSerializer> Xml = new Lazy<MessageWrapperSerializer>(BuildXmlMessageWrapperSerializer);
+
+        static Dictionary<string, string> CoreV5XmlToDataContractSerializer =
+            new Dictionary<string, string>
+            {
+                {"<NServiceBus.KeyValuePairOfStringAndString>", "<NServiceBus.KeyValuePairOfStringAndString xmlns=\"\">"},
+                {
+                    "<?xml version=\"1.0\" ?>\r\n<MessageWrapper xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"",
+                    "<MessageWrapper xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\""
+                }
+            };
+
+        static UTF8Encoding UTF8NoBOM = new UTF8Encoding(false, true);
     }
 }

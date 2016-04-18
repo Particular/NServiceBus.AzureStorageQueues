@@ -2,16 +2,14 @@
 {
     using System;
     using System.Text.RegularExpressions;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.Config;
-    using NServiceBus.Settings;
+    using Config;
+    using Settings;
 
     /// <summary>
-    ///     Helper class
+    /// Helper class
     /// </summary>
     class QueueAddressGenerator
     {
-        Func<string, string> shortener;
-
         public QueueAddressGenerator(ReadOnlySettings settings)
         {
             if (settings.GetOrDefault<bool>(WellKnownConfigurationKeys.Sha1Shortener))
@@ -47,5 +45,7 @@
             sanitized = multipleDashes.Replace(sanitized, "-");
             return sanitized;
         }
+
+        Func<string, string> shortener;
     }
 }

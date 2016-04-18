@@ -1,6 +1,6 @@
 namespace NServiceBus
 {
-    using NServiceBus.Configuration.AdvanceExtensibility;
+    using Configuration.AdvanceExtensibility;
 
     public static class AzureStorageTransportAddressingExtensions
     {
