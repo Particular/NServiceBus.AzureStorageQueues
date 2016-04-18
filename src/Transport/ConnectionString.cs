@@ -4,8 +4,6 @@
 
     public sealed class ConnectionString : IEquatable<ConnectionString>
     {
-        public readonly string Value;
-
         public ConnectionString(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -14,11 +12,6 @@
             }
 
             Value = value;
-        }
-
-        public override string ToString()
-        {
-            return Value;
         }
 
         public bool Equals(ConnectionString other)
@@ -32,6 +25,11 @@
                 return true;
             }
             return string.Equals(Value, other.Value);
+        }
+
+        public override string ToString()
+        {
+            return Value;
         }
 
         public override bool Equals(object obj)
@@ -48,12 +46,14 @@
             {
                 return false;
             }
-            return Equals((ConnectionString)obj);
+            return Equals((ConnectionString) obj);
         }
 
         public override int GetHashCode()
         {
             return Value.GetHashCode();
         }
+
+        public readonly string Value;
     }
 }

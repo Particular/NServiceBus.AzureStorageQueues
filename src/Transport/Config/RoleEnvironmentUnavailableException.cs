@@ -6,12 +6,20 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     [Serializable]
     public class RoleEnvironmentUnavailableException : Exception
     {
-        public RoleEnvironmentUnavailableException(){}
+        public RoleEnvironmentUnavailableException()
+        {
+        }
 
-        public RoleEnvironmentUnavailableException(string message) : base(message){}
+        public RoleEnvironmentUnavailableException(string message) : base(message)
+        {
+        }
 
-        public RoleEnvironmentUnavailableException(string message, Exception inner) : base(message, inner){}
+        public RoleEnvironmentUnavailableException(string message, Exception inner) : base(message, inner)
+        {
+        }
 
-        protected RoleEnvironmentUnavailableException(SerializationInfo info,StreamingContext context) : base(info, context){}
+        protected RoleEnvironmentUnavailableException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

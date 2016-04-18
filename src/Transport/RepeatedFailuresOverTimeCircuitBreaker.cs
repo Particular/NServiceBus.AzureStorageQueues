@@ -3,20 +3,10 @@
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using NServiceBus.Logging;
+    using Logging;
 
     class RepeatedFailuresOverTimeCircuitBreaker : IDisposable
     {
-        static TimeSpan NoPeriodicTriggering = TimeSpan.FromMilliseconds(-1);
-        static ILog Logger = LogManager.GetLogger<RepeatedFailuresOverTimeCircuitBreaker>();
-        long failureCount;
-        Exception lastException;
-
-        string name;
-        Timer timer;
-        TimeSpan timeToWaitBeforeTriggering;
-        Action<Exception> triggerAction;
-
         public RepeatedFailuresOverTimeCircuitBreaker(string name, TimeSpan timeToWaitBeforeTriggering, Action<Exception> triggerAction)
         {
             this.name = name;
@@ -66,5 +56,15 @@
                 triggerAction(lastException);
             }
         }
+
+        long failureCount;
+        Exception lastException;
+
+        string name;
+        Timer timer;
+        TimeSpan timeToWaitBeforeTriggering;
+        Action<Exception> triggerAction;
+        static TimeSpan NoPeriodicTriggering = TimeSpan.FromMilliseconds(-1);
+        static ILog Logger = LogManager.GetLogger<RepeatedFailuresOverTimeCircuitBreaker>();
     }
 }

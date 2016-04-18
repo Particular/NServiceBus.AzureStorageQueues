@@ -2,9 +2,9 @@
 {
     using System;
     using System.Linq;
-    using NServiceBus.DeliveryConstraints;
-    using NServiceBus.Performance.TimeToBeReceived;
+    using DeliveryConstraints;
     using NServiceBus.Transports;
+    using Performance.TimeToBeReceived;
 
     static class TransportOperationExtensions
     {

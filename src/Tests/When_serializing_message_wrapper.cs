@@ -4,7 +4,7 @@
     using System.IO;
     using System.Linq;
     using System.Text;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using NUnit.Framework;
 
     public class When_serializing_message_wrapper
