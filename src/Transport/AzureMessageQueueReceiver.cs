@@ -2,17 +2,15 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
-    using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(MessageWrapperSerializer messageSerializer, CloudQueueClient client, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueReceiver(MessageEnvelopeUnwrapper unwrapper, CloudQueueClient client, QueueAddressGenerator addressGenerator)
         {
-            this.messageSerializer = messageSerializer;
+            this.unwrapper = unwrapper;
             this.client = client;
             this.addressGenerator = addressGenerator;
         }
@@ -56,11 +54,19 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        internal async Task<MessageRetrieved> Receive(CancellationToken token)
+        internal async Task<IEnumerable<MessageRetrieved>> Receive(CancellationToken token)
         {
-            var rawMessage = await GetMessage(token).ConfigureAwait(false);
+            var rawMessages = await azureQueue.GetMessagesAsync(BatchSize, TimeSpan.FromMilliseconds(MessageInvisibleTime), null, null, token).ConfigureAwait(false);
 
-            if (rawMessage == null)
+            var messageFound = false;
+            var messages = new List<MessageRetrieved>();
+            foreach (var rawMessage in rawMessages)
+            {
+                messageFound = true;
+                messages.Add(new MessageRetrieved(unwrapper, rawMessage, azureQueue));
+            }
+
+            if (!messageFound)
             {
                 if (timeToDelayNextPeek + PeekInterval < MaximumWaitTimeWhenIdle)
                 {
@@ -69,80 +75,18 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                 else timeToDelayNextPeek = MaximumWaitTimeWhenIdle;
 
                 await Task.Delay(timeToDelayNextPeek, token).ConfigureAwait(false);
-                return null;
             }
 
             timeToDelayNextPeek = 0;
-            try
-            {
-                var wrapper = DeserializeMessage(rawMessage);
-                return new MessageRetrieved(wrapper, rawMessage, azureQueue, true);
-            }
-            catch (Exception ex)
-            {
-                throw new EnvelopeDeserializationFailed(rawMessage, ex);
-            }
+            return messages;
         }
 
-        async Task<CloudQueueMessage> GetMessage(CancellationToken token)
-        {
-            if (batchQueue.Count == 0)
-            {
-                var messages = await azureQueue.GetMessagesAsync(BatchSize, TimeSpan.FromMilliseconds(MessageInvisibleTime), null, null, token).ConfigureAwait(false);
-                foreach (var receivedMessage in messages)
-                {
-                    batchQueue.Enqueue(receivedMessage);
-                }
-            }
-            if (batchQueue.Count > 0)
-            {
-                return batchQueue.Dequeue();
-            }
-
-            return null;
-        }
-
-        MessageWrapper DeserializeMessage(CloudQueueMessage rawMessage)
-        {
-            MessageWrapper m;
-            using (var stream = new MemoryStream(rawMessage.AsBytes))
-            {
-                try
-                {
-                    m = messageSerializer.Deserialize(stream);
-                }
-                catch (Exception)
-                {
-                    throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
-                }
-            }
-
-            if (m == null)
-            {
-                throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
-            }
-
-            if (m.ReplyToAddress != null)
-            {
-                m.Headers[Headers.ReplyToAddress] = m.ReplyToAddress;
-            }
-            m.Headers[Headers.CorrelationId] = m.CorrelationId;
-
-            if (m.TimeToBeReceived != TimeSpan.MaxValue)
-            {
-                m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived.ToString();
-            }
-            m.Headers[Headers.MessageIntent] = m.MessageIntent.ToString(); // message intent exztension method
-
-            return m;
-        }
+        MessageEnvelopeUnwrapper unwrapper;
 
         QueueAddressGenerator addressGenerator;
 
         CloudQueue azureQueue;
-        Queue<CloudQueueMessage> batchQueue = new Queue<CloudQueueMessage>();
         CloudQueueClient client;
-        MessageWrapperSerializer messageSerializer;
         int timeToDelayNextPeek;
     }
 }

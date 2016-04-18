@@ -104,18 +104,36 @@
         {
             while (!cancellationTokenSource.IsCancellationRequested)
             {
-                MessageRetrieved retrieved;
                 try
                 {
-                    retrieved = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
-                    if (retrieved == null)
-                    {
-                        continue;
-                    }
+                    var retrieved = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
 
-                    if (ackBeforeDispatch)
+                    foreach (var message in retrieved)
                     {
-                        await retrieved.Ack().ConfigureAwait(false);
+                        await concurrencyLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+                        if (cancellationTokenSource.IsCancellationRequested)
+                        {
+                            return;
+                        }
+
+                        var receiveTask = InnerReceive(message);
+
+                        runningReceiveTasks.TryAdd(receiveTask, receiveTask);
+
+                        // We insert the original task into the runningReceiveTasks because we want to await the completion
+                        // of the running receives. ExecuteSynchronously is a request to execute the continuation as part of
+                        // the transition of the antecedents completion phase. This means in most of the cases the continuation
+                        // will be executed during this transition and the antecedent task goes into the completion state only
+                        // after the continuation is executed. This is not always the case. When the TPL thread handling the
+                        // antecedent task is aborted the continuation will be scheduled. But in this case we don't need to await
+                        // the continuation to complete because only really care about the receive operations. The final operation
+                        // when shutting down is a clear of the running tasks anyway.
+                        receiveTask.ContinueWith(t =>
+                        {
+                            Task toBeRemoved;
+                            runningReceiveTasks.TryRemove(t, out toBeRemoved);
+                        }, TaskContinuationOptions.ExecuteSynchronously).Ignore();
                     }
 
                     circuitBreaker.Success();
@@ -124,13 +142,11 @@
                 {
                     Logger.Error($"The queue '{ex.Queue}' was not found. Create the queue.", ex);
                     await circuitBreaker.Failure(ex).ConfigureAwait(false);
-                    continue;
                 }
                 catch (UnableToDispatchException ex)
                 {
                     Logger.Error($"The dispach failed at sending a message to the following queue: '{ex.Queue}'", ex);
                     await circuitBreaker.Failure(ex).ConfigureAwait(false);
-                    continue;
                 }
                 catch (TaskCanceledException)
                 {
@@ -140,71 +156,58 @@
                 {
                     Logger.Warn("Receiving from the queue failed", ex);
                     await circuitBreaker.Failure(ex).ConfigureAwait(false);
-                    continue;
                 }
-
-                if (cancellationTokenSource.IsCancellationRequested)
-                {
-                    return;
-                }
-
-                await concurrencyLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
-
-                var tokenSource = new CancellationTokenSource();
-                var receiveTask = Task.Run(async () =>
-                {
-                    try
-                    {
-                        var message = retrieved.Wrapper;
-
-                        addressing.ApplyMappingToLogicalName(message.Headers);
-
-                        var pushContext = new PushContext(message.Id, message.Headers, new MemoryStream(message.Body), new TransportTransaction(), tokenSource, new ContextBag());
-                        await pipeline(pushContext).ConfigureAwait(false);
-
-                        if (ackBeforeDispatch == false)
-                        {
-                            if (tokenSource.IsCancellationRequested == false)
-                            {
-                                await retrieved.Ack().ConfigureAwait(false);
-                            }
-                            else
-                            {
-                                await retrieved.Nack().ConfigureAwait(false);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        await retrieved.Nack().ConfigureAwait(false);
-                        Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
-                    }
-                    finally
-                    {
-                        concurrencyLimiter.Release();
-                    }
-                }, tokenSource.Token).ContinueWith(t => tokenSource.Dispose());
-
-                runningReceiveTasks.TryAdd(receiveTask, receiveTask);
-
-                // We insert the original task into the runningReceiveTasks because we want to await the completion
-                // of the running receives. ExecuteSynchronously is a request to execute the continuation as part of
-                // the transition of the antecedents completion phase. This means in most of the cases the continuation
-                // will be executed during this transition and the antecedent task goes into the completion state only
-                // after the continuation is executed. This is not always the case. When the TPL thread handling the
-                // antecedent task is aborted the continuation will be scheduled. But in this case we don't need to await
-                // the continuation to complete because only really care about the receive operations. The final operation
-                // when shutting down is a clear of the running tasks anyway.
-                receiveTask.ContinueWith(t =>
-                {
-                    Task toBeRemoved;
-                    runningReceiveTasks.TryRemove(t, out toBeRemoved);
-                }, TaskContinuationOptions.ExecuteSynchronously).Ignore();
             }
         }
 
-        AzureMessageQueueReceiver messageReceiver;
+        private async Task InnerReceive(MessageRetrieved retrieved)
+        {
+            using (var tokenSource = new CancellationTokenSource())
+            {
+                try
+                {
+                    if (ackBeforeDispatch)
+                    {
+                        await retrieved.Ack().ConfigureAwait(false);
+                    }
+
+                    var message = retrieved.Unwrap();
+                    addressing.ApplyMappingToLogicalName(message.Headers);
+
+                    using (var memoryStream = new MemoryStream(message.Body))
+                    {
+                        var pushContext = new PushContext(message.Id, message.Headers, memoryStream, new TransportTransaction(), tokenSource, new ContextBag());
+                        await pipeline(pushContext).ConfigureAwait(false);
+                    }
+
+                    if (ackBeforeDispatch == false)
+                    {
+                        if (tokenSource.IsCancellationRequested == false)
+                        {
+                            await retrieved.Ack().ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await retrieved.Nack().ConfigureAwait(false);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await retrieved.Nack().ConfigureAwait(false);
+                    Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
+                }
+                finally
+                {
+                    concurrencyLimiter.Release();
+                }
+            }
+        }
+
         AzureStorageAddressingSettings addressing;
+
+        AzureMessageQueueReceiver messageReceiver;
+
         bool ackBeforeDispatch;
         CancellationToken cancellationToken;
         CancellationTokenSource cancellationTokenSource;
