@@ -1,11 +1,12 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
     using System.Configuration;
     using System.Threading.Tasks;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using Config;
-    using NServiceBus.Transports;
+    using Transports;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;

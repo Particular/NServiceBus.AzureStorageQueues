@@ -1,9 +1,9 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
     using System.Linq;
     using DeliveryConstraints;
-    using NServiceBus.Transports;
+    using Transports;
     using Performance.TimeToBeReceived;
 
     static class TransportOperationExtensions

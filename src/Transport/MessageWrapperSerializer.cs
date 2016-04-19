@@ -1,8 +1,9 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
     using System.IO;
     using System.Linq;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using MessageInterfaces;
     using MessageInterfaces.MessageMapper.Reflection;
     using Serialization;

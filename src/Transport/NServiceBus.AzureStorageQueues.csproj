@@ -105,6 +105,7 @@
     <Compile Include="Dispatcher.cs" />
     <Compile Include="MessageEnvelopeUnwrapper.cs" />
     <Compile Include="MessagePump.cs" />
+    <Compile Include="obsoletes.cs" />
     <Compile Include="RepeatedFailuresOverTimeCircuitBreaker.cs" />
     <Compile Include="AzureMessageQueueReceiver.cs" />
     <Compile Include="Config\DefaultConfigurationValues.cs" />
@@ -121,14 +122,10 @@
     <Compile Include="MessageRetrieved.cs" />
     <Compile Include="MessageWrapperSerializer.cs" />
     <Compile Include="Config\AzureStorageTransportExtensions.cs" />
-    <Compile Include="Config\QueueIndividualizer.cs" />
-    <Compile Include="Config\RoleEnvironmentUnavailableException.cs" />
-    <Compile Include="Config\SafeRoleEnvironment.cs" />
     <Compile Include="Shortener.cs" />
     <Compile Include="EnvelopeDeserializationFailed.cs" />
     <Compile Include="MessageWrapper.cs" />
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="SettingsExtensions.cs" />
     <Compile Include="TaskEx.cs" />
     <Compile Include="TransportOperationExtensions.cs" />
   </ItemGroup>
