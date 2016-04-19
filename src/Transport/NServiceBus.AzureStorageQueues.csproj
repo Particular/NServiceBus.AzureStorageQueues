@@ -122,10 +122,10 @@
     <Compile Include="MessageWrapperSerializer.cs" />
     <Compile Include="Config\AzureStorageTransportExtensions.cs" />
     <Compile Include="Config\QueueIndividualizer.cs" />
+    <Compile Include="Config\RoleEnvironmentUnavailableException.cs" />
     <Compile Include="Config\SafeRoleEnvironment.cs" />
     <Compile Include="Shortener.cs" />
     <Compile Include="EnvelopeDeserializationFailed.cs" />
-    <Compile Include="IsHostedIn.cs" />
     <Compile Include="MessageWrapper.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="SettingsExtensions.cs" />
