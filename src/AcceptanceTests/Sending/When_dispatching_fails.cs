@@ -69,7 +69,7 @@
             }
 
             public ICredentials Credentials { get; set; }
-            public readonly static Exception ThrownException = new Exception("Fail on proxy");
+            public static readonly Exception ThrownException = new Exception("Fail on proxy");
         }
 
         public class Context : ScenarioContext

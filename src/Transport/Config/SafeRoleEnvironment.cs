@@ -59,7 +59,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         {
             if (!IsAvailable)
             {
-                throw new RoleEnvironmentUnavailableException("Role environment is not available, please check IsAvailable before calling this property!");
+                throw new Exception("Role environment is not available, please check IsAvailable before calling this property!");
             }
         }
 
