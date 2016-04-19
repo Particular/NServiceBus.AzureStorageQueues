@@ -160,7 +160,7 @@
             }
         }
 
-        private async Task InnerReceive(MessageRetrieved retrieved)
+        async Task InnerReceive(MessageRetrieved retrieved)
         {
             using (var tokenSource = new CancellationTokenSource())
             {

@@ -40,7 +40,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         return Task.FromResult(0);
     }
 
-    private static void CleanQueuesUsedByTest(string connectionString)
+    static void CleanQueuesUsedByTest(string connectionString)
     {
         var storage = CloudStorageAccount.Parse(connectionString);
         var client = storage.CreateCloudQueueClient();
@@ -59,7 +59,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         }
     }
 
-    private static IEnumerable<CloudQueue> GetTestRelatedQueues(CloudQueueClient queues)
+    static IEnumerable<CloudQueue> GetTestRelatedQueues(CloudQueueClient queues)
     {
         // for now, return all
         return queues.ListQueues();

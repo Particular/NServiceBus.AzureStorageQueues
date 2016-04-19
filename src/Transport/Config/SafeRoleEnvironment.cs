@@ -55,7 +55,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             }
         }
 
-        private static void ThrowExceptionWhenRoleEnvironmentIsNotAvailable()
+        static void ThrowExceptionWhenRoleEnvironmentIsNotAvailable()
         {
             if (!IsAvailable)
             {

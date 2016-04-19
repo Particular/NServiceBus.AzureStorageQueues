@@ -31,7 +31,7 @@
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
             var connectionObject = new ConnectionString(connectionString);
-            var client = new CreateQueueClients().CreateRecevier(connectionObject);
+            var client = new CreateQueueClients().CreateReceiver(connectionObject);
 
             return new TransportReceiveInfrastructure(
                 () =>
@@ -54,7 +54,7 @@
                 );
         }
 
-        private static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
+        static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
 
@@ -63,7 +63,7 @@
             return addressing;
         }
 
-        private static QueueAddressGenerator GetAddressGenerator(ReadOnlySettings settings)
+        static QueueAddressGenerator GetAddressGenerator(ReadOnlySettings settings)
         {
             return new QueueAddressGenerator(settings);
         }

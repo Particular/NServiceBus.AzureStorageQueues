@@ -32,7 +32,7 @@
         }
 
         /// <summary>
-        /// Acknowledes the successful processing of the message.
+        /// Acknowledges the successful processing of the message.
         /// </summary>
         public async Task Ack()
         {
@@ -66,7 +66,7 @@
 
             try
             {
-                // the simplest solution to push the message back is to update its visibity timeout to 0 which is ok according to the API:
+                // the simplest solution to push the message back is to update its visibility timeout to 0 which is ok according to the API:
                 // https://msdn.microsoft.com/en-us/library/azure/hh452234.aspx
                 rawMessage.SetMessageContent(EmptyContent);
                 await azureQueue.UpdateMessageAsync(rawMessage, TimeSpan.Zero, MessageUpdateFields.Visibility).ConfigureAwait(false);

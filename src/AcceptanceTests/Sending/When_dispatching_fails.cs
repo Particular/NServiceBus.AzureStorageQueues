@@ -41,11 +41,10 @@
                 .Run());
         }
 
-        //private static async Task Send(IEndpointInstance messageSession)
-        private static async Task Send(IMessageSession messageSession)
+        static async Task Send(IMessageSession messageSession)
         {
             await messageSession.Send(new MyMessage()).ConfigureAwait(false);
-            var prev = WebRequest.DefaultWebProxy;
+            var previous = WebRequest.DefaultWebProxy;
             WebRequest.DefaultWebProxy = new ThrowingProxy();
             try
             {
@@ -53,11 +52,11 @@
             }
             finally
             {
-                WebRequest.DefaultWebProxy = prev;
+                WebRequest.DefaultWebProxy = previous;
             }
         }
 
-        private class ThrowingProxy : IWebProxy
+        class ThrowingProxy : IWebProxy
         {
             public Uri GetProxy(Uri destination)
             {

@@ -96,10 +96,10 @@
             return connectionString2name.TryGetValue(connectionString, out name);
         }
 
-        internal void Add(string name, string connectionString, bool throwOnExisitingEntry = true)
+        internal void Add(string name, string connectionString, bool throwOnExistingEntry = true)
         {
             var value = new ConnectionString(connectionString);
-            if (throwOnExisitingEntry)
+            if (throwOnExistingEntry)
             {
                 name2connectionString.Add(name, value);
                 connectionString2name.Add(value, name);

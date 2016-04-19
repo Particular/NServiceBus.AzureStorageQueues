@@ -4,7 +4,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System.Collections.Generic;
 
     [Serializable]
-    internal class MessageWrapper : IMessage
+    class MessageWrapper : IMessage
     {
         public string IdForCorrelation { get; set; }
 

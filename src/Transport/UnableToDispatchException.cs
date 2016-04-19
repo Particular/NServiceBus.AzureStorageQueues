@@ -24,7 +24,7 @@
         public string Queue { get; set; }
 
         /// <summary>
-        /// The queue namemespace dispatch was sending a message to.
+        /// The queue namespace dispatch was sending a message to.
         /// </summary>
         public string Namespace { get; set; }
 
