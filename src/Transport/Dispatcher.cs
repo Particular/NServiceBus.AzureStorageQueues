@@ -30,10 +30,13 @@
                 throw new Exception("The Azure Storage Queue transport only supports unicast transport operations.");
             }
 
+            var sends = new List<Task>(outgoingMessages.UnicastTransportOperations.Count());
             foreach (var unicastTransportOperation in outgoingMessages.UnicastTransportOperations)
             {
-                await Send(unicastTransportOperation).ConfigureAwait(false);
+                sends.Add(Send(unicastTransportOperation));
             }
+
+            await Task.WhenAll(sends).ConfigureAwait(false);
         }
 
         async Task Send(UnicastTransportOperation operation)
@@ -48,7 +51,7 @@
             var q = addressGenerator.GetQueueName(queue.QueueName);
             var sendQueue = sendClient.GetQueueReference(q);
 
-            if (!Exists(sendQueue))
+            if (!await ExistsAsync(sendQueue).ConfigureAwait(false))
             {
                 throw new QueueNotFoundException
                 {
@@ -80,6 +83,7 @@
             }
 
             var rawMessage = SerializeMessage(operation, timeToBeReceived);
+
             try
             {
                 await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
@@ -93,10 +97,10 @@
             }
         }
 
-        bool Exists(CloudQueue sendQueue)
+        Task<bool> ExistsAsync(CloudQueue sendQueue)
         {
             var key = sendQueue.Uri.ToString();
-            return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.Exists());
+            return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.ExistsAsync());
         }
 
         CloudQueueMessage SerializeMessage(IOutgoingTransportOperation operation, TimeSpan? timeToBeReceived)
@@ -136,6 +140,6 @@
         CreateQueueClients createQueueClients;
         ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         MessageWrapperSerializer messageSerializer;
-        static ConcurrentDictionary<string, bool> rememberExistence = new ConcurrentDictionary<string, bool>();
+        ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
     }
 }

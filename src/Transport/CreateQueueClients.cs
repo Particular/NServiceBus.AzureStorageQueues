@@ -11,12 +11,12 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
             return destinationQueueClients.GetOrAdd(connectionString, BuildClient);
         }
 
-        public CloudQueueClient CreateReceiver(ConnectionString connectionString)
+        public static CloudQueueClient CreateReceiver(ConnectionString connectionString)
         {
             return BuildClient(connectionString);
         }
 
-        CloudQueueClient BuildClient(ConnectionString connectionString)
+        static CloudQueueClient BuildClient(ConnectionString connectionString)
         {
             CloudStorageAccount account;
             if (CloudStorageAccount.TryParse(connectionString.Value, out account))
