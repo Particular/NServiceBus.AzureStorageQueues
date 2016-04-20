@@ -10,13 +10,6 @@
         public override int GetHashCode() { }
         public override string ToString() { }
     }
-    public class RoleEnvironmentUnavailableException : System.Exception
-    {
-        public RoleEnvironmentUnavailableException() { }
-        public RoleEnvironmentUnavailableException(string message) { }
-        public RoleEnvironmentUnavailableException(string message, System.Exception inner) { }
-        protected RoleEnvironmentUnavailableException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
-    }
     public class UnableToDispatchException : System.Exception
     {
         public const string ExceptionMessage = "Message couldn\'t be dispatched";
