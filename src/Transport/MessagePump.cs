@@ -105,10 +105,6 @@
                 {
                     await InnerProcessMessages().ConfigureAwait(false);
                 }
-                catch (OperationCanceledException)
-                {
-                    // For graceful shutdown purposes
-                }
                 catch (Exception ex)
                 {
                     Logger.Error("Polling Dequeue Strategy failed", ex);
@@ -164,8 +160,9 @@
                     Logger.Error($"The dispach failed at sending a message to the following queue: '{ex.Queue}'", ex);
                     await circuitBreaker.Failure(ex).ConfigureAwait(false);
                 }
-                catch (TaskCanceledException)
+                catch (OperationCanceledException)
                 {
+                    // For graceful shutdown purposes
                     return;
                 }
                 catch (Exception ex)
