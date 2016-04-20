@@ -34,7 +34,7 @@ top of things.
 
 Follow these steps to run the acceptance tests locally:
 * Add a new environment variable `Transport.UseSpecific` with the value `AzureStorageQueueTransport`
-* Add a new environment variable `AzureStorageQueueTransport.ConnectionString` containing a connection string to your Azure storage account or use use `UseDevelopmentStorage=true` to use the [Azure Storage Emulator](https://azure.microsoft.com/en-us/documentation/articles/storage-use-emulator/) (make sure to start it before you run the tests).
+* Add a new environment variable `AzureStorageQueueTransport.ConnectionString` containing a connection string to your Azure storage account or use `UseDevelopmentStorage=true` to use the [Azure Storage Emulator](https://azure.microsoft.com/en-us/documentation/articles/storage-use-emulator/) (make sure to start it before you run the tests).
 
 
 ## Submitting Changes
