@@ -14,8 +14,9 @@
 
     class MessagePump : IPushMessages, IDisposable
     {
-        public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing)
+        public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing, int? degreeOfReceiveParallelism)
         {
+            this.degreeOfReceiveParallelism = degreeOfReceiveParallelism;
             this.messageReceiver = messageReceiver;
             this.addressing = addressing;
         }
@@ -53,10 +54,19 @@
             concurrencyLimiter = new SemaphoreSlim(limitations.MaxConcurrency);
             cancellationTokenSource = new CancellationTokenSource();
 
+            if (!degreeOfReceiveParallelism.HasValue)
+            {
+                degreeOfReceiveParallelism = EstimateDegreeOfReceiveParallelism(limitations.MaxConcurrency);
+            }
+
+            messagePumpTasks = new Task[degreeOfReceiveParallelism.Value];
+
             cancellationToken = cancellationTokenSource.Token;
-            // ReSharper disable once ConvertClosureToMethodGroup
-            // LongRunning is useless combined with async/await
-            messagePumpTask = Task.Run(() => ProcessMessages(), CancellationToken.None);
+
+            for (var i = 0; i < degreeOfReceiveParallelism; i++)
+            {
+                messagePumpTasks[i] = Task.Run(ProcessMessages, CancellationToken.None);
+            }
         }
 
         public async Task Stop()
@@ -65,10 +75,7 @@
 
             // ReSharper disable once MethodSupportsCancellation
             var timeoutTask = Task.Delay(StoppingAllTasksTimeout);
-            var allTasks = runningReceiveTasks.Values.Concat(new[]
-            {
-                messagePumpTask
-            });
+            var allTasks = runningReceiveTasks.Values.Concat(messagePumpTasks);
             var finishedTask = await Task.WhenAny(Task.WhenAll(allTasks), timeoutTask).ConfigureAwait(false);
 
             if (finishedTask.Equals(timeoutTask))
@@ -78,6 +85,15 @@
 
             concurrencyLimiter.Dispose();
             runningReceiveTasks.Clear();
+        }
+
+        static int EstimateDegreeOfReceiveParallelism(int maxConcurrency)
+        {
+            /*
+             * Degree of parallelism = square root of MaxConcurrency (rounded)
+             *  (concurrency 1 = 1, concurrency 10 = 3, concurrency 20 = 4, concurrency 50 = 7, concurrency 100 [default] = 10, concurrency 200 = 14, concurrency 1000 = 32)
+             */
+            return Math.Min(Convert.ToInt32(Math.Round(Math.Sqrt(Convert.ToDouble(maxConcurrency)))), AzureStorageTransportExtensions.MaxDegreeOfReceiveParallelism);
         }
 
         [DebuggerNonUserCode]
@@ -214,9 +230,10 @@
         RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
         SemaphoreSlim concurrencyLimiter;
 
-        Task messagePumpTask;
+        Task[] messagePumpTasks;
         Func<PushContext, Task> pipeline;
         ConcurrentDictionary<Task, Task> runningReceiveTasks;
+        int? degreeOfReceiveParallelism;
         static ILog Logger = LogManager.GetLogger(typeof(MessagePump));
         static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
