@@ -24,7 +24,7 @@
         const int DefaultMessageInvisibleTime = 30000;
         const int DefaultPeekInterval = 50;
         const int DefaultMaximumWaitTimeWhenIdle = 1000;
-        const int DefaultBatchSize = 10;
+        const int DefaultBatchSize = 32;
         const bool DefaultPurgeOnStartup = false;
         const string DefaultConnectionString = "";
         const bool DefaultQueuePerInstance = false;

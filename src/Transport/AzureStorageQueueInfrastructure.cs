@@ -47,7 +47,13 @@
                         BatchSize = settings.Get<int>(WellKnownConfigurationKeys.ReceiverBatchSize)
                     };
 
-                    return new MessagePump(receiver, addressing);
+                    int? degreeOfReceiveParallelism = null;
+                    int parallelism;
+                    if (settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out parallelism))
+                    {
+                        degreeOfReceiveParallelism = parallelism;
+                    }
+                    return new MessagePump(receiver, addressing, degreeOfReceiveParallelism);
                 },
                 () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings)),
                 () => Task.FromResult(StartupCheckResult.Success)

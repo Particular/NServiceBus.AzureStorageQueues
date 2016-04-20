@@ -11,5 +11,6 @@
         public const string Sha1Shortener = "Transport.AzureStorageQueue.Sha1Shortener";
         public const string PurgeOnStartup = "Transport.AzureStorageQueue.PurgeOnStartup";
         public const string DefaultQueuePerInstance = "Transport.AzureStorageQueue.DefaultQueuePerInstance";
+        public const string DegreeOfReceiveParallelism = "Transport.AzureStorageQueue.DegreeOfReceiveParallelism";
     }
 }

@@ -100,5 +100,21 @@ namespace NServiceBus
             config.GetSettings().Set(WellKnownConfigurationKeys.Sha1Shortener, true);
             return config;
         }
+
+        /// <summary>
+        /// Sets the degree of parallelism that should be used to receive messages.
+        /// </summary>
+        public static TransportExtensions<AzureStorageQueueTransport> DegreeOfReceiveParallelism(this TransportExtensions<AzureStorageQueueTransport> config, int degreeOfReceiveParallelism)
+        {
+            if (degreeOfReceiveParallelism < 1 || degreeOfReceiveParallelism > MaxDegreeOfReceiveParallelism)
+            {
+                throw new ArgumentOutOfRangeException(nameof(degreeOfReceiveParallelism), degreeOfReceiveParallelism, "DegreeOfParallelism must be between 1 and 32.");
+            }
+
+            config.GetSettings().Set(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, degreeOfReceiveParallelism);
+            return config;
+        }
+
+        internal const int MaxDegreeOfReceiveParallelism = 32;
     }
 }
