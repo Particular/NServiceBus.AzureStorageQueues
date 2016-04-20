@@ -2,7 +2,7 @@
 {
     using System;
 
-    public sealed class ConnectionString : IEquatable<ConnectionString>
+    sealed class ConnectionString : IEquatable<ConnectionString>
     {
         public ConnectionString(string value)
         {
