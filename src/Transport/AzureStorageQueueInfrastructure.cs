@@ -17,6 +17,7 @@
         {
             this.settings = settings;
             this.connectionString = connectionString;
+            serializer = BuildSerializer(settings);
         }
 
         public override IEnumerable<Type> DeliveryConstraints { get; } = new[]
@@ -37,7 +38,7 @@
                 () =>
                 {
                     var addressing = GetAddressing(settings, connectionString);
-                    var unwrapper = new MessageEnvelopeUnwrapper(GetSerializer(settings));
+                    var unwrapper = new MessageEnvelopeUnwrapper(serializer);
                     var receiver = new AzureMessageQueueReceiver(unwrapper, client, GetAddressGenerator(settings))
                     {
                         PurgeOnStartup = settings.Get<bool>(WellKnownConfigurationKeys.PurgeOnStartup),
@@ -74,17 +75,6 @@
             return new QueueAddressGenerator(settings);
         }
 
-        MessageWrapperSerializer GetSerializer(ReadOnlySettings settings)
-        {
-            if (serializer != null)
-            {
-                return serializer;
-            }
-
-            serializer = BuildSerializer(settings);
-            return serializer;
-        }
-
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
         {
             var definition = settings.GetOrDefault<SerializationDefinition>(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition);
@@ -112,7 +102,7 @@
 
                     var queueCreator = new CreateQueueClients();
                     var addressRetriever = GetAddressGenerator(settings);
-                    return new Dispatcher(queueCreator, GetSerializer(settings), addressRetriever, addressing);
+                    return new Dispatcher(queueCreator, serializer, addressRetriever, addressing);
                 },
                 () => Task.FromResult(StartupCheckResult.Success));
         }
