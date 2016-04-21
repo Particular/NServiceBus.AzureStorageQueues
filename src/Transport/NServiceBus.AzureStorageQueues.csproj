@@ -128,7 +128,6 @@
     <Compile Include="IsHostedIn.cs" />
     <Compile Include="MessageWrapper.cs" />
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="UnableToDispatchException.cs" />
     <Compile Include="SettingsExtensions.cs" />
     <Compile Include="TaskEx.cs" />
     <Compile Include="TransportOperationExtensions.cs" />
