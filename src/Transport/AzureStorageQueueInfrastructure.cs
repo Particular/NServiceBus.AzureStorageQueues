@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.Configuration;
     using System.Threading.Tasks;
-    using Azure.Transports.WindowsAzureStorageQueues;
     using Config;
     using Transports;
     using Performance.TimeToBeReceived;

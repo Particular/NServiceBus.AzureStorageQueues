@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -6,17 +6,17 @@
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
-    using AzureStorageQueues;
-    using AzureStorageQueues.Config;
+    using Azure.Transports.WindowsAzureStorageQueues;
+    using Config;
     using Extensibility;
     using Logging;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Transports;
+    using Transports;
     using Unicast.Queuing;
 
     class Dispatcher : IDispatchMessages
     {
-        public Dispatcher(AzureStorageQueues.CreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
+        public Dispatcher(CreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
         {
             this.createQueueClients = createQueueClients;
             this.messageSerializer = messageSerializer;
@@ -129,7 +129,7 @@
 
         QueueAddressGenerator addressGenerator;
         AzureStorageAddressingSettings addressing;
-        AzureStorageQueues.CreateQueueClients createQueueClients;
+        CreateQueueClients createQueueClients;
         ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         MessageWrapperSerializer messageSerializer;
         ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
