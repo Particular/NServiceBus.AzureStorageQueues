@@ -1,7 +1,6 @@
 ﻿namespace NServiceBus.Azure.QuickTests
 {
-    using Azure.Transports.WindowsAzureStorageQueues;
-    using Azure.Transports.WindowsAzureStorageQueues.Config;
+    using AzureStorageQueues.Config;
     using NUnit.Framework;
 
     [TestFixture]
@@ -34,16 +33,6 @@
             QueueAddress queue;
             Assert.IsFalse(QueueAddress.TryParse(name, out queue));
             Assert.IsNull(queue);
-        }
-
-        [Test]
-        public void Should_parse_queueindex_from_queuename_using_underscores() // azure queuestorage transport will replace dots by underscores
-        {
-            const string connectionstring = "myqueue_1";
-
-            var index = QueueIndividualizer.ParseIndexFrom(connectionstring);
-
-            Assert.AreEqual(index, 1);
         }
     }
 }

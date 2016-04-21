@@ -1,6 +1,6 @@
 ﻿namespace NServiceBus.Azure.QuickTests
 {
-    using Azure.Transports.WindowsAzureStorageQueues;
+    using AzureStorageQueues;
     using NUnit.Framework;
 
     public class ShortenerTests

@@ -1,8 +1,8 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
 
-    public sealed class ConnectionString : IEquatable<ConnectionString>
+    sealed class ConnectionString : IEquatable<ConnectionString>
     {
         public ConnectionString(string value)
         {

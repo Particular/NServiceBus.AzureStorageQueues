@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -9,7 +9,7 @@
     using System.Threading.Tasks;
     using Extensibility;
     using Logging;
-    using NServiceBus.Transports;
+    using Transports;
 
     class MessagePump : IPushMessages, IDisposable
     {

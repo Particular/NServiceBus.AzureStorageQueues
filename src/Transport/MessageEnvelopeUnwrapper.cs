@@ -1,8 +1,9 @@
-namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+namespace NServiceBus.AzureStorageQueues
 {
     using System;
     using System.IO;
     using System.Runtime.Serialization;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage.Queue;
 
     class MessageEnvelopeUnwrapper

@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -6,11 +6,12 @@
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using Config;
     using Extensibility;
     using Logging;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Transports;
+    using Transports;
     using Unicast.Queuing;
 
     class Dispatcher : IDispatchMessages
