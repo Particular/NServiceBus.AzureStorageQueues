@@ -176,7 +176,8 @@
                     var message = retrieved.Unwrap();
                     addressing.ApplyMappingToLogicalName(message.Headers);
 
-                    using (var memoryStream = new MemoryStream(message.Body))
+                    var body = message.Body ?? new byte[0];
+                    using (var memoryStream = new MemoryStream(body))
                     {
                         var pushContext = new PushContext(message.Id, message.Headers, memoryStream, new TransportTransaction(), tokenSource, new ContextBag());
                         await pipeline(pushContext).ConfigureAwait(false);
