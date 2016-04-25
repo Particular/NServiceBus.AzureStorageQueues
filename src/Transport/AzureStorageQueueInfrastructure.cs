@@ -41,7 +41,6 @@
                     var unwrapper = new MessageEnvelopeUnwrapper(serializer);
                     var receiver = new AzureMessageQueueReceiver(unwrapper, client, GetAddressGenerator(settings))
                     {
-                        PurgeOnStartup = settings.Get<bool>(WellKnownConfigurationKeys.PurgeOnStartup),
                         MaximumWaitTimeWhenIdle = settings.Get<int>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
                         MessageInvisibleTime = settings.Get<int>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
                         PeekInterval = settings.Get<int>(WellKnownConfigurationKeys.ReceiverPeekInterval),
