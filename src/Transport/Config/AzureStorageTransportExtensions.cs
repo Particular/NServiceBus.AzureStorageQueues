@@ -1,8 +1,10 @@
 namespace NServiceBus
 {
     using System;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using AzureStorageQueues.Config;
     using Configuration.AdvanceExtensibility;
+    using Serialization;
 
     public static class AzureStorageTransportExtensions
     {
@@ -76,6 +78,17 @@ namespace NServiceBus
             }
 
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverBatchSize, value);
+            return config;
+        }
+
+        /// <summary>
+        /// Sets a custom serialization for <see cref="MessageWrapper" /> if your configurations uses serialization different
+        /// from <see cref="XmlSerializer" /> or <see cref="JsonSerializer" />.
+        /// </summary>
+        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this TransportExtensions<AzureStorageQueueTransport> config)
+            where TSerializationDefinition : SerializationDefinition, new()
+        {
+            config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, new TSerializationDefinition());
             return config;
         }
 

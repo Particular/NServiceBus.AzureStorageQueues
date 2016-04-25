@@ -76,8 +76,13 @@
 
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
         {
-            var definition = settings.Get<SerializationDefinition>();
-            return new MessageWrapperSerializer(definition.Configure(settings));
+            SerializationDefinition wrapperSerializer;
+            if (settings.TryGet(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, out wrapperSerializer))
+            {
+                return new MessageWrapperSerializer(wrapperSerializer.Configure(settings));
+            }
+
+            return new MessageWrapperSerializer(settings.Get<SerializationDefinition>().Configure(settings));
         }
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()
