@@ -17,16 +17,12 @@
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverPeekInterval, DefaultPeekInterval);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, DefaultMaximumWaitTimeWhenIdle);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverBatchSize, DefaultBatchSize);
-            settings.SetDefault(WellKnownConfigurationKeys.PurgeOnStartup, DefaultPurgeOnStartup);
-            settings.SetDefault(WellKnownConfigurationKeys.DefaultQueuePerInstance, DefaultQueuePerInstance);
         }
 
         const int DefaultMessageInvisibleTime = 30000;
         const int DefaultPeekInterval = 50;
         const int DefaultMaximumWaitTimeWhenIdle = 1000;
         const int DefaultBatchSize = 32;
-        const bool DefaultPurgeOnStartup = false;
         const string DefaultConnectionString = "";
-        const bool DefaultQueuePerInstance = false;
     }
 }

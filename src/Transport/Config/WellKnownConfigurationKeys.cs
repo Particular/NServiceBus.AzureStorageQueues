@@ -9,8 +9,6 @@
         public const string ReceiverBatchSize = "Transport.AzureStorageQueue.ReceiverBatchSize";
         public const string MessageWrapperSerializationDefinition = "Transport.AzureStorageQueue.MessageWrapperSerializationDefinition";
         public const string Sha1Shortener = "Transport.AzureStorageQueue.Sha1Shortener";
-        public const string PurgeOnStartup = "Transport.AzureStorageQueue.PurgeOnStartup";
-        public const string DefaultQueuePerInstance = "Transport.AzureStorageQueue.DefaultQueuePerInstance";
         public const string DegreeOfReceiveParallelism = "Transport.AzureStorageQueue.DegreeOfReceiveParallelism";
     }
 }
