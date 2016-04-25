@@ -1,17 +1,16 @@
 ﻿namespace NServiceBus.AcceptanceTests.DelayedDelivery
 {
     using System;
-    using System.Linq;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using EndpointTemplates;
     using Extensibility;
     using Features;
-    using Persistence;
+    using NServiceBus.Persistence;
     using NUnit.Framework;
     using ScenarioDescriptors;
     using Timeout.Core;
-    using Conventions = AcceptanceTesting.Customization.Conventions;
 
     public class When_timeout_dispatch_fails : NServiceBusAcceptanceTest
     {
@@ -24,8 +23,8 @@
                         .When((bus, c) =>
                         {
                             var options = new SendOptions();
-                            options.SetHeader("Timeout.Id", Guid.NewGuid().ToString());
-                            options.SetDestination(Conventions.EndpointNamingConvention(typeof(Endpoint)) + ".TimeoutsDispatcher");
+                            options.DelayDeliveryWith(TimeSpan.FromSeconds(2));
+                            options.RouteToThisEndpoint();
                             return bus.Send(new MyMessage(), options);
                         }))
                 .WithEndpoint<ErrorSpy>()
@@ -91,7 +90,12 @@
 
                 public Task<TimeoutsChunk> GetNextChunk(DateTime startSlice)
                 {
-                    return Task.FromResult(new TimeoutsChunk(Enumerable.Empty<TimeoutsChunk.Timeout>(), DateTime.MaxValue));
+                    var timeout = new TimeoutsChunk.Timeout(Guid.NewGuid().ToString(), DateTime.UtcNow);
+                    var timeouts = new List<TimeoutsChunk.Timeout>
+                    {
+                        timeout
+                    };
+                    return Task.FromResult(new TimeoutsChunk(timeouts, DateTime.MaxValue));
                 }
             }
         }
