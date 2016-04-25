@@ -17,9 +17,6 @@ namespace NServiceBus
 
         protected override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
         {
-            settings.SetDefault("Transactions.DoNotWrapHandlersExecutionInATransactionScope", true);
-            settings.SetDefault("Transactions.SuppressDistributedTransactions", true);
-            
             // user JSON instead of XML as the default serializer:
             settings.SetDefault<SerializationDefinition>(new JsonSerializer());
 
