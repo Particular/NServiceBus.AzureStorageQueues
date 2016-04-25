@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Configuration;
     using System.Threading.Tasks;
     using Config;
     using Transports;
@@ -77,19 +76,7 @@
 
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
         {
-            var definition = settings.GetOrDefault<SerializationDefinition>(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition);
-            if (definition == null)
-            {
-                definition = settings.GetOrDefault<SerializationDefinition>();
-            }
-
-            if (definition == null)
-            {
-                var name = typeof(SerializationDefinition).Name;
-                throw new ConfigurationErrorsException($"There's no {name} configured either for the Azure Storage Queue transport or the bus itself. " +
-                                                       "Use either endpointConfiguration.UseSerialization() or .UseTransport<AzureStorageQueueTransport>().SerializeMessageWrapperWith() to provide one.");
-            }
-
+            var definition = settings.Get<SerializationDefinition>();
             return new MessageWrapperSerializer(definition.Configure(settings));
         }
 
