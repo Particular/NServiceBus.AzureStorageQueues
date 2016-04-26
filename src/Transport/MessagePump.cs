@@ -118,7 +118,8 @@
                 try
                 {
                     var retrieved = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
-
+                    circuitBreaker.Success();
+                    
                     foreach (var message in retrieved)
                     {
                         await concurrencyLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -146,8 +147,6 @@
                             runningReceiveTasks.TryRemove(t, out toBeRemoved);
                         }, TaskContinuationOptions.ExecuteSynchronously).Ignore();
                     }
-
-                    circuitBreaker.Success();
                 }
                 catch (OperationCanceledException)
                 {
@@ -198,7 +197,6 @@
                 catch (Exception ex)
                 {
                     Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
-                    await circuitBreaker.Failure(ex).ConfigureAwait(false);
                     await retrieved.Nack().ConfigureAwait(false);
                 }
                 finally
