@@ -18,19 +18,12 @@ namespace NServiceBus.AzureStorageQueues
             MessageWrapper m;
             using (var stream = new MemoryStream(rawMessage.AsBytes))
             {
-                try
-                {
-                    m = messageWrapperSerializer.Deserialize(stream);
-                }
-                catch (Exception)
-                {
-                    throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
-                }
+                m = messageWrapperSerializer.Deserialize(stream);
             }
 
             if (m == null)
             {
-                throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
+                throw new SerializationException("Message is null");
             }
 
             if (m.ReplyToAddress != null)
