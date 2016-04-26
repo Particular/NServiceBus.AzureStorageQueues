@@ -13,7 +13,7 @@
     {
         [Test]
         [MethodImpl(MethodImplOptions.NoInlining)]
-        [UseReporter(typeof(DiffReporter))]
+        [UseReporter(typeof(DiffReporter), typeof(AllFailingTestsClipboardReporter))]
         public void ApproveAzureStorageQueueTransport()
         {
             var assemblyPath = Path.GetFullPath(typeof(AzureStorageQueueTransport).Assembly.Location);
