@@ -22,7 +22,7 @@
             var context = await Scenario.Define<Context>()
                 .WithEndpoint<DefaultConfigurationEndpoint>(c => c
                     .When(e => e.SendLocal(new MyRequest())))
-                .Done(c => c.EndpointsStarted)
+                .Done(c => c.InvokedHandler)
                 .Run();
 
             Assert.IsTrue(context.InvokedHandler);
