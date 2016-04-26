@@ -17,7 +17,7 @@ namespace NServiceBus
 
         protected override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
         {
-            // user JSON instead of XML as the default serializer:
+            // configure JSON instead of XML as the default serializer:
             settings.SetDefault<SerializationDefinition>(new JsonSerializer());
 
             new DefaultConfigurationValues().Apply(settings);
