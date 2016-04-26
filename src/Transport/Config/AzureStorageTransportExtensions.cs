@@ -9,9 +9,9 @@ namespace NServiceBus
     public static class AzureStorageTransportExtensions
     {
         /// <summary>
-        /// Sets the amount of time, in milliseconds, to add to the time to wait before checking for a new message
+        /// Sets the amount of time to add to the time to wait before checking for a new message
         /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> PeekInterval(this TransportExtensions<AzureStorageQueueTransport> config, int value)
+        public static TransportExtensions<AzureStorageQueueTransport> PeekInterval(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverPeekInterval, value);
             return config;
@@ -34,9 +34,9 @@ namespace NServiceBus
         /// <summary>
         /// Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
         /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, int value)
+        public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
-            if (value < 100 || value > 60000)
+            if (value < TimeSpan.FromMilliseconds(100) || value > TimeSpan.FromSeconds(60))
             {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be between 100ms and 60 seconds.");
             }
@@ -48,23 +48,14 @@ namespace NServiceBus
         /// <summary>
         /// Controls how long messages should be invisible to other callers when receiving messages from the queue
         /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, int value)
+        public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
-            if (value < 1000 || value > 604800000)
+            if (value < TimeSpan.FromSeconds(1) || value > TimeSpan.FromDays(7))
             {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be between 1 second and 7 days.");
             }
-
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, value);
             return config;
-        }
-
-        /// <summary>
-        /// Controls how long messages should be invisible to other callers when receiving messages from the queue
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
-        {
-            return config.MessageInvisibleTime((int) value.TotalMilliseconds);
         }
 
         /// <summary>

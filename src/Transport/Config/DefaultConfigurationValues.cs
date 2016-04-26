@@ -1,5 +1,6 @@
 ﻿namespace NServiceBus.AzureStorageQueues
 {
+    using System;
     using Config;
     using Settings;
 
@@ -19,9 +20,9 @@
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverBatchSize, DefaultBatchSize);
         }
 
-        const int DefaultMessageInvisibleTime = 30000;
-        const int DefaultPeekInterval = 50;
-        const int DefaultMaximumWaitTimeWhenIdle = 1000;
+        TimeSpan DefaultMessageInvisibleTime = TimeSpan.FromSeconds(30);
+        TimeSpan DefaultPeekInterval = TimeSpan.FromMilliseconds(50);
+        TimeSpan DefaultMaximumWaitTimeWhenIdle = TimeSpan.FromSeconds(1);
         const int DefaultBatchSize = 32;
         const string DefaultConnectionString = "";
     }
