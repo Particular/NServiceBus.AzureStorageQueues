@@ -1,13 +1,13 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Sending
+﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Sending
 {
     using System;
     using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
-    using NServiceBus.AcceptanceTests.ScenarioDescriptors;
+    using AcceptanceTests;
+    using EndpointTemplates;
+    using ScenarioDescriptors;
     using NUnit.Framework;
 
     public class When_dispatching_fails : NServiceBusAcceptanceTest
