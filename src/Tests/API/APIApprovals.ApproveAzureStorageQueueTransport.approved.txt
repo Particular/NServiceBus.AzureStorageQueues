@@ -84,6 +84,19 @@
     {
         public IsHostedIn() { }
     }
+    public class MessageWrapper : NServiceBus.IMessage
+    {
+        public MessageWrapper() { }
+        public byte[] Body { get; set; }
+        public string CorrelationId { get; set; }
+        public System.Collections.Generic.Dictionary<string, string> Headers { get; set; }
+        public string Id { get; set; }
+        public string IdForCorrelation { get; set; }
+        public NServiceBus.MessageIntentEnum MessageIntent { get; set; }
+        public bool Recoverable { get; set; }
+        public string ReplyToAddress { get; set; }
+        public System.TimeSpan TimeToBeReceived { get; set; }
+    }
     [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
         "t and as such was removed from the public API. For more information, refer to th" +
         "e documentation. Will be removed in version 8.0.0.", true)]

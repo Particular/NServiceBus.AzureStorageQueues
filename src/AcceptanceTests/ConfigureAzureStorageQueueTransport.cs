@@ -24,7 +24,6 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings)
     {
         var connectionString = settings.Get<string>("Transport.ConnectionString");
-        configuration.UseSerialization<XmlSerializer>();
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(5))

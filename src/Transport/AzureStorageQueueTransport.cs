@@ -1,6 +1,7 @@
 namespace NServiceBus
 {
     using AzureStorageQueues;
+    using Serialization;
     using Settings;
     using Transports;
 
@@ -16,8 +17,9 @@ namespace NServiceBus
 
         protected override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
         {
-            settings.SetDefault("Transactions.DoNotWrapHandlersExecutionInATransactionScope", true);
-            settings.SetDefault("Transactions.SuppressDistributedTransactions", true);
+            // configure JSON instead of XML as the default serializer:
+            settings.SetDefault<SerializationDefinition>(new JsonSerializer());
+
             new DefaultConfigurationValues().Apply(settings);
 
             return new AzureStorageQueueInfrastructure(settings, connectionString);

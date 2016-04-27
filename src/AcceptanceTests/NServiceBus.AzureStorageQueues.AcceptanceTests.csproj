@@ -297,9 +297,9 @@
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-beta0001\Tx\When_sending_within_an_ambient_transaction.cs" />
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-beta0001\Versioning\When_multiple_versions_of_a_message_is_published.cs" />
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-beta0001\Volatile\When_sending_to_non_durable_endpoint.cs" />
+    <Compile Include="Configuration\When_configuring_message_wrapper_serializer.cs" />
     <Compile Include="ConfigureAzureStorageQueueTransport.cs" />
     <Compile Include="NamespaceSetup.cs" />
-    <Compile Include="NServiceBusAcceptanceTest.cs" />
     <Compile Include="Sending\When_dispatching_fails.cs" />
     <Compile Include="Sending\When_dispatching_to_other_account.cs" />
     <Compile Include="Sending\When_message_is_sent_with_time_to_be_received_set_to_more_than_7_days.cs" />
