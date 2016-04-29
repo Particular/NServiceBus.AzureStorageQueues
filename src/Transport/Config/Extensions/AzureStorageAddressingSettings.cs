@@ -51,6 +51,12 @@
                     var address = QueueAddress.Parse(headerValue);
                     string name;
 
+                    // no mapping if address is default
+                    if (address.IsAccountDefault)
+                    {
+                        continue;
+                    }
+
                     // try map as connection string
                     if (TryMap(new ConnectionString(address.StorageAccount), out name))
                     {

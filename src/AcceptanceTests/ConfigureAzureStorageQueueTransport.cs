@@ -27,7 +27,9 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         configuration.UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(5))
-            .SerializeMessageWrapperWith<JsonSerializer>();
+            .SerializeMessageWrapperWith<JsonSerializer>()
+            .Addressing()
+            .UseAccountNamesInsteadOfConnectionStrings();
 
         CleanQueuesUsedByTest(connectionString);
 
