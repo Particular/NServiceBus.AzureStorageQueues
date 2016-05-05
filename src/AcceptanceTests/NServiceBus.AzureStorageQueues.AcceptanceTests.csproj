@@ -299,7 +299,7 @@
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-beta0001\Volatile\When_sending_to_non_durable_endpoint.cs" />
     <Compile Include="Configuration\JsonExtensions.cs" />
     <Compile Include="Configuration\When_configuring_message_wrapper_serializer.cs" />
-    <Compile Include="Configuration\When_using_mapping_to_account_names.cs" />
+    <Compile Include="Configuration\When_mapping_account_names.cs" />
     <Compile Include="ConfigureAzureStorageQueueTransport.cs" />
     <Compile Include="NamespaceSetup.cs" />
     <Compile Include="Sending\When_dispatching_fails.cs" />
