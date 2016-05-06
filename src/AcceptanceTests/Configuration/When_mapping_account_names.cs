@@ -16,7 +16,8 @@
     public class When_mapping_account_names : NServiceBusAcceptanceTest
     {
         readonly CloudQueue auditQueue;
-        static string connectionString;
+        static string defaultConnectionString;
+        static string anotherConnectionString;
         const string SenderName = "mapping-names-sender";
         const string ReceiverName = "mapping-names-receiver";
         const string AuditName = "mapping-names-audit";
@@ -25,8 +26,10 @@
 
         public When_mapping_account_names()
         {
-            connectionString = Environment.GetEnvironmentVariable("AzureStorageQueueTransport.ConnectionString");
-            var account = CloudStorageAccount.Parse(connectionString);
+            defaultConnectionString = Environment.GetEnvironmentVariable("AzureStorageQueueTransport.ConnectionString");
+            anotherConnectionString = defaultConnectionString + ";BlobEndpoint=https://notusedatall.blob.core.windows.net";
+
+            var account = CloudStorageAccount.Parse(defaultConnectionString);
             auditQueue = account.CreateCloudQueueClient().GetQueueReference(AuditName);
         }
 
@@ -60,9 +63,20 @@
             var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>(ReceiverName + "@" + AnotherConnectionStringName);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
+            var exluded = new HashSet<string>
+            {
+                Headers.OriginatingEndpoint
+            };
+
             foreach (var propertyWithSenderName in ctx.AllPropertiesFlattened.Where(property => property.Value.Contains(SenderName)))
             {
-                Assert.AreEqual(SenderName + "@" + DefaultConnectionStringName, propertyWithSenderName.Value);
+                if (exluded.Contains(propertyWithSenderName.Key))
+                {
+                    continue;
+                }
+
+                const string expected = SenderName + "@" + DefaultConnectionStringName;
+                Assert.AreEqual(expected, propertyWithSenderName.Value, propertyWithSenderName.Key);
             }
         }
 
@@ -92,7 +106,7 @@
             ctx.AllPropertiesFlattened = message.FindProperties(IsSimpleProperty)
                 .ToDictionary(jp => jp.Name, jp => ((JValue)jp.Value).Value<string>());
 
-            ctx.ContainingRawConnectionString = ctx.AllPropertiesFlattened.Where(kvp => kvp.Value.Contains(connectionString))
+            ctx.ContainingRawConnectionString = ctx.AllPropertiesFlattened.Where(kvp => kvp.Value.Contains(defaultConnectionString))
                 .Select(kvp => kvp.Key).ToArray();
 
             return ctx;
@@ -126,7 +140,7 @@
                     cfg.UseTransport<AzureStorageQueueTransport>()
                         .Addressing()
                         .UseAccountNamesInsteadOfConnectionStrings(DefaultConnectionStringName)
-                        .AddStorageAccount(AnotherConnectionStringName, When_mapping_account_names.connectionString);
+                        .AddStorageAccount(AnotherConnectionStringName, anotherConnectionString);
                 });
             }
         }
@@ -135,28 +149,34 @@
         {
             protected Receiver()
             {
-                EndpointSetup<DefaultPublisher>(Setup);
+                EndpointSetup<DefaultPublisher>(cfg =>
+                {
+                    var extensions = cfg.UseTransport<AzureStorageQueueTransport>()
+                        .ConnectionString(anotherConnectionString);
+
+                    Setup(extensions);
+                });
                 CustomEndpointName(ReceiverName);
                 AuditTo(AuditName);
             }
 
-            protected abstract void Setup(EndpointConfiguration cfg);
+            protected abstract void Setup(TransportExtensions<AzureStorageQueueTransport> cfg);
         }
 
         class ReceiverUsingRawConnectionStrings : Receiver
         {
-            protected override void Setup(EndpointConfiguration cfg)
+            protected override void Setup(TransportExtensions<AzureStorageQueueTransport> cfg)
             {
             }
         }
 
         class ReceiverUsingMappedConnectionStrings : Receiver
         {
-            protected override void Setup(EndpointConfiguration cfg)
+            protected override void Setup(TransportExtensions<AzureStorageQueueTransport> cfg)
             {
-                cfg.UseTransport<AzureStorageQueueTransport>()
-                    .Addressing()
-                    .UseAccountNamesInsteadOfConnectionStrings(DefaultConnectionStringName);
+                cfg.Addressing()
+                    .UseAccountNamesInsteadOfConnectionStrings(AnotherConnectionStringName)
+                    .AddStorageAccount(DefaultConnectionStringName, defaultConnectionString);
             }
         }
 

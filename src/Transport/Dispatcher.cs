@@ -84,7 +84,7 @@
                 timeToBeReceived = null;
             }
 
-            var rawMessage = SerializeMessage(operation, timeToBeReceived);
+            var rawMessage = SerializeMessage(operation, timeToBeReceived, queue);
 
             await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
         }
@@ -95,13 +95,13 @@
             return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.ExistsAsync());
         }
 
-        CloudQueueMessage SerializeMessage(IOutgoingTransportOperation operation, TimeSpan? timeToBeReceived)
+        CloudQueueMessage SerializeMessage(IOutgoingTransportOperation operation, TimeSpan? timeToBeReceived, QueueAddress destinationQueue)
         {
             using (var stream = new MemoryStream())
             {
                 var msg = operation.Message;
                 var headers = new Dictionary<string, string>(msg.Headers);
-                addressing.ApplyMappingOnOutgoingHeaders(headers);
+                addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
 
                 var messageIntent = default(MessageIntentEnum);
                 string messageIntentString;

@@ -145,7 +145,7 @@ namespace NServiceBus
     public sealed class AzureStorageAddressingSettings : NServiceBus.IAzureStoragePartitioningSettings
     {
         public AzureStorageAddressingSettings() { }
-        public NServiceBus.IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings() { }
+        public NServiceBus.IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName) { }
     }
     public class AzureStorageQueueTransport : NServiceBus.Transports.TransportDefinition
     {
@@ -177,7 +177,7 @@ namespace NServiceBus
     public interface IAzureStoragePartitioningSettings
     {
         NServiceBus.IAzureStoragePartitioningSettings AddStorageAccount(string name, string connectionString);
-        NServiceBus.IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings();
+        NServiceBus.IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName);
     }
 }
 namespace NServiceBus.Config
