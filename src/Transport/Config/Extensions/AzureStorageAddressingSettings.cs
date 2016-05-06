@@ -18,8 +18,13 @@
             return this;
         }
 
-        public IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings()
+        public IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName)
         {
+            if (string.IsNullOrWhiteSpace(defaultConnectionStringName))
+            {
+                throw new ArgumentException(nameof(defaultConnectionStringName));
+            }
+
             logicalQueueAddresses = true;
             return this;
         }

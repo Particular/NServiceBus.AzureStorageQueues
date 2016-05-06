@@ -16,10 +16,12 @@
     public class When_mapping_account_names : NServiceBusAcceptanceTest
     {
         readonly CloudQueue auditQueue;
-        readonly string connectionString;
+        static string connectionString;
         const string SenderName = "mapping-names-sender";
         const string ReceiverName = "mapping-names-receiver";
         const string AuditName = "mapping-names-audit";
+        const string DefaultConnectionStringName = "default_account";
+        const string AnotherConnectionStringName = "another_account";
 
         public When_mapping_account_names()
         {
@@ -31,7 +33,7 @@
         [Test]
         public async Task Is_disabled_Should_audit_with_raw_connection_strings()
         {
-            var ctx = await SendMessage<ReceiverUsingRawConnectionStrings>();
+            var ctx = await SendMessage<ReceiverUsingRawConnectionStrings>(ReceiverName);
 
             CollectionAssert.IsNotEmpty(ctx.ContainingRawConnectionString);
             foreach (var name in ctx.ContainingRawConnectionString)
@@ -43,7 +45,7 @@
         [Test]
         public async Task Is_enabled_and_single_account_is_used_Should_audit_just_queue_name_without_account()
         {
-            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>();
+            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>(ReceiverName);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             foreach (var propertyWithSenderName in ctx.AllPropertiesFlattened.Where(property => property.Value.Contains(SenderName)))
@@ -52,15 +54,26 @@
             }
         }
 
-        async Task<Context> SendMessage<TReceiver>()
+        [Test]
+        public async Task Is_enabled_and_sending_to_another_account_Should_audit_fully_qualified_queue()
+        {
+            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>(ReceiverName + "@" + AnotherConnectionStringName);
+            CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
+
+            foreach (var propertyWithSenderName in ctx.AllPropertiesFlattened.Where(property => property.Value.Contains(SenderName)))
+            {
+                Assert.AreEqual(SenderName + "@" + DefaultConnectionStringName, propertyWithSenderName.Value);
+            }
+        }
+
+        async Task<Context> SendMessage<TReceiver>(string destination)
             where TReceiver : EndpointConfigurationBuilder
         {
             var ctx = await Scenario.Define<Context>()
                             .WithEndpoint<Sender>(b => b.When(s =>
                             {
                                 var options = new SendOptions();
-                                options.RouteReplyTo(SenderName);
-                                options.SetDestination(ReceiverName);
+                                options.SetDestination(destination);
                                 return s.Send(new MyCommand(), options);
                             }))
                             .WithEndpoint<TReceiver>()
@@ -107,7 +120,14 @@
         {
             public Sender()
             {
-                EndpointSetup<DefaultServer>();
+                CustomEndpointName(SenderName);
+                EndpointSetup<DefaultServer>(cfg =>
+                {
+                    cfg.UseTransport<AzureStorageQueueTransport>()
+                        .Addressing()
+                        .UseAccountNamesInsteadOfConnectionStrings(DefaultConnectionStringName)
+                        .AddStorageAccount(AnotherConnectionStringName, When_mapping_account_names.connectionString);
+                });
             }
         }
 
@@ -136,7 +156,7 @@
             {
                 cfg.UseTransport<AzureStorageQueueTransport>()
                     .Addressing()
-                    .UseAccountNamesInsteadOfConnectionStrings();
+                    .UseAccountNamesInsteadOfConnectionStrings(DefaultConnectionStringName);
             }
         }
 

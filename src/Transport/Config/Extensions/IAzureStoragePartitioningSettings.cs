@@ -10,6 +10,7 @@
         /// <summary>
         /// Configures this endpoint as one, using logical names of the accounts instead of connection strings when sending.
         /// </summary>
-        IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings();
+        /// <param name="defaultConnectionStringName"></param>
+        IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName);
     }
 }
