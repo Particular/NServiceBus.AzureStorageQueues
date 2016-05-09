@@ -46,9 +46,9 @@ namespace NServiceBus.AzureStorageQueues
             var queueName = addressGenerator.GetQueueName(address);
 
             azureQueue = client.GetQueueReference(queueName);
-            await azureQueue.CreateIfNotExistsAsync().ConfigureAwait(false);
+            var created = await azureQueue.CreateIfNotExistsAsync().ConfigureAwait(false);
 
-            if (PurgeOnStartup)
+            if (!created && PurgeOnStartup)
             {
                 await azureQueue.ClearAsync().ConfigureAwait(false);
             }

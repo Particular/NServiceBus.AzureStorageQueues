@@ -19,11 +19,10 @@
             this.addressGenerator = addressGenerator;
         }
 
-        public async Task CreateQueueIfNecessary(QueueBindings queueBindings, string identity)
+        public Task CreateQueueIfNecessary(QueueBindings queueBindings, string identity)
         {
             var addresses = queueBindings.ReceivingAddresses.Union(queueBindings.SendingAddresses).ToArray();
-
-            await Task.WhenAll(addresses.Select(CreateQueue)).ConfigureAwait(false);
+            return Task.WhenAll(addresses.Select(CreateQueue));
         }
 
         async Task CreateQueue(string address)
