@@ -62,10 +62,7 @@
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings("default", new Dictionary<string, string>
-                        {
-                            {AnotherAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString")}
-                        });
+                        .UseAccountNamesInsteadOfConnectionStrings("default", _ => _.MapAccount(AnotherAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString")));
                 }).AddMapping<MyMessage>(typeof(Receiver));
             }
         }
@@ -77,10 +74,7 @@
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings("another", new Dictionary<string, string>
-                        {
-                            {"default", Transports.Default.Settings.Get<string>("Transport.ConnectionString")}
-                        });
+                        .UseAccountNamesInsteadOfConnectionStrings("another", _ => _.MapAccount("default", Transports.Default.Settings.Get<string>("Transport.ConnectionString")));
                 });
             }
 

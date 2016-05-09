@@ -8,7 +8,7 @@ namespace NServiceBus
     {
         public static TransportExtensions<AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config,
             string defaultConnectionStringName,
-            Dictionary<string, string> name2connectionString = null)
+            Action<AccountMapping> map)
         {
             AzureStorageAddressingSettings settings;
             var settingsHolder = config.GetSettings();
@@ -18,10 +18,22 @@ namespace NServiceBus
             }
 
             settings = new AzureStorageAddressingSettings();
-            settings.UseAccountNamesInsteadOfConnectionStrings(defaultConnectionStringName, name2connectionString);
+            var mapping = new AccountMapping();
+            map?.Invoke(mapping);
+            settings.UseAccountNamesInsteadOfConnectionStrings(defaultConnectionStringName, mapping.mappings);
             settingsHolder.Set<AzureStorageAddressingSettings>(settings);
 
             return config;
+        }
+    }
+
+    public sealed class AccountMapping
+    {
+        internal Dictionary<string,string> mappings = new Dictionary<string, string>();
+
+        public void MapAccount(string name, string connectionStringValue)
+        {
+            mappings.Add(name, connectionStringValue);
         }
     }
 }
