@@ -1,25 +1,27 @@
 namespace NServiceBus
 {
+    using System;
+    using System.Collections.Generic;
     using Configuration.AdvanceExtensibility;
 
     public static class AzureStorageTransportAddressingExtensions
     {
-        public static AzureStorageAddressingSettings Addressing(this TransportExtensions<AzureStorageQueueTransport> config)
+        public static TransportExtensions<AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config,
+            string defaultConnectionStringName,
+            Dictionary<string, string> name2connectionString = null)
         {
             AzureStorageAddressingSettings settings;
             var settingsHolder = config.GetSettings();
-            if (settingsHolder.TryGet(out settings) == false)
+            if (settingsHolder.TryGet(out settings))
             {
-                settings = new AzureStorageAddressingSettings();
-                settingsHolder.Set<AzureStorageAddressingSettings>(settings);
+                throw new Exception("Safe connection strings has already been configured");
             }
 
-            return settings;
-        }
+            settings = new AzureStorageAddressingSettings();
+            settings.UseAccountNamesInsteadOfConnectionStrings(defaultConnectionStringName, name2connectionString);
+            settingsHolder.Set<AzureStorageAddressingSettings>(settings);
 
-        public static IAzureStoragePartitioningSettings Partitioning(this AzureStorageAddressingSettings addressingSettings)
-        {
-            return addressingSettings;
+            return config;
         }
     }
 }

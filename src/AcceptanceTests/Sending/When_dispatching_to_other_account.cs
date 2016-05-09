@@ -62,9 +62,10 @@
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
-                        .Addressing()
-                        .Partitioning()
-                        .AddStorageAccount(AnotherAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString"));
+                        .UseAccountNamesInsteadOfConnectionStrings("default", new Dictionary<string, string>
+                        {
+                            {AnotherAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString")}
+                        });
                 }).AddMapping<MyMessage>(typeof(Receiver));
             }
         }
@@ -73,7 +74,14 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>();
+                EndpointSetup<DefaultServer>(configuration =>
+                {
+                    configuration.UseTransport<AzureStorageQueueTransport>()
+                        .UseAccountNamesInsteadOfConnectionStrings("another", new Dictionary<string, string>
+                        {
+                            {"default", Transports.Default.Settings.Get<string>("Transport.ConnectionString")}
+                        });
+                });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>

@@ -142,11 +142,6 @@
 namespace NServiceBus
 {
     
-    public sealed class AzureStorageAddressingSettings : NServiceBus.IAzureStoragePartitioningSettings
-    {
-        public AzureStorageAddressingSettings() { }
-        public NServiceBus.IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName) { }
-    }
     public class AzureStorageQueueTransport : NServiceBus.Transports.TransportDefinition
     {
         public AzureStorageQueueTransport() { }
@@ -156,8 +151,7 @@ namespace NServiceBus
     }
     public class static AzureStorageTransportAddressingExtensions
     {
-        public static NServiceBus.AzureStorageAddressingSettings Addressing(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
-        public static NServiceBus.IAzureStoragePartitioningSettings Partitioning(this NServiceBus.AzureStorageAddressingSettings addressingSettings) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, string defaultConnectionStringName, System.Collections.Generic.Dictionary<string, string> name2connectionString = null) { }
     }
     public class static AzureStorageTransportExtensions
     {
@@ -174,11 +168,6 @@ namespace NServiceBus
     [System.ObsoleteAttribute("This class was replaced by extension methods on endpointConfiguration.UseTranspor" +
         "t<AzureStorageQueue>(). Will be removed in version 8.0.0.", true)]
     public class static ConfigureAzureMessageQueue { }
-    public interface IAzureStoragePartitioningSettings
-    {
-        NServiceBus.IAzureStoragePartitioningSettings AddStorageAccount(string name, string connectionString);
-        NServiceBus.IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName);
-    }
 }
 namespace NServiceBus.Config
 {

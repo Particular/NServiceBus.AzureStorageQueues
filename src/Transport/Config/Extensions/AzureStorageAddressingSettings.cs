@@ -5,20 +5,9 @@
     using AzureStorageQueues;
     using AzureStorageQueues.Config;
 
-    public sealed class AzureStorageAddressingSettings : IAzureStoragePartitioningSettings
+    sealed class AzureStorageAddressingSettings
     {
-        IAzureStoragePartitioningSettings IAzureStoragePartitioningSettings.AddStorageAccount(string name, string connectionString)
-        {
-            if (name == QueueAddress.DefaultStorageAccountName)
-            {
-                throw new ArgumentException("Don't use default empty name", nameof(name));
-            }
-
-            Add(name, connectionString);
-            return this;
-        }
-
-        public IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName)
+        public void UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName, Dictionary<string, string> name2connectionString = null)
         {
             if (string.IsNullOrWhiteSpace(defaultConnectionStringName))
             {
@@ -27,7 +16,22 @@
 
             this.defaultConnectionStringName = defaultConnectionStringName;
             useLogicalQueueAddresses = true;
-            return this;
+
+            if (name2connectionString != null)
+            {
+                foreach (var kvp in name2connectionString)
+                {
+                    var name = kvp.Key;
+                    var connectionString = kvp.Value;
+
+                    if (name == QueueAddress.DefaultStorageAccountName)
+                    {
+                        throw new ArgumentException("Don't use default empty name for mapping connection strings", nameof(name2connectionString));
+                    }
+
+                    Add(name, connectionString);
+                }
+            }
         }
 
         /// <summary>
