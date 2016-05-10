@@ -138,7 +138,11 @@
                 EndpointSetup<DefaultServer>(cfg =>
                 {
                     cfg.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings(DefaultConnectionStringName, mapping => mapping.MapAccount(AnotherConnectionStringName, anotherConnectionString));
+                        .UseAccountNamesInsteadOfConnectionStrings(m =>
+                        {
+                            m.MapLocalAccount(DefaultConnectionStringName);
+                            m.MapAccount(AnotherConnectionStringName, anotherConnectionString);
+                        });
                 });
             }
         }
@@ -172,7 +176,11 @@
         {
             protected override void Setup(TransportExtensions<AzureStorageQueueTransport> cfg)
             {
-                cfg.UseAccountNamesInsteadOfConnectionStrings(AnotherConnectionStringName, mapping => mapping.MapAccount(DefaultConnectionStringName, defaultConnectionString));
+                cfg.UseAccountNamesInsteadOfConnectionStrings(mapping =>
+                {
+                    mapping.MapLocalAccount(AnotherConnectionStringName);
+                    mapping.MapAccount(DefaultConnectionStringName, defaultConnectionString);
+                });
             }
         }
 

@@ -46,8 +46,9 @@
             Assert.IsTrue(context.WasCalled);
         }
 
-        const string AnotherAccountName = "AnotherAccountName";
+        const string AnotherAccountName = "another";
         public static readonly string MainNamespaceConnectionString = Transports.Default.Settings.Get<string>("Transport.ConnectionString");
+        const string DefaultAccountName = "default";
 
         public class Context : ScenarioContext
         {
@@ -57,12 +58,17 @@
 
         public class Endpoint : EndpointConfigurationBuilder
         {
+
             public Endpoint()
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings("default", mapping => mapping.MapAccount(AnotherAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString")));
+                        .UseAccountNamesInsteadOfConnectionStrings(m =>
+                        {
+                            m.MapLocalAccount(DefaultAccountName);
+                            m.MapAccount(AnotherAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString"));
+                        });
                 }).AddMapping<MyMessage>(typeof(Receiver));
             }
         }
@@ -74,7 +80,11 @@
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings("another", mapping => mapping.MapAccount("default", Transports.Default.Settings.Get<string>("Transport.ConnectionString")));
+                        .UseAccountNamesInsteadOfConnectionStrings(m =>
+                        {
+                            m.MapLocalAccount(AnotherAccountName);
+                            m.MapAccount(DefaultAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString"));
+                        });
                 });
             }
 
