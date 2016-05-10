@@ -1,4 +1,39 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
+﻿namespace NServiceBus
+{
+    
+    public sealed class AccountMapping
+    {
+        public AccountMapping() { }
+        public void MapAccount(string name, string connectionStringValue) { }
+        public void MapLocalAccount(string name) { }
+    }
+    public class AzureStorageQueueTransport : NServiceBus.Transports.TransportDefinition
+    {
+        public AzureStorageQueueTransport() { }
+        public override string ExampleConnectionStringForErrorMessage { get; }
+        public override bool RequiresConnectionString { get; }
+        protected override NServiceBus.Transports.TransportInfrastructure Initialize(NServiceBus.Settings.SettingsHolder settings, string connectionString) { }
+    }
+    public class static AzureStorageTransportAddressingExtensions
+    {
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Action<NServiceBus.AccountMapping> map) { }
+    }
+    public class static AzureStorageTransportExtensions
+    {
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> BatchSize(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, int value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DegreeOfReceiveParallelism(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, int degreeOfReceiveParallelism) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MessageInvisibleTime(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> PeekInterval(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config)
+            where TSerializationDefinition : NServiceBus.Serialization.SerializationDefinition, new () { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseSha1ForShortening(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
+    }
+    [System.ObsoleteAttribute("This class was replaced by extension methods on endpointConfiguration.UseTranspor" +
+        "t<AzureStorageQueue>(). Will be removed in version 8.0.0.", true)]
+    public class static ConfigureAzureMessageQueue { }
+}
+namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     
     [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
@@ -137,47 +172,6 @@
     public class SendResourceManager
     {
         public SendResourceManager() { }
-    }
-}
-namespace NServiceBus
-{
-    
-    public sealed class AzureStorageAddressingSettings : NServiceBus.IAzureStoragePartitioningSettings
-    {
-        public AzureStorageAddressingSettings() { }
-        public NServiceBus.IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings() { }
-    }
-    public class AzureStorageQueueTransport : NServiceBus.Transports.TransportDefinition
-    {
-        public AzureStorageQueueTransport() { }
-        public override string ExampleConnectionStringForErrorMessage { get; }
-        public override bool RequiresConnectionString { get; }
-        protected override NServiceBus.Transports.TransportInfrastructure Initialize(NServiceBus.Settings.SettingsHolder settings, string connectionString) { }
-    }
-    public class static AzureStorageTransportAddressingExtensions
-    {
-        public static NServiceBus.AzureStorageAddressingSettings Addressing(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
-        public static NServiceBus.IAzureStoragePartitioningSettings Partitioning(this NServiceBus.AzureStorageAddressingSettings addressingSettings) { }
-    }
-    public class static AzureStorageTransportExtensions
-    {
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> BatchSize(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, int value) { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> ConnectionString(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, string value) { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DegreeOfReceiveParallelism(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, int degreeOfReceiveParallelism) { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MessageInvisibleTime(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> PeekInterval(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config)
-            where TSerializationDefinition : NServiceBus.Serialization.SerializationDefinition, new () { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseSha1ForShortening(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
-    }
-    [System.ObsoleteAttribute("This class was replaced by extension methods on endpointConfiguration.UseTranspor" +
-        "t<AzureStorageQueue>(). Will be removed in version 8.0.0.", true)]
-    public class static ConfigureAzureMessageQueue { }
-    public interface IAzureStoragePartitioningSettings
-    {
-        NServiceBus.IAzureStoragePartitioningSettings AddStorageAccount(string name, string connectionString);
-        NServiceBus.IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings();
     }
 }
 namespace NServiceBus.Config

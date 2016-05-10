@@ -5,23 +5,33 @@
     using AzureStorageQueues;
     using AzureStorageQueues.Config;
 
-    public sealed class AzureStorageAddressingSettings : IAzureStoragePartitioningSettings
+    sealed class AzureStorageAddressingSettings
     {
-        IAzureStoragePartitioningSettings IAzureStoragePartitioningSettings.AddStorageAccount(string name, string connectionString)
+        public void UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName, Dictionary<string, string> name2connectionString = null)
         {
-            if (name == QueueAddress.DefaultStorageAccountName)
+            if (string.IsNullOrWhiteSpace(defaultConnectionStringName))
             {
-                throw new ArgumentException("Don't use default empty name", nameof(name));
+                throw new ArgumentException(nameof(defaultConnectionStringName));
             }
 
-            Add(name, connectionString);
-            return this;
-        }
+            this.defaultConnectionStringName = defaultConnectionStringName;
+            useLogicalQueueAddresses = true;
 
-        public IAzureStoragePartitioningSettings UseAccountNamesInsteadOfConnectionStrings()
-        {
-            logicalQueueAddresses = true;
-            return this;
+            if (name2connectionString != null)
+            {
+                foreach (var kvp in name2connectionString)
+                {
+                    var name = kvp.Key;
+                    var connectionString = kvp.Value;
+
+                    if (name == QueueAddress.DefaultStorageAccountName)
+                    {
+                        throw new ArgumentException("Don't use default empty name for mapping connection strings", nameof(name2connectionString));
+                    }
+
+                    Add(name, connectionString);
+                }
+            }
         }
 
         /// <summary>
@@ -65,9 +75,9 @@
                     else
                     {
                         // it must be a logical name, try to find it, otherwise throw
-                        if (name2connectionString.ContainsKey(name) == false)
+                        if (name2connectionString.ContainsKey(address.StorageAccount) == false)
                         {
-                            throw new KeyNotFoundException($"No account was mapped under following name '{name}'. Please map it using AddStorageAccount method.");
+                            throw new KeyNotFoundException($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
                         }
                     }
                 }
@@ -78,21 +88,28 @@
         /// Transforms all the <see cref="QueueAddress" /> in <see cref="headersToApplyNameMapping" /> to connection string
         /// values to maintain backward compatibility.
         /// </summary>
-        internal void ApplyMappingOnOutgoingHeaders(Dictionary<string, string> headers)
+        internal void ApplyMappingOnOutgoingHeaders(Dictionary<string, string> headers, QueueAddress destinationQueue)
         {
-            if (logicalQueueAddresses)
-            {
-                return;
-            }
-
             foreach (var header in headersToApplyNameMapping)
             {
                 string headerValue;
                 if (headers.TryGetValue(header, out headerValue))
                 {
                     var address = QueueAddress.Parse(headerValue);
-                    var connectionString = Map(address.StorageAccount);
-                    headers[header] = new QueueAddress(address.QueueName, connectionString.Value).ToString();
+
+                    if (useLogicalQueueAddresses)
+                    {
+                        var sendingToAnotherAccount = destinationQueue.IsAccountDefault == false;
+                        if (sendingToAnotherAccount && address.IsAccountDefault)
+                        {
+                            headers[header] = new QueueAddress(address.QueueName, defaultConnectionStringName).ToString();
+                        }
+                    }
+                    else
+                    {
+                        var connectionString = Map(address.StorageAccount);
+                        headers[header] = new QueueAddress(address.QueueName, connectionString.Value).ToString();
+                    }
                 }
             }
         }
@@ -120,7 +137,8 @@
         Dictionary<ConnectionString, string> connectionString2name = new Dictionary<ConnectionString, string>();
         Dictionary<string, ConnectionString> name2connectionString = new Dictionary<string, ConnectionString>();
 
-        bool logicalQueueAddresses;
+        string defaultConnectionStringName;
+        bool useLogicalQueueAddresses;
 
         static string[] headersToApplyNameMapping =
         {
