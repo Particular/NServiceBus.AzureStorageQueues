@@ -6,6 +6,11 @@ namespace NServiceBus
 
     public static class AzureStorageTransportAddressingExtensions
     {
+        public static TransportExtensions<AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config)
+        {
+            return config.UseAccountNamesInsteadOfConnectionStrings(_ => { });
+        }
+
         public static TransportExtensions<AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config,
             Action<AccountMapping> map)
         {
