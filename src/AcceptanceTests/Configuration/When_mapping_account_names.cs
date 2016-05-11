@@ -1,11 +1,11 @@
 ﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
 {
-    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -26,8 +26,8 @@
 
         public When_mapping_account_names()
         {
-            defaultConnectionString = Environment.GetEnvironmentVariable("AzureStorageQueueTransport.ConnectionString");
-            anotherConnectionString = defaultConnectionString + ";BlobEndpoint=https://notusedatall.blob.core.windows.net";
+            defaultConnectionString = Utils.GetEnvConfiguredConnectionString();
+            anotherConnectionString = Utils.BuildAnotherConnectionString(defaultConnectionString);
 
             var account = CloudStorageAccount.Parse(defaultConnectionString);
             auditQueue = account.CreateCloudQueueClient().GetQueueReference(AuditName);

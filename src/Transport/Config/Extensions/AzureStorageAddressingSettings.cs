@@ -9,6 +9,12 @@
     {
         public void UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName, Dictionary<string, string> name2connectionString = null)
         {
+            var hasAnyMapping = name2connectionString!= null && name2connectionString.Count > 0;
+            if (hasAnyMapping == false)
+            {
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(defaultConnectionStringName))
             {
                 throw new ArgumentException(nameof(defaultConnectionStringName));
@@ -17,20 +23,17 @@
             this.defaultConnectionStringName = defaultConnectionStringName;
             useLogicalQueueAddresses = true;
 
-            if (name2connectionString != null)
+            foreach (var kvp in name2connectionString)
             {
-                foreach (var kvp in name2connectionString)
+                var name = kvp.Key;
+                var connectionString = kvp.Value;
+
+                if (name == QueueAddress.DefaultStorageAccountName)
                 {
-                    var name = kvp.Key;
-                    var connectionString = kvp.Value;
-
-                    if (name == QueueAddress.DefaultStorageAccountName)
-                    {
-                        throw new ArgumentException("Don't use default empty name for mapping connection strings", nameof(name2connectionString));
-                    }
-
-                    Add(name, connectionString);
+                    throw new ArgumentException("Don't use default empty name for mapping connection strings", nameof(name2connectionString));
                 }
+
+                Add(name, connectionString);
             }
         }
 
