@@ -16,6 +16,7 @@
     }
     public class static AzureStorageTransportAddressingExtensions
     {
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Action<NServiceBus.AccountMapping> map) { }
     }
     public class static AzureStorageTransportExtensions
