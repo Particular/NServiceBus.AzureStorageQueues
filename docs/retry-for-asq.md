@@ -13,13 +13,14 @@ This section contains analysis of multiple storage account support when doing re
 
 ### Each endpoint resides in separate storage account
  * If every account has it's own error queue (that is situated in corresponding storage accounts)
-  * ServiceControl need to have two instances each connected to 1 storage account
-  * Failed messages can be retried as the failed queue is in the same storage account as destination queue
+  * An instance per storage account will be required
+  * Failed messages can be retried as the queue where it failed is in the same storage account as destination queue
   * Each instance of SC can see only part of the conversation
+
   
  * If there is one error queue on different storage account
   * ServiceControl need to have only 1 instance connected to storage account that has error queue
   * Failed messages can not be retried at this point of time, as SC would pass the value of FailedQ to Send method as destination. Operation would fail. As the SC uses v6 of ASQ transport in the end it calls:
 https://github.com/Particular/NServiceBus.AzureStorageQueues/blob/6.2.1/src/Transport/AzureMessageQueueSender.cs#L41
 
-NOTE: For SC to work FaileQ field need to contains connection string after @. As the v6 of the AzureMessageQueueSender should work in that configuration properly.
+NOTE: For SC to work FailedQ field need to contains connection name after @.
