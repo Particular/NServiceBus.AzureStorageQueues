@@ -63,14 +63,14 @@
             var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>(ReceiverName + "@" + AnotherConnectionStringName);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
-            var exluded = new HashSet<string>
+            var excluded = new HashSet<string>
             {
                 Headers.OriginatingEndpoint
             };
 
             foreach (var propertyWithSenderName in ctx.AllPropertiesFlattened.Where(property => property.Value.Contains(SenderName)))
             {
-                if (exluded.Contains(propertyWithSenderName.Key))
+                if (excluded.Contains(propertyWithSenderName.Key))
                 {
                     continue;
                 }
