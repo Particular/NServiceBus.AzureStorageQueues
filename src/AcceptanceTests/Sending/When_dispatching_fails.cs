@@ -5,17 +5,16 @@
     using System.Net;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using AcceptanceTests;
     using EndpointTemplates;
-    using ScenarioDescriptors;
     using NUnit.Framework;
+    using ScenarioDescriptors;
 
     public class When_dispatching_fails : NServiceBusAcceptanceTest
     {
         [Test]
         public void Should_log_send_related_error()
         {
-            Assert.Throws<AggregateException>(async () => await Scenario.Define<Context>()
+            Assert.ThrowsAsync<AggregateException>(() => Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((bus, c) => Send(bus)))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.Logs.Any(li => li.Message.Contains("Fail on proxy") && li.Level == "error"))
@@ -28,7 +27,7 @@
         {
             const string queue = "non-existent";
 
-            Assert.Throws<AggregateException>(async () => await Scenario.Define<Context>()
+            Assert.ThrowsAsync<AggregateException>(() => Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((bus, c) =>
                 {
                     var options = new SendOptions();
