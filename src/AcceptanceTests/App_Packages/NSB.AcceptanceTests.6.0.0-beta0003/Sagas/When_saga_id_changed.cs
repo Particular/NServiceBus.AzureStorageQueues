@@ -12,6 +12,7 @@
     public class When_saga_id_changed : NServiceBusAcceptanceTest
     {
         [Test]
+        [Ignore("Will be fixed on the next core release")]
         public void Should_throw()
         {
             var exception = Assert.ThrowsAsync<AggregateException>(() =>
