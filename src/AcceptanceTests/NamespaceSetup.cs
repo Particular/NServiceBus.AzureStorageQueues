@@ -4,7 +4,7 @@ using NUnit.Framework;
 [SetUpFixture]
 public class NamespaceSetup
 {
-    [SetUp]
+    [OneTimeSetUp]
     public void SetUp()
     {
         ServicePointManager.DefaultConnectionLimit = 64;

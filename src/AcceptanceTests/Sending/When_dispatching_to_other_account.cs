@@ -6,17 +6,16 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Support;
-    using AcceptanceTests;
     using EndpointTemplates;
-    using ScenarioDescriptors;
     using NUnit.Framework;
+    using ScenarioDescriptors;
 
     public class When_dispatching_to_another_account : NServiceBusAcceptanceTest
     {
         [Test]
         public void Connection_string_should_throw()
         {
-            var ex = Assert.Throws<AggregateException>(async () => await RunTest(MainNamespaceConnectionString));
+            var ex = Assert.ThrowsAsync<AggregateException>(() => RunTest(MainNamespaceConnectionString));
 
             Assert.IsInstanceOf<KeyNotFoundException>(ex.InnerExceptions.Cast<ScenarioException>().Single().InnerException);
         }
@@ -40,15 +39,15 @@
                     });
                 })
                 .WithEndpoint<Receiver>()
-                .Done(c => c.WasCalled)
+                .Done(c => c.WasCalled) 
                 .Run();
 
             Assert.IsTrue(context.WasCalled);
         }
 
         const string AnotherAccountName = "another";
-        public static readonly string MainNamespaceConnectionString = Transports.Default.Settings.Get<string>("Transport.ConnectionString");
         const string DefaultAccountName = "default";
+        public static readonly string MainNamespaceConnectionString = Transports.Default.Settings.Get<string>("Transport.ConnectionString");
 
         public class Context : ScenarioContext
         {
@@ -58,7 +57,6 @@
 
         public class Endpoint : EndpointConfigurationBuilder
         {
-
             public Endpoint()
             {
                 EndpointSetup<DefaultServer>(configuration =>
