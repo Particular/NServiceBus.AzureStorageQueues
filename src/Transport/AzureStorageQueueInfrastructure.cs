@@ -8,7 +8,7 @@
     using Routing;
     using Serialization;
     using Settings;
-    using Transports;
+    using Transport;
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {

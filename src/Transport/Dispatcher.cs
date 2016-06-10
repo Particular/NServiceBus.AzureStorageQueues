@@ -11,7 +11,7 @@
     using Extensibility;
     using Logging;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using Transports;
+    using Transport;
     using Unicast.Queuing;
 
     class Dispatcher : IDispatchMessages
@@ -24,7 +24,7 @@
             this.addressing = addressing;
         }
 
-        public async Task Dispatch(TransportOperations outgoingMessages, ContextBag context)
+        public async Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
         {
             if (outgoingMessages.MulticastTransportOperations.Any())
             {

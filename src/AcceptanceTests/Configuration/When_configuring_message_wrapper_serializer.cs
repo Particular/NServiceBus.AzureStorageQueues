@@ -10,8 +10,8 @@
     using EndpointTemplates;
     using MessageInterfaces;
     using NServiceBus.Configuration.AdvanceExtensibility;
+    using NServiceBus.Serialization;
     using NUnit.Framework;
-    using Serialization;
     using Settings;
 
     public class When_configuring_message_wrapper_serializer : NServiceBusAcceptanceTest
@@ -50,8 +50,6 @@
 
             class MyRequestHandler : IHandleMessages<MyRequest>
             {
-                Context scenarioContext;
-
                 public MyRequestHandler(Context scenarioContext)
                 {
                     this.scenarioContext = scenarioContext;
@@ -62,6 +60,8 @@
                     scenarioContext.InvokedHandler = true;
                     return Task.FromResult(0);
                 }
+
+                Context scenarioContext;
             }
         }
 
@@ -79,8 +79,6 @@
 
         class MyCustomSerializer : IMessageSerializer
         {
-            Context scenarioContext;
-
             public MyCustomSerializer(ScenarioContext scenarioContext)
             {
                 this.scenarioContext = (Context) scenarioContext;
@@ -118,6 +116,7 @@
             }
 
             public string ContentType => "MyCustomSerializer";
+            Context scenarioContext;
         }
     }
 }

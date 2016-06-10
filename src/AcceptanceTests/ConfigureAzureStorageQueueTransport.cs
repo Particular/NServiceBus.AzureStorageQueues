@@ -8,6 +8,9 @@ using Microsoft.WindowsAzure.Storage.Queue;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.AcceptanceTests.ScenarioDescriptors;
+using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
+using NServiceBus.Settings;
+using NServiceBus.TransportTests;
 
 public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupportedScenariosForTestExecution
 {
@@ -62,5 +65,21 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
     {
         // for now, return all
         return queues.ListQueues();
+    }
+}
+
+public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTransportInfrastructure
+{
+    public TransportConfigurationResult Configure(SettingsHolder settings, TransportTransactionMode transactionMode)
+    {
+        return new TransportConfigurationResult
+        {
+            TransportInfrastructure = new AzureStorageQueueTransport().Initialize(settings, Utils.GetEnvConfiguredConnectionString())
+        };
+    }
+
+    public Task Cleanup()
+    {
+        return Task.FromResult(0);
     }
 }
