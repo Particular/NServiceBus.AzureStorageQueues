@@ -122,7 +122,6 @@
     <Compile Include="MessageWrapperSerializer.cs" />
     <Compile Include="Config\AzureStorageTransportExtensions.cs" />
     <Compile Include="Shortener.cs" />
-    <Compile Include="EnvelopeDeserializationFailed.cs" />
     <Compile Include="MessageWrapper.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="TaskEx.cs" />
