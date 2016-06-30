@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
+    using System.Runtime.Serialization;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage;
@@ -28,7 +29,7 @@
             }
             catch (Exception ex)
             {
-                throw new EnvelopeDeserializationFailed(rawMessage, ex);
+                throw new SerializationException($"Failed to deserialize message envelope for message with id {rawMessage.Id}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
             }
         }
 
