@@ -54,15 +54,20 @@ namespace NServiceBus.AzureStorageQueues
             }
         }
 
-        internal async Task<IEnumerable<MessageRetrieved>> Receive(CancellationToken token)
+        internal async Task<List<MessageRetrieved>> Receive(CancellationToken token)
         {
             var rawMessages = await azureQueue.GetMessagesAsync(BatchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
 
             var messageFound = false;
-            var messages = new List<MessageRetrieved>();
+            List<MessageRetrieved> messages = null;
             foreach (var rawMessage in rawMessages)
             {
-                messageFound = true;
+                if (!messageFound)
+                {
+                    messages = new List<MessageRetrieved>(BatchSize);
+                    messageFound = true;
+                }
+
                 messages.Add(new MessageRetrieved(unwrapper, rawMessage, azureQueue));
             }
 
@@ -81,7 +86,7 @@ namespace NServiceBus.AzureStorageQueues
             }
 
             timeToDelayNextPeek = TimeSpan.Zero;
-            return messages;
+            return messages ?? noMessagesFound;
         }
 
         MessageEnvelopeUnwrapper unwrapper;
@@ -91,5 +96,7 @@ namespace NServiceBus.AzureStorageQueues
         CloudQueue azureQueue;
         CloudQueueClient client;
         TimeSpan timeToDelayNextPeek;
+
+        static List<MessageRetrieved> noMessagesFound = new List<MessageRetrieved>();
     }
 }
