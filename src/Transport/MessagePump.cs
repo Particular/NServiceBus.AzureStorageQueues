@@ -119,7 +119,7 @@
                 {
                     var retrieved = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
                     circuitBreaker.Success();
-                    
+
                     foreach (var message in retrieved)
                     {
                         await concurrencyLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -141,11 +141,12 @@
                         // antecedent task is aborted the continuation will be scheduled. But in this case we don't need to await
                         // the continuation to complete because only really care about the receive operations. The final operation
                         // when shutting down is a clear of the running tasks anyway.
-                        receiveTask.ContinueWith(t =>
+                        receiveTask.ContinueWith((t, state) =>
                         {
+                            var receiveTasks = (ConcurrentDictionary<Task, Task>) state;
                             Task toBeRemoved;
-                            runningReceiveTasks.TryRemove(t, out toBeRemoved);
-                        }, TaskContinuationOptions.ExecuteSynchronously).Ignore();
+                            receiveTasks.TryRemove(t, out toBeRemoved);
+                        }, runningReceiveTasks, TaskContinuationOptions.ExecuteSynchronously).Ignore();
                     }
                 }
                 catch (OperationCanceledException)
