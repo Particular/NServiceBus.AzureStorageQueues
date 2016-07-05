@@ -7,9 +7,9 @@
 
     sealed class AzureStorageAddressingSettings
     {
-        public void UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName, Dictionary<string, string> name2connectionString = null)
+        internal void UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName, Dictionary<string, string> name2connectionString = null)
         {
-            var hasAnyMapping = name2connectionString!= null && name2connectionString.Count > 0;
+            var hasAnyMapping = name2connectionString != null && name2connectionString.Count > 0;
             if (hasAnyMapping == false)
             {
                 return;
@@ -17,7 +17,7 @@
 
             if (string.IsNullOrWhiteSpace(defaultConnectionStringName))
             {
-                throw new ArgumentException(nameof(defaultConnectionStringName));
+                throw new Exception("The mapping of account names instead of connection strings is enabled, but the default connection string name isn\'t provided. Provide the default connection string name when adding more accounts");
             }
 
             this.defaultConnectionStringName = defaultConnectionStringName;
