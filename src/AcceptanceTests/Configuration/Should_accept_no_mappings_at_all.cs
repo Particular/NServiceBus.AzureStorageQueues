@@ -7,7 +7,9 @@
     using AcceptanceTesting.Support;
     using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
+    using Features;
     using NUnit.Framework;
+    using AzureStorageQueueTransport = AzureStorageQueueTransport;
 
     public class When_configuring_account_names : NServiceBusAcceptanceTest
     {
@@ -26,7 +28,7 @@
         [Test]
         public void Should_not_accept_mappings_without_default()
         {
-            var ex = Assert.ThrowsAsync<AggregateException>(() => { return Configure(m => { m.MapAccount(Another, anotherConnectionString); }); });
+            var ex = Assert.ThrowsAsync<AggregateException>(() => { return Configure(cfg => { cfg.AccountRouting().AddAccount(Another, anotherConnectionString); }); });
             var inner = ex.InnerExceptions.OfType<ScenarioException>().Single();
             Assert.IsInstanceOf<ArgumentException>(inner.InnerException);
         }
@@ -34,22 +36,25 @@
         [Test]
         public Task Should_accept_mappings_with_default()
         {
-            return Configure(m =>
+            return Configure(cfg =>
             {
-                m.MapLocalAccount(Default);
-                m.MapAccount(Another, anotherConnectionString);
+                cfg.DefaultAccountName(Default);
+                cfg.AccountRouting().AddAccount(Another, anotherConnectionString);
             });
         }
 
-        Task Configure(Action<AccountMapping> action)
+        Task Configure(Action<TransportExtensions<AzureStorageQueueTransport>> action)
         {
             return Scenario.Define<Context>()
                 .WithEndpoint<Endpoint>(cfg => cfg.CustomConfig(c =>
                 {
-                    c.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings(action)
+                    var transport = c.UseTransport<AzureStorageQueueTransport>();
+                    transport
+                        .UseAccountNamesInsteadOfConnectionStrings()
                         .ConnectionString(connectionString)
                         .SerializeMessageWrapperWith<JsonSerializer>();
+
+                    action(transport);
                 }))
                 .Done(c => c.WasStarted)
                 .Run();
@@ -72,19 +77,19 @@
                 EndpointSetup<DefaultServer>(c => { c.EnableFeature<Bootstrapper>(); }).SendOnly();
             }
 
-            public class Bootstrapper : Features.Feature
+            public class Bootstrapper : Feature
             {
                 public Bootstrapper()
                 {
                     EnableByDefault();
                 }
 
-                protected override void Setup(Features.FeatureConfigurationContext context)
+                protected override void Setup(FeatureConfigurationContext context)
                 {
                     context.RegisterStartupTask(b => new MyTask(b.Build<Context>()));
                 }
 
-                public class MyTask : Features.FeatureStartupTask
+                public class MyTask : FeatureStartupTask
                 {
                     public MyTask(Context scenarioContext)
                     {

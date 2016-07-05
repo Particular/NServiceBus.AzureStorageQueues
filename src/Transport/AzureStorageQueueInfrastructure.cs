@@ -4,11 +4,11 @@
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Config;
-    using Transports;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
     using Settings;
+    using Transports;
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
@@ -62,6 +62,18 @@
         static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
+
+            object useAccountNames;
+            if (settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out useAccountNames))
+            {
+                AccountConfigurations accounts;
+                if (settings.TryGet(out accounts) == false)
+                {
+                    accounts = new AccountConfigurations();
+                }
+
+                addressing.UseAccountNamesInsteadOfConnectionStrings(accounts.defaultName, accounts.mappings);
+            }
 
             addressing.Add(QueueAddress.DefaultStorageAccountName, connectionString, false);
 

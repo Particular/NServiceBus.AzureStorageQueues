@@ -1,54 +1,42 @@
 namespace NServiceBus
 {
-    using System;
-    using System.Collections.Generic;
+    using AzureStorageQueues.Config;
     using Configuration.AdvanceExtensibility;
 
     public static class AzureStorageTransportAddressingExtensions
     {
         public static TransportExtensions<AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config)
         {
-            return config.UseAccountNamesInsteadOfConnectionStrings(_ => { });
-        }
-
-        public static TransportExtensions<AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config,
-            Action<AccountMapping> map)
-        {
-            AzureStorageAddressingSettings settings;
-            var settingsHolder = config.GetSettings();
-            if (settingsHolder.TryGet(out settings))
-            {
-                throw new Exception("Safe connection strings has already been configured");
-            }
-
-            settings = new AzureStorageAddressingSettings();
-            var mapping = new AccountMapping();
-            map?.Invoke(mapping);
-            settings.UseAccountNamesInsteadOfConnectionStrings(mapping.defaultName, mapping.mappings);
-            settingsHolder.Set<AzureStorageAddressingSettings>(settings);
-
+            config.GetSettings().Set(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, true);
             return config;
         }
-    }
 
-    public sealed class AccountMapping
-    {
-        internal Dictionary<string,string> mappings = new Dictionary<string, string>();
-        internal string defaultName;
-
-        public void MapLocalAccount(string name)
+        /// <summary>
+        /// Provides access to configure cross account routing.
+        /// </summary>
+        public static AccountRoutingSettings AccountRouting(this TransportExtensions<AzureStorageQueueTransport> transportExtensions)
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException("Should not be null or white space", nameof(name));
-            }
-
-            defaultName = name;
+            return new AccountRoutingSettings(transportExtensions.EnsureAccounts());
         }
 
-        public void MapAccount(string name, string connectionStringValue)
+        public static TransportExtensions<AzureStorageQueueTransport> DefaultAccountName(this TransportExtensions<AzureStorageQueueTransport> transportExtensions, string name)
         {
-            mappings.Add(name, connectionStringValue);
+            transportExtensions.EnsureAccounts().MapLocalAccount(name);
+            return transportExtensions;
+        }
+
+        static AccountConfigurations EnsureAccounts(this ExposeSettings transportExtensions)
+        {
+            var settings = transportExtensions.GetSettings();
+            AccountConfigurations accounts;
+            if (settings.TryGet(out accounts))
+            {
+                return accounts;
+            }
+
+            accounts = new AccountConfigurations();
+            settings.Set<AccountConfigurations>(accounts);
+            return accounts;
         }
     }
 }
