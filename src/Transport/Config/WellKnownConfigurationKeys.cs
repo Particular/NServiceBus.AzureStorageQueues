@@ -10,5 +10,6 @@
         public const string MessageWrapperSerializationDefinition = "Transport.AzureStorageQueue.MessageWrapperSerializationDefinition";
         public const string Sha1Shortener = "Transport.AzureStorageQueue.Sha1Shortener";
         public const string DegreeOfReceiveParallelism = "Transport.AzureStorageQueue.DegreeOfReceiveParallelism";
+        public const string UseAccountNamesInsteadOfConnectionStrings = "Transport.AzureStorageQueue.UseAccountNamesInsteadOfConnectionStrings";
     }
 }

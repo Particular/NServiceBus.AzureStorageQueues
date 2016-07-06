@@ -15,15 +15,6 @@
 
     public class When_mapping_account_names : NServiceBusAcceptanceTest
     {
-        readonly CloudQueue auditQueue;
-        static string defaultConnectionString;
-        static string anotherConnectionString;
-        const string SenderName = "mapping-names-sender";
-        const string ReceiverName = "mapping-names-receiver";
-        const string AuditName = "mapping-names-audit";
-        const string DefaultConnectionStringName = "default_account";
-        const string AnotherConnectionStringName = "another_account";
-
         public When_mapping_account_names()
         {
             defaultConnectionString = Utils.GetEnvConfiguredConnectionString();
@@ -84,15 +75,15 @@
             where TReceiver : EndpointConfigurationBuilder
         {
             var ctx = await Scenario.Define<Context>()
-                            .WithEndpoint<Sender>(b => b.When(s =>
-                            {
-                                var options = new SendOptions();
-                                options.SetDestination(destination);
-                                return s.Send(new MyCommand(), options);
-                            }))
-                            .WithEndpoint<TReceiver>()
-                            .Done(c => c.Received)
-                            .Run();
+                .WithEndpoint<Sender>(b => b.When(s =>
+                {
+                    var options = new SendOptions();
+                    options.SetDestination(destination);
+                    return s.Send(new MyCommand(), options);
+                }))
+                .WithEndpoint<TReceiver>()
+                .Done(c => c.Received)
+                .Run();
 
             Assert.IsTrue(ctx.Received);
 
@@ -104,7 +95,7 @@
             }
 
             ctx.AllPropertiesFlattened = message.FindProperties(IsSimpleProperty)
-                .ToDictionary(jp => jp.Name, jp => ((JValue)jp.Value).Value<string>());
+                .ToDictionary(jp => jp.Name, jp => ((JValue) jp.Value).Value<string>());
 
             ctx.ContainingRawConnectionString = ctx.AllPropertiesFlattened.Where(kvp => kvp.Value.Contains(defaultConnectionString))
                 .Select(kvp => kvp.Key).ToArray();
@@ -123,6 +114,15 @@
             return true;
         }
 
+        readonly CloudQueue auditQueue;
+        const string SenderName = "mapping-names-sender";
+        const string ReceiverName = "mapping-names-receiver";
+        const string AuditName = "mapping-names-audit";
+        const string DefaultConnectionStringName = "default_account";
+        const string AnotherConnectionStringName = "another_account";
+        static string defaultConnectionString;
+        static string anotherConnectionString;
+
         class Context : ScenarioContext
         {
             public bool Received { get; set; }
@@ -138,11 +138,10 @@
                 EndpointSetup<DefaultServer>(cfg =>
                 {
                     cfg.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings(m =>
-                        {
-                            m.MapLocalAccount(DefaultConnectionStringName);
-                            m.MapAccount(AnotherConnectionStringName, anotherConnectionString);
-                        });
+                        .UseAccountNamesInsteadOfConnectionStrings()
+                        .DefaultAccountName(DefaultConnectionStringName)
+                        .AccountRouting()
+                        .AddAccount(AnotherConnectionStringName, anotherConnectionString);
                 });
             }
         }
@@ -176,11 +175,10 @@
         {
             protected override void Setup(TransportExtensions<AzureStorageQueueTransport> cfg)
             {
-                cfg.UseAccountNamesInsteadOfConnectionStrings(mapping =>
-                {
-                    mapping.MapLocalAccount(AnotherConnectionStringName);
-                    mapping.MapAccount(DefaultConnectionStringName, defaultConnectionString);
-                });
+                cfg.UseAccountNamesInsteadOfConnectionStrings()
+                    .DefaultAccountName(AnotherConnectionStringName)
+                    .AccountRouting()
+                    .AddAccount(DefaultConnectionStringName, defaultConnectionString);
             }
         }
 
@@ -191,13 +189,13 @@
                 this.testContext = testContext;
             }
 
-            readonly Context testContext;
-
             public Task Handle(MyCommand message, IMessageHandlerContext context)
             {
                 testContext.Received = true;
                 return Task.FromResult(0);
             }
+
+            readonly Context testContext;
         }
 
         class MyCommand : ICommand

@@ -26,32 +26,46 @@
         [Test]
         public void Should_not_accept_mappings_without_default()
         {
-            var ex = Assert.ThrowsAsync<AggregateException>(() => { return Configure(m => { m.MapAccount(Another, anotherConnectionString); }); });
+            var ex = Assert.ThrowsAsync<AggregateException>(() => { return Configure(cfg => { cfg.AccountRouting().AddAccount(Another, anotherConnectionString); }); });
             var inner = ex.InnerExceptions.OfType<ScenarioException>().Single();
-            Assert.IsInstanceOf<ArgumentException>(inner.InnerException);
+            Assert.IsInstanceOf<Exception>(inner.InnerException);
         }
 
         [Test]
         public Task Should_accept_mappings_with_default()
         {
-            return Configure(m =>
+            return Configure(cfg =>
             {
-                m.MapLocalAccount(Default);
-                m.MapAccount(Another, anotherConnectionString);
+                cfg.DefaultAccountName(Default);
+                cfg.AccountRouting().AddAccount(Another, anotherConnectionString);
             });
         }
 
-        Task Configure(Action<AccountMapping> action)
+        Task Configure(Action<TransportExtensions<AzureStorageQueueTransport>> action)
         {
             return Scenario.Define<Context>()
-                .WithEndpoint<Endpoint>(cfg => cfg.CustomConfig(c =>
+                .WithEndpoint<Endpoint>(cfg =>
                 {
-                    c.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings(action)
-                        .ConnectionString(connectionString)
-                        .SerializeMessageWrapperWith<JsonSerializer>();
-                }))
-                .Done(c => c.WasStarted)
+                    cfg.CustomConfig(c =>
+                    {
+                        var transport = c.UseTransport<AzureStorageQueueTransport>();
+                        transport
+                            .UseAccountNamesInsteadOfConnectionStrings()
+                            .ConnectionString(connectionString)
+                            .SerializeMessageWrapperWith<JsonSerializer>();
+
+                        action(transport);
+                    });
+
+                    cfg.When((bus, c) =>
+                    {
+                        var options = new SendOptions();
+                        options.SetDestination("ConfiguringAccountNames.Receiver");
+                        return bus.Send(new MyMessage(), options);
+                    });
+                })
+                .WithEndpoint<Receiver>()
+                .Done(c => c.WasCalled)
                 .Run();
         }
 
@@ -60,51 +74,41 @@
         const string Default = "default";
         const string Another = "another";
 
-        public class Context : ScenarioContext
+        class Context : ScenarioContext
         {
-            public bool WasStarted { get; set; }
+            public bool WasCalled { get; set; }
         }
 
-        public class Endpoint : EndpointConfigurationBuilder
+        class Endpoint : EndpointConfigurationBuilder
         {
             public Endpoint()
             {
-                EndpointSetup<DefaultServer>(c => { c.EnableFeature<Bootstrapper>(); }).SendOnly();
+                EndpointSetup<DefaultServer>().SendOnly();
             }
+        }
 
-            public class Bootstrapper : Features.Feature
+        class Receiver : EndpointConfigurationBuilder
+        {
+            public Receiver()
             {
-                public Bootstrapper()
+                EndpointSetup<DefaultServer>(configuration => { configuration.UseTransport<AzureStorageQueueTransport>(); });
+            }
+
+            public class MyMessageHandler : IHandleMessages<MyMessage>
+            {
+                public Context Context { get; set; }
+
+                public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
-                    EnableByDefault();
-                }
-
-                protected override void Setup(Features.FeatureConfigurationContext context)
-                {
-                    context.RegisterStartupTask(b => new MyTask(b.Build<Context>()));
-                }
-
-                public class MyTask : Features.FeatureStartupTask
-                {
-                    public MyTask(Context scenarioContext)
-                    {
-                        this.scenarioContext = scenarioContext;
-                    }
-
-                    protected override Task OnStart(IMessageSession session)
-                    {
-                        scenarioContext.WasStarted = true;
-                        return Task.FromResult(0);
-                    }
-
-                    protected override Task OnStop(IMessageSession session)
-                    {
-                        return Task.FromResult(0);
-                    }
-
-                    readonly Context scenarioContext;
+                    Context.WasCalled = true;
+                    return Task.FromResult(0);
                 }
             }
+        }
+
+        [Serializable]
+        class MyMessage : ICommand
+        {
         }
     }
 }

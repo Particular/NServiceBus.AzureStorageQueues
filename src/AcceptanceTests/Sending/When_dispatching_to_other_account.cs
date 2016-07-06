@@ -21,7 +21,7 @@
         }
 
         [Test]
-        public async Task Namespace_mapped_should_be_respected()
+        public async Task Account_mapped_should_be_respected()
         {
             await RunTest(AnotherAccountName);
         }
@@ -39,7 +39,7 @@
                     });
                 })
                 .WithEndpoint<Receiver>()
-                .Done(c => c.WasCalled) 
+                .Done(c => c.WasCalled)
                 .Run();
 
             Assert.IsTrue(context.WasCalled);
@@ -47,7 +47,7 @@
 
         const string AnotherAccountName = "another";
         const string DefaultAccountName = "default";
-        public static readonly string MainNamespaceConnectionString = Transports.Default.Settings.Get<string>("Transport.ConnectionString");
+        static readonly string MainNamespaceConnectionString = Transports.Default.Settings.Get<string>("Transport.ConnectionString");
 
         public class Context : ScenarioContext
         {
@@ -55,18 +55,17 @@
             public bool WasCalled { get; set; }
         }
 
-        public class Endpoint : EndpointConfigurationBuilder
+        class Endpoint : EndpointConfigurationBuilder
         {
             public Endpoint()
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings(m =>
-                        {
-                            m.MapLocalAccount(DefaultAccountName);
-                            m.MapAccount(AnotherAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString"));
-                        });
+                        .UseAccountNamesInsteadOfConnectionStrings()
+                        .DefaultAccountName(DefaultAccountName)
+                        .AccountRouting()
+                        .AddAccount(AnotherAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString"));
                 }).AddMapping<MyMessage>(typeof(Receiver));
             }
         }
@@ -78,11 +77,10 @@
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings(m =>
-                        {
-                            m.MapLocalAccount(AnotherAccountName);
-                            m.MapAccount(DefaultAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString"));
-                        });
+                        .UseAccountNamesInsteadOfConnectionStrings()
+                        .DefaultAccountName(AnotherAccountName)
+                        .AccountRouting()
+                        .AddAccount(DefaultAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString"));
                 });
             }
 
