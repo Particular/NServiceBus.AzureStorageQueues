@@ -1,8 +1,8 @@
 namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
@@ -12,6 +12,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using NUnit.Framework;
+    using NUnit.Framework.Interfaces;
 
     public class When_sending_message_with_custom_reply_to : NServiceBusAcceptanceTest
     {
@@ -34,38 +35,29 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
             return auditQueue.CreateIfNotExistsAsync();
         }
 
-        [TestCase(AuditName)]
-        [TestCase(AuditNameAtAnotherAccount)]
-        public async Task Should_preserve_fully_qualified_name_when_using_mappings(string destination)
+        [TestCaseSource(nameof(GetTestCases))]
+        public async Task Should_preserve_fully_qualified_name_when_using_mappings(string destination, string replyTo)
         {
-            await Run<SenderUsingNamesInsteadOfConnectionStrings>(destination);
+            await Run<SenderUsingNamesInsteadOfConnectionStrings>(destination, replyTo);
         }
 
-        [TestCase(AuditName)]
-        [TestCase(AuditNameAtAnotherAccount)]
-        public async Task Should_preserve_fully_qualified_name_when_using_raw_connection_strings(string destination)
+        [TestCaseSource(nameof(GetTestCases))]
+        public async Task Should_preserve_fully_qualified_name_when_using_raw_connection_strings(string destination, string replyTo)
         {
-            await Run<SenderNotUsingNamesInsteadOfConnectionStrings>(destination);
+            await Run<SenderNotUsingNamesInsteadOfConnectionStrings>(destination, replyTo);
         }
 
-        async Task Run<TSender>(string destination) where TSender : Sender
+        async Task Run<TSender>(string destination, string replyTo) where TSender : Sender
         {
             await Scenario.Define<Context>()
-                .WithEndpoint<TSender>(b => b.When(async s =>
-                {
-                    await Send(s, MappedReplyTo, destination);
-                    await Send(s, RawReplyTo, destination);
-                }))
+                .WithEndpoint<TSender>(b => b.When(async s => { await Send(s, replyTo, destination); }))
                 .Done(c => true)
                 .Run();
 
-            var messages = await auditQueue.PeekMessagesAsync(2);
+            var msg = await auditQueue.GetMessageAsync();
+            await auditQueue.DeleteMessageAsync(msg);
 
-            var msgs = messages.ToArray();
-            Assert.AreEqual(2, msgs.Length);
-
-            AssertReplyTo(msgs[0], MappedReplyTo);
-            AssertReplyTo(msgs[1], RawReplyTo);
+            AssertReplyTo(msg, replyTo);
         }
 
         static void AssertReplyTo(CloudQueueMessage m1, string expectedReplyTo)
@@ -78,6 +70,15 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
 
                 Assert.AreEqual(expectedReplyTo, ((JValue) replyTo).Value);
             }
+        }
+
+        static IEnumerable<ITestCaseData> GetTestCases()
+        {
+            // combinatorial
+            yield return new TestCaseData(AuditName, RawReplyTo);
+            yield return new TestCaseData(AuditName, MappedReplyTo);
+            yield return new TestCaseData(AuditNameAtAnotherAccount, RawReplyTo);
+            yield return new TestCaseData(AuditNameAtAnotherAccount, MappedReplyTo);
         }
 
         static async Task Send(IMessageSession s, string replyTo, string destination)
