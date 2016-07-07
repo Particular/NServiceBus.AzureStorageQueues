@@ -100,6 +100,12 @@
                 {
                     var address = QueueAddress.Parse(headerValue);
 
+                    var isFullyQualifiedAddress = address.IsAccountDefault == false;
+                    if (isFullyQualifiedAddress)
+                    {
+                        continue;
+                    }
+
                     if (useLogicalQueueAddresses)
                     {
                         var sendingToAnotherAccount = destinationQueue.IsAccountDefault == false;
