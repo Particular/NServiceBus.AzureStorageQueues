@@ -309,8 +309,9 @@
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0-beta0004\Volatile\When_sending_to_non_durable_endpoint.cs" />
     <Compile Include="Configuration\JsonExtensions.cs" />
     <Compile Include="Configuration\When_configuring_message_wrapper_serializer.cs" />
-    <Compile Include="Configuration\When_mapping_account_names.cs" />
-    <Compile Include="Configuration\Should_accept_no_mappings_at_all.cs" />
+    <Compile Include="Configuration\When_sending_messages_with_mapped_account_names.cs" />
+    <Compile Include="Configuration\When_configuring_account_names.cs" />
+    <Compile Include="Configuration\When_sending_message_with_custom_reply_to.cs" />
     <Compile Include="ConfigureAzureStorageQueueTransport.cs" />
     <Compile Include="NamespaceSetup.cs" />
     <Compile Include="Sending\When_dispatching_fails.cs" />

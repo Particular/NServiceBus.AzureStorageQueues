@@ -13,9 +13,9 @@
     using Newtonsoft.Json.Linq;
     using NUnit.Framework;
 
-    public class When_mapping_account_names : NServiceBusAcceptanceTest
+    public class When_sending_messages_with_mapped_account_names : NServiceBusAcceptanceTest
     {
-        public When_mapping_account_names()
+        public When_sending_messages_with_mapped_account_names()
         {
             defaultConnectionString = Utils.GetEnvConfiguredConnectionString();
             anotherConnectionString = Utils.BuildAnotherConnectionString(defaultConnectionString);
@@ -103,15 +103,10 @@
             return ctx;
         }
 
-        bool IsSimpleProperty(JProperty p)
+        static bool IsSimpleProperty(JProperty p)
         {
             var jValue = p.Value as JValue;
-            if (jValue == null || jValue.Type == JTokenType.Null)
-            {
-                return false;
-            }
-
-            return true;
+            return jValue != null && jValue.Type != JTokenType.Null;
         }
 
         readonly CloudQueue auditQueue;

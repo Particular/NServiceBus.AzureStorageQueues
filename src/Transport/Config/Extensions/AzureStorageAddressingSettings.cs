@@ -7,7 +7,7 @@
 
     sealed class AzureStorageAddressingSettings
     {
-        internal void UseAccountNamesInsteadOfConnectionStrings(string defaultConnectionStringName, Dictionary<string, string> name2connectionString = null)
+        internal void RegisterMapping(string defaultConnectionStringName, Dictionary<string, string> name2connectionString, bool shouldUseAccountNames)
         {
             var hasAnyMapping = name2connectionString != null && name2connectionString.Count > 0;
             if (hasAnyMapping == false)
@@ -21,7 +21,7 @@
             }
 
             this.defaultConnectionStringName = defaultConnectionStringName;
-            useLogicalQueueAddresses = true;
+            useLogicalQueueAddresses = shouldUseAccountNames;
 
             foreach (var kvp in name2connectionString)
             {
@@ -99,6 +99,12 @@
                 if (headers.TryGetValue(header, out headerValue))
                 {
                     var address = QueueAddress.Parse(headerValue);
+
+                    var isFullyQualifiedAddress = address.IsAccountDefault == false;
+                    if (isFullyQualifiedAddress)
+                    {
+                        continue;
+                    }
 
                     if (useLogicalQueueAddresses)
                     {
