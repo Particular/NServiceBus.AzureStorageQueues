@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Concurrent;
     using System.Diagnostics;
-    using System.IO;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -177,11 +176,8 @@
                     addressing.ApplyMappingToLogicalName(message.Headers);
 
                     var body = message.Body ?? new byte[0];
-                    using (var memoryStream = new MemoryStream(body))
-                    {
-                        var pushContext = new PushContext(message.Id, message.Headers, memoryStream, new TransportTransaction(), tokenSource, new ContextBag());
-                        await pipeline(pushContext).ConfigureAwait(false);
-                    }
+                    var pushContext = new PushContext(message.Id, message.Headers, body, new TransportTransaction(), tokenSource, new ContextBag());
+                    await pipeline(pushContext).ConfigureAwait(false);
 
                     if (ackBeforeDispatch == false)
                     {
