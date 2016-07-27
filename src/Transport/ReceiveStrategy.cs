@@ -102,6 +102,12 @@ namespace NServiceBus.AzureStorageQueues
                         }
                     }
                 }
+                catch (LeaseTimeoutException)
+                {
+                    // The lease has expired and cannot be used any longer to Ack or Nack the message.
+                    // see original issue: https://github.com/Azure/azure-storage-net/issues/285
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     var context = CreateErrorContext(retrieved, message, ex, body);
