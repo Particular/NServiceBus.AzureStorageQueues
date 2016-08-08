@@ -88,10 +88,10 @@
             SerializationDefinition wrapperSerializer;
             if (settings.TryGet(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, out wrapperSerializer))
             {
-                return new MessageWrapperSerializer(wrapperSerializer.Configure(settings));
+                return new MessageWrapperSerializer(wrapperSerializer.Configure(settings)(MessageWrapperSerializer.GetMapper()));
             }
 
-            return new MessageWrapperSerializer(settings.Get<SerializationDefinition>().Configure(settings));
+            return new MessageWrapperSerializer(AzureStorageQueueTransport.GetMainSerializer(MessageWrapperSerializer.GetMapper(), settings));
         }
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()

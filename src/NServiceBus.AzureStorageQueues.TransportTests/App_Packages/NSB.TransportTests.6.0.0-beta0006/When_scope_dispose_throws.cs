@@ -8,10 +8,7 @@
 
     public class When_scope_dispose_throws : NServiceBusTransportTest
     {
-        /// <remarks>
-        /// [TestCase] used instead of [Test] to overcome <see cref="ConventionEnforcementTests.Ensure_all_tests_derive_from_a_common_base_class"/>.
-        /// </remarks>
-        [TestCase()]
+        [Test]
         public async Task Should_call_on_error()
         {
             var onErrorCalled = new TaskCompletionSource<ErrorContext>();

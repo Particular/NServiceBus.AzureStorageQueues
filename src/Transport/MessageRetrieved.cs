@@ -51,7 +51,6 @@
             {
                 // the simplest solution to push the message back is to update its visibility timeout to 0 which is ok according to the API:
                 // https://msdn.microsoft.com/en-us/library/azure/hh452234.aspx
-                rawMessage.SetMessageContent(EmptyContent);
                 await azureQueue.UpdateMessageAsync(rawMessage, TimeSpan.Zero, MessageUpdateFields.Visibility).ConfigureAwait(false);
             }
             catch (StorageException ex)
@@ -67,6 +66,5 @@
 
         CloudQueue azureQueue;
         CloudQueueMessage rawMessage;
-        static byte[] EmptyContent = new byte[0];
     }
 }

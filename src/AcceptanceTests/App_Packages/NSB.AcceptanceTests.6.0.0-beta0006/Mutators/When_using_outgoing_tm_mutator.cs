@@ -10,6 +10,7 @@
 
     public class When_using_outgoing_tm_mutator : NServiceBusAcceptanceTest
     {
+        [Ignore("Xml serialization based")]
         [Test]
         public Task Should_be_able_to_update_message()
         {

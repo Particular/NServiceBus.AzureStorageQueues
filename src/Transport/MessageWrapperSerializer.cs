@@ -4,17 +4,21 @@
     using System.IO;
     using System.Linq;
     using Azure.Transports.WindowsAzureStorageQueues;
-    using MessageInterfaces;
     using MessageInterfaces.MessageMapper.Reflection;
     using Serialization;
 
     class MessageWrapperSerializer
     {
-        public MessageWrapperSerializer(Func<IMessageMapper, IMessageSerializer> builder)
+        public MessageWrapperSerializer(IMessageSerializer messageSerializer)
+        {
+            this.messageSerializer = messageSerializer;
+        }
+
+        public static MessageMapper GetMapper()
         {
             var mapper = new MessageMapper();
             mapper.Initialize(MessageTypes);
-            messageSerializer = builder(mapper);
+            return mapper;
         }
 
         public void Serialize(MessageWrapper wrapper, Stream stream)

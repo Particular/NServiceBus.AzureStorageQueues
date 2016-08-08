@@ -10,6 +10,7 @@
 
     public class When_publishing_an_event_implementing_two_unrelated_interfaces : NServiceBusAcceptanceTest
     {
+        [Ignore("Xml serialization based")]
         [Test]
         public async Task Event_should_be_published_using_instance_type()
         {

@@ -53,7 +53,7 @@ namespace NServiceBus.AzureStorageQueues
 
                 try
                 {
-                    var pushContext = new MessageContext(message.Id, message.Headers, body, new TransportTransaction(), EmptyCancellationTokenSource, new ContextBag());
+                    var pushContext = new MessageContext(message.Id, message.Headers, body, new TransportTransaction(), new CancellationTokenSource(), new ContextBag());
                     await pipeline(pushContext).ConfigureAwait(false);
                 }
                 catch (Exception ex)
@@ -70,7 +70,6 @@ namespace NServiceBus.AzureStorageQueues
 
             readonly Func<MessageContext, Task> pipeline;
             readonly Func<ErrorContext, Task<ErrorHandleResult>> errorPipe;
-            static readonly CancellationTokenSource EmptyCancellationTokenSource = new CancellationTokenSource();
         }
 
         sealed class AtLeastOnceReceiveStrategy : ReceiveStrategy

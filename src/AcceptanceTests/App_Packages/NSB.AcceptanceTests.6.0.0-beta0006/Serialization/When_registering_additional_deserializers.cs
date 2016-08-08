@@ -13,6 +13,7 @@
     using NUnit.Framework;
     using Settings;
 
+    [Ignore("ASQ currently uses only main serializer")]
     public class When_registering_additional_deserializers : NServiceBusAcceptanceTest
     {
         [Test]
