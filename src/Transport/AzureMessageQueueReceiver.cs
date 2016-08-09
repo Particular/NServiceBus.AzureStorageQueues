@@ -83,10 +83,11 @@ namespace NServiceBus.AzureStorageQueues
                 }
 
                 await Task.Delay(timeToDelayNextPeek, token).ConfigureAwait(false);
+                return noMessagesFound;
             }
 
             timeToDelayNextPeek = TimeSpan.Zero;
-            return messages ?? noMessagesFound;
+            return messages;
         }
 
         MessageEnvelopeUnwrapper unwrapper;
