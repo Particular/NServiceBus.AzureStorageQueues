@@ -22,7 +22,7 @@
 
         TimeSpan DefaultMessageInvisibleTime = TimeSpan.FromSeconds(30);
         TimeSpan DefaultPeekInterval = TimeSpan.FromMilliseconds(125);
-        TimeSpan DefaultMaximumWaitTimeWhenIdle = TimeSpan.FromSeconds(1);
+        TimeSpan DefaultMaximumWaitTimeWhenIdle = TimeSpan.FromSeconds(30);
         const int DefaultBatchSize = 32;
         const string DefaultConnectionString = "";
     }
