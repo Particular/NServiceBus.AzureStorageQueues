@@ -12,6 +12,7 @@
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using NUnit.Framework;
+    using Serializer = JsonSerializer;
 
     public class When_sending_messages_with_mapped_account_names : NServiceBusAcceptanceTest
     {
@@ -132,6 +133,7 @@
                 CustomEndpointName(SenderName);
                 EndpointSetup<DefaultServer>(cfg =>
                 {
+                    cfg.UseSerialization<Serializer>();
                     cfg.UseTransport<AzureStorageQueueTransport>()
                         .UseAccountNamesInsteadOfConnectionStrings()
                         .DefaultAccountName(DefaultConnectionStringName)
@@ -147,6 +149,7 @@
             {
                 EndpointSetup<DefaultPublisher>(cfg =>
                 {
+                    cfg.UseSerialization<Serializer>();
                     var extensions = cfg.UseTransport<AzureStorageQueueTransport>()
                         .ConnectionString(anotherConnectionString);
 
