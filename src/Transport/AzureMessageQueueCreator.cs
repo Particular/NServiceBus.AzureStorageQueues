@@ -5,7 +5,7 @@
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using Transports;
+    using Transport;
 
     /// <summary>
     /// Creates the queues. Note that this class will only be invoked when running the windows host and not when running in

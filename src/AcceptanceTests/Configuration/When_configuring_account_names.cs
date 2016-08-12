@@ -8,6 +8,7 @@
     using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
     using NUnit.Framework;
+    using Serializer = JsonSerializer;
 
     public class When_configuring_account_names : NServiceBusAcceptanceTest
     {
@@ -48,6 +49,7 @@
                 {
                     cfg.CustomConfig(c =>
                     {
+                        c.UseSerialization<Serializer>();
                         var transport = c.UseTransport<AzureStorageQueueTransport>();
                         transport
                             .UseAccountNamesInsteadOfConnectionStrings()
@@ -91,7 +93,11 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(configuration => { configuration.UseTransport<AzureStorageQueueTransport>(); });
+                EndpointSetup<DefaultServer>(c =>
+                {
+                    c.UseSerialization<Serializer>();
+                    c.UseTransport<AzureStorageQueueTransport>();
+                });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>

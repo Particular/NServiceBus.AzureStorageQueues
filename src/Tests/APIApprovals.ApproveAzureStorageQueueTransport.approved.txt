@@ -5,12 +5,12 @@
     {
         public void AddAccount(string name, string connectionString) { }
     }
-    public class AzureStorageQueueTransport : NServiceBus.Transports.TransportDefinition
+    public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition
     {
         public AzureStorageQueueTransport() { }
         public override string ExampleConnectionStringForErrorMessage { get; }
         public override bool RequiresConnectionString { get; }
-        protected override NServiceBus.Transports.TransportInfrastructure Initialize(NServiceBus.Settings.SettingsHolder settings, string connectionString) { }
+        public override NServiceBus.Transport.TransportInfrastructure Initialize(NServiceBus.Settings.SettingsHolder settings, string connectionString) { }
     }
     public class static AzureStorageTransportAddressingExtensions
     {

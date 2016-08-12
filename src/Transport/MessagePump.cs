@@ -3,13 +3,11 @@
     using System;
     using System.Collections.Concurrent;
     using System.Diagnostics;
-    using System.IO;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using Extensibility;
     using Logging;
-    using Transports;
+    using Transport;
 
     class MessagePump : IPushMessages, IDisposable
     {
@@ -25,26 +23,14 @@
             // Injected
         }
 
-        public async Task Init(Func<PushContext, Task> pipe, CriticalError criticalError, PushSettings settings)
+        public Task Init(Func<MessageContext, Task> onMessage, Func<ErrorContext, Task<ErrorHandleResult>> onError, CriticalError criticalError, PushSettings settings)
         {
-            pipeline = pipe;
             circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
             messageReceiver.PurgeOnStartup = settings.PurgeOnStartup;
 
-            switch (settings.RequiredTransactionMode)
-            {
-                case TransportTransactionMode.None:
-                    ackBeforeDispatch = true;
-                    break;
-                case TransportTransactionMode.ReceiveOnly:
-                    ackBeforeDispatch = false;
-                    break;
-                default:
-                    throw new NotSupportedException($"The TransportTransactionMode {settings.RequiredTransactionMode} is not supported");
-            }
+            receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, settings.RequiredTransactionMode);
 
-
-            await messageReceiver.Init(settings.InputQueue).ConfigureAwait(false);
+            return messageReceiver.Init(settings.InputQueue);
         }
 
         public void Start(PushRuntimeSettings limitations)
@@ -156,6 +142,7 @@
                 }
                 catch (Exception ex)
                 {
+                    // TODO: Should it be the circuit breaker or the onCriticalError call?
                     Logger.Warn("Receiving from the queue failed", ex);
                     await circuitBreaker.Failure(ex).ConfigureAwait(false);
                 }
@@ -164,61 +151,35 @@
 
         async Task InnerReceive(MessageRetrieved retrieved)
         {
-            using (var tokenSource = new CancellationTokenSource())
+            try
             {
-                try
-                {
-                    if (ackBeforeDispatch)
-                    {
-                        await retrieved.Ack().ConfigureAwait(false);
-                    }
+                var message = retrieved.Unwrap();
+                addressing.ApplyMappingToLogicalName(message.Headers);
 
-                    var message = retrieved.Unwrap();
-                    addressing.ApplyMappingToLogicalName(message.Headers);
-
-                    var body = message.Body ?? new byte[0];
-                    using (var memoryStream = new MemoryStream(body))
-                    {
-                        var pushContext = new PushContext(message.Id, message.Headers, memoryStream, new TransportTransaction(), tokenSource, new ContextBag());
-                        await pipeline(pushContext).ConfigureAwait(false);
-                    }
-
-                    if (ackBeforeDispatch == false)
-                    {
-                        if (tokenSource.IsCancellationRequested == false)
-                        {
-                            await retrieved.Ack().ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            await retrieved.Nack().ConfigureAwait(false);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
-                    await retrieved.Nack().ConfigureAwait(false);
-                }
-                finally
-                {
-                    concurrencyLimiter.Release();
-                }
+                await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
+            }
+            finally
+            {
+                concurrencyLimiter.Release();
             }
         }
+
+        ReceiveStrategy receiveStrategy;
 
         AzureStorageAddressingSettings addressing;
 
         AzureMessageQueueReceiver messageReceiver;
 
-        bool ackBeforeDispatch;
         CancellationToken cancellationToken;
         CancellationTokenSource cancellationTokenSource;
         RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
         SemaphoreSlim concurrencyLimiter;
 
         Task[] messagePumpTasks;
-        Func<PushContext, Task> pipeline;
         ConcurrentDictionary<Task, Task> runningReceiveTasks;
         int? degreeOfReceiveParallelism;
         static ILog Logger = LogManager.GetLogger(typeof(MessagePump));
