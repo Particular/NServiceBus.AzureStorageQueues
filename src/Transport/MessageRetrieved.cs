@@ -37,11 +37,11 @@
         /// <summary>
         /// Acknowledges the successful processing of the message.
         /// </summary>
-        public async Task Ack()
+        public Task Ack()
         {
             AssertVisibilityTimeout();
 
-            await azureQueue.DeleteMessageAsync(rawMessage).ConfigureAwait(false);
+            return azureQueue.DeleteMessageAsync(rawMessage);
         }
 
         void AssertVisibilityTimeout()

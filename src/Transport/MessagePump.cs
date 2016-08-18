@@ -142,7 +142,6 @@
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Should it be the circuit breaker or the onCriticalError call?
                     Logger.Warn("Receiving from the queue failed", ex);
                     await circuitBreaker.Failure(ex).ConfigureAwait(false);
                 }
@@ -157,6 +156,10 @@
                 addressing.ApplyMappingToLogicalName(message.Headers);
 
                 await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);
+            }
+            catch (LeaseTimeoutException ex)
+            {
+                Logger.Warn("Dispatching the message took longer than a visibility timeout. The message will reappear in the queue and will be obtained again.", ex);
             }
             catch (Exception ex)
             {
