@@ -30,7 +30,7 @@
 
             receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, settings.RequiredTransactionMode);
 
-            return messageReceiver.Init(settings.InputQueue);
+            return messageReceiver.Init(settings.InputQueue, settings.ErrorQueue);
         }
 
         public void Start(PushRuntimeSettings limitations)

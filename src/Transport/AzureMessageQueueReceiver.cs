@@ -41,22 +41,28 @@ namespace NServiceBus.AzureStorageQueues
         /// </summary>
         public int BatchSize { get; set; }
 
-        public async Task Init(string address)
+        public async Task Init(string inputQueueAddress, string errorQueueAddress)
         {
-            var queueName = addressGenerator.GetQueueName(address);
-
-            azureQueue = client.GetQueueReference(queueName);
-            await azureQueue.CreateIfNotExistsAsync().ConfigureAwait(false);
+            inputQueue = await GetQueue(inputQueueAddress).ConfigureAwait(false);
+            errorQueue = await GetQueue(errorQueueAddress).ConfigureAwait(false);
 
             if (PurgeOnStartup)
             {
-                await azureQueue.ClearAsync().ConfigureAwait(false);
+                await inputQueue.ClearAsync().ConfigureAwait(false);
             }
+        }
+
+        async Task<CloudQueue> GetQueue(string address)
+        {
+            var name = addressGenerator.GetQueueName(address);
+            var queue = client.GetQueueReference(name);
+            await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
+            return queue;
         }
 
         internal async Task<List<MessageRetrieved>> Receive(CancellationToken token)
         {
-            var rawMessages = await azureQueue.GetMessagesAsync(BatchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
+            var rawMessages = await inputQueue.GetMessagesAsync(BatchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
 
             var messageFound = false;
             List<MessageRetrieved> messages = null;
@@ -68,7 +74,7 @@ namespace NServiceBus.AzureStorageQueues
                     messageFound = true;
                 }
 
-                messages.Add(new MessageRetrieved(unwrapper, rawMessage, azureQueue));
+                messages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue));
             }
 
             if (!messageFound)
@@ -94,7 +100,8 @@ namespace NServiceBus.AzureStorageQueues
 
         QueueAddressGenerator addressGenerator;
 
-        CloudQueue azureQueue;
+        CloudQueue inputQueue;
+        CloudQueue errorQueue;
         CloudQueueClient client;
         TimeSpan timeToDelayNextPeek;
 
