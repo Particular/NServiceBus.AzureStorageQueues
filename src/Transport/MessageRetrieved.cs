@@ -1,7 +1,6 @@
 ﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
-    using System.Runtime.Serialization;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage;
@@ -9,30 +8,14 @@
 
     class MessageRetrieved
     {
-        public MessageRetrieved(MessageEnvelopeUnwrapper unpacker, CloudQueueMessage rawMessage, CloudQueue azureQueue)
+        public MessageRetrieved(MessageWrapper wrapper, CloudQueueMessage rawMessage, CloudQueue azureQueue)
         {
-            this.unpacker = unpacker;
+            Wrapper = wrapper;
             this.rawMessage = rawMessage;
             this.azureQueue = azureQueue;
         }
 
         public int DequeueCount => rawMessage.DequeueCount;
-
-        /// <summary>
-        /// Unwraps the raw message.
-        /// </summary>
-        /// <returns>Returns the message wrapper.</returns>
-        public MessageWrapper Unwrap()
-        {
-            try
-            {
-                return unpacker.Unwrap(rawMessage);
-            }
-            catch (Exception ex)
-            {
-                throw new SerializationException($"Failed to deserialize message envelope for message with id {rawMessage.Id}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
-            }
-        }
 
         /// <summary>
         /// Acknowledges the successful processing of the message.
@@ -79,10 +62,9 @@
             }
         }
 
-        MessageEnvelopeUnwrapper unpacker;
-
-        CloudQueue azureQueue;
-        CloudQueueMessage rawMessage;
+        public readonly MessageWrapper Wrapper;
+        readonly CloudQueue azureQueue;
+        readonly CloudQueueMessage rawMessage;
     }
 
     class LeaseTimeoutException : Exception

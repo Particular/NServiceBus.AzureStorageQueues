@@ -4,6 +4,7 @@ namespace NServiceBus.AzureStorageQueues
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using Logging;
     using Microsoft.WindowsAzure.Storage.Queue;
 
     class AzureMessageQueueReceiver
@@ -41,34 +42,51 @@ namespace NServiceBus.AzureStorageQueues
         /// </summary>
         public int BatchSize { get; set; }
 
-        public async Task Init(string address)
+        public async Task Init(string inputQueueAddress, string errorQueueAddress)
         {
-            var queueName = addressGenerator.GetQueueName(address);
-
-            azureQueue = client.GetQueueReference(queueName);
-            await azureQueue.CreateIfNotExistsAsync().ConfigureAwait(false);
+            inputQueue = await GetQueue(inputQueueAddress).ConfigureAwait(false);
+            errorQueue = await GetQueue(errorQueueAddress).ConfigureAwait(false);
 
             if (PurgeOnStartup)
             {
-                await azureQueue.ClearAsync().ConfigureAwait(false);
+                await inputQueue.ClearAsync().ConfigureAwait(false);
             }
+        }
+
+        async Task<CloudQueue> GetQueue(string address)
+        {
+            var name = addressGenerator.GetQueueName(address);
+            var queue = client.GetQueueReference(name);
+            await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
+            return queue;
         }
 
         internal async Task<List<MessageRetrieved>> Receive(CancellationToken token)
         {
-            var rawMessages = await azureQueue.GetMessagesAsync(BatchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
+            var rawMessages = await inputQueue.GetMessagesAsync(BatchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
 
             var messageFound = false;
             List<MessageRetrieved> messages = null;
             foreach (var rawMessage in rawMessages)
             {
-                if (!messageFound)
+                try
                 {
-                    messages = new List<MessageRetrieved>(BatchSize);
-                    messageFound = true;
-                }
+                    var wrapper = unwrapper.Unwrap(rawMessage);
 
-                messages.Add(new MessageRetrieved(unwrapper, rawMessage, azureQueue));
+                    if (!messageFound)
+                    {
+                        messages = new List<MessageRetrieved>(BatchSize);
+                        messageFound = true;
+                    }
+
+                    messages.Add(new MessageRetrieved(wrapper, rawMessage, inputQueue));
+                }
+                catch (Exception ex)
+                {
+                    await errorQueue.AddMessageAsync(rawMessage).ConfigureAwait(false);
+                    Logger.Error($"Failed to deserialize message envelope for message with id {rawMessage.Id}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
+                    await inputQueue.DeleteMessageAsync(rawMessage).ConfigureAwait(false);
+                }
             }
 
             if (!messageFound)
@@ -94,10 +112,13 @@ namespace NServiceBus.AzureStorageQueues
 
         QueueAddressGenerator addressGenerator;
 
-        CloudQueue azureQueue;
+        CloudQueue inputQueue;
+        CloudQueue errorQueue;
         CloudQueueClient client;
         TimeSpan timeToDelayNextPeek;
 
         static List<MessageRetrieved> noMessagesFound = new List<MessageRetrieved>();
+
+        static readonly ILog Logger = LogManager.GetLogger(typeof(AzureMessageQueueReceiver));
     }
 }

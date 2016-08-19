@@ -30,7 +30,7 @@
 
             receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, settings.RequiredTransactionMode);
 
-            return messageReceiver.Init(settings.InputQueue);
+            return messageReceiver.Init(settings.InputQueue, settings.ErrorQueue);
         }
 
         public void Start(PushRuntimeSettings limitations)
@@ -152,7 +152,7 @@
         {
             try
             {
-                var message = retrieved.Unwrap();
+                var message = retrieved.Wrapper;
                 addressing.ApplyMappingToLogicalName(message.Headers);
 
                 await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);
