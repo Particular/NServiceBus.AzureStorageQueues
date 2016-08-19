@@ -48,9 +48,11 @@
         {
             if (rawMessage.NextVisibleTime != null)
             {
-                if (rawMessage.NextVisibleTime.Value < DateTimeOffset.Now)
+                var visibleIn = rawMessage.NextVisibleTime.Value - DateTimeOffset.Now;
+                if (visibleIn < TimeSpan.Zero)
                 {
-                    throw new LeaseTimeoutException();
+                    var visibilityTimeoutExceededBy = -visibleIn;
+                    throw new LeaseTimeoutException(rawMessage, visibilityTimeoutExceededBy);
                 }
             }
         }
@@ -85,7 +87,7 @@
 
     class LeaseTimeoutException : Exception
     {
-        public LeaseTimeoutException() : base("Pop receipt is invalid as it exceeded the next visibile time.")
+        public LeaseTimeoutException(CloudQueueMessage rawMessage, TimeSpan visibilityTimeoutExceededBy) : base($"The pop receipt of the cloud queue message '{rawMessage.Id}' is invalid as it exceeded the next visible time by '{visibilityTimeoutExceededBy}'.")
         {
         }
     }

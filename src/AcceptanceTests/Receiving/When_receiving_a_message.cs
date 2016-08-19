@@ -34,7 +34,7 @@
 
         static bool IsPopReceiptLogItem(ScenarioContext.LogItem item)
         {
-            return item.Message.Contains("Pop receipt is invalid as it exceeded the next visibile time.");
+            return item.Message.Contains("Pop receipt is invalid as it exceeded the next visible time.");
         }
 
         const int VisibilityTimeoutInSeconds = 5;
