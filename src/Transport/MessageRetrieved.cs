@@ -37,9 +37,24 @@
         /// <summary>
         /// Acknowledges the successful processing of the message.
         /// </summary>
-        public async Task Ack()
+        public Task Ack()
         {
-            await azureQueue.DeleteMessageAsync(rawMessage).ConfigureAwait(false);
+            AssertVisibilityTimeout();
+
+            return azureQueue.DeleteMessageAsync(rawMessage);
+        }
+
+        void AssertVisibilityTimeout()
+        {
+            if (rawMessage.NextVisibleTime != null)
+            {
+                var visibleIn = rawMessage.NextVisibleTime.Value - DateTimeOffset.Now;
+                if (visibleIn < TimeSpan.Zero)
+                {
+                    var visibilityTimeoutExceededBy = -visibleIn;
+                    throw new LeaseTimeoutException(rawMessage, visibilityTimeoutExceededBy);
+                }
+            }
         }
 
         /// <summary>
@@ -47,6 +62,8 @@
         /// </summary>
         public async Task Nack()
         {
+            AssertVisibilityTimeout();
+
             try
             {
                 // the simplest solution to push the message back is to update its visibility timeout to 0 which is ok according to the API:
@@ -66,5 +83,12 @@
 
         CloudQueue azureQueue;
         CloudQueueMessage rawMessage;
+    }
+
+    class LeaseTimeoutException : Exception
+    {
+        public LeaseTimeoutException(CloudQueueMessage rawMessage, TimeSpan visibilityTimeoutExceededBy) : base($"The pop receipt of the cloud queue message '{rawMessage.Id}' is invalid as it exceeded the next visible time by '{visibilityTimeoutExceededBy}'.")
+        {
+        }
     }
 }
