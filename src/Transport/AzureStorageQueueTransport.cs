@@ -5,6 +5,7 @@ namespace NServiceBus
     using Azure.Transports.WindowsAzureStorageQueues;
     using AzureStorageQueues;
     using MessageInterfaces;
+    using Routing;
     using Serialization;
     using Settings;
     using Transport;
@@ -13,7 +14,7 @@ namespace NServiceBus
     /// <summary>
     /// Transport definition for AzureStorageQueue
     /// </summary>
-    public class AzureStorageQueueTransport : TransportDefinition
+    public class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
     {
         public override bool RequiresConnectionString { get; } = true;
 
