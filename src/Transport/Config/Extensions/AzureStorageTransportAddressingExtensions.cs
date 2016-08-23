@@ -5,7 +5,7 @@ namespace NServiceBus
 
     public static class AzureStorageTransportAddressingExtensions
     {
-        public static TransportExtensions<AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config)
+        public static TransportExtensions<AzureStorageQueueTransport> UseAccountAliasesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config)
         {
             config.GetSettings().Set(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, true);
             return config;
@@ -19,9 +19,9 @@ namespace NServiceBus
             return new AccountRoutingSettings(transportExtensions.EnsureAccounts());
         }
 
-        public static TransportExtensions<AzureStorageQueueTransport> DefaultAccountName(this TransportExtensions<AzureStorageQueueTransport> transportExtensions, string name)
+        public static TransportExtensions<AzureStorageQueueTransport> DefaultAccountAlias(this TransportExtensions<AzureStorageQueueTransport> transportExtensions, string alias)
         {
-            transportExtensions.EnsureAccounts().MapLocalAccount(name);
+            transportExtensions.EnsureAccounts().MapLocalAccount(alias);
             return transportExtensions;
         }
 

@@ -120,7 +120,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
                     SetUp(transport);
 
                     transport
-                        .DefaultAccountName(DefaultConnectionStringName)
+                        .DefaultAccountAlias(DefaultConnectionStringName)
                         .AccountRouting()
                         .AddAccount(AnotherConnectionStringName, anotherConnectionString);
                 });
@@ -133,7 +133,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         {
             protected override void SetUp(TransportExtensions<AzureStorageQueueTransport> transport)
             {
-                transport.UseAccountNamesInsteadOfConnectionStrings();
+                transport.UseAccountAliasesInsteadOfConnectionStrings();
             }
         }
 

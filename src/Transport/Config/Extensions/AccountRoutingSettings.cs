@@ -1,7 +1,7 @@
 namespace NServiceBus
 {
     /// <summary>
-    /// Provides methods to define routing between Azure Storage accounts and map them to a logical name instead of using bare
+    /// Provides methods to define routing between Azure Storage accounts and map them to a logical alias instead of using bare
     /// connection strings.
     /// </summary>
     public class AccountRoutingSettings
@@ -12,11 +12,11 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Adds the mapping between the <paramref name="name" /> and its <paramref name="connectionString" />.
+        /// Adds the mapping between the <paramref alias="alias" /> and its <paramref alias="connectionString" />.
         /// </summary>
-        public void AddAccount(string name, string connectionString)
+        public void AddAccount(string alias, string connectionString)
         {
-            accounts.Add(name, connectionString);
+            accounts.Add(alias, connectionString);
         }
 
         readonly AccountConfigurations accounts;

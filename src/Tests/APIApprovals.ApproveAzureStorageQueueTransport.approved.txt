@@ -3,7 +3,7 @@
     
     public class AccountRoutingSettings
     {
-        public void AddAccount(string name, string connectionString) { }
+        public void AddAccount(string alias, string connectionString) { }
     }
     public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition
     {
@@ -15,8 +15,8 @@
     public class static AzureStorageTransportAddressingExtensions
     {
         public static NServiceBus.AccountRoutingSettings AccountRouting(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transportExtensions) { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DefaultAccountName(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transportExtensions, string name) { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseAccountNamesInsteadOfConnectionStrings(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DefaultAccountAlias(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transportExtensions, string alias) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseAccountAliasesInsteadOfConnectionStrings(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
     }
     public class static AzureStorageTransportExtensions
     {

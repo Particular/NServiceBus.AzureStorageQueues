@@ -153,7 +153,7 @@
             try
             {
                 var message = retrieved.Wrapper;
-                addressing.ApplyMappingToLogicalName(message.Headers);
+                addressing.ApplyMappingToAliases(message.Headers);
 
                 await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);
             }

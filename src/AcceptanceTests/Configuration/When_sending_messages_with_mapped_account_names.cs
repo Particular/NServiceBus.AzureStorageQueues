@@ -135,8 +135,8 @@
                 {
                     cfg.UseSerialization<Serializer>();
                     cfg.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountNamesInsteadOfConnectionStrings()
-                        .DefaultAccountName(DefaultConnectionStringName)
+                        .UseAccountAliasesInsteadOfConnectionStrings()
+                        .DefaultAccountAlias(DefaultConnectionStringName)
                         .AccountRouting()
                         .AddAccount(AnotherConnectionStringName, anotherConnectionString);
                 });
@@ -173,8 +173,8 @@
         {
             protected override void Setup(TransportExtensions<AzureStorageQueueTransport> cfg)
             {
-                cfg.UseAccountNamesInsteadOfConnectionStrings()
-                    .DefaultAccountName(AnotherConnectionStringName)
+                cfg.UseAccountAliasesInsteadOfConnectionStrings()
+                    .DefaultAccountAlias(AnotherConnectionStringName)
                     .AccountRouting()
                     .AddAccount(DefaultConnectionStringName, defaultConnectionString);
             }

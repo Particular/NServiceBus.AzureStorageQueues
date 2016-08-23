@@ -37,7 +37,7 @@
         {
             return Configure(cfg =>
             {
-                cfg.DefaultAccountName(Default);
+                cfg.DefaultAccountAlias(Default);
                 cfg.AccountRouting().AddAccount(Another, anotherConnectionString);
             });
         }
@@ -52,7 +52,7 @@
                         c.UseSerialization<Serializer>();
                         var transport = c.UseTransport<AzureStorageQueueTransport>();
                         transport
-                            .UseAccountNamesInsteadOfConnectionStrings()
+                            .UseAccountAliasesInsteadOfConnectionStrings()
                             .ConnectionString(connectionString)
                             .SerializeMessageWrapperWith<JsonSerializer>();
 

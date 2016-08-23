@@ -72,8 +72,8 @@
 
             var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out useAccountNames);
 
-            addressing.RegisterMapping(accounts.defaultName, accounts.mappings, shouldUseAccountNames);
-            addressing.Add(QueueAddress.DefaultStorageAccountName, connectionString, false);
+            addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings, shouldUseAccountNames);
+            addressing.Add(QueueAddress.DefaultStorageAccountAlias, connectionString, false);
 
             return addressing;
         }

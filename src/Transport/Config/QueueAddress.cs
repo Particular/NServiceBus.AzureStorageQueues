@@ -69,7 +69,7 @@
                     return false;
                 }
 
-                queue = new QueueAddress(inputQueue, DefaultStorageAccountName);
+                queue = new QueueAddress(inputQueue, DefaultStorageAccountAlias);
                 return true;
             }
 
@@ -112,9 +112,9 @@
             return IsAccountDefault ? QueueName : $"{QueueName}@{StorageAccount}";
         }
 
-        public bool IsAccountDefault => StorageAccount == DefaultStorageAccountName;
+        public bool IsAccountDefault => StorageAccount == DefaultStorageAccountAlias;
 
-        public const string DefaultStorageAccountName = "";
+        public const string DefaultStorageAccountAlias = "";
         public const string Separator = "@";
     }
 }
