@@ -7,9 +7,9 @@
 
     sealed class AzureStorageAddressingSettings
     {
-        internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, string> alias2connectionString, bool shouldUseAccountAliases)
+        internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, string> aliasToConnectionStringMap, bool shouldUseAccountAliases)
         {
-            var hasAnyMapping = alias2connectionString != null && alias2connectionString.Count > 0;
+            var hasAnyMapping = aliasToConnectionStringMap != null && aliasToConnectionStringMap.Count > 0;
             if (hasAnyMapping == false)
             {
                 return;
@@ -23,14 +23,14 @@
             this.defaultConnectionStringAlias = defaultConnectionStringAlias;
             useLogicalQueueAddresses = shouldUseAccountAliases;
 
-            foreach (var kvp in alias2connectionString)
+            foreach (var kvp in aliasToConnectionStringMap)
             {
                 var name = kvp.Key;
                 var connectionString = kvp.Value;
 
                 if (name == QueueAddress.DefaultStorageAccountAlias)
                 {
-                    throw new ArgumentException("Don't use default empty name for mapping connection strings", nameof(alias2connectionString));
+                    throw new ArgumentException("Don't use default empty name for mapping connection strings", nameof(aliasToConnectionStringMap));
                 }
 
                 Add(name, connectionString);
@@ -43,7 +43,7 @@
         internal ConnectionString Map(string alias)
         {
             ConnectionString connectionString;
-            if (alias2connectionString.TryGetValue(alias, out connectionString) == false)
+            if (aliasToConnectionStringMap.TryGetValue(alias, out connectionString) == false)
             {
                 throw new KeyNotFoundException($"No account was mapped under following name '{alias}'. Please map it using AddStorageAccount method.");
             }
@@ -78,7 +78,7 @@
                     else
                     {
                         // it must be a logical name, try to find it, otherwise throw
-                        if (alias2connectionString.ContainsKey(address.StorageAccount) == false)
+                        if (aliasToConnectionStringMap.ContainsKey(address.StorageAccount) == false)
                         {
                             throw new KeyNotFoundException($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
                         }
@@ -125,7 +125,7 @@
 
         bool TryMap(ConnectionString connectionString, out string alias)
         {
-            return connectionString2alias.TryGetValue(connectionString, out alias);
+            return connectionStringToAliasMap.TryGetValue(connectionString, out alias);
         }
 
         internal void Add(string name, string connectionString, bool throwOnExistingEntry = true)
@@ -133,18 +133,18 @@
             var value = new ConnectionString(connectionString);
             if (throwOnExistingEntry)
             {
-                alias2connectionString.Add(name, value);
-                connectionString2alias.Add(value, name);
+                aliasToConnectionStringMap.Add(name, value);
+                connectionStringToAliasMap.Add(value, name);
             }
             else
             {
-                alias2connectionString[name] = value;
-                connectionString2alias[value] = name;
+                aliasToConnectionStringMap[name] = value;
+                connectionStringToAliasMap[value] = name;
             }
         }
 
-        Dictionary<ConnectionString, string> connectionString2alias = new Dictionary<ConnectionString, string>();
-        Dictionary<string, ConnectionString> alias2connectionString = new Dictionary<string, ConnectionString>();
+        Dictionary<ConnectionString, string> connectionStringToAliasMap = new Dictionary<ConnectionString, string>();
+        Dictionary<string, ConnectionString> aliasToConnectionStringMap = new Dictionary<string, ConnectionString>();
 
         string defaultConnectionStringAlias;
         bool useLogicalQueueAddresses;
