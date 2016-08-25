@@ -8,22 +8,22 @@ namespace NServiceBus
     /// </summary>
     class AccountConfigurations
     {
-        public void MapLocalAccount(string name)
+        public void MapLocalAccount(string alias)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            if (string.IsNullOrWhiteSpace(alias))
             {
-                throw new ArgumentException("Should not be null or white space", nameof(name));
+                throw new ArgumentException("Should not be null or white space", nameof(alias));
             }
 
-            defaultName = name;
+            defaultAlias = alias;
         }
 
-        public void Add(string name, string connectionStringValue)
+        public void Add(string alias, string connectionStringValue)
         {
-            mappings.Add(name, connectionStringValue);
+            mappings.Add(alias, connectionStringValue);
         }
 
         internal Dictionary<string, string> mappings = new Dictionary<string, string>();
-        internal string defaultName;
+        internal string defaultAlias;
     }
 }
