@@ -4,7 +4,6 @@ namespace NServiceBus.AzureStorageQueues
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using Logging;
     using Microsoft.WindowsAzure.Storage.Queue;
 
     class AzureMessageQueueReceiver
@@ -69,24 +68,13 @@ namespace NServiceBus.AzureStorageQueues
             List<MessageRetrieved> messages = null;
             foreach (var rawMessage in rawMessages)
             {
-                try
+                if (!messageFound)
                 {
-                    var wrapper = unwrapper.Unwrap(rawMessage);
-
-                    if (!messageFound)
-                    {
-                        messages = new List<MessageRetrieved>(BatchSize);
-                        messageFound = true;
-                    }
-
-                    messages.Add(new MessageRetrieved(wrapper, rawMessage, inputQueue));
+                    messages = new List<MessageRetrieved>(BatchSize);
+                    messageFound = true;
                 }
-                catch (Exception ex)
-                {
-                    await errorQueue.AddMessageAsync(rawMessage).ConfigureAwait(false);
-                    Logger.Error($"Failed to deserialize message envelope for message with id {rawMessage.Id}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
-                    await inputQueue.DeleteMessageAsync(rawMessage).ConfigureAwait(false);
-                }
+
+                messages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue, errorQueue));
             }
 
             if (!messageFound)
@@ -118,7 +106,5 @@ namespace NServiceBus.AzureStorageQueues
         TimeSpan timeToDelayNextPeek;
 
         static List<MessageRetrieved> noMessagesFound = new List<MessageRetrieved>();
-
-        static readonly ILog Logger = LogManager.GetLogger(typeof(AzureMessageQueueReceiver));
     }
 }

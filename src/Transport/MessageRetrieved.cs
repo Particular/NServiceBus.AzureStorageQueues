@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
+    using System.Runtime.Serialization;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage;
@@ -8,14 +9,35 @@
 
     class MessageRetrieved
     {
-        public MessageRetrieved(MessageWrapper wrapper, CloudQueueMessage rawMessage, CloudQueue azureQueue)
+        public MessageRetrieved(MessageEnvelopeUnwrapper unwrapper, CloudQueueMessage rawMessage, CloudQueue inputQueue, CloudQueue errorQueue)
         {
-            Wrapper = wrapper;
+            this.unwrapper = unwrapper;
+            this.errorQueue = errorQueue;
             this.rawMessage = rawMessage;
-            this.azureQueue = azureQueue;
+            this.inputQueue = inputQueue;
         }
 
         public int DequeueCount => rawMessage.DequeueCount;
+
+        /// <summary>
+        /// Unwraps the raw message body.
+        /// </summary>
+        /// <exception cref="SerializationException">Thrown when the raw message could not be unwrapped. The raw message is automatically moved to the error queue before this exception is thrown.</exception>
+        /// <returns>The actual message wrapper.</returns>
+        public async Task<MessageWrapper> Unwrap()
+        {
+            try
+            {
+                return unwrapper.Unwrap(rawMessage);
+            }
+            catch (Exception ex)
+            {
+                await errorQueue.AddMessageAsync(rawMessage).ConfigureAwait(false);
+                await inputQueue.DeleteMessageAsync(rawMessage).ConfigureAwait(false);
+
+                throw new SerializationException($"Failed to deserialize message envelope for message with id {rawMessage.Id}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
+            }
+        }
 
         /// <summary>
         /// Acknowledges the successful processing of the message.
@@ -24,7 +46,7 @@
         {
             AssertVisibilityTimeout();
 
-            return azureQueue.DeleteMessageAsync(rawMessage);
+            return inputQueue.DeleteMessageAsync(rawMessage);
         }
 
         void AssertVisibilityTimeout()
@@ -51,7 +73,7 @@
             {
                 // the simplest solution to push the message back is to update its visibility timeout to 0 which is ok according to the API:
                 // https://msdn.microsoft.com/en-us/library/azure/hh452234.aspx
-                await azureQueue.UpdateMessageAsync(rawMessage, TimeSpan.Zero, MessageUpdateFields.Visibility).ConfigureAwait(false);
+                await inputQueue.UpdateMessageAsync(rawMessage, TimeSpan.Zero, MessageUpdateFields.Visibility).ConfigureAwait(false);
             }
             catch (StorageException ex)
             {
@@ -62,9 +84,10 @@
             }
         }
 
-        public readonly MessageWrapper Wrapper;
-        readonly CloudQueue azureQueue;
+        readonly CloudQueue inputQueue;
         readonly CloudQueueMessage rawMessage;
+        readonly CloudQueue errorQueue;
+        readonly MessageEnvelopeUnwrapper unwrapper;
     }
 
     class LeaseTimeoutException : Exception
