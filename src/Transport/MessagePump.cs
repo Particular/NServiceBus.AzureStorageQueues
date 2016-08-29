@@ -4,6 +4,7 @@
     using System.Collections.Concurrent;
     using System.Diagnostics;
     using System.Linq;
+    using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
     using Logging;
@@ -152,7 +153,7 @@
         {
             try
             {
-                var message = retrieved.Wrapper;
+                var message = await retrieved.Unwrap().ConfigureAwait(false);
                 addressing.ApplyMappingToAliases(message.Headers);
 
                 await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);
@@ -160,6 +161,10 @@
             catch (LeaseTimeoutException ex)
             {
                 Logger.Warn("Dispatching the message took longer than a visibility timeout. The message will reappear in the queue and will be obtained again.", ex);
+            }
+            catch (SerializationException ex)
+            {
+                Logger.Warn(ex.Message, ex);
             }
             catch (Exception ex)
             {
