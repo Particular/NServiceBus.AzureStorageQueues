@@ -27,6 +27,7 @@
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> PeekInterval(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config)
             where TSerializationDefinition : NServiceBus.Serialization.SerializationDefinition, new () { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseNativeTimeouts(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, bool useNativeTimeouts = True) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseSha1ForShortening(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
     }
     [System.ObsoleteAttribute("This class was replaced by extension methods on endpointConfiguration.UseTranspor" +

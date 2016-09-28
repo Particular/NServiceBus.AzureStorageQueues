@@ -4,6 +4,7 @@ namespace NServiceBus
     using Azure.Transports.WindowsAzureStorageQueues;
     using AzureStorageQueues.Config;
     using Configuration.AdvanceExtensibility;
+    using Features;
     using Serialization;
 
     public static class AzureStorageTransportExtensions
@@ -89,6 +90,19 @@ namespace NServiceBus
             }
 
             config.GetSettings().Set(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, degreeOfReceiveParallelism);
+            return config;
+        }
+
+        /// <summary>
+        /// Switches transport to use timeouts based on the Azure Storage Queues capabilities.
+        /// </summary>
+        public static TransportExtensions<AzureStorageQueueTransport> UseNativeTimeouts(this TransportExtensions<AzureStorageQueueTransport> config, bool useNativeTimeouts = true)
+        {
+            var settings = config.GetSettings();
+
+            settings.EnableFeatureByDefault(typeof(NativeDelayDeliveryFeature));
+            settings.Set(WellKnownConfigurationKeys.NativeTimeouts, useNativeTimeouts);
+
             return config;
         }
 

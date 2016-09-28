@@ -107,6 +107,7 @@
     <Compile Include="AzureStorageQueueInfrastructure.cs" />
     <Compile Include="Config\Extensions\AccountConfigurations.cs" />
     <Compile Include="Config\Extensions\AccountRoutingSettings.cs" />
+    <Compile Include="NativeDelayDeliveryFeature.cs" />
     <Compile Include="Dispatcher.cs" />
     <Compile Include="MessageEnvelopeUnwrapper.cs" />
     <Compile Include="MessagePump.cs" />
