@@ -16,12 +16,13 @@
 
     class Dispatcher : IDispatchMessages
     {
-        public Dispatcher(CreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
+        public Dispatcher(CreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, Func<UnicastTransportOperation, TimeSpan?> calculateVisibilityDelay)
         {
             this.createQueueClients = createQueueClients;
             this.messageSerializer = messageSerializer;
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
+            this.calculateVisibilityDelay = calculateVisibilityDelay;
         }
 
         public async Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
@@ -43,6 +44,8 @@
 
         async Task Send(UnicastTransportOperation operation)
         {
+            var visbilityDelay = calculateVisibilityDelay(operation);
+
             // The destination might be in a queue@destination format
             var destination = operation.Destination;
 
@@ -85,8 +88,9 @@
             }
 
             var rawMessage = SerializeMessage(operation, timeToBeReceived, queue);
+            
 
-            await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
+            await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, visbilityDelay, null, null).ConfigureAwait(false);
         }
 
         Task<bool> ExistsAsync(CloudQueue sendQueue)
@@ -129,6 +133,7 @@
 
         QueueAddressGenerator addressGenerator;
         AzureStorageAddressingSettings addressing;
+        readonly Func<UnicastTransportOperation, TimeSpan?> calculateVisibilityDelay;
         CreateQueueClients createQueueClients;
         ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         MessageWrapperSerializer messageSerializer;

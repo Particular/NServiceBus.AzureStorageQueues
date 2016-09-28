@@ -4,7 +4,9 @@
     using System.Collections.Generic;
     using System.Text;
     using System.Threading.Tasks;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using Config;
+    using DelayedDelivery;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -18,13 +20,22 @@
             this.settings = settings;
             this.connectionString = connectionString;
             serializer = BuildSerializer(settings);
+
+            useNativeTimeouts = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.NativeTimeouts);
+
+            var contraints = new List<Type>
+            {
+                typeof(DiscardIfNotReceivedBefore),
+                typeof(NonDurableDelivery)
+            };
+            if (useNativeTimeouts)
+            {
+                contraints.Add(typeof(DelayedDeliveryConstraint));
+            }
+            DeliveryConstraints = contraints;
         }
 
-        public override IEnumerable<Type> DeliveryConstraints { get; } = new[]
-        {
-            typeof(DiscardIfNotReceivedBefore),
-            typeof(NonDurableDelivery)
-        };
+        public override IEnumerable<Type> DeliveryConstraints { get; }
 
         public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
         public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
@@ -104,7 +115,15 @@
 
                     var queueCreator = new CreateQueueClients();
                     var addressRetriever = GetAddressGenerator(settings);
-                    return new Dispatcher(queueCreator, serializer, addressRetriever, addressing);
+                    if (useNativeTimeouts)
+                    {
+                        return new Dispatcher(queueCreator, serializer, addressRetriever, addressing, NativeDelayDeliveryFeature.GetVisibilityDelay);
+                    }
+                    else
+                    {
+                        return new Dispatcher(queueCreator, serializer, addressRetriever, addressing, o => null);
+                    }
+                    
                 },
                 () => Task.FromResult(StartupCheckResult.Success));
         }
@@ -136,8 +155,9 @@
             return queue.ToString();
         }
 
-        ReadOnlySettings settings;
-        string connectionString;
-        MessageWrapperSerializer serializer;
+        readonly ReadOnlySettings settings;
+        readonly string connectionString;
+        readonly MessageWrapperSerializer serializer;
+        readonly bool useNativeTimeouts;
     }
 }
