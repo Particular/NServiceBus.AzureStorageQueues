@@ -105,6 +105,8 @@ namespace NServiceBus.AzureStorageQueues
         CloudQueueClient client;
         TimeSpan timeToDelayNextPeek;
 
+        public string QueueName => inputQueue.Name;
+
         static List<MessageRetrieved> noMessagesFound = new List<MessageRetrieved>();
     }
 }
