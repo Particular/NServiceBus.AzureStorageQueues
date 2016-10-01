@@ -1,10 +1,11 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Sending
 {
     using System;
-    using System.Threading;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Microsoft.WindowsAzure.Storage;
+    using Microsoft.WindowsAzure.Storage.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -14,6 +15,21 @@
     //[Explicit("long running")]
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
     {
+        CloudTable timeoutTable;
+
+        [SetUp]
+        public new async Task SetUp()
+        {
+            timeoutTable = CloudStorageAccount.Parse(Utils.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderTimeoutsTable);
+            if (await timeoutTable.ExistsAsync().ConfigureAwait(false))
+            {
+                foreach (var dte in await timeoutTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false))
+                {
+                    await timeoutTable.ExecuteAsync(TableOperation.Delete(dte)).ConfigureAwait(false);
+                }
+            }
+        }
+
         [Test]
         public async Task Should_receive_the_message_after_delay()
         {
@@ -50,7 +66,11 @@
                     {
                         Id = c.TestRunId
                     }, sendOptions).ConfigureAwait(false);
-                    c.WasCalled = true;
+
+                    var timeouts = await GetTimeouts();
+                    Assert.AreEqual(1, timeouts.Count);
+
+                    await MoveBeforeNow(timeouts[0]).ConfigureAwait(false);
                 }))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.WasCalled)
@@ -58,53 +78,25 @@
             Assert.True(context.WasCalled, "The message handler should be called");
         }
 
-        [Test]
-        public async Task Should_resend_message_if_delay_did_not_pass()
+        async Task MoveBeforeNow(ITableEntity dte)
         {
-            var delay = TimeSpan.FromMinutes(1);
+            var earlier = DateTimeOffset.Now - TimeSpan.FromMinutes(5);
 
-            // remove the visibilitytimeout up to 5 times, which will make the message to be requeued again and again
-            var countDown = new SemaphoreSlim(5);
-            EventHandler<RequestEventArgs> h = (o, e) =>
-            {
-                var req = e.Request;
+            var ctx = new OperationContext();
 
-                if (req.Method == "POST")
-                {
-                    var values = req.Headers.GetValues("visibilitytimeout");
-                    if (values != null && values.Length > 0)
-                    {
-                        if (countDown.Wait(TimeSpan.Zero))
-                        {
-                            req.Headers.Remove("visibilitytimeout");
-                        }
-                    }
-                }
-            };
-            OperationContext.GlobalSendingRequest += h;
-            try
-            {
+            var earlierTimeout = new DynamicTableEntity();
+            earlierTimeout.ReadEntity( dte.WriteEntity(ctx), ctx);
+            
+            earlierTimeout.PartitionKey = earlier.ToString("yyyyMMddHH");
+            earlierTimeout.RowKey = earlier.ToString("yyyyMMddHHmmss");
 
-                var context = await Scenario.Define<Context>()
-                    .WithEndpoint<Sender>(b => b.When(async (session, c) =>
-                    {
-                        var sendOptions = new SendOptions();
-                        sendOptions.DelayDeliveryWith(delay);
-                        await session.Send(new MyMessage
-                        {
-                            Id = c.TestRunId
-                        }, sendOptions).ConfigureAwait(false);
-                        c.WasCalled = true;
-                    }))
-                    .WithEndpoint<Receiver>()
-                    .Done(c => c.WasCalled)
-                    .Run(delay + TimeSpan.FromMinutes(1));
-                Assert.True(context.WasCalled, "The message handler should be called");
-            }
-            finally
-            {
-                OperationContext.GlobalSendingRequest -= h;
-            }
+            await timeoutTable.ExecuteAsync(TableOperation.Delete(dte)).ConfigureAwait(false);
+            await timeoutTable.ExecuteAsync(TableOperation.Insert(earlierTimeout)).ConfigureAwait(false);
+        }
+
+        async Task<List<DynamicTableEntity>> GetTimeouts()
+        {
+            return (await timeoutTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false)).Results;
         }
 
         public class Context : ScenarioContext
@@ -119,7 +111,7 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseTransport<AzureStorageQueueTransport>().UseNativeTimeouts();
+                    cfg.UseTransport<AzureStorageQueueTransport>().UseNativeTimeouts(timeoutTableName: SenderTimeoutsTable);
                 }).AddMapping<MyMessage>(typeof(Receiver));
             }
         }
@@ -128,7 +120,10 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>();
+                EndpointSetup<DefaultServer>(cfg =>
+                {
+                    cfg.UseTransport<AzureStorageQueueTransport>();
+                });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
@@ -153,5 +148,7 @@
         {
             public Guid Id { get; set; }
         }
+
+        const string SenderTimeoutsTable = "NativeTimeoutsSender";
     }
 }

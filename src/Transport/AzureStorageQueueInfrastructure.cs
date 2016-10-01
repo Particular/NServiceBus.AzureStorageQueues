@@ -4,7 +4,7 @@
     using System.Collections.Generic;
     using System.Text;
     using System.Threading.Tasks;
-    using Azure.Transports.WindowsAzureStorageQueues;
+    using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
     using DelayedDelivery;
     using Performance.TimeToBeReceived;
@@ -21,13 +21,14 @@
             this.connectionString = connectionString;
             serializer = BuildSerializer(settings);
 
-            useNativeTimeouts = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.NativeTimeouts);
+            timeoutsTableName = settings.GetOrDefault<string>(WellKnownConfigurationKeys.NativeTimeoutsTableName);
 
             var contraints = new List<Type>
             {
                 typeof(DiscardIfNotReceivedBefore),
                 typeof(NonDurableDelivery)
             };
+            useNativeTimeouts = timeoutsTableName!=null;
             if (useNativeTimeouts)
             {
                 contraints.Add(typeof(DelayedDeliveryConstraint));
@@ -50,7 +51,8 @@
                 {
                     var addressing = GetAddressing(settings, connectionString);
                     var unwrapper = new MessageEnvelopeUnwrapper(serializer);
-                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, GetAddressGenerator(settings))
+                    var addressGenerator = GetAddressGenerator(settings);
+                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, addressGenerator)
                     {
                         MaximumWaitTimeWhenIdle = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
                         MessageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
@@ -64,6 +66,13 @@
                     {
                         degreeOfReceiveParallelism = parallelism;
                     }
+
+                    if (useNativeTimeouts)
+                    {
+                        var poller = new TimeoutsPoller(connectionString, BuildDispatcher(), timeoutsTableName);
+                        return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, poller);
+                    }
+
                     return new MessagePump(receiver, addressing, degreeOfReceiveParallelism);
                 },
                 () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings)),
@@ -108,24 +117,23 @@
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()
         {
-            return new TransportSendInfrastructure(
-                () =>
-                {
-                    var addressing = GetAddressing(settings, connectionString);
+            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(StartupCheckResult.Success));
+        }
 
-                    var queueCreator = new CreateQueueClients();
-                    var addressRetriever = GetAddressGenerator(settings);
-                    if (useNativeTimeouts)
-                    {
-                        return new Dispatcher(queueCreator, serializer, addressRetriever, addressing, NativeDelayDeliveryFeature.GetVisibilityDelay);
-                    }
-                    else
-                    {
-                        return new Dispatcher(queueCreator, serializer, addressRetriever, addressing, o => null);
-                    }
-                    
-                },
-                () => Task.FromResult(StartupCheckResult.Success));
+        Dispatcher BuildDispatcher()
+        {
+            var addressing = GetAddressing(settings, connectionString);
+            var addressRetriever = GetAddressGenerator(settings);
+            if (useNativeTimeouts)
+            {
+                nativeDelayDelivery = new NativeDelayDelivery(connectionString, timeoutsTableName);
+                return new Dispatcher(addressRetriever, addressing, serializer, nativeDelayDelivery.ShouldDispatch);
+            }
+            else
+            {
+                var @true = Task.FromResult(new DispatchDecision(true,null));
+                return new Dispatcher(addressRetriever, addressing, serializer, u => @true);
+            }
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -155,9 +163,20 @@
             return queue.ToString();
         }
 
+        public override Task Start()
+        {
+            if (nativeDelayDelivery != null)
+            {
+                return nativeDelayDelivery.Init();
+            }
+            return Task.FromResult(0);
+        }
+
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
-        readonly bool useNativeTimeouts;
+        readonly string timeoutsTableName;
+        NativeDelayDelivery nativeDelayDelivery;
+        bool useNativeTimeouts;
     }
 }

@@ -7,14 +7,16 @@
     using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
+    using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Logging;
     using Transport;
 
     class MessagePump : IPushMessages, IDisposable
     {
-        public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing, int? degreeOfReceiveParallelism)
+        public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing, int? degreeOfReceiveParallelism, TimeoutsPoller poller = null)
         {
             this.degreeOfReceiveParallelism = degreeOfReceiveParallelism;
+            this.poller = poller;
             this.messageReceiver = messageReceiver;
             this.addressing = addressing;
         }
@@ -24,14 +26,19 @@
             // Injected
         }
 
-        public Task Init(Func<MessageContext, Task> onMessage, Func<ErrorContext, Task<ErrorHandleResult>> onError, CriticalError criticalError, PushSettings settings)
+        public async Task Init(Func<MessageContext, Task> onMessage, Func<ErrorContext, Task<ErrorHandleResult>> onError, CriticalError criticalError, PushSettings settings)
         {
             circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
             messageReceiver.PurgeOnStartup = settings.PurgeOnStartup;
 
             receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, settings.RequiredTransactionMode);
 
-            return messageReceiver.Init(settings.InputQueue, settings.ErrorQueue);
+            await messageReceiver.Init(settings.InputQueue, settings.ErrorQueue).ConfigureAwait(false);
+
+            if (poller != null)
+            {
+                await poller.Init().ConfigureAwait(false);
+            }
         }
 
         public void Start(PushRuntimeSettings limitations)
@@ -53,6 +60,8 @@
             {
                 messagePumpTasks[i] = Task.Run(ProcessMessages, CancellationToken.None);
             }
+
+            poller?.Start(cancellationToken);
         }
 
         public async Task Stop()
@@ -62,6 +71,13 @@
             // ReSharper disable once MethodSupportsCancellation
             var timeoutTask = Task.Delay(StoppingAllTasksTimeout);
             var allTasks = runningReceiveTasks.Values.Concat(messagePumpTasks);
+            if (poller != null)
+            {
+                allTasks = allTasks.Concat(new[]
+                {
+                    poller.Stop()
+                });
+            }
             var finishedTask = await Task.WhenAny(Task.WhenAll(allTasks), timeoutTask).ConfigureAwait(false);
 
             if (finishedTask.Equals(timeoutTask))
@@ -190,6 +206,7 @@
         Task[] messagePumpTasks;
         ConcurrentDictionary<Task, Task> runningReceiveTasks;
         int? degreeOfReceiveParallelism;
+        readonly TimeoutsPoller poller;
         static ILog Logger = LogManager.GetLogger(typeof(MessagePump));
         static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);

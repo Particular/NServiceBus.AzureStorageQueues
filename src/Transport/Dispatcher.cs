@@ -7,6 +7,7 @@
     using System.Linq;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
     using Extensibility;
     using Logging;
@@ -16,13 +17,13 @@
 
     class Dispatcher : IDispatchMessages
     {
-        public Dispatcher(CreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, Func<UnicastTransportOperation, TimeSpan?> calculateVisibilityDelay)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, Task<DispatchDecision>> shouldSend)
         {
-            this.createQueueClients = createQueueClients;
-            this.messageSerializer = messageSerializer;
+            createQueueClients = new CreateQueueClients();
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
-            this.calculateVisibilityDelay = calculateVisibilityDelay;
+            this.serializer = serializer;
+            this.shouldSend = shouldSend;
         }
 
         public async Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
@@ -41,10 +42,13 @@
             await Task.WhenAll(sends).ConfigureAwait(false);
         }
 
-
-        async Task Send(UnicastTransportOperation operation)
+        public async Task Send(UnicastTransportOperation operation)
         {
-            var visbilityDelay = calculateVisibilityDelay(operation);
+            var dispatchDecision = await shouldSend(operation).ConfigureAwait(false);
+            if (dispatchDecision.ShouldDispatch == false)
+            {
+                return;
+            }
 
             // The destination might be in a queue@destination format
             var destination = operation.Destination;
@@ -87,10 +91,19 @@
                 timeToBeReceived = null;
             }
 
-            var rawMessage = SerializeMessage(operation, timeToBeReceived, queue);
-            
+            var wrapper = BuildMessageWrapper(operation, timeToBeReceived, queue);
+            await Send(wrapper, sendQueue, dispatchDecision.Delay).ConfigureAwait(false);
+        }
 
-            await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, visbilityDelay, null, null).ConfigureAwait(false);
+        Task Send(MessageWrapper wrapper, CloudQueue sendQueue, TimeSpan? visibilityDelay)
+        {
+            CloudQueueMessage rawMessage;
+            using (var stream = new MemoryStream())
+            {
+                serializer.Serialize(wrapper, stream);
+                rawMessage = new CloudQueueMessage(stream.ToArray());
+            }
+            return sendQueue.AddMessageAsync(rawMessage, wrapper.TimeToBeReceived != TimeSpan.MaxValue ? wrapper.TimeToBeReceived : default(TimeSpan?), visibilityDelay, null, null);
         }
 
         Task<bool> ExistsAsync(CloudQueue sendQueue)
@@ -99,44 +112,39 @@
             return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.ExistsAsync());
         }
 
-        CloudQueueMessage SerializeMessage(IOutgoingTransportOperation operation, TimeSpan? timeToBeReceived, QueueAddress destinationQueue)
+        MessageWrapper BuildMessageWrapper(IOutgoingTransportOperation operation, TimeSpan? timeToBeReceived, QueueAddress destinationQueue)
         {
-            using (var stream = new MemoryStream())
+            var msg = operation.Message;
+            var headers = new Dictionary<string, string>(msg.Headers);
+            addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
+
+            var messageIntent = default(MessageIntentEnum);
+            string messageIntentString;
+            if (headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
             {
-                var msg = operation.Message;
-                var headers = new Dictionary<string, string>(msg.Headers);
-                addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
-
-                var messageIntent = default(MessageIntentEnum);
-                string messageIntentString;
-                if (headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
-                {
-                    Enum.TryParse(messageIntentString, true, out messageIntent);
-                }
-
-                var toSend = new MessageWrapper
-                {
-                    Id = msg.MessageId,
-                    Body = msg.Body,
-                    CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
-                    Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
-                    ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
-                    TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
-                    Headers = headers,
-                    MessageIntent = messageIntent
-                };
-
-                messageSerializer.Serialize(toSend, stream);
-                return new CloudQueueMessage(stream.ToArray());
+                Enum.TryParse(messageIntentString, true, out messageIntent);
             }
+
+            return new MessageWrapper
+            {
+                Id = msg.MessageId,
+                Body = msg.Body,
+                CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
+                Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
+                ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
+                TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
+                Headers = headers,
+                MessageIntent = messageIntent
+            };
         }
 
         QueueAddressGenerator addressGenerator;
         AzureStorageAddressingSettings addressing;
-        readonly Func<UnicastTransportOperation, TimeSpan?> calculateVisibilityDelay;
-        CreateQueueClients createQueueClients;
+        readonly CreateQueueClients createQueueClients;
+        
         ILog logger = LogManager.GetLogger(typeof(Dispatcher));
-        MessageWrapperSerializer messageSerializer;
         ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
+        readonly MessageWrapperSerializer serializer;
+        readonly Func<UnicastTransportOperation, Task<DispatchDecision>> shouldSend;
     }
 }
