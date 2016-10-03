@@ -107,8 +107,10 @@
     <Compile Include="AzureStorageQueueInfrastructure.cs" />
     <Compile Include="Config\Extensions\AccountConfigurations.cs" />
     <Compile Include="Config\Extensions\AccountRoutingSettings.cs" />
+    <Compile Include="DelayDelivery\DispatchDecision.cs" />
     <Compile Include="DelayDelivery\LockManager.cs" />
     <Compile Include="DelayDelivery\NativeDelayDelivery.cs" />
+    <Compile Include="DelayDelivery\TableExtensions.cs" />
     <Compile Include="DelayDelivery\TimeoutEntity.cs" />
     <Compile Include="DelayDelivery\TimeoutsPoller.cs" />
     <Compile Include="Dispatcher.cs" />

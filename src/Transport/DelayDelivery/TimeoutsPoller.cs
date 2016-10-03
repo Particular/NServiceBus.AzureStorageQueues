@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
 {
     using System;
+    using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
     using AzureStorageQueues;
@@ -10,9 +11,10 @@
 
     class TimeoutsPoller
     {
-        const int TimeoutProcessedAtOnce = 100;
+        const int TimeoutProcessedAtOnce = 50;
         static readonly TimeSpan NextRetrievalPollSleep = TimeSpan.FromMilliseconds(1000);
         static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
+        static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks/2);
         static ILog Logger = LogManager.GetLogger<TimeoutsPoller>();
 
         readonly string connectionString;
@@ -87,7 +89,7 @@
 
         async Task SpinOnce(CancellationToken cancellationToken)
         {
-            var now = DateTimeOffset.UtcNow;
+            var now = NativeDelayDelivery.UtcNow;
             if (cancellationToken.IsCancellationRequested)
             {
                 return;
@@ -97,13 +99,19 @@
 
             var query = new TableQuery<TimeoutEntity>
             {
-                FilterString = $"(PartitionKey le '{TimeoutEntity.GetPartitionKey(now)}') and (RowKey le '{TimeoutEntity.GetRawRowKeyPrefix(now)}'",
+                FilterString = $"(PartitionKey le '{TimeoutEntity.GetPartitionKey(now)}') and (RowKey le '{TimeoutEntity.GetRawRowKeyPrefix(now)}')",
                 TakeCount = TimeoutProcessedAtOnce // max batch size
             };
 
-            var timeouts = await table.ExecuteQuerySegmentedAsync(query, null, cancellationToken).ConfigureAwait(false);
+            var timeouts = await table.ExecuteQueryAsync(query, TimeoutProcessedAtOnce, cancellationToken).ConfigureAwait(false);
 
-            var batch = new TableBatchOperation();
+            if (await TryLease().ConfigureAwait(false) == false)
+            {
+                return;
+            }
+
+            var sw = Stopwatch.StartNew();
+
             foreach (var timeout in timeouts)
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -111,19 +119,22 @@
                     return;
                 }
 
+                // after half check if the lease is active
+                if (sw.Elapsed > HalfOfLeaseLength)
+                {
+                    if (await TryLease().ConfigureAwait(false) == false)
+                    {
+                        return;
+                    }
+                    sw.Reset();
+                }
+
                 // TODO: exceptions
                 await Send(timeout).ConfigureAwait(false);
-                batch.Delete(timeout);
-                
+                await table.ExecuteAsync(TableOperation.Delete(timeout)).ConfigureAwait(false);
             }
 
-            // TODO: exceptions
-            if (await TryLease().ConfigureAwait(false))
-            {
-                await table.ExecuteBatchAsync(batch).ConfigureAwait(false);
-            }
-            
-            if (timeouts.Results.Count < TimeoutProcessedAtOnce)
+            if (timeouts.Count < TimeoutProcessedAtOnce)
             {
                 await Task.Delay(NextRetrievalPollSleep, cancellationToken).ConfigureAwait(false);
             }
@@ -131,7 +142,8 @@
 
         Task Send(TimeoutEntity timeout)
         {
-            return dispatcher.Send(timeout.GetOperation());
+            var operation = timeout.GetOperation();
+            return dispatcher.Send(operation);
         }
 
         public async Task Init()
