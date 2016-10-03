@@ -80,7 +80,7 @@
 
         async Task MoveBeforeNow(ITableEntity dte)
         {
-            var earlier = DateTimeOffset.Now - TimeSpan.FromMinutes(5);
+            var earlier = DateTimeOffset.UtcNow - TimeSpan.FromMinutes(5);
 
             var ctx = new OperationContext();
 

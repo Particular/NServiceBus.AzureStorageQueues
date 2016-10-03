@@ -9,7 +9,7 @@
     using Newtonsoft.Json;
     using Transport;
 
-    internal class TimeoutEntity : TableEntity
+    class TimeoutEntity : TableEntity
     {
         public string Destination { get; set; }
         public byte[] Body { get; set; }
@@ -26,7 +26,7 @@
 
         static T Deserialize<T>(string obj)
         {
-            return new JsonSerializer().Deserialize<T>(new JsonTextReader(new StreamReader(obj)));
+            return new JsonSerializer().Deserialize<T>(new JsonTextReader(new StringReader(obj)));
         }
 
         public void SetOperation(UnicastTransportOperation operation)

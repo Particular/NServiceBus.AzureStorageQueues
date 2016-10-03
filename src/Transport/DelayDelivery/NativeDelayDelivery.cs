@@ -31,9 +31,11 @@
             {
                 return new DispatchDecision(true, delay);
             }
-            await ScheduleAt(operation, DateTimeOffset.Now + delay.Value).ConfigureAwait(false);
+            await ScheduleAt(operation, UtcNow + delay.Value).ConfigureAwait(false);
             return new DispatchDecision(false, null);
         }
+
+        public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
 
         static TimeSpan? GetVisbilityDelay(IOutgoingTransportOperation operation)
         {
@@ -53,7 +55,7 @@
                     var exact = deliveryConstraint as DoNotDeliverBefore;
                     if (exact != null)
                     {
-                        value = DateTimeOffset.Now - exact.At;
+                        value = UtcNow - exact.At;
                     }
                 }
             }
@@ -61,7 +63,7 @@
             return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
         }
 
-        private Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date)
+        Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date)
         {
             var timeout = new TimeoutEntity
             {
@@ -71,18 +73,6 @@
 
             timeout.SetOperation(operation);
             return timeouts.ExecuteAsync(TableOperation.Insert(timeout));
-        }
-    }
-
-    public struct DispatchDecision
-    {
-        public readonly bool ShouldDispatch;
-        public readonly TimeSpan? Delay;
-
-        public DispatchDecision(bool shouldDispatch, TimeSpan? delay)
-        {
-            ShouldDispatch = shouldDispatch;
-            Delay = delay;
         }
     }
 }
