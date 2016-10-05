@@ -27,6 +27,7 @@
         LockManager lockManager;
         Task timeoutPollerTask;
         string errorQueue;
+        bool isAtMostOnce;
 
         public TimeoutsPoller(string connectionString, Dispatcher dispatcher, string tableName, BackoffStrategy backoffStrategy)
         {
@@ -138,19 +139,20 @@
 
                 try
                 {
-                    var operation = timeout.GetOperation();
-                    try
-                    {
-                        await dispatcher.Send(operation).ConfigureAwait(false);
-                    }
-                    catch (QueueNotFoundException)
-                    {
-                        // queue does not exist or is disabled, try send to an error queue
-                        await dispatcher.Send(CreateOperationForErrorQueue(operation)).ConfigureAwait(false);
-                        return;
-                    }
+                    var delete = TableOperation.Delete(timeout);
 
-                    await table.ExecuteAsync(TableOperation.Delete(timeout)).ConfigureAwait(false);
+                    if (isAtMostOnce)
+                    {
+                        // delete first, then dispatch
+                        await table.ExecuteAsync(delete).ConfigureAwait(false);
+                        await SafeDispatch(timeout).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        // dispatch first, then delete
+                        await SafeDispatch(timeout).ConfigureAwait(false);
+                        await table.ExecuteAsync(delete).ConfigureAwait(false);
+                    }
                 }
                 catch (StorageException ex)
                 {
@@ -162,18 +164,33 @@
             await backoffStrategy.OnBatch(TimeoutProcessedAtOnce, timeouts.Count, cancellationToken).ConfigureAwait(false);
         }
 
+        async Task SafeDispatch(TimeoutEntity timeout)
+        {
+            var operation = timeout.GetOperation();
+            try
+            {
+                await dispatcher.Send(operation).ConfigureAwait(false);
+            }
+            catch (QueueNotFoundException)
+            {
+                // queue does not exist or is disabled, try send to an error queue
+                await dispatcher.Send(CreateOperationForErrorQueue(operation)).ConfigureAwait(false);
+            }
+        }
+
         UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
             return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
         }
 
-        public async Task Init(string errorQueue)
+        public async Task Init(string errorQueue, TransportTransactionMode transactionMode)
         {
             this.errorQueue = errorQueue;
             var account = CloudStorageAccount.Parse(connectionString);
             table = await TimeoutEntity.BuiltTimeoutTableWithExplicitName(connectionString, tableName).ConfigureAwait(false);
             var container = account.CreateCloudBlobClient().GetContainerReference(table.Name.ToLower()); // TODO: can it be lowered?
             lockManager = new LockManager(container, LeaseLength);
+            isAtMostOnce = transactionMode == TransportTransactionMode.None;
         }
     }
 }
