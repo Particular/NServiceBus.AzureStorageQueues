@@ -129,9 +129,16 @@
                     sw.Reset();
                 }
 
-                // TODO: exceptions
-                await Send(timeout).ConfigureAwait(false);
-                await table.ExecuteAsync(TableOperation.Delete(timeout)).ConfigureAwait(false);
+                try
+                {
+                    await Send(timeout).ConfigureAwait(false);
+                    await table.ExecuteAsync(TableOperation.Delete(timeout)).ConfigureAwait(false);
+                }
+                catch (StorageException ex)
+                {
+                    // just log and move on with the rest
+                    Logger.Warn($"Failed at dispatching the timeout PK:'{timeout.PartitionKey}' RK: '{timeout.RowKey}' with message id '{timeout.MessageId}'", ex);
+                }
             }
 
             if (timeouts.Count < TimeoutProcessedAtOnce)

@@ -6,7 +6,10 @@
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 
-    internal sealed class LockManager
+    /// <summary>
+    /// Provides a container lease based lock manager.
+    /// </summary>
+    sealed class LockManager
     {
         readonly TimeSpan span;
         readonly CloudBlobContainer container;
