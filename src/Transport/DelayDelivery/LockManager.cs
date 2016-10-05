@@ -6,7 +6,7 @@
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 
-    sealed class LockManager
+    internal sealed class LockManager
     {
         readonly TimeSpan span;
         readonly CloudBlobContainer container;
