@@ -28,7 +28,7 @@
                 typeof(DiscardIfNotReceivedBefore),
                 typeof(NonDurableDelivery)
             };
-            useNativeTimeouts = timeoutsTableName!=null;
+            useNativeTimeouts = timeoutsTableName != null;
             if (useNativeTimeouts)
             {
                 contraints.Add(typeof(DelayedDeliveryConstraint));
@@ -52,11 +52,13 @@
                     var addressing = GetAddressing(settings, connectionString);
                     var unwrapper = new MessageEnvelopeUnwrapper(serializer);
                     var addressGenerator = GetAddressGenerator(settings);
-                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, addressGenerator)
+                    var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
+                    var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
+
+                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, addressGenerator, new BackoffStrategy(maximumWaitTime, peekInterval))
                     {
-                        MaximumWaitTimeWhenIdle = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
                         MessageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
-                        PeekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval),
+
                         BatchSize = settings.Get<int>(WellKnownConfigurationKeys.ReceiverBatchSize)
                     };
 
@@ -69,7 +71,7 @@
 
                     if (useNativeTimeouts)
                     {
-                        var poller = new TimeoutsPoller(connectionString, BuildDispatcher(), timeoutsTableName);
+                        var poller = new TimeoutsPoller(connectionString, BuildDispatcher(), timeoutsTableName, new BackoffStrategy(maximumWaitTime, peekInterval));
                         return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, poller);
                     }
 
@@ -131,7 +133,7 @@
             }
             else
             {
-                var @true = Task.FromResult(new DispatchDecision(true,null));
+                var @true = Task.FromResult(new DispatchDecision(true, null));
                 return new Dispatcher(addressRetriever, addressing, serializer, u => @true);
             }
         }

@@ -12,7 +12,6 @@
     class TimeoutsPoller
     {
         const int TimeoutProcessedAtOnce = 50;
-        static readonly TimeSpan NextRetrievalPollSleep = TimeSpan.FromMilliseconds(1000);
         static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
         static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks/2);
         static ILog Logger = LogManager.GetLogger<TimeoutsPoller>();
@@ -20,15 +19,18 @@
         readonly string connectionString;
         readonly Dispatcher dispatcher;
         readonly string tableName;
+        readonly BackoffStrategy backoffStrategy;
+
         CloudTable table;
         LockManager lockManager;
         Task timeoutPollerTask;
 
-        public TimeoutsPoller(string connectionString, Dispatcher dispatcher, string tableName)
+        public TimeoutsPoller(string connectionString, Dispatcher dispatcher, string tableName, BackoffStrategy backoffStrategy)
         {
             this.connectionString = connectionString;
             this.dispatcher = dispatcher;
             this.tableName = tableName;
+            this.backoffStrategy = backoffStrategy;
         }
 
         public void Start(CancellationToken token)
@@ -77,8 +79,10 @@
                 {
                     await SpinOnce(cancellationToken).ConfigureAwait(false);
                 }
-
-                await Task.Delay(NextRetrievalPollSleep, cancellationToken).ConfigureAwait(false);
+                else
+                {
+                    await backoffStrategy.OnBatch(TimeoutProcessedAtOnce, 0, cancellationToken).ConfigureAwait(false);
+                }
             }
         }
 
@@ -141,10 +145,7 @@
                 }
             }
 
-            if (timeouts.Count < TimeoutProcessedAtOnce)
-            {
-                await Task.Delay(NextRetrievalPollSleep, cancellationToken).ConfigureAwait(false);
-            }
+            await backoffStrategy.OnBatch(TimeoutProcessedAtOnce, timeouts.Count, cancellationToken).ConfigureAwait(false);
         }
 
         Task Send(TimeoutEntity timeout)

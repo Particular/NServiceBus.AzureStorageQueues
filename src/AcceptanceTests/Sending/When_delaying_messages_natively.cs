@@ -11,8 +11,7 @@
     using NUnit.Framework;
     using NUnit.Framework.Compatibility;
 
-    //TODO: should this be explicit
-    //[Explicit("long running")]
+    [Category("long running")]
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
     {
         CloudTable timeoutTable;
