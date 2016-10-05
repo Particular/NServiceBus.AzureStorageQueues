@@ -77,6 +77,30 @@
             Assert.True(context.WasCalled, "The message handler should be called");
         }
 
+
+        [Test]
+        public async Task Should_send_message_to_error_queue_when_target_queue_does_not_exist()
+        {
+            var delay = TimeSpan.FromDays(30);
+
+            var context = await Scenario.Define<Context>()
+                .WithEndpoint<SenderToNowhere>(b => b.When(async (session, c) =>
+                {
+                    var sendOptions = new SendOptions();
+                    sendOptions.DelayDeliveryWith(delay);
+                    sendOptions.SetDestination("thisisnonexistingqueuename");
+                    await session.Send(new MyMessage { Id = c.TestRunId }, sendOptions).ConfigureAwait(false);
+
+                    var timeouts = await GetTimeouts();
+                    await MoveBeforeNow(timeouts[0]).ConfigureAwait(false);
+                }))
+                .WithEndpoint<Receiver>()
+                .Done(c => c.WasCalled)
+                .Run();
+
+            Assert.True(context.WasCalled, "The message should have been moved to the error queue");
+        }
+
         async Task MoveBeforeNow(ITableEntity dte)
         {
             var earlier = DateTimeOffset.UtcNow - TimeSpan.FromMinutes(5);
@@ -84,8 +108,8 @@
             var ctx = new OperationContext();
 
             var earlierTimeout = new DynamicTableEntity();
-            earlierTimeout.ReadEntity( dte.WriteEntity(ctx), ctx);
-            
+            earlierTimeout.ReadEntity(dte.WriteEntity(ctx), ctx);
+
             earlierTimeout.PartitionKey = earlier.ToString("yyyyMMddHH");
             earlierTimeout.RowKey = earlier.ToString("yyyyMMddHHmmss");
 
@@ -112,6 +136,20 @@
                 {
                     cfg.UseTransport<AzureStorageQueueTransport>().UseNativeTimeouts(timeoutTableName: SenderTimeoutsTable);
                 }).AddMapping<MyMessage>(typeof(Receiver));
+            }
+        }
+
+        public class SenderToNowhere : EndpointConfigurationBuilder
+        {
+            public SenderToNowhere()
+            {
+                EndpointSetup<DefaultServer>(cfg =>
+                {
+                    cfg
+                        .UseTransport<AzureStorageQueueTransport>()
+                        .UseNativeTimeouts(timeoutTableName: SenderTimeoutsTable);
+                    cfg.SendFailedMessagesTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(Receiver)));
+                });
             }
         }
 

@@ -8,6 +8,8 @@
     using Logging;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
+    using Transport;
+    using Unicast.Queuing;
 
     class TimeoutsPoller
     {
@@ -24,6 +26,7 @@
         CloudTable table;
         LockManager lockManager;
         Task timeoutPollerTask;
+        string errorQueue;
 
         public TimeoutsPoller(string connectionString, Dispatcher dispatcher, string tableName, BackoffStrategy backoffStrategy)
         {
@@ -135,7 +138,18 @@
 
                 try
                 {
-                    await Send(timeout).ConfigureAwait(false);
+                    var operation = timeout.GetOperation();
+                    try
+                    {
+                        await dispatcher.Send(operation).ConfigureAwait(false);
+                    }
+                    catch (QueueNotFoundException)
+                    {
+                        // queue does not exist or is disabled, try send to an error queue
+                        await dispatcher.Send(CreateOperationForErrorQueue(operation)).ConfigureAwait(false);
+                        return;
+                    }
+
                     await table.ExecuteAsync(TableOperation.Delete(timeout)).ConfigureAwait(false);
                 }
                 catch (StorageException ex)
@@ -148,14 +162,14 @@
             await backoffStrategy.OnBatch(TimeoutProcessedAtOnce, timeouts.Count, cancellationToken).ConfigureAwait(false);
         }
 
-        Task Send(TimeoutEntity timeout)
+        UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
-            var operation = timeout.GetOperation();
-            return dispatcher.Send(operation);
+            return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
         }
 
-        public async Task Init()
+        public async Task Init(string errorQueue)
         {
+            this.errorQueue = errorQueue;
             var account = CloudStorageAccount.Parse(connectionString);
             table = await TimeoutEntity.BuiltTimeoutTableWithExplicitName(connectionString, tableName).ConfigureAwait(false);
             var container = account.CreateCloudBlobClient().GetContainerReference(table.Name.ToLower()); // TODO: can it be lowered?
