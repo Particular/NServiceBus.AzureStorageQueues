@@ -15,7 +15,7 @@
     {
         const int TimeoutProcessedAtOnce = 50;
         static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
-        static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks/2);
+        static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
         static ILog Logger = LogManager.GetLogger<TimeoutsPoller>();
 
         readonly string connectionString;
@@ -75,19 +75,33 @@
             }
         }
 
-        async Task InnerPoll(CancellationToken cancellationToken)
+        async Task InnerPoll(CancellationToken token)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!token.IsCancellationRequested)
             {
                 if (await TryLease().ConfigureAwait(false))
                 {
-                    await SpinOnce(cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        await SpinOnce(token).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn("Failed at spinning the poller", ex);
+                        await BackoffOnError(token).ConfigureAwait(false);
+                    }
                 }
                 else
                 {
-                    await backoffStrategy.OnBatch(TimeoutProcessedAtOnce, 0, cancellationToken).ConfigureAwait(false);
+                    await BackoffOnError(token).ConfigureAwait(false);
                 }
             }
+        }
+
+        Task BackoffOnError(CancellationToken cancellationToken)
+        {
+            // run as there was no messages at all
+            return backoffStrategy.OnBatch(TimeoutProcessedAtOnce, 0, cancellationToken);
         }
 
         Task<bool> TryLease()
