@@ -105,6 +105,7 @@
     <Compile Include="AtMostOnceReceiveStrategy.cs" />
     <Compile Include="AzureMessageQueueCreator.cs" />
     <Compile Include="AzureStorageQueueInfrastructure.cs" />
+    <Compile Include="BackoffStrategy.cs" />
     <Compile Include="Config\Extensions\AccountConfigurations.cs" />
     <Compile Include="Config\Extensions\AccountRoutingSettings.cs" />
     <Compile Include="DelayDelivery\DispatchDecision.cs" />
