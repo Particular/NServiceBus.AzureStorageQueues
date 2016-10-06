@@ -5,9 +5,11 @@
     using System.Threading;
     using System.Threading.Tasks;
     using AzureStorageQueues;
+    using ConsistencyGuarantees;
     using Logging;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
+    using Settings;
     using Transport;
     using Unicast.Queuing;
 
@@ -19,7 +21,6 @@
         static ILog Logger = LogManager.GetLogger<TimeoutsPoller>();
 
         readonly string connectionString;
-        readonly string localAddress;
         readonly Dispatcher dispatcher;
         readonly string tableName;
         readonly BackoffStrategy backoffStrategy;
@@ -29,27 +30,19 @@
         Task timeoutPollerTask;
         string errorQueue;
         bool isAtMostOnce;
-        bool isMainQueue;
 
-        public TimeoutsPoller(string connectionString, string localAddress, Dispatcher dispatcher, string tableName, BackoffStrategy backoffStrategy)
+        public TimeoutsPoller(string connectionString, Dispatcher dispatcher, string tableName, BackoffStrategy backoffStrategy)
         {
             this.connectionString = connectionString;
-            this.localAddress = localAddress;
             this.dispatcher = dispatcher;
             this.tableName = tableName;
             this.backoffStrategy = backoffStrategy;
         }
 
-        public void Start(CancellationToken token)
+        public async Task Start(ReadOnlySettings settings, CancellationToken token)
         {
-            if (isMainQueue)
-            {
-                timeoutPollerTask = Task.Run(() => Poll(token));
-            }
-            else // satellite
-            {
-                timeoutPollerTask = TaskEx.CompletedTask;
-            }
+            await Init(settings).ConfigureAwait(false);
+            timeoutPollerTask = Task.Run(() => Poll(token));
         }
 
         public Task Stop()
@@ -207,22 +200,14 @@
             return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
         }
 
-        public async Task Init(PushSettings settings)
+        async Task Init(ReadOnlySettings settings)
         {
-            if (settings.InputQueue == localAddress)
-            {
-                isMainQueue = true;
-                errorQueue = settings.ErrorQueue;
-                var account = CloudStorageAccount.Parse(connectionString);
-                table = await TimeoutEntity.BuiltTimeoutTableWithExplicitName(connectionString, tableName).ConfigureAwait(false);
-                var container = account.CreateCloudBlobClient().GetContainerReference(table.Name.ToLower()); // TODO: can it be lowered?
-                lockManager = new LockManager(container, LeaseLength);
-                isAtMostOnce = settings.RequiredTransactionMode == TransportTransactionMode.None;
-            }
-            else
-            {
-                isMainQueue = false;
-            }
+            errorQueue = settings.ErrorQueueAddress();
+            var account = CloudStorageAccount.Parse(connectionString);
+            table = await TimeoutEntity.BuiltTimeoutTableWithExplicitName(connectionString, tableName).ConfigureAwait(false);
+            var container = account.CreateCloudBlobClient().GetContainerReference(table.Name.ToLower()); // TODO: can it be lowered?
+            lockManager = new LockManager(container, LeaseLength);
+            isAtMostOnce = settings.GetRequiredTransactionModeForReceives() == TransportTransactionMode.None;
         }
     }
 }

@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
@@ -32,6 +33,13 @@
             if (useNativeTimeouts)
             {
                 contraints.Add(typeof(DelayedDeliveryConstraint));
+                delayedDelivery = new NativeDelayDelivery(connectionString, timeoutsTableName);
+                shouldDispatch = delayedDelivery.ShouldDispatch;
+            }
+            else
+            {
+                var @true = Task.FromResult(new DispatchDecision(true, null));
+                shouldDispatch = u => @true;
             }
             DeliveryConstraints = contraints;
         }
@@ -67,12 +75,6 @@
                     if (settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out parallelism))
                     {
                         degreeOfReceiveParallelism = parallelism;
-                    }
-
-                    if (useNativeTimeouts)
-                    {
-                        var poller = new TimeoutsPoller(connectionString, settings.LocalAddress(), BuildDispatcher(), timeoutsTableName, new BackoffStrategy(maximumWaitTime, peekInterval));
-                        return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, poller);
                     }
 
                     return new MessagePump(receiver, addressing, degreeOfReceiveParallelism);
@@ -126,16 +128,7 @@
         {
             var addressing = GetAddressing(settings, connectionString);
             var addressRetriever = GetAddressGenerator(settings);
-            if (useNativeTimeouts)
-            {
-                nativeDelayDelivery = new NativeDelayDelivery(connectionString, timeoutsTableName);
-                return new Dispatcher(addressRetriever, addressing, serializer, nativeDelayDelivery.ShouldDispatch);
-            }
-            else
-            {
-                var @true = Task.FromResult(new DispatchDecision(true, null));
-                return new Dispatcher(addressRetriever, addressing, serializer, u => @true);
-            }
+            return new Dispatcher(addressRetriever, addressing, serializer, shouldDispatch);
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -165,20 +158,33 @@
             return queue.ToString();
         }
 
-        public override Task Start()
+        public override async Task Start()
         {
-            if (nativeDelayDelivery != null)
+            if (useNativeTimeouts)
             {
-                return nativeDelayDelivery.Init();
+                var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
+                var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
+                poller = new TimeoutsPoller(connectionString, BuildDispatcher(), timeoutsTableName, new BackoffStrategy(maximumWaitTime, peekInterval));
+                cancellationSource = new CancellationTokenSource();
+                await poller.Start(settings, cancellationSource.Token).ConfigureAwait(false);
+                await delayedDelivery.Init().ConfigureAwait(false);
             }
-            return Task.FromResult(0);
+        }
+
+        public override Task Stop()
+        {
+            cancellationSource.Cancel();
+            return poller != null ? poller.Stop() : TaskEx.CompletedTask;
         }
 
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
         readonly string timeoutsTableName;
-        NativeDelayDelivery nativeDelayDelivery;
+        NativeDelayDelivery delayedDelivery;
         bool useNativeTimeouts;
+        readonly Func<UnicastTransportOperation, Task<DispatchDecision>> shouldDispatch;
+        TimeoutsPoller poller;
+        CancellationTokenSource cancellationSource;
     }
 }
