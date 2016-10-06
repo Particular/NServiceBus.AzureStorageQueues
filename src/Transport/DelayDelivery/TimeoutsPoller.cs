@@ -19,6 +19,7 @@
         static ILog Logger = LogManager.GetLogger<TimeoutsPoller>();
 
         readonly string connectionString;
+        readonly string localAddress;
         readonly Dispatcher dispatcher;
         readonly string tableName;
         readonly BackoffStrategy backoffStrategy;
@@ -28,10 +29,12 @@
         Task timeoutPollerTask;
         string errorQueue;
         bool isAtMostOnce;
+        bool isMainQueue;
 
-        public TimeoutsPoller(string connectionString, Dispatcher dispatcher, string tableName, BackoffStrategy backoffStrategy)
+        public TimeoutsPoller(string connectionString, string localAddress, Dispatcher dispatcher, string tableName, BackoffStrategy backoffStrategy)
         {
             this.connectionString = connectionString;
+            this.localAddress = localAddress;
             this.dispatcher = dispatcher;
             this.tableName = tableName;
             this.backoffStrategy = backoffStrategy;
@@ -39,7 +42,14 @@
 
         public void Start(CancellationToken token)
         {
-            timeoutPollerTask = Task.Run(() => Poll(token));
+            if (isMainQueue)
+            {
+                timeoutPollerTask = Task.Run(() => Poll(token));
+            }
+            else // satellite
+            {
+                timeoutPollerTask = TaskEx.CompletedTask;
+            }
         }
 
         public Task Stop()
@@ -197,14 +207,22 @@
             return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
         }
 
-        public async Task Init(string errorQueue, TransportTransactionMode transactionMode)
+        public async Task Init(PushSettings settings)
         {
-            this.errorQueue = errorQueue;
-            var account = CloudStorageAccount.Parse(connectionString);
-            table = await TimeoutEntity.BuiltTimeoutTableWithExplicitName(connectionString, tableName).ConfigureAwait(false);
-            var container = account.CreateCloudBlobClient().GetContainerReference(table.Name.ToLower()); // TODO: can it be lowered?
-            lockManager = new LockManager(container, LeaseLength);
-            isAtMostOnce = transactionMode == TransportTransactionMode.None;
+            if (settings.InputQueue == localAddress)
+            {
+                isMainQueue = true;
+                errorQueue = settings.ErrorQueue;
+                var account = CloudStorageAccount.Parse(connectionString);
+                table = await TimeoutEntity.BuiltTimeoutTableWithExplicitName(connectionString, tableName).ConfigureAwait(false);
+                var container = account.CreateCloudBlobClient().GetContainerReference(table.Name.ToLower()); // TODO: can it be lowered?
+                lockManager = new LockManager(container, LeaseLength);
+                isAtMostOnce = settings.RequiredTransactionMode == TransportTransactionMode.None;
+            }
+            else
+            {
+                isMainQueue = false;
+            }
         }
     }
 }
