@@ -71,7 +71,7 @@
 
                     if (useNativeTimeouts)
                     {
-                        var poller = new TimeoutsPoller(connectionString, BuildDispatcher(), timeoutsTableName, new BackoffStrategy(maximumWaitTime, peekInterval));
+                        var poller = new TimeoutsPoller(connectionString, settings.LocalAddress(), BuildDispatcher(), timeoutsTableName, new BackoffStrategy(maximumWaitTime, peekInterval));
                         return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, poller);
                     }
 

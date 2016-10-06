@@ -37,7 +37,7 @@
 
             if (poller != null)
             {
-                await poller.Init(settings.ErrorQueue, settings.RequiredTransactionMode).ConfigureAwait(false);
+                await poller.Init(settings).ConfigureAwait(false);
             }
         }
 
