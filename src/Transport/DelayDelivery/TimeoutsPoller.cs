@@ -171,7 +171,7 @@
                         await table.ExecuteAsync(delete).ConfigureAwait(false);
                     }
                 }
-                catch (StorageException ex)
+                catch (Exception ex)
                 {
                     // just log and move on with the rest
                     Logger.Warn($"Failed at dispatching the timeout PK:'{timeout.PartitionKey}' RK: '{timeout.RowKey}' with message id '{timeout.MessageId}'", ex);
@@ -188,9 +188,9 @@
             {
                 await dispatcher.Send(operation).ConfigureAwait(false);
             }
-            catch (QueueNotFoundException)
+            catch (Exception)
             {
-                // queue does not exist or is disabled, try send to an error queue
+                // if send fails for any reason
                 await dispatcher.Send(CreateOperationForErrorQueue(operation)).ConfigureAwait(false);
             }
         }
