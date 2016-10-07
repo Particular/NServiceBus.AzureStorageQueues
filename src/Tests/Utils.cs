@@ -8,10 +8,5 @@
         {
             return Environment.GetEnvironmentVariable("AzureStorageQueueTransport.ConnectionString");
         }
-
-        public static string BuildAnotherConnectionString(string connectionString)
-        {
-            return connectionString + ";BlobEndpoint=https://notusedatall.blob.core.windows.net";
-        }
     }
 }
