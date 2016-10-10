@@ -5,15 +5,13 @@
     using System.IO;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using MessageInterfaces;
+    using AzureStorageQueues;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
-    using Serialization;
-    using Settings;
 
     public class When_receiving_a_raw_json_message : NServiceBusAcceptanceTest
     {
@@ -67,83 +65,37 @@
                 {
                     config.UseSerialization<NServiceBus.JsonSerializer>();
                     config.UseTransport<AzureStorageQueueTransport>()
-                        .SerializeMessageWrapperWith<NativeAwareSerializer>();
+                        .UnwrapMessagesWith(new NativeAwareUnwrapper());
                 });
             }
         }
 
 
-        class NativeAwareSerializer : SerializationDefinition
+        class NativeAwareUnwrapper : IMessageEnvelopeUnwrapper
         {
-            public override Func<IMessageMapper, IMessageSerializer> Configure(ReadOnlySettings settings)
+            public MessageWrapper Unwrap(CloudQueueMessage rawMessage)
             {
-                return mapper => new Serializer();
-            }
-
-            class Serializer : IMessageSerializer
-            {
-                public void Serialize(object message, Stream stream)
+                using (var stream = new MemoryStream(rawMessage.AsBytes))
+                using (var streamReader = new StreamReader(stream))
+                using (var textReader = new JsonTextReader(streamReader))
                 {
-                    using (var streamWriter = new StreamWriter(stream))
+                    var wrapper = jsonSerializer.Deserialize<MessageWrapper>(textReader);
+
+                    if (!string.IsNullOrEmpty(wrapper.Id))
                     {
-                        using (var jsonWriter = new JsonTextWriter(streamWriter))
-                        {
-                            jsonSerializer.Serialize(jsonWriter, message);
-                            jsonWriter.Flush();
-                        }
+                        return wrapper;
                     }
-                }
 
-                public object[] Deserialize(Stream stream, IList<Type> messageTypes = null)
-                {
-
-                    using (var streamReader = new StreamReader(stream))
-                    using (var textReader = new JsonTextReader(streamReader))
+                    return new MessageWrapper
                     {
-                        var wrapper = jsonSerializer.Deserialize<MessageWrapper>(textReader);
-
-                        if (!string.IsNullOrEmpty(wrapper.Id))
-                        {
-                            return new object[] { wrapper };
-                        }
-                        stream.Seek(0, SeekOrigin.Begin);
-                        return ReadNative(stream);
-                    }
-                }
-
-                static object[] ReadNative(Stream stream)
-                {
-                    var nativeWrapper = new MessageWrapper();
-
-                    nativeWrapper.Id = Guid.NewGuid().ToString(); //todo: How to deal with this?
-                    nativeWrapper.Headers = new Dictionary<string, string>();
-
-                    nativeWrapper.Body = ReadStream(stream);
-
-                    return new object[]
-                    {
-                        nativeWrapper
+                        Id = rawMessage.Id,
+                        Headers = new Dictionary<string, string>(),
+                        Body = rawMessage.AsBytes
                     };
                 }
-
-                static byte[] ReadStream(Stream input)
-                {
-                    var buffer = new byte[16 * 1024];
-                    using (var ms = new MemoryStream())
-                    {
-                        int read;
-                        while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
-                        {
-                            ms.Write(buffer, 0, read);
-                        }
-                        return ms.ToArray();
-                    }
-                }
-
-                public string ContentType { get; } = "application/json";
-
-                JsonSerializer jsonSerializer = JsonSerializer.Create();
             }
+
+            JsonSerializer jsonSerializer = JsonSerializer.Create();
         }
 
         class MyMessage : IMessage

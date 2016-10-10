@@ -58,7 +58,11 @@
                 () =>
                 {
                     var addressing = GetAddressing(settings, connectionString);
-                    var unwrapper = new MessageEnvelopeUnwrapper(serializer);
+
+                    var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ?
+                        settings.GetOrDefault<IMessageEnvelopeUnwrapper>() :
+                        new DefaultMessageEnvelopeUnwrapper(serializer);
+
                     var addressGenerator = GetAddressGenerator(settings);
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                     var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);

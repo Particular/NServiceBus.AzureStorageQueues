@@ -28,6 +28,7 @@
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config)
             where TSerializationDefinition : NServiceBus.Serialization.SerializationDefinition, new () { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseNativeTimeouts(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, string timeoutTableName) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UnwrapMessagesWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, NServiceBus.AzureStorageQueues.IMessageEnvelopeUnwrapper unwrapper) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseSha1ForShortening(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
     }
     [System.ObsoleteAttribute("This class was replaced by extension methods on endpointConfiguration.UseTranspor" +
@@ -173,6 +174,14 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     public class SendResourceManager
     {
         public SendResourceManager() { }
+    }
+}
+namespace NServiceBus.AzureStorageQueues
+{
+    
+    public interface IMessageEnvelopeUnwrapper
+    {
+        NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper Unwrap(Microsoft.WindowsAzure.Storage.Queue.CloudQueueMessage rawMessage);
     }
 }
 namespace NServiceBus.Config
