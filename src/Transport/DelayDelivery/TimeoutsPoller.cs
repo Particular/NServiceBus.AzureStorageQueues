@@ -11,7 +11,6 @@
     using Microsoft.WindowsAzure.Storage.Table;
     using Settings;
     using Transport;
-    using Unicast.Queuing;
 
     class TimeoutsPoller
     {
