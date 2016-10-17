@@ -124,7 +124,9 @@
     <Compile Include="APIApprovals.cs" />
     <Compile Include="App_Packages\ApiApprover.3.0.1\PublicApiApprover.cs" />
     <Compile Include="App_Packages\ApiApprover.3.0.1\PublicApiGenerator.cs" />
+    <Compile Include="DelayDelivery\LockManagerTests.cs" />
     <Compile Include="ShortenerTests.cs" />
+    <Compile Include="Utils.cs" />
     <Compile Include="When_naming_queues_on_azure_storage.cs" />
     <Compile Include="When_parsing_connectionstrings.cs" />
   </ItemGroup>

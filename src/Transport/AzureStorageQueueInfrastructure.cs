@@ -3,8 +3,11 @@
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
+    using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
+    using DelayedDelivery;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -18,13 +21,30 @@
             this.settings = settings;
             this.connectionString = connectionString;
             serializer = BuildSerializer(settings);
+
+            timeoutsTableName = settings.GetOrDefault<string>(WellKnownConfigurationKeys.NativeTimeoutsTableName);
+
+            var contraints = new List<Type>
+            {
+                typeof(DiscardIfNotReceivedBefore),
+                typeof(NonDurableDelivery)
+            };
+            useNativeTimeouts = timeoutsTableName != null;
+            if (useNativeTimeouts)
+            {
+                contraints.Add(typeof(DelayedDeliveryConstraint));
+                delayedDelivery = new NativeDelayDelivery(connectionString, timeoutsTableName);
+                shouldDispatch = delayedDelivery.ShouldDispatch;
+            }
+            else
+            {
+                var @true = Task.FromResult(new DispatchDecision(true, null));
+                shouldDispatch = u => @true;
+            }
+            DeliveryConstraints = contraints;
         }
 
-        public override IEnumerable<Type> DeliveryConstraints { get; } = new[]
-        {
-            typeof(DiscardIfNotReceivedBefore),
-            typeof(NonDurableDelivery)
-        };
+        public override IEnumerable<Type> DeliveryConstraints { get; }
 
         public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
         public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
@@ -39,11 +59,14 @@
                 {
                     var addressing = GetAddressing(settings, connectionString);
                     var unwrapper = new MessageEnvelopeUnwrapper(serializer);
-                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, GetAddressGenerator(settings))
+                    var addressGenerator = GetAddressGenerator(settings);
+                    var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
+                    var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
+
+                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, addressGenerator, new BackoffStrategy(maximumWaitTime, peekInterval))
                     {
-                        MaximumWaitTimeWhenIdle = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
                         MessageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
-                        PeekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval),
+
                         BatchSize = settings.Get<int>(WellKnownConfigurationKeys.ReceiverBatchSize)
                     };
 
@@ -53,6 +76,7 @@
                     {
                         degreeOfReceiveParallelism = parallelism;
                     }
+
                     return new MessagePump(receiver, addressing, degreeOfReceiveParallelism);
                 },
                 () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings)),
@@ -97,16 +121,14 @@
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()
         {
-            return new TransportSendInfrastructure(
-                () =>
-                {
-                    var addressing = GetAddressing(settings, connectionString);
+            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(StartupCheckResult.Success));
+        }
 
-                    var queueCreator = new CreateQueueClients();
-                    var addressRetriever = GetAddressGenerator(settings);
-                    return new Dispatcher(queueCreator, serializer, addressRetriever, addressing);
-                },
-                () => Task.FromResult(StartupCheckResult.Success));
+        Dispatcher BuildDispatcher()
+        {
+            var addressing = GetAddressing(settings, connectionString);
+            var addressRetriever = GetAddressGenerator(settings);
+            return new Dispatcher(addressRetriever, addressing, serializer, shouldDispatch);
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -136,8 +158,33 @@
             return queue.ToString();
         }
 
-        ReadOnlySettings settings;
-        string connectionString;
-        MessageWrapperSerializer serializer;
+        public override async Task Start()
+        {
+            if (useNativeTimeouts)
+            {
+                var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
+                var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
+                poller = new TimeoutsPoller(connectionString, BuildDispatcher(), timeoutsTableName, new BackoffStrategy(maximumWaitTime, peekInterval));
+                cancellationSource = new CancellationTokenSource();
+                await poller.Start(settings, cancellationSource.Token).ConfigureAwait(false);
+                await delayedDelivery.Init().ConfigureAwait(false);
+            }
+        }
+
+        public override Task Stop()
+        {
+            cancellationSource.Cancel();
+            return poller != null ? poller.Stop() : TaskEx.CompletedTask;
+        }
+
+        readonly ReadOnlySettings settings;
+        readonly string connectionString;
+        readonly MessageWrapperSerializer serializer;
+        readonly string timeoutsTableName;
+        NativeDelayDelivery delayedDelivery;
+        bool useNativeTimeouts;
+        readonly Func<UnicastTransportOperation, Task<DispatchDecision>> shouldDispatch;
+        TimeoutsPoller poller;
+        CancellationTokenSource cancellationSource;
     }
 }

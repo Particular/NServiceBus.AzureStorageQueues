@@ -1,6 +1,7 @@
 namespace NServiceBus
 {
     using System;
+    using System.Text.RegularExpressions;
     using Azure.Transports.WindowsAzureStorageQueues;
     using AzureStorageQueues.Config;
     using Configuration.AdvanceExtensibility;
@@ -89,6 +90,29 @@ namespace NServiceBus
             }
 
             config.GetSettings().Set(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, degreeOfReceiveParallelism);
+            return config;
+        }
+
+        /// <summary>
+        /// Switches transport to use timeouts based on the Azure Storage Queues capabilities.
+        /// </summary>
+        public static TransportExtensions<AzureStorageQueueTransport> UseNativeTimeouts(this TransportExtensions<AzureStorageQueueTransport> config, string timeoutTableName)
+        {
+            var settings = config.GetSettings();
+
+            if (string.IsNullOrWhiteSpace(timeoutTableName))
+            {
+                throw new ArgumentException($"{nameof(timeoutTableName)} cannot be null nor empty nor whitespace", nameof(timeoutTableName));
+            }
+
+            const string tableNameRegex = "^[A-Za-z][A-Za-z0-9]{2,62}$";
+            if (new Regex(tableNameRegex).IsMatch(timeoutTableName) == false)
+            {
+                throw new ArgumentException($"{nameof(timeoutTableName)} must match the following regular expression '{tableNameRegex}'");
+            }
+
+            settings.Set(WellKnownConfigurationKeys.NativeTimeoutsTableName, timeoutTableName);
+
             return config;
         }
 

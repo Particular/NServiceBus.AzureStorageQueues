@@ -8,22 +8,13 @@ namespace NServiceBus.AzureStorageQueues
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(MessageEnvelopeUnwrapper unwrapper, CloudQueueClient client, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueReceiver(MessageEnvelopeUnwrapper unwrapper, CloudQueueClient client, QueueAddressGenerator addressGenerator, BackoffStrategy backoffStrategy)
         {
             this.unwrapper = unwrapper;
             this.client = client;
             this.addressGenerator = addressGenerator;
+            this.backoffStrategy = backoffStrategy;
         }
-
-        /// <summary>
-        /// Sets the amount of time, in milliseconds, to add to the time to wait before checking for a new message
-        /// </summary>
-        public TimeSpan PeekInterval { get; set; }
-
-        /// <summary>
-        /// Sets the maximum amount of time that the queue will wait before checking for a new message
-        /// </summary>
-        public TimeSpan MaximumWaitTimeWhenIdle { get; set; }
 
         /// <summary>
         /// Sets whether or not the transport should purge the input
@@ -77,23 +68,8 @@ namespace NServiceBus.AzureStorageQueues
                 messages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue, errorQueue));
             }
 
-            if (!messageFound)
-            {
-                if (timeToDelayNextPeek + PeekInterval < MaximumWaitTimeWhenIdle)
-                {
-                    timeToDelayNextPeek += PeekInterval;
-                }
-                else
-                {
-                    timeToDelayNextPeek = MaximumWaitTimeWhenIdle;
-                }
-
-                await Task.Delay(timeToDelayNextPeek, token).ConfigureAwait(false);
-                return noMessagesFound;
-            }
-
-            timeToDelayNextPeek = TimeSpan.Zero;
-            return messages;
+            await backoffStrategy.OnBatch(BatchSize, messageFound ? messages.Count : 0, token).ConfigureAwait(false);
+            return messageFound ? messages : noMessagesFound;
         }
 
         MessageEnvelopeUnwrapper unwrapper;
@@ -103,7 +79,9 @@ namespace NServiceBus.AzureStorageQueues
         CloudQueue inputQueue;
         CloudQueue errorQueue;
         CloudQueueClient client;
-        TimeSpan timeToDelayNextPeek;
+        readonly BackoffStrategy backoffStrategy;
+
+        public string QueueName => inputQueue.Name;
 
         static List<MessageRetrieved> noMessagesFound = new List<MessageRetrieved>();
     }
