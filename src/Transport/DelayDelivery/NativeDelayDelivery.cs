@@ -5,13 +5,12 @@
     using System.Threading.Tasks;
     using DelayedDelivery;
     using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Queue;
     using Microsoft.WindowsAzure.Storage.Table;
     using Transport;
 
     class NativeDelayDelivery
     {
-        static readonly TimeSpan MaxVisibilityDelay = CloudQueueMessage.MaxTimeToLive - TimeSpan.FromDays(1);
+        static readonly TimeSpan MaxVisibilityDelay = TimeSpan.FromDays(1);
         CloudTable timeouts;
 
         public NativeDelayDelivery(string connectionString, string timeoutTableName)
