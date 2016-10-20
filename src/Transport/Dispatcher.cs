@@ -7,7 +7,6 @@
     using System.Linq;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
-    using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
     using Extensibility;
     using Logging;
@@ -17,7 +16,7 @@
 
     class Dispatcher : IDispatchMessages
     {
-        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, Task<DispatchDecision>> shouldSend)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, Task<bool>> shouldSend)
         {
             createQueueClients = new CreateQueueClients();
             this.addressGenerator = addressGenerator;
@@ -45,7 +44,7 @@
         public async Task Send(UnicastTransportOperation operation)
         {
             var dispatchDecision = await shouldSend(operation).ConfigureAwait(false);
-            if (dispatchDecision.ShouldDispatch == false)
+            if (dispatchDecision == false)
             {
                 return;
             }
@@ -92,10 +91,10 @@
             }
 
             var wrapper = BuildMessageWrapper(operation, timeToBeReceived, queue);
-            await Send(wrapper, sendQueue, dispatchDecision.Delay).ConfigureAwait(false);
+            await Send(wrapper, sendQueue).ConfigureAwait(false);
         }
 
-        Task Send(MessageWrapper wrapper, CloudQueue sendQueue, TimeSpan? visibilityDelay)
+        Task Send(MessageWrapper wrapper, CloudQueue sendQueue)
         {
             CloudQueueMessage rawMessage;
             using (var stream = new MemoryStream())
@@ -103,7 +102,7 @@
                 serializer.Serialize(wrapper, stream);
                 rawMessage = new CloudQueueMessage(stream.ToArray());
             }
-            return sendQueue.AddMessageAsync(rawMessage, wrapper.TimeToBeReceived != TimeSpan.MaxValue ? wrapper.TimeToBeReceived : default(TimeSpan?), visibilityDelay, null, null);
+            return sendQueue.AddMessageAsync(rawMessage, wrapper.TimeToBeReceived != TimeSpan.MaxValue ? wrapper.TimeToBeReceived : default(TimeSpan?), null, null, null);
         }
 
         Task<bool> ExistsAsync(CloudQueue sendQueue)
@@ -145,6 +144,6 @@
         ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
         readonly MessageWrapperSerializer serializer;
-        readonly Func<UnicastTransportOperation, Task<DispatchDecision>> shouldSend;
+        readonly Func<UnicastTransportOperation, Task<bool>> shouldSend;
     }
 }

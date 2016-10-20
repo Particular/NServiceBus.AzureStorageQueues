@@ -10,7 +10,6 @@
 
     class NativeDelayDelivery
     {
-        static readonly TimeSpan MaxVisibilityDelay = TimeSpan.FromDays(1);
         CloudTable timeouts;
 
         public NativeDelayDelivery(string connectionString, string timeoutTableName)
@@ -23,15 +22,15 @@
             return timeouts.CreateIfNotExistsAsync();
         }
 
-        public async Task<DispatchDecision> ShouldDispatch(UnicastTransportOperation operation)
+        public async Task<bool> ShouldDispatch(UnicastTransportOperation operation)
         {
             var delay = GetVisbilityDelay(operation);
-            if (delay == null || delay.Value < MaxVisibilityDelay)
+            if (delay == null)
             {
-                return new DispatchDecision(true, delay);
+                return true;
             }
             await ScheduleAt(operation, UtcNow + delay.Value).ConfigureAwait(false);
-            return new DispatchDecision(false, null);
+            return false;
         }
 
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
