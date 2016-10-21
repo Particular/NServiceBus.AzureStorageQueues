@@ -11,7 +11,6 @@
     using NUnit.Framework;
     using NUnit.Framework.Compatibility;
 
-    [Category("long running")]
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
     {
         CloudTable timeoutTable;
@@ -32,7 +31,7 @@
         [Test]
         public async Task Should_receive_the_message_after_delay()
         {
-            var delay = TimeSpan.FromMinutes(1);
+            var delay = TimeSpan.FromSeconds(30);
 
             var context = await Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((session, c) =>
@@ -50,33 +49,6 @@
             Assert.True(context.WasCalled, "The message handler should be called");
             Assert.Greater(context.SW.Elapsed, delay);
         }
-
-        [Test]
-        public async Task Should_send_message_with_long_delay()
-        {
-            var delay = TimeSpan.FromDays(30);
-
-            var context = await Scenario.Define<Context>()
-                .WithEndpoint<Sender>(b => b.When(async (session, c) =>
-                {
-                    var sendOptions = new SendOptions();
-                    sendOptions.DelayDeliveryWith(delay);
-                    await session.Send(new MyMessage
-                    {
-                        Id = c.TestRunId
-                    }, sendOptions).ConfigureAwait(false);
-
-                    var timeouts = await GetTimeouts();
-                    Assert.AreEqual(1, timeouts.Count);
-
-                    await MoveBeforeNow(timeouts[0]).ConfigureAwait(false);
-                }))
-                .WithEndpoint<Receiver>()
-                .Done(c => c.WasCalled)
-                .Run();
-            Assert.True(context.WasCalled, "The message handler should be called");
-        }
-
 
         [Test]
         public async Task Should_send_message_to_error_queue_when_target_queue_does_not_exist()
