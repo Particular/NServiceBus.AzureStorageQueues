@@ -52,7 +52,6 @@
         {
             public bool GotMessage { get; set; }
             public MyMessage MessageReceived { get; set; }
-            public IReadOnlyDictionary<string, string> HeadersReceived { get; set; }
         }
 
         class Receiver : EndpointConfigurationBuilder
@@ -110,7 +109,6 @@
             public Task Handle(MyMessage message, IMessageHandlerContext context)
             {
                 ctx.MessageReceived = message;
-                ctx.HeadersReceived = context.MessageHeaders;
                 ctx.GotMessage = true;
 
                 return Task.FromResult(0);
