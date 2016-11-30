@@ -5,7 +5,6 @@
     using System.IO;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using AzureStorageQueues;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
@@ -55,6 +54,7 @@
         {
             public bool GotMessage { get; set; }
             public MyMessage MessageReceived { get; set; }
+            public IReadOnlyDictionary<string, string> HeadersReceived { get; set; }
         }
 
         class Receiver : EndpointConfigurationBuilder
@@ -65,38 +65,37 @@
                 {
                     config.UseSerialization<NServiceBus.JsonSerializer>();
                     config.UseTransport<AzureStorageQueueTransport>()
-                        .UnwrapMessagesWith(new NativeAwareUnwrapper());
+                        .UnwrapMessagesWith(MyCustomUnwrapper);
                 });
             }
         }
 
 
-        class NativeAwareUnwrapper : IMessageEnvelopeUnwrapper
+
+        static MessageWrapper MyCustomUnwrapper(CloudQueueMessage rawMessage)
         {
-            public MessageWrapper Unwrap(CloudQueueMessage rawMessage)
+            using (var stream = new MemoryStream(rawMessage.AsBytes))
+            using (var streamReader = new StreamReader(stream))
+            using (var textReader = new JsonTextReader(streamReader))
             {
-                using (var stream = new MemoryStream(rawMessage.AsBytes))
-                using (var streamReader = new StreamReader(stream))
-                using (var textReader = new JsonTextReader(streamReader))
+                var wrapper = jsonSerializer.Deserialize<MessageWrapper>(textReader);
+
+                if (!string.IsNullOrEmpty(wrapper.Id))
                 {
-                    var wrapper = jsonSerializer.Deserialize<MessageWrapper>(textReader);
-
-                    if (!string.IsNullOrEmpty(wrapper.Id))
-                    {
-                        return wrapper;
-                    }
-
-                    return new MessageWrapper
-                    {
-                        Id = rawMessage.Id,
-                        Headers = new Dictionary<string, string>(),
-                        Body = rawMessage.AsBytes
-                    };
+                    return wrapper;
                 }
-            }
 
-            JsonSerializer jsonSerializer = JsonSerializer.Create();
+                return new MessageWrapper
+                {
+                    Id = rawMessage.Id,
+                    Headers = new Dictionary<string, string>(),
+                    Body = rawMessage.AsBytes
+                };
+            }
         }
+
+        static JsonSerializer jsonSerializer = JsonSerializer.Create();
+
 
         class MyMessage : IMessage
         {
@@ -113,6 +112,7 @@
             public Task Handle(MyMessage message, IMessageHandlerContext context)
             {
                 ctx.MessageReceived = message;
+                ctx.HeadersReceived = context.MessageHeaders;
                 ctx.GotMessage = true;
 
                 return Task.FromResult(0);

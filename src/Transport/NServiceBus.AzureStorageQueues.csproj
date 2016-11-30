@@ -139,6 +139,7 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="TaskEx.cs" />
     <Compile Include="TransportOperationExtensions.cs" />
+    <Compile Include="UserProvidedEnvelopeUnwrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

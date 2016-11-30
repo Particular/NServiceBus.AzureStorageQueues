@@ -140,7 +140,7 @@
         QueueAddressGenerator addressGenerator;
         AzureStorageAddressingSettings addressing;
         readonly CreateQueueClients createQueueClients;
-        
+
         ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
         readonly MessageWrapperSerializer serializer;
