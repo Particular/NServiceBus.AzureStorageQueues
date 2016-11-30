@@ -1,6 +1,5 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Receiving
 {
-    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
@@ -34,11 +33,10 @@
 
                         var cloudQueueMessage = new CloudQueueMessage(jsonPayload);
 
-                        var connectionString = Environment.GetEnvironmentVariable("AzureStorageQueueTransport.ConnectionString");
-
+                        var connectionString = Utils.GetEnvConfiguredConnectionString();
                         var storageAccount = CloudStorageAccount.Parse(connectionString);
                         var queueClient = storageAccount.CreateCloudQueueClient();
-                        var queue = queueClient.GetQueueReference("receivingarawjsonmessage-receiver-retries");
+                        var queue = queueClient.GetQueueReference("receivingarawjsonmessage-receiver");
 
                         return queue.AddMessageAsync(cloudQueueMessage);
                     });
