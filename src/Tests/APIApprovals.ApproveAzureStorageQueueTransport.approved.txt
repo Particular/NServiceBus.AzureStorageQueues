@@ -176,14 +176,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public SendResourceManager() { }
     }
 }
-namespace NServiceBus.AzureStorageQueues
-{
-    
-    public interface IMessageEnvelopeUnwrapper
-    {
-        NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper Unwrap(Microsoft.WindowsAzure.Storage.Queue.CloudQueueMessage rawMessage);
-    }
-}
 namespace NServiceBus.Config
 {
     
