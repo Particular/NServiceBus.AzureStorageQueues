@@ -15,13 +15,12 @@ public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupport
     {
         typeof(AllTransportsWithCentralizedPubSubSupport),
         typeof(AllDtcTransports),
-        typeof(AllTransportsWithoutNativeDeferralAndWithAtomicSendAndReceive)
     };
 }
 
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
-    public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings)
+    public Task Configure(string endpointName, NServiceBus.EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
         var connectionString = settings.Get<string>("Transport.ConnectionString");
         configuration

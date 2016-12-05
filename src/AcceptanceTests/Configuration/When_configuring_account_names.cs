@@ -1,10 +1,8 @@
 ﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
 {
     using System;
-    using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using AcceptanceTesting.Support;
     using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
     using NUnit.Framework;
@@ -27,9 +25,7 @@
         [Test]
         public void Should_not_accept_mappings_without_default()
         {
-            var ex = Assert.ThrowsAsync<AggregateException>(() => { return Configure(cfg => { cfg.AccountRouting().AddAccount(Another, anotherConnectionString); }); });
-            var inner = ex.InnerExceptions.OfType<ScenarioException>().Single();
-            Assert.IsInstanceOf<Exception>(inner.InnerException);
+            Assert.ThrowsAsync<Exception>(() => { return Configure(cfg => { cfg.AccountRouting().AddAccount(Another, anotherConnectionString); }); });
         }
 
         [Test]
