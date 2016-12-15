@@ -20,7 +20,7 @@ public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupport
 
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
-    public Task Configure(string endpointName, NServiceBus.EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
+    public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
         var connectionString = settings.Get<string>("Transport.ConnectionString");
         configuration
