@@ -109,7 +109,7 @@
         }
 
         [Serializable]
-        class MyMessage : ICommand
+        public class MyMessage : ICommand
         {
         }
     }
