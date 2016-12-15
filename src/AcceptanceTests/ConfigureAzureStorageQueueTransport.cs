@@ -23,11 +23,21 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
         var connectionString = settings.Get<string>("Transport.ConnectionString");
-        configuration
+        var transportConfig = configuration
             .UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(5));
         //.SerializeMessageWrapperWith<JsonSerializer>();
+
+        var routingConfig = transportConfig.Routing();
+
+        foreach (var publisher in publisherMetadata.Publishers)
+        {
+            foreach (var eventType in publisher.Events)
+            {
+                routingConfig.RegisterPublisher(eventType, publisher.PublisherName);
+            }
+        }
 
         configuration.UseSerialization<XmlSerializer>();
 
