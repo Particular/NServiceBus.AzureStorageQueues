@@ -8,6 +8,7 @@ using Microsoft.WindowsAzure.Storage.Queue;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.AcceptanceTests.ScenarioDescriptors;
+using NUnit.Framework;
 
 public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupportedScenariosForTestExecution
 {
@@ -41,7 +42,12 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
 
         configuration.UseSerialization<XmlSerializer>();
 
-        CleanQueuesUsedByTest(connectionString);
+        if (TestContext.CurrentContext.Test.Properties.ContainsKey("QueuesCleaned") == false)
+        {
+            TestContext.CurrentContext.Test.Properties.Add("QueuesCleaned", true);
+
+            return CleanQueuesUsedByTest(connectionString);
+        }
 
         return Task.FromResult(0);
     }
@@ -51,23 +57,20 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         return Task.FromResult(0);
     }
 
-    static void CleanQueuesUsedByTest(string connectionString)
+    static Task CleanQueuesUsedByTest(string connectionString)
     {
         var storage = CloudStorageAccount.Parse(connectionString);
         var client = storage.CreateCloudQueueClient();
         var queues = GetTestRelatedQueues(client).ToArray();
 
-        var countdown = new CountdownEvent(queues.Length);
-
-        foreach (var queue in queues)
+        var tasks = new Task[queues.Length];
+        for (var i = 0; i < queues.Length; i++)
         {
-            queue.ClearAsync().ContinueWith(t => countdown.Signal());
+            tasks[i] = queues[i].ClearAsync();
+
         }
 
-        if (countdown.Wait(TimeSpan.FromMinutes(1)) == false)
-        {
-            throw new TimeoutException("Waiting for cleaning queues took too much.");
-        }
+        return Task.WhenAll(tasks);
     }
 
     static IEnumerable<CloudQueue> GetTestRelatedQueues(CloudQueueClient queues)
