@@ -173,7 +173,7 @@
 
         public override Task Stop()
         {
-            cancellationSource.Cancel();
+            cancellationSource?.Cancel();
             return poller != null ? poller.Stop() : TaskEx.CompletedTask;
         }
 
