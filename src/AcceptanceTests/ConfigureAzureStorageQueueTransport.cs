@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
@@ -27,7 +26,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         var transportConfig = configuration
             .UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
-            .MessageInvisibleTime(TimeSpan.FromSeconds(5));
+            .MessageInvisibleTime(TimeSpan.FromSeconds(30));
         //.SerializeMessageWrapperWith<JsonSerializer>();
 
         var routingConfig = transportConfig.Routing();
