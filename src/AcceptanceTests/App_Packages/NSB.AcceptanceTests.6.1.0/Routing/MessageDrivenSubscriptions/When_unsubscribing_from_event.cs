@@ -22,7 +22,11 @@
                 .WithEndpoint<Publisher>(c => c
                     .When(
                         ctx => ctx.Subscriber1Subscribed && ctx.Subscriber2Subscribed,
-                        s => s.Publish(new Event()))
+                        async s =>
+                        {
+                            await s.Publish(new Event());
+                            Trace.TraceInformation("P: Event published");
+                        })
                     .When(
                         ctx => ctx.Subscriber2Unsubscribed,
                         async s =>
@@ -32,9 +36,16 @@
                             await s.Publish(new Event());
                         }))
                 .WithEndpoint<Subscriber1>(c => c
-                    .When(s => s.Subscribe<Event>()))
+                    .When(async s => {
+                        await s.Subscribe<Event>();
+                        Trace.TraceInformation("S1: Subscription sent");
+                    }))
                 .WithEndpoint<Subscriber2>(c => c
-                    .When(s => s.Subscribe<Event>())
+                    .When(async s =>
+                    {
+                        await s.Subscribe<Event>();
+                        Trace.TraceInformation("S2: Subscription sent");
+                    })
                     .When(
                         ctx => ctx.Subscriber2ReceivedMessages >= 1,
                         s => s.Unsubscribe<Event>()))
