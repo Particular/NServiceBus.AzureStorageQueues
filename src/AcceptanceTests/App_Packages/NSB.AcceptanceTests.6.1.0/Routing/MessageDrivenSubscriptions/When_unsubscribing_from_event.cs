@@ -1,5 +1,7 @@
 ﻿namespace NServiceBus.AcceptanceTests.Routing.MessageDrivenSubscriptions
 {
+    using System;
+    using System.Diagnostics;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
@@ -11,9 +13,12 @@
     public class When_unsubscribing_from_event : NServiceBusAcceptanceTest
     {
         [Test]
-        public Task ShouldNoLongerReceiveEvent()
+        public async Task ShouldNoLongerReceiveEvent()
         {
-            return Scenario.Define<Context>()
+            Trace.Listeners.Add(new ConsoleTraceListener());
+
+            Context local = new Context();
+            var test = Scenario.Define<Context>(c => local = c)
                 .WithEndpoint<Publisher>(c => c
                     .When(
                         ctx => ctx.Subscriber1Subscribed && ctx.Subscriber2Subscribed,
@@ -42,6 +47,14 @@
                     Assert.IsTrue(c.Subscriber2Unsubscribed);
                 })
                 .Run();
+
+            while (test.IsCompleted == false && test.IsFaulted == false)
+            {
+                Trace.TraceInformation(local.Stringify());
+                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
+
+            await test;
         }
 
         public class Context : ScenarioContext
@@ -51,6 +64,11 @@
             public bool Subscriber2Unsubscribed { get; set; }
             public int Subscriber1ReceivedMessages { get; set; }
             public int Subscriber2ReceivedMessages { get; set; }
+
+            public string Stringify()
+            {
+                return $"\r\n\r\n *** Context: {nameof(Subscriber1Subscribed)}: {Subscriber1Subscribed}, {nameof(Subscriber2Subscribed)}: {Subscriber2Subscribed}, {nameof(Subscriber2Unsubscribed)}: {Subscriber2Unsubscribed}, {nameof(Subscriber1ReceivedMessages)}: {Subscriber1ReceivedMessages}, {nameof(Subscriber2ReceivedMessages)}: {Subscriber2ReceivedMessages}\r\n";
+            }
         }
 
         public class Publisher : EndpointConfigurationBuilder
