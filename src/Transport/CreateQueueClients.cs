@@ -28,7 +28,5 @@ namespace NServiceBus.AzureStorageQueues
 
             return null;
         }
-
-        ConcurrentDictionary<ConnectionString, CloudQueueClient> destinationQueueClients = new ConcurrentDictionary<ConnectionString, CloudQueueClient>();
     }
 }
