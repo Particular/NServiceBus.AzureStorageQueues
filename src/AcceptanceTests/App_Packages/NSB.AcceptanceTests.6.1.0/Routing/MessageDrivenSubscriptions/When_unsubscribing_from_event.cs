@@ -48,7 +48,12 @@
                     })
                     .When(
                         ctx => ctx.Subscriber2ReceivedMessages >= 1,
-                        s => s.Unsubscribe<Event>()))
+                        async s =>
+                        {
+                            Trace.TraceInformation("S2: Ubsubscribing");
+                            await s.Unsubscribe<Event>();
+                            Trace.TraceInformation("S2: Ubsubscribed");
+                        }))
                 .Done(c => c.Subscriber1ReceivedMessages >= 4)
                 .Repeat(r => r.For<AllTransportsWithMessageDrivenPubSub>())
                 .Should(c =>
