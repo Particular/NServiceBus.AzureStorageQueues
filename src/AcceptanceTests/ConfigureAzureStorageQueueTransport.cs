@@ -29,6 +29,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             .MessageInvisibleTime(TimeSpan.FromSeconds(30));
         //.SerializeMessageWrapperWith<JsonSerializer>();
 
+
         var routingConfig = transportConfig.Routing();
 
         foreach (var publisher in publisherMetadata.Publishers)

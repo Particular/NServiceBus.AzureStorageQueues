@@ -21,25 +21,25 @@
             var test = Scenario.Define<Context>(c => local = c)
                 .WithEndpoint<Publisher>(c => c
                     .When(
-                        ctx => ctx.Subscriber1Subscribed && ctx.Subscriber2Subscribed,
+                        ctx => ctx.Subscriber2Subscribed,
                         async s =>
                         {
                             await s.Publish(new Event());
                             Trace.TraceInformation("P: Event published");
                         })
                     .When(
-                        ctx => ctx.Subscriber2Unsubscribed,
+                        ctx =>
+                        {
+                            //Trace.TraceInformation("P: Evaluating: ctx.Subscriber2Unsubscribed");
+                            //System.Threading.Thread.Sleep(TimeSpan.FromSeconds(1));
+                            return ctx.Subscriber2Unsubscribed;
+                        },
                         async s =>
                         {
-                            await s.Publish(new Event());
-                            await s.Publish(new Event());
-                            await s.Publish(new Event());
+                            Trace.TraceInformation("SP: Publishing more events ");
+                            await Task.Delay(1);
+                            local.PublisherDone = true;;
                         }))
-                .WithEndpoint<Subscriber1>(c => c
-                    .When(async s => {
-                        await s.Subscribe<Event>();
-                        Trace.TraceInformation("S1: Subscription sent");
-                    }))
                 .WithEndpoint<Subscriber2>(c => c
                     .When(async s =>
                     {
@@ -50,11 +50,13 @@
                         ctx => ctx.Subscriber2ReceivedMessages >= 1,
                         async s =>
                         {
-                            Trace.TraceInformation("S2: Ubsubscribing");
+                            Trace.TraceInformation("S2: Sending unsubscribe");
                             await s.Unsubscribe<Event>();
-                            Trace.TraceInformation("S2: Ubsubscribed");
+                            Trace.TraceInformation("S2: Unsubscription sent");
+
+                            //return Task.FromResult(0);
                         }))
-                .Done(c => c.Subscriber1ReceivedMessages >= 4)
+                .Done(c => c.PublisherDone)
                 .Repeat(r => r.For<AllTransportsWithMessageDrivenPubSub>())
                 .Should(c =>
                 {
@@ -80,6 +82,8 @@
             public bool Subscriber2Unsubscribed { get; set; }
             public int Subscriber1ReceivedMessages { get; set; }
             public int Subscriber2ReceivedMessages { get; set; }
+
+            public bool PublisherDone { get; set; }
 
             public string Stringify()
             {
@@ -107,6 +111,7 @@
                     });
                     c.OnEndpointUnsubscribed<Context>((args, ctx) =>
                     {
+                        Trace.TraceInformation($"Unsubscribe message received from" + args.SubscriberReturnAddress);
                         if (args.SubscriberReturnAddress.Contains(Conventions.EndpointNamingConvention(typeof(Subscriber2))))
                         {
                             ctx.Subscriber2Unsubscribed = true;
@@ -133,6 +138,7 @@
 
                 public Task Handle(Event message, IMessageHandlerContext context)
                 {
+                    Trace.TraceInformation("S1: event received");
                     testContext.Subscriber1ReceivedMessages++;
                     return Task.FromResult(0);
                 }
@@ -158,6 +164,7 @@
 
                 public Task Handle(Event message, IMessageHandlerContext context)
                 {
+                    Trace.TraceInformation("S2: event received");
                     testContext.Subscriber2ReceivedMessages++;
                     return Task.FromResult(0);
                 }
