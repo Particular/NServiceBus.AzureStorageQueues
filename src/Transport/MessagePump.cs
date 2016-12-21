@@ -109,7 +109,9 @@
             {
                 try
                 {
+
                     var retrieved = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
+                   
                     circuitBreaker.Success();
 
                     foreach (var message in retrieved)

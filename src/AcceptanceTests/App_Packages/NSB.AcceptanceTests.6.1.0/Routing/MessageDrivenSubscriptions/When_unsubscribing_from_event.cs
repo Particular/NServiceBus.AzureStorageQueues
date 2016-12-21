@@ -73,6 +73,11 @@
             }
 
             await test;
+
+            foreach (var log in local.Logs)
+            {
+                Trace.TraceInformation(log.Level + "|" + log.Message);
+            }
         }
 
         public class Context : ScenarioContext
