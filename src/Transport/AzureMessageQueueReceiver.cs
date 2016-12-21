@@ -56,12 +56,6 @@ namespace NServiceBus.AzureStorageQueues
         {
             Trace.TraceInformation($"Requesting batch of messages for {inputQueue.Name}");
 
-            var requestOptions = new QueueRequestOptions
-            {
-                ServerTimeout = TimeSpan.FromSeconds(10),
-                MaximumExecutionTime = TimeSpan.FromSeconds(10)
-            };
-
             var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
             IEnumerable<CloudQueueMessage> rawMessages = new List<CloudQueueMessage>();
