@@ -2,10 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using AcceptanceTesting.Support;
     using EndpointTemplates;
     using NUnit.Framework;
     using ScenarioDescriptors;
@@ -15,9 +13,7 @@
         [Test]
         public void Connection_string_should_throw()
         {
-            var ex = Assert.ThrowsAsync<AggregateException>(() => RunTest(MainNamespaceConnectionString));
-
-            Assert.IsInstanceOf<KeyNotFoundException>(ex.InnerExceptions.Cast<ScenarioException>().Single().InnerException);
+            Assert.ThrowsAsync<KeyNotFoundException>(() => RunTest(MainNamespaceConnectionString));
         }
 
         [Test]

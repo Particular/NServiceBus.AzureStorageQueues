@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
@@ -91,7 +92,10 @@
             }
 
             var wrapper = BuildMessageWrapper(operation, timeToBeReceived, queue);
+
+            Trace.TraceInformation($"Dispatching message {wrapper.Id}|{wrapper.MessageIntent}->{sendQueue.Name}");
             await Send(wrapper, sendQueue).ConfigureAwait(false);
+            Trace.TraceInformation($"Dispatching message finished for {wrapper.Id}|{wrapper.MessageIntent}->{sendQueue.Name}");
         }
 
         Task Send(MessageWrapper wrapper, CloudQueue sendQueue)
@@ -140,7 +144,7 @@
         QueueAddressGenerator addressGenerator;
         AzureStorageAddressingSettings addressing;
         readonly CreateQueueClients createQueueClients;
-        
+
         ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
         readonly MessageWrapperSerializer serializer;

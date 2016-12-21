@@ -84,6 +84,11 @@
             }
         }
 
+        public string RawId()
+        {
+            return rawMessage.Id;
+        }
+
         readonly CloudQueue inputQueue;
         readonly CloudQueueMessage rawMessage;
         readonly CloudQueue errorQueue;

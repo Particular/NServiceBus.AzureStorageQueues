@@ -1,6 +1,7 @@
 namespace NServiceBus.AzureStorageQueues
 {
     using System;
+    using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
@@ -24,7 +25,12 @@ namespace NServiceBus.AzureStorageQueues
                 using (var tokenSource = new CancellationTokenSource())
                 {
                     var pushContext = new MessageContext(message.Id, message.Headers, body, new TransportTransaction(), tokenSource, new ContextBag());
+
+                    Trace.TraceInformation($"Pushing to pipeline {message.Id}|{message.MessageIntent}");
+
                     await pipeline(pushContext).ConfigureAwait(false);
+
+                    Trace.TraceInformation($"Pushing to pipeline finished for {message.Id}|{message.MessageIntent}");
 
                     if (tokenSource.IsCancellationRequested)
                     {
@@ -40,12 +46,15 @@ namespace NServiceBus.AzureStorageQueues
             }
             catch (LeaseTimeoutException)
             {
+                Trace.TraceInformation($"Message processing: LeaseTimeoutException error for {message.Id}");
                 // The lease has expired and cannot be used any longer to Ack or Nack the message.
                 // see original issue: https://github.com/Azure/azure-storage-net/issues/285
                 throw;
             }
             catch (Exception ex)
             {
+                Trace.TraceInformation($"Message processing: Exception error for {message.Id}. {ex}");
+
                 var context = CreateErrorContext(retrieved, message, ex, body);
                 ErrorHandleResult immediateRetry;
 

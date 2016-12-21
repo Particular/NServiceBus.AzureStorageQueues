@@ -2,6 +2,7 @@ namespace NServiceBus.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -53,12 +54,31 @@ namespace NServiceBus.AzureStorageQueues
 
         internal async Task<List<MessageRetrieved>> Receive(CancellationToken token)
         {
-            var rawMessages = await inputQueue.GetMessagesAsync(BatchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
+            Trace.TraceInformation($"Requesting batch of messages for {inputQueue.Name}");
+
+            var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            IEnumerable<CloudQueueMessage> rawMessages = new List<CloudQueueMessage>();
+
+            try
+            {
+                await Task.Yield();
+
+                rawMessages = await inputQueue.GetMessagesAsync(1, MessageInvisibleTime, null, null, tokenSource.Token).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                Trace.TraceInformation($"Requesting batch timedout for {inputQueue.Name}");
+            }
+
+            Trace.TraceInformation($"Request returned for {inputQueue.Name}");
 
             var messageFound = false;
             List<MessageRetrieved> messages = null;
             foreach (var rawMessage in rawMessages)
             {
+                Trace.TraceInformation($"After batch request for {inputQueue.Name}. Message id {rawMessage.Id}");
+
                 if (!messageFound)
                 {
                     messages = new List<MessageRetrieved>(BatchSize);

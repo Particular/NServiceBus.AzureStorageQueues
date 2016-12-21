@@ -196,7 +196,7 @@
             readonly Context testContext;
         }
 
-        class MyCommand : ICommand
+        public class MyCommand : ICommand
         {
         }
     }

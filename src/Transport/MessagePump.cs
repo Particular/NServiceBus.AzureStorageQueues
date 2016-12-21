@@ -66,7 +66,12 @@
 
             if (finishedTask.Equals(timeoutTask))
             {
-                Logger.Error("The message pump failed to stop with in the time allowed(30s)");
+                var inflight = string.Join("|", messageStatus.Where(kv => kv.Value == false).Select(kv => kv.Key).ToArray());
+
+                Logger.Error($"The message pump failed to stop with in the time allowed(30s). {this.messageReceiver.QueueName}. Inflight: {inflight}");
+
+
+
             }
 
             concurrencyLimiter.Dispose();
@@ -104,7 +109,9 @@
             {
                 try
                 {
+
                     var retrieved = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
+                   
                     circuitBreaker.Success();
 
                     foreach (var message in retrieved)
@@ -156,7 +163,12 @@
                 var message = await retrieved.Unwrap().ConfigureAwait(false);
                 addressing.ApplyMappingToAliases(message.Headers);
 
+                var messageKey = message.Id + message.MessageIntent;
+                messageStatus.TryAdd(messageKey, false);
+
                 await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);
+
+                messageStatus.TryUpdate(messageKey, true, false);
             }
             catch (LeaseTimeoutException ex)
             {
@@ -193,5 +205,7 @@
         static ILog Logger = LogManager.GetLogger(typeof(MessagePump));
         static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
+
+        ConcurrentDictionary<string, bool> messageStatus = new ConcurrentDictionary<string, bool>();
     }
 }
