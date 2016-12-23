@@ -1,6 +1,5 @@
 namespace NServiceBus.AzureStorageQueues
 {
-    using System.Collections.Concurrent;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
 
@@ -8,8 +7,7 @@ namespace NServiceBus.AzureStorageQueues
     {
         public CloudQueueClient Create(ConnectionString connectionString)
         {
-            // ReSharper disable once ConvertClosureToMethodGroup
-            return destinationQueueClients.GetOrAdd(connectionString, cs => BuildClient(cs));
+            return BuildClient(connectionString);
         }
 
         public static CloudQueueClient CreateReceiver(ConnectionString connectionString)
@@ -27,7 +25,5 @@ namespace NServiceBus.AzureStorageQueues
 
             return null;
         }
-
-        ConcurrentDictionary<ConnectionString, CloudQueueClient> destinationQueueClients = new ConcurrentDictionary<ConnectionString, CloudQueueClient>();
     }
 }
