@@ -47,7 +47,9 @@
 
             Assert.AreEqual("Simulated exception", errorContext.Exception.Message);
             Assert.AreEqual(2, errorContext.ImmediateProcessingFailures);
-            Assert.IsNotNull(criticalError);
+
+            // removed on the following basis: https://github.com/Particular/NServiceBus.AzureStorageQueues/pull/170#issuecomment-268980171
+            //Assert.IsNotNull(criticalError);
         }
     }
 }
