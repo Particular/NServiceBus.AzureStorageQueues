@@ -46,6 +46,11 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             Assert.Ignore("Ignored until issue #173 is resolved.");
         }
 
+        if (endpointName.StartsWith("RegisteringAdditionalDeserializers.CustomSerializationSender"))
+        {
+            Assert.Ignore("Ignored since this scenario is not supported by ASQ.");
+        }
+
         configuration.UseSerialization<XmlSerializer>();
 
         if (TestContext.CurrentContext.Test.Properties.ContainsKey("QueuesCleaned") == false)
