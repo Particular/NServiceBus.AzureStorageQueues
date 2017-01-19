@@ -4,6 +4,7 @@ namespace NServiceBus.AzureStorageQueues
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
 
     class AzureMessageQueueReceiver
@@ -53,7 +54,7 @@ namespace NServiceBus.AzureStorageQueues
 
         internal async Task<List<MessageRetrieved>> Receive(CancellationToken token)
         {
-            var rawMessages = await inputQueue.GetMessagesAsync(BatchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
+            var rawMessages = await inputQueue.GetMessagesAsync(BatchSize, MessageInvisibleTime, new QueueRequestOptions { MaximumExecutionTime = TimeSpan.FromSeconds(5), ServerTimeout = TimeSpan.FromSeconds(5)}, new OperationContext(), token).ConfigureAwait(false);
 
             var messageFound = false;
             List<MessageRetrieved> messages = null;
