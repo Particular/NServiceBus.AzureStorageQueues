@@ -6,9 +6,9 @@ namespace NServiceBus.AzureStorageQueues
     using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage.Queue;
 
-    class MessageEnvelopeUnwrapper
+    class DefaultMessageEnvelopeUnwrapper : IMessageEnvelopeUnwrapper
     {
-        public MessageEnvelopeUnwrapper(MessageWrapperSerializer messageSerializer)
+        public DefaultMessageEnvelopeUnwrapper(MessageWrapperSerializer messageSerializer)
         {
             messageWrapperSerializer = messageSerializer;
         }

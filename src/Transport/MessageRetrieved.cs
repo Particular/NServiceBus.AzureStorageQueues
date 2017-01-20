@@ -9,7 +9,7 @@
 
     class MessageRetrieved
     {
-        public MessageRetrieved(MessageEnvelopeUnwrapper unwrapper, CloudQueueMessage rawMessage, CloudQueue inputQueue, CloudQueue errorQueue)
+        public MessageRetrieved(IMessageEnvelopeUnwrapper unwrapper, CloudQueueMessage rawMessage, CloudQueue inputQueue, CloudQueue errorQueue)
         {
             this.unwrapper = unwrapper;
             this.errorQueue = errorQueue;
@@ -87,7 +87,7 @@
         readonly CloudQueue inputQueue;
         readonly CloudQueueMessage rawMessage;
         readonly CloudQueue errorQueue;
-        readonly MessageEnvelopeUnwrapper unwrapper;
+        readonly IMessageEnvelopeUnwrapper unwrapper;
     }
 
     class LeaseTimeoutException : Exception

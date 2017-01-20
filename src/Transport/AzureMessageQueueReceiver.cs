@@ -8,7 +8,7 @@ namespace NServiceBus.AzureStorageQueues
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(MessageEnvelopeUnwrapper unwrapper, CloudQueueClient client, QueueAddressGenerator addressGenerator, BackoffStrategy backoffStrategy)
+        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, CloudQueueClient client, QueueAddressGenerator addressGenerator, BackoffStrategy backoffStrategy)
         {
             this.unwrapper = unwrapper;
             this.client = client;
@@ -72,7 +72,7 @@ namespace NServiceBus.AzureStorageQueues
             return messageFound ? messages : noMessagesFound;
         }
 
-        MessageEnvelopeUnwrapper unwrapper;
+        IMessageEnvelopeUnwrapper unwrapper;
 
         QueueAddressGenerator addressGenerator;
 
