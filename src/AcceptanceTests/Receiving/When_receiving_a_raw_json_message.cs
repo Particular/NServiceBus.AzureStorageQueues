@@ -94,7 +94,7 @@
         static JsonSerializer jsonSerializer = JsonSerializer.Create();
 
 
-        class MyMessage : IMessage
+        public class MyMessage : IMessage
         {
             public string SomeProperty { get; set; }
         }
