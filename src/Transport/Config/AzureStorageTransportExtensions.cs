@@ -107,7 +107,8 @@ namespace NServiceBus
         /// <summary>
         /// Switches transport to use timeouts based on the Azure Storage Queues capabilities.
         /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> UseNativeTimeouts(this TransportExtensions<AzureStorageQueueTransport> config, string timeoutTableName)
+        // TODO: UseNativeTimeouts are internalized till doco and migration arrives.
+        internal static TransportExtensions<AzureStorageQueueTransport> UseNativeTimeouts(this TransportExtensions<AzureStorageQueueTransport> config, string timeoutTableName)
         {
             var settings = config.GetSettings();
 
