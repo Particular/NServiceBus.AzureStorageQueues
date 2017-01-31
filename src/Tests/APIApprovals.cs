@@ -1,11 +1,10 @@
 ﻿namespace NServiceBus.Azure.WindowsAzureServiceBus.Tests.API
 {
     using System.IO;
+    using System.Reflection;
     using System.Runtime.CompilerServices;
     using ApiApprover;
-    using ApprovalTests;
     using ApprovalTests.Reporters;
-    using Mono.Cecil;
     using NUnit.Framework;
 
     [TestFixture]
@@ -16,11 +15,9 @@
         [UseReporter(typeof(DiffReporter), typeof(AllFailingTestsClipboardReporter))]
         public void ApproveAzureStorageQueueTransport()
         {
-            Directory.SetCurrentDirectory(TestContext.CurrentContext.TestDirectory);
-            var assemblyPath = Path.GetFullPath(typeof(AzureStorageQueueTransport).Assembly.Location);
-            var asm = AssemblyDefinition.ReadAssembly(assemblyPath);
-            var publicApi = PublicApiGenerator.CreatePublicApiForAssembly(asm, definition => true, false);
-            Approvals.Verify(publicApi);
+            var combine = Path.Combine(TestContext.CurrentContext.TestDirectory, "NServiceBus.Azure.Transports.WindowsAzureStorageQueues.dll");
+            var assembly = Assembly.LoadFile(combine);
+            PublicApiApprover.ApprovePublicApi(assembly);
         }
     }
 }
