@@ -97,7 +97,6 @@
     <Compile Include="App_Packages\NSB.TransportTests.6.0.0\When_using_non_durable_delivery.cs" />
     <Compile Include="ConfigureAzureStorageQueueTransportInfrastructure.cs" />
     <Compile Include="ConsoleLoggerFactory.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj">
@@ -109,6 +108,5 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
