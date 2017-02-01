@@ -29,7 +29,7 @@
         {
             const string queue = "non-existent";
 
-            Assert.ThrowsAsync<StorageException>(() => Scenario.Define<Context>()
+            Assert.ThrowsAsync<Exception>(() => Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((bus, c) =>
                 {
                     var options = new SendOptions();
