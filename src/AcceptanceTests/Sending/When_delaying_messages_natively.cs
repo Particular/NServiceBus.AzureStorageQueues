@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Microsoft.WindowsAzure.Storage;
@@ -9,8 +10,7 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
-    using NUnit.Framework.Compatibility;
-
+    
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
     {
         CloudTable timeoutTable;

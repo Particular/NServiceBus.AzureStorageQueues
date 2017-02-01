@@ -2,10 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using AcceptanceTesting.Support;
     using EndpointTemplates;
     using NUnit.Framework;
     using ScenarioDescriptors;
@@ -15,15 +13,13 @@
         [Test]
         public void Connection_string_should_throw()
         {
-            var ex = Assert.ThrowsAsync<AggregateException>(() => RunTest(MainNamespaceConnectionString));
-
-            Assert.IsInstanceOf<KeyNotFoundException>(ex.InnerExceptions.Cast<ScenarioException>().Single().InnerException);
+            Assert.ThrowsAsync<KeyNotFoundException>(() => RunTest(MainNamespaceConnectionString));
         }
 
         [Test]
-        public async Task Account_mapped_should_be_respected()
+        public Task Account_mapped_should_be_respected()
         {
-            await RunTest(AnotherAccountName);
+            return RunTest(AnotherAccountName);
         }
 
         static async Task RunTest(string connectionStringOrName)
