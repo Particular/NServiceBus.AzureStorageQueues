@@ -15,7 +15,7 @@
         [Test]
         public void Should_log_send_related_error()
         {
-            Assert.ThrowsAsync<Microsoft.WindowsAzure.Storage.StorageException>(() => Scenario.Define<Context>()
+            Assert.ThrowsAsync<AggregateException>(() => Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((bus, c) => Send(bus)))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.Logs.Any(li => li.Message.Contains("Fail on proxy") && li.Level == LogLevel.Error))
@@ -28,7 +28,7 @@
         {
             const string queue = "non-existent";
 
-            Assert.ThrowsAsync<Exception>(() => Scenario.Define<Context>()
+            Assert.ThrowsAsync<AggregateException>(() => Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((bus, c) =>
                 {
                     var options = new SendOptions();

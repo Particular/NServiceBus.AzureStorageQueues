@@ -52,7 +52,8 @@
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
             var connectionObject = new ConnectionString(connectionString);
-            
+            var client = CreateQueueClients.CreateReceiver(connectionObject);
+
             return new TransportReceiveInfrastructure(
                 () =>
                 {
@@ -66,7 +67,6 @@
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                     var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
 
-                    var client = CreateQueueClients.CreateReceiver(connectionObject);
                     var receiver = new AzureMessageQueueReceiver(unwrapper, client, addressGenerator, new BackoffStrategy(maximumWaitTime, peekInterval))
                     {
                         MessageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
@@ -83,7 +83,7 @@
 
                     return new MessagePump(receiver, addressing, degreeOfReceiveParallelism);
                 },
-                () => new AzureMessageQueueCreator(CreateQueueClients.CreateReceiver(connectionObject), GetAddressGenerator(settings)),
+                () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings)),
                 () => Task.FromResult(StartupCheckResult.Success)
                 );
         }

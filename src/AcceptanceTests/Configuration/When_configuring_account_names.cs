@@ -1,8 +1,10 @@
 ﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
 {
     using System;
+    using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using AcceptanceTesting.Support;
     using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
     using NUnit.Framework;
@@ -25,8 +27,9 @@
         [Test]
         public void Should_not_accept_mappings_without_default()
         {
-            var exception = Assert.CatchAsync(() => { return Configure(cfg => { cfg.AccountRouting().AddAccount(Another, anotherConnectionString); }); });
-            Assert.IsTrue(exception.Message.Contains("The mapping of account names instead of connection strings is enabled, but the default connection string name isn\'t provided. Provide the default connection string name when adding more accounts"), "Message is missing or incorrect");
+            var ex = Assert.ThrowsAsync<AggregateException>(() => { return Configure(cfg => { cfg.AccountRouting().AddAccount(Another, anotherConnectionString); }); });
+            var inner = ex.InnerExceptions.OfType<ScenarioException>().Single();
+            Assert.IsInstanceOf<Exception>(inner.InnerException);
         }
 
         [Test]
@@ -110,7 +113,7 @@
         }
 
         [Serializable]
-        public class MyMessage : ICommand
+        class MyMessage : ICommand
         {
         }
     }

@@ -145,7 +145,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         }
 
         [Serializable]
-        public class MyCommand : ICommand
+        class MyCommand : ICommand
         {
         }
     }
