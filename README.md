@@ -4,8 +4,9 @@ The Azure Storage Queues transport for NServiceBus enables the use of the Azure 
 
 ## Documentation
 
-[Azure Transport](http://docs.particular.net/nservicebus/windows-azure-transport)
-[Samples](https://github.com/Particular/NServiceBus.Azure.samples)
+[Azure Transport](https://docs.particular.net/nservicebus/azure-storage-queues/)
+
+[Samples](https://docs.particular.net/samples/azure/storage-queues/)
 
 ## Maintainers
-The following team is responsible for this repository: @Particular/azure-storage-queues-maintainers
+The following team is responsible for this repository: @Particular/azure-maintainers
