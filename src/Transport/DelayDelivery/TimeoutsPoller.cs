@@ -38,10 +38,12 @@
             this.backoffStrategy = backoffStrategy;
         }
 
-        public async Task Start(ReadOnlySettings settings, CancellationToken token)
+        public async Task Start(ReadOnlySettings settings, CancellationToken cancellationToken)
         {
-            await Init(settings).ConfigureAwait(false);
-            timeoutPollerTask = Task.Run(() => Poll(token));
+            await Init(settings, cancellationToken).ConfigureAwait(false);
+            // No need to pass token to run. to avoid when token is cancelled the task changing into 
+            // the cancelled state and when awaited while stopping rethrow the cancelled exception
+            timeoutPollerTask = Task.Run(() => Poll(cancellationToken));
         }
 
         public Task Stop()
@@ -55,7 +57,8 @@
             {
                 try
                 {
-                    await InnerPoll(cancellationToken).ConfigureAwait(false);
+                    await InnerPoll(cancellationToken)
+                        .ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -69,7 +72,8 @@
 
             try
             {
-                await lockManager.TryRelease().ConfigureAwait(false);
+                await lockManager.TryRelease(cancellationToken)
+                    .ConfigureAwait(false);
             }
             catch
             {
@@ -77,25 +81,29 @@
             }
         }
 
-        async Task InnerPoll(CancellationToken token)
+        async Task InnerPoll(CancellationToken cancellationToken)
         {
-            while (!token.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                if (await TryLease().ConfigureAwait(false))
+                if (await TryLease(cancellationToken)
+                    .ConfigureAwait(false))
                 {
                     try
                     {
-                        await SpinOnce(token).ConfigureAwait(false);
+                        await SpinOnce(cancellationToken)
+                            .ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
                         Logger.Warn("Failed at spinning the poller", ex);
-                        await BackoffOnError(token).ConfigureAwait(false);
+                        await BackoffOnError(cancellationToken)
+                            .ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    await BackoffOnError(token).ConfigureAwait(false);
+                    await BackoffOnError(cancellationToken)
+                        .ConfigureAwait(false);
                 }
             }
         }
@@ -106,9 +114,9 @@
             return backoffStrategy.OnBatch(TimeoutProcessedAtOnce, 0, cancellationToken);
         }
 
-        Task<bool> TryLease()
+        Task<bool> TryLease(CancellationToken cancellationToken)
         {
-            return lockManager.TryLockOrRenew();
+            return lockManager.TryLockOrRenew(cancellationToken);
         }
 
         async Task SpinOnce(CancellationToken cancellationToken)
@@ -127,14 +135,15 @@
                 TakeCount = TimeoutProcessedAtOnce // max batch size
             };
 
-            var timeouts = await table.ExecuteQueryAsync(query, TimeoutProcessedAtOnce, cancellationToken).ConfigureAwait(false);
+            var timeouts = await table.ExecuteQueryAsync(query, TimeoutProcessedAtOnce, cancellationToken)
+                .ConfigureAwait(false);
 
-            if (await TryLease().ConfigureAwait(false) == false)
+            if (await TryLease(cancellationToken).ConfigureAwait(false) == false)
             {
                 return;
             }
 
-            var sw = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
 
             foreach (var timeout in timeouts)
             {
@@ -144,13 +153,13 @@
                 }
 
                 // after half check if the lease is active
-                if (sw.Elapsed > HalfOfLeaseLength)
+                if (stopwatch.Elapsed > HalfOfLeaseLength)
                 {
-                    if (await TryLease().ConfigureAwait(false) == false)
+                    if (await TryLease(cancellationToken).ConfigureAwait(false) == false)
                     {
                         return;
                     }
-                    sw.Reset();
+                    stopwatch.Reset();
                 }
 
                 try
@@ -160,37 +169,37 @@
                     if (isAtMostOnce)
                     {
                         // delete first, then dispatch
-                        await table.ExecuteAsync(delete).ConfigureAwait(false);
-                        await SafeDispatch(timeout).ConfigureAwait(false);
+                        await table.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
+                        await SafeDispatch(timeout, cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
                         // dispatch first, then delete
-                        await SafeDispatch(timeout).ConfigureAwait(false);
-                        await table.ExecuteAsync(delete).ConfigureAwait(false);
+                        await SafeDispatch(timeout, cancellationToken).ConfigureAwait(false);
+                        await table.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
                     // just log and move on with the rest
-                    Logger.Warn($"Failed at dispatching the timeout PK:'{timeout.PartitionKey}' RK: '{timeout.RowKey}' with message id '{timeout.MessageId}'", ex);
+                    Logger.Warn($"Failed at dispatching the timeout PK:'{timeout.PartitionKey}' RK: '{timeout.RowKey}' with message id '{timeout.MessageId}'", exception);
                 }
             }
 
             await backoffStrategy.OnBatch(TimeoutProcessedAtOnce, timeouts.Count, cancellationToken).ConfigureAwait(false);
         }
 
-        async Task SafeDispatch(TimeoutEntity timeout)
+        async Task SafeDispatch(TimeoutEntity timeout, CancellationToken cancellationToken)
         {
             var operation = timeout.GetOperation();
             try
             {
-                await dispatcher.Send(operation).ConfigureAwait(false);
+                await dispatcher.Send(operation, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception)
             {
                 // if send fails for any reason
-                await dispatcher.Send(CreateOperationForErrorQueue(operation)).ConfigureAwait(false);
+                await dispatcher.Send(CreateOperationForErrorQueue(operation), cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -199,11 +208,11 @@
             return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
         }
 
-        async Task Init(ReadOnlySettings settings)
+        async Task Init(ReadOnlySettings settings, CancellationToken cancellationToken)
         {
             errorQueue = settings.ErrorQueueAddress();
             var account = CloudStorageAccount.Parse(connectionString);
-            table = await TimeoutEntity.BuiltTimeoutTableWithExplicitName(connectionString, tableName).ConfigureAwait(false);
+            table = await TimeoutEntity.BuiltTimeoutTableWithExplicitName(connectionString, tableName, cancellationToken).ConfigureAwait(false);
             var container = account.CreateCloudBlobClient().GetContainerReference(table.Name.ToLower()); // TODO: can it be lowered?
             lockManager = new LockManager(container, LeaseLength);
             isAtMostOnce = settings.GetRequiredTransactionModeForReceives() == TransportTransactionMode.None;

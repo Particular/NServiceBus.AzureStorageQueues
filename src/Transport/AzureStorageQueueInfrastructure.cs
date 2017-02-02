@@ -39,7 +39,7 @@
             else
             {
                 var @true = Task.FromResult(true);
-                shouldDispatch = u => @true;
+                shouldDispatch = (u,y) => @true;
             }
             DeliveryConstraints = contraints;
         }
@@ -187,7 +187,7 @@
         readonly string timeoutsTableName;
         NativeDelayDelivery delayedDelivery;
         bool useNativeTimeouts;
-        readonly Func<UnicastTransportOperation, Task<bool>> shouldDispatch;
+        readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldDispatch;
         TimeoutsPoller poller;
         CancellationTokenSource cancellationSource;
     }

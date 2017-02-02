@@ -1,20 +1,19 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 
-    /// <summary>
-    /// Provides a container lease based lock manager.
-    /// </summary>
+    // Provides a container lease based lock manager.
     sealed class LockManager
     {
-        readonly TimeSpan span;
-        readonly CloudBlobContainer container;
-        bool _created;
-        string _lease;
+        TimeSpan span;
+        CloudBlobContainer container;
+        bool created;
+        string lease;
 
         public LockManager(CloudBlobContainer container, TimeSpan span)
         {
@@ -22,54 +21,51 @@
             this.span = span;
         }
 
-        public async Task<bool> TryLockOrRenew()
+        public async Task<bool> TryLockOrRenew(CancellationToken cancellationToken)
         {
-            await EnsureContainerExists().ConfigureAwait(false);
+            await EnsureContainerExists(cancellationToken).ConfigureAwait(false);
 
-            if (_lease == null)
+            if (lease == null)
             {
                 try
                 {
-                    _lease = await container.AcquireLeaseAsync(span).ConfigureAwait(false);
+                    lease = await container.AcquireLeaseAsync(span, null, cancellationToken).ConfigureAwait(false);
                     return true;
                 }
-                catch (StorageException ex)
+                catch (StorageException exception)
                 {
-                    if (ex.RequestInformation.ExtendedErrorInformation.ErrorCode == BlobErrorCodeStrings.LeaseAlreadyPresent)
+                    if (exception.RequestInformation.ExtendedErrorInformation.ErrorCode == BlobErrorCodeStrings.LeaseAlreadyPresent)
                     {
                         return false;
                     }
                     throw;
                 }
             }
-            else
+            try
             {
-                try
+                await container.RenewLeaseAsync(AccessCondition.GenerateLeaseCondition(lease), cancellationToken).ConfigureAwait(false);
+                return true;
+            }
+            catch (StorageException exception)
+            {
+                if (exception.RequestInformation.ExtendedErrorInformation.ErrorCode == BlobErrorCodeStrings.LeaseIdMismatchWithLeaseOperation)
                 {
-                    await container.RenewLeaseAsync(AccessCondition.GenerateLeaseCondition(_lease)).ConfigureAwait(false);
-                    return true;
+                    lease = null;
+                    return false;
                 }
-                catch (StorageException ex)
-                {
-                    if (ex.RequestInformation.ExtendedErrorInformation.ErrorCode == BlobErrorCodeStrings.LeaseIdMismatchWithLeaseOperation)
-                    {
-                        _lease = null;
-                        return false;
-                    }
-                    throw;
-                }
+                throw;
             }
         }
 
-        public async Task TryRelease()
+        public async Task TryRelease(CancellationToken cancellationToken)
         {
-            await EnsureContainerExists().ConfigureAwait(false);
+            await EnsureContainerExists(cancellationToken).ConfigureAwait(false);
 
-            if (_lease != null)
+            if (lease != null)
             {
                 try
                 {
-                    await container.ReleaseLeaseAsync(AccessCondition.GenerateLeaseCondition(_lease)).ConfigureAwait(false);
+                    await container.ReleaseLeaseAsync(AccessCondition.GenerateLeaseCondition(lease), cancellationToken).ConfigureAwait(false);
                 }
                 catch (StorageException)
                 {
@@ -77,12 +73,12 @@
             }
         }
 
-        async Task EnsureContainerExists()
+        async Task EnsureContainerExists(CancellationToken cancellationToken)
         {
-            if (_created == false)
+            if (created == false)
             {
-                await container.CreateIfNotExistsAsync().ConfigureAwait(false);
-                _created = true;
+                await container.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+                created = true;
             }
         }
     }
