@@ -65,11 +65,15 @@
         public static async Task<CloudTable> BuiltTimeoutTableWithExplicitName(string connectionString, string tableName, CancellationToken cancellationToken)
         {
             CloudStorageAccount account;
-            var tables = CloudStorageAccount.TryParse(connectionString, out account) ? account.CreateCloudTableClient() : null;
+            if (!CloudStorageAccount.TryParse(connectionString, out account))
+            {
+                throw new Exception($"Cannot parse ConnectionString to a CloudStorageAccount. ConnectionString: {connectionString}");
+            }
+            var tables = account.CreateCloudTableClient();
             // TODO: fix the naming or add queue to the timeout
-            var t = tables.GetTableReference(tableName);
-            await t.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
-            return t;
+            var table = tables.GetTableReference(tableName);
+            await table.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+            return table;
         }
 
         static string BuildTimeoutTableName(string queueName)
