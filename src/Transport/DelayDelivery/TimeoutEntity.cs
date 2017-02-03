@@ -74,9 +74,8 @@
 
         static string BuildTimeoutTableName(string queueName)
         {
-            return TablePrefix + queueName.Replace("-","");
+            return $"Timeouts{queueName.Replace("-", "")}";
         }
 
-        const string TablePrefix = "Timeouts";
     }
 }

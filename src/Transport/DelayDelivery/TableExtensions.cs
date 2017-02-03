@@ -1,6 +1,5 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
@@ -9,14 +8,15 @@
 
     static class TableExtensions
     {
-        public static async Task<IList<T>> ExecuteQueryAsync<T>(this CloudTable table, TableQuery<T> query, int take = Int32.MaxValue, CancellationToken ct = default(CancellationToken)) where T : ITableEntity, new()
+        public static async Task<IList<T>> ExecuteQueryAsync<T>(this CloudTable table, TableQuery<T> query, int take, CancellationToken cancellationToken)
+            where T : ITableEntity, new()
         {
             var items = new List<T>();
             TableContinuationToken token = null;
 
             do
             {
-                var seg = await table.ExecuteQuerySegmentedAsync(query, token, ct).ConfigureAwait(false);
+                var seg = await table.ExecuteQuerySegmentedAsync(query, token, cancellationToken).ConfigureAwait(false);
                 token = seg.ContinuationToken;
 
                 if (items.Count + seg.Results.Count > take)
@@ -28,7 +28,7 @@
                 {
                     items.AddRange(seg);
                 }
-            } while (token != null && !ct.IsCancellationRequested && items.Count < take);
+            } while (token != null && !cancellationToken.IsCancellationRequested && items.Count < take);
 
             return items;
         }
