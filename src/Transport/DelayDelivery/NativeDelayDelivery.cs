@@ -2,6 +2,7 @@
 {
     using System;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using DelayedDelivery;
     using Microsoft.WindowsAzure.Storage;
@@ -22,14 +23,14 @@
             return timeouts.CreateIfNotExistsAsync();
         }
 
-        public async Task<bool> ShouldDispatch(UnicastTransportOperation operation)
+        public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
             var delay = GetVisbilityDelay(operation);
             if (delay == null)
             {
                 return true;
             }
-            await ScheduleAt(operation, UtcNow + delay.Value).ConfigureAwait(false);
+            await ScheduleAt(operation, UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
             return false;
         }
 
@@ -61,16 +62,16 @@
             return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
         }
 
-        Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date)
+        Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken)
         {
             var timeout = new TimeoutEntity
             {
                 PartitionKey = TimeoutEntity.GetPartitionKey(date),
-                RowKey = TimeoutEntity.GetRawRowKeyPrefix(date) + "_" + Guid.NewGuid().ToString("N"),
+                RowKey = $"{TimeoutEntity.GetRawRowKeyPrefix(date)}_{Guid.NewGuid():N}",
             };
 
             timeout.SetOperation(operation);
-            return timeouts.ExecuteAsync(TableOperation.Insert(timeout));
+            return timeouts.ExecuteAsync(TableOperation.Insert(timeout), cancellationToken);
         }
     }
 }

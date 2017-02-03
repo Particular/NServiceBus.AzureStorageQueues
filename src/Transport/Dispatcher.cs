@@ -5,6 +5,7 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Config;
@@ -16,7 +17,7 @@
 
     class Dispatcher : IDispatchMessages
     {
-        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, Task<bool>> shouldSend)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend)
         {
             createQueueClients = new CreateQueueClients();
             this.addressGenerator = addressGenerator;
@@ -25,25 +26,25 @@
             this.shouldSend = shouldSend;
         }
 
-        public async Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
+        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
         {
             if (outgoingMessages.MulticastTransportOperations.Any())
             {
                 throw new Exception("The Azure Storage Queue transport only supports unicast transport operations.");
             }
 
-            var sends = new List<Task>(outgoingMessages.UnicastTransportOperations.Count());
+            var sends = new List<Task>(outgoingMessages.UnicastTransportOperations.Count);
             foreach (var unicastTransportOperation in outgoingMessages.UnicastTransportOperations)
             {
-                sends.Add(Send(unicastTransportOperation));
+                sends.Add(Send(unicastTransportOperation, CancellationToken.None));
             }
 
-            await Task.WhenAll(sends).ConfigureAwait(false);
+            return Task.WhenAll(sends);
         }
 
-        public async Task Send(UnicastTransportOperation operation)
+        public async Task Send(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
-            var dispatchDecision = await shouldSend(operation).ConfigureAwait(false);
+            var dispatchDecision = await shouldSend(operation, cancellationToken).ConfigureAwait(false);
             if (dispatchDecision == false)
             {
                 return;
@@ -144,6 +145,6 @@
         ILog logger = LogManager.GetLogger(typeof(Dispatcher));
         ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
         readonly MessageWrapperSerializer serializer;
-        readonly Func<UnicastTransportOperation, Task<bool>> shouldSend;
+        readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
     }
 }

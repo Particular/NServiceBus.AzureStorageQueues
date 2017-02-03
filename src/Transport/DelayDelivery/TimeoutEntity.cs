@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
@@ -55,26 +56,30 @@
             return dto.ToString(RowKeyScope);
         }
 
-        public static Task<CloudTable> BuildTimeoutTableByQueueName(string connectionString, string queueName)
+        public static Task<CloudTable> BuildTimeoutTableByQueueName(string connectionString, string queueName, CancellationToken cancellationToken)
         {
             var tableName = BuildTimeoutTableName(queueName);
-            return BuiltTimeoutTableWithExplicitName(connectionString, tableName);
+            return BuiltTimeoutTableWithExplicitName(connectionString, tableName, cancellationToken);
         }
 
-        public static async Task<CloudTable> BuiltTimeoutTableWithExplicitName(string connectionString, string tableName)
+        public static async Task<CloudTable> BuiltTimeoutTableWithExplicitName(string connectionString, string tableName, CancellationToken cancellationToken)
         {
             CloudStorageAccount account;
-            var tables = CloudStorageAccount.TryParse(connectionString, out account) ? account.CreateCloudTableClient() : null;
-            var t = tables.GetTableReference(tableName); // TODO: fix the naming or add queue to the timeout
-            await t.CreateIfNotExistsAsync().ConfigureAwait(false);
-            return t;
+            if (!CloudStorageAccount.TryParse(connectionString, out account))
+            {
+                throw new Exception($"Cannot parse ConnectionString to a CloudStorageAccount. ConnectionString: {connectionString}");
+            }
+            var tables = account.CreateCloudTableClient();
+            // TODO: fix the naming or add queue to the timeout
+            var table = tables.GetTableReference(tableName);
+            await table.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+            return table;
         }
 
         static string BuildTimeoutTableName(string queueName)
         {
-            return TablePrefix + queueName.Replace("-","");
+            return $"Timeouts{queueName.Replace("-", "")}";
         }
 
-        const string TablePrefix = "Timeouts";
     }
 }

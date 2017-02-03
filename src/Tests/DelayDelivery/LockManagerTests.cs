@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.DelayDelivery
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using WindowsAzureStorageQueues.DelayDelivery;
     using Microsoft.WindowsAzure.Storage;
@@ -26,7 +27,7 @@
             const int manyTimes = 10;
             for (var i = 0; i < manyTimes; i++)
             {
-                Assert.IsTrue(await manager.TryLockOrRenew().ConfigureAwait(false));
+                Assert.IsTrue(await manager.TryLockOrRenew(CancellationToken.None).ConfigureAwait(false));
             }
         }
 
@@ -37,8 +38,8 @@
             var manager1 = GetLockManager(id);
             var manager2 = GetLockManager(id);
 
-            await manager1.TryLockOrRenew().ConfigureAwait(false);
-            Assert.IsFalse(await manager2.TryLockOrRenew().ConfigureAwait(false));
+            await manager1.TryLockOrRenew(CancellationToken.None).ConfigureAwait(false);
+            Assert.IsFalse(await manager2.TryLockOrRenew(CancellationToken.None).ConfigureAwait(false));
         }
 
         [Test]
@@ -48,9 +49,9 @@
             var manager1 = GetLockManager(id);
             var manager2 = GetLockManager(id);
 
-            await manager1.TryLockOrRenew().ConfigureAwait(false);
-            await manager1.TryRelease().ConfigureAwait(false);
-            Assert.IsTrue(await manager2.TryLockOrRenew().ConfigureAwait(false));
+            await manager1.TryLockOrRenew(CancellationToken.None).ConfigureAwait(false);
+            await manager1.TryRelease(CancellationToken.None).ConfigureAwait(false);
+            Assert.IsTrue(await manager2.TryLockOrRenew(CancellationToken.None).ConfigureAwait(false));
         }
 
         LockManager GetLockManager(string containerName)
