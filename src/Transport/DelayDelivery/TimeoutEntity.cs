@@ -12,29 +12,35 @@
 
     class TimeoutEntity : TableEntity
     {
+        static JsonSerializer serializer = new JsonSerializer();
         public string Destination { get; set; }
         public byte[] Body { get; set; }
         public string MessageId { get; set; }
         public string Headers { get; set; }
         
-        static string Serialize<T>(T obj)
+        static string Serialize<T>(T value)
         {
-            var sw = new StringWriter();
-            new JsonSerializer().Serialize(sw, obj);
-            sw.Flush();
-            return sw.ToString();
+            using (var stringWriter = new StringWriter())
+            {
+                serializer.Serialize(stringWriter, value);
+                return stringWriter.ToString();
+            }
         }
 
-        static T Deserialize<T>(string obj)
+        static T Deserialize<T>(string value)
         {
-            return new JsonSerializer().Deserialize<T>(new JsonTextReader(new StringReader(obj)));
+            using (var stringReader = new StringReader(value))
+            using (var jsonReader = new JsonTextReader(stringReader))
+            {
+                return serializer.Deserialize<T>(jsonReader);
+            }
         }
 
         public void SetOperation(UnicastTransportOperation operation)
         {
             Destination = operation.Destination;
             Body = operation.Message.Body;
-            MessageId=operation.Message.MessageId;
+            MessageId = operation.Message.MessageId;
             Headers = Serialize(operation.Message.Headers);
         }
 
