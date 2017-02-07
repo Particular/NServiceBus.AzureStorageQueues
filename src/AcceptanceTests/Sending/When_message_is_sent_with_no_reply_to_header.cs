@@ -11,18 +11,19 @@
 
     public class When_message_is_sent_with_no_reply_to_header : NServiceBusAcceptanceTest
     {
+        const string EndpointName = "custom-no-reply-receiver";
         CloudQueue helperQueue;
         CloudQueue testQueue;
         string connectionString;
 
         [SetUp]
-        public void SetUp()
+        public new void SetUp()
         {
             connectionString = Environment.GetEnvironmentVariable("AzureStorageQueueTransport.ConnectionString");
             var account = CloudStorageAccount.Parse(connectionString);
             var queues = account.CreateCloudQueueClient();
             helperQueue = queues.GetQueueReference("custom-no-reply-header");
-            testQueue = queues.GetQueueReference("messageissentwithnoreplytoheader-receiverendpoint");
+            testQueue = queues.GetQueueReference(EndpointName);
 
             helperQueue.CreateIfNotExists();
             testQueue.CreateIfNotExists();
@@ -34,7 +35,7 @@
             var context = new Context();
 
             Scenario.Define(context)
-                .WithEndpoint<ReceiverEndPoint>(b =>
+                .WithEndpoint<Receiver>(b =>
                 {
                     b.Given((bus, c) =>
                     {
@@ -85,11 +86,11 @@
             public bool WasCalled { get; set; }
         }
 
-        public class ReceiverEndPoint : EndpointConfigurationBuilder
+        public class Receiver : EndpointConfigurationBuilder
         {
-            public ReceiverEndPoint()
+            public Receiver()
             {
-                EndpointSetup<DefaultServer>();
+                EndpointSetup<DefaultServer>().CustomEndpointName(EndpointName);
             }
 
             public class MyMessageHandler : IHandleMessages<Message>
