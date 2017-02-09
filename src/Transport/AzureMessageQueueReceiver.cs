@@ -181,7 +181,16 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                     throw new SerializationException("Failed to deserialize message with id: " + rawMessage.Id);
                 }
 
-                return new TransportMessage(m.Id, m.Headers, Address.Parse(m.ReplyToAddress))
+                if (string.IsNullOrEmpty(m.ReplyToAddress))
+                {
+                    m.Headers.Remove(Headers.ReplyToAddress);
+                }
+                else
+                {
+                    m.Headers[Headers.ReplyToAddress] = m.ReplyToAddress;
+                }
+
+                var transportMessage = new TransportMessage(m.Id, m.Headers)
                 {
                     Body = m.Body ?? new byte[0],
                     CorrelationId = m.CorrelationId,
@@ -189,6 +198,8 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
                     TimeToBeReceived = m.TimeToBeReceived,
                     MessageIntent = m.MessageIntent
                 };
+                
+                return transportMessage;
             }
         }
 
