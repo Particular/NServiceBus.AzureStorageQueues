@@ -56,6 +56,7 @@
                         }
                     });
                 })
+                .Done(c => c.WasCalled)
                 .Run();
 
 
