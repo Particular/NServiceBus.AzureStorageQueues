@@ -32,7 +32,6 @@ namespace NServiceBus
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config)
             where TSerializationDefinition : NServiceBus.Serialization.SerializationDefinition, new () { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UnwrapMessagesWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Func<Microsoft.WindowsAzure.Storage.Queue.CloudQueueMessage, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> unwrapper) { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseNativeTimeouts(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, string timeoutTableName) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseSha1ForShortening(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
     }
     [System.ObsoleteAttribute("This class was replaced by extension methods on endpointConfiguration.UseTranspor" +
