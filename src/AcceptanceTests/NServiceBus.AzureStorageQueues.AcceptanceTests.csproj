@@ -345,6 +345,7 @@
     <Compile Include="App_Packages\NSB.AcceptanceTests.6.0.0\Versioning\When_multiple_versions_of_a_message_is_published.cs" />
     <Compile Include="Configuration\JsonExtensions.cs" />
     <Compile Include="Configuration\When_configuring_message_wrapper_serializer.cs" />
+    <Compile Include="Configuration\When_receiving_from_another_account_wo_aliases.cs" />
     <Compile Include="Configuration\When_sending_messages_with_mapped_account_names.cs" />
     <Compile Include="Configuration\When_configuring_account_names.cs" />
     <Compile Include="Configuration\When_sending_message_with_custom_reply_to.cs" />
