@@ -77,10 +77,13 @@
                     }
                     else
                     {
-                        // it must be a logical name, try to find it, otherwise throw
-                        if (aliasToConnectionStringMap.ContainsKey(address.StorageAccount) == false)
+                        if (useLogicalQueueAddresses)
                         {
-                            throw new KeyNotFoundException($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
+                            // it must be a logical name, try to find it, otherwise throw
+                            if (aliasToConnectionStringMap.ContainsKey(address.StorageAccount) == false)
+                            {
+                                throw new KeyNotFoundException($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
+                            }
                         }
                     }
                 }
