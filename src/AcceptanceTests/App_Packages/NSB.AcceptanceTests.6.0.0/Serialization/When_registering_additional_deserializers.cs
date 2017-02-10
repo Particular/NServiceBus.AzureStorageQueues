@@ -16,6 +16,7 @@
     public class When_registering_additional_deserializers : NServiceBusAcceptanceTest
     {
         [Test]
+        [Ignore("ASQ does not support this")]
         public async Task Two_endpoints_with_different_serializers_should_deserialize_the_message()
         {
             var context = await Scenario.Define<Context>()
