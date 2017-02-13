@@ -8,7 +8,7 @@
 
     public class When_receiving_from_another_account_wo_aliases : NServiceBusAcceptanceTest
     {
-        const string ReplyToValue = "queue@DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;";
+        const string UnmappedConnectionString = "queue@DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;";
 
         [Test]
         public async Task Should_properly_handle_it()
@@ -18,7 +18,7 @@
                 {
                     var options = new SendOptions();
                     options.RouteToThisEndpoint();
-                    options.RouteReplyTo(ReplyToValue);
+                    options.RouteReplyTo(UnmappedConnectionString);
                     return s.Send(new MyMessage(), options);
                 }))
                 .Done(c => c.HandlerCalled)
@@ -55,7 +55,7 @@
 
             public Task Handle(MyMessage message, IMessageHandlerContext context)
             {
-                if (context.MessageHeaders[Headers.ReplyToAddress] == ReplyToValue)
+                if (context.MessageHeaders[Headers.ReplyToAddress] == UnmappedConnectionString)
                 {
                     scenarioContext.HandlerCalled = true;
                 }
