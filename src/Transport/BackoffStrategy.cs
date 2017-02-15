@@ -40,7 +40,7 @@ namespace NServiceBus.AzureStorageQueues
             return Task.Delay(timeToDelayNextPeek, token);
         }
 
-        public Task OnBatch(int requestedBatchSize, int receivedBatchSize, CancellationToken token)
+        public Task OnBatch(int receivedBatchSize, CancellationToken token)
         {
             if (receivedBatchSize > 0)
             {

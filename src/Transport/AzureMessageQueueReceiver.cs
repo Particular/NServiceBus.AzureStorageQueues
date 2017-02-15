@@ -68,7 +68,7 @@ namespace NServiceBus.AzureStorageQueues
                 messages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue, errorQueue));
             }
 
-            await backoffStrategy.OnBatch(BatchSize, messageFound ? messages.Count : 0, token).ConfigureAwait(false);
+            await backoffStrategy.OnBatch(messageFound ? messages.Count : 0, token).ConfigureAwait(false);
             return messageFound ? messages : noMessagesFound;
         }
 
