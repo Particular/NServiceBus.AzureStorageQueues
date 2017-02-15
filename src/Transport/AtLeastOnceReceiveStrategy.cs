@@ -78,6 +78,6 @@ namespace NServiceBus.AzureStorageQueues
         readonly Func<MessageContext, Task> pipeline;
         readonly Func<ErrorContext, Task<ErrorHandleResult>> errorPipe;
 
-        static readonly ILog Logger = LogManager.GetLogger(typeof(ReceiveStrategy));
+        static readonly ILog Logger = LogManager.GetLogger<ReceiveStrategy>();
     }
 }

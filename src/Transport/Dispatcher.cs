@@ -142,7 +142,7 @@
         AzureStorageAddressingSettings addressing;
         readonly CreateQueueClients createQueueClients;
 
-        static ILog logger = LogManager.GetLogger(typeof(Dispatcher));
+        static ILog logger = LogManager.GetLogger<Dispatcher>();
         ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
         readonly MessageWrapperSerializer serializer;
         readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
