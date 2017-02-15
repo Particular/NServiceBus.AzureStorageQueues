@@ -190,7 +190,7 @@
         Task[] messagePumpTasks;
         ConcurrentDictionary<Task, Task> runningReceiveTasks;
         int? degreeOfReceiveParallelism;
-        static ILog Logger = LogManager.GetLogger(typeof(MessagePump));
+        static ILog Logger = LogManager.GetLogger<MessagePump>();
         static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
     }

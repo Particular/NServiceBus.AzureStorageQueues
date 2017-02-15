@@ -49,13 +49,10 @@
                     value = delay.Delay;
                     return value;
                 }
-                else
+                var exact = deliveryConstraint as DoNotDeliverBefore;
+                if (exact != null)
                 {
-                    var exact = deliveryConstraint as DoNotDeliverBefore;
-                    if (exact != null)
-                    {
-                        value = UtcNow - exact.At;
-                    }
+                    value = UtcNow - exact.At;
                 }
             }
 

@@ -4,14 +4,9 @@
     using Config;
     using Settings;
 
-    class DefaultConfigurationValues
+    static class DefaultConfigurationValues
     {
-        public void Apply(SettingsHolder settings)
-        {
-            ApplyDefaults(settings);
-        }
-
-        void ApplyDefaults(SettingsHolder settings)
+        public static void Apply(SettingsHolder settings)
         {
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverConnectionString, DefaultConnectionString);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, DefaultMessageInvisibleTime);
@@ -20,9 +15,9 @@
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverBatchSize, DefaultBatchSize);
         }
 
-        TimeSpan DefaultMessageInvisibleTime = TimeSpan.FromSeconds(30);
-        TimeSpan DefaultPeekInterval = TimeSpan.FromMilliseconds(125);
-        TimeSpan DefaultMaximumWaitTimeWhenIdle = TimeSpan.FromSeconds(30);
+        static TimeSpan DefaultMessageInvisibleTime = TimeSpan.FromSeconds(30);
+        static TimeSpan DefaultPeekInterval = TimeSpan.FromMilliseconds(125);
+        static TimeSpan DefaultMaximumWaitTimeWhenIdle = TimeSpan.FromSeconds(30);
         const int DefaultBatchSize = 32;
         const string DefaultConnectionString = "";
     }

@@ -7,6 +7,7 @@ namespace NServiceBus
     {
         public static TransportExtensions<AzureStorageQueueTransport> UseAccountAliasesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config)
         {
+            Guard.AgainstNull(nameof(config), config);
             config.GetSettings().Set(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, true);
             return config;
         }
@@ -16,11 +17,13 @@ namespace NServiceBus
         /// </summary>
         public static AccountRoutingSettings AccountRouting(this TransportExtensions<AzureStorageQueueTransport> transportExtensions)
         {
+            Guard.AgainstNull(nameof(transportExtensions), transportExtensions);
             return new AccountRoutingSettings(transportExtensions.EnsureAccounts());
         }
 
         public static TransportExtensions<AzureStorageQueueTransport> DefaultAccountAlias(this TransportExtensions<AzureStorageQueueTransport> transportExtensions, string alias)
         {
+            Guard.AgainstNull(nameof(transportExtensions), transportExtensions);
             transportExtensions.EnsureAccounts().MapLocalAccount(alias);
             return transportExtensions;
         }

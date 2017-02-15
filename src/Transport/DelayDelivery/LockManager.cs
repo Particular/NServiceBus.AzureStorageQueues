@@ -8,7 +8,7 @@
     using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 
     // Provides a container lease based lock manager.
-    sealed class LockManager
+    class LockManager
     {
         TimeSpan span;
         CloudBlobContainer container;
