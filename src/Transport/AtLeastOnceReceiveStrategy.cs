@@ -8,7 +8,7 @@ namespace NServiceBus.AzureStorageQueues
     using Logging;
     using Transport;
 
-    sealed class AtLeastOnceReceiveStrategy : ReceiveStrategy
+    class AtLeastOnceReceiveStrategy : ReceiveStrategy
     {
         public AtLeastOnceReceiveStrategy(Func<MessageContext, Task> pipeline, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe)
         {

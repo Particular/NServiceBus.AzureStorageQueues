@@ -2,7 +2,7 @@
 {
     using System;
 
-    sealed class QueueAddress : IEquatable<QueueAddress>
+    class QueueAddress : IEquatable<QueueAddress>
     {
         public QueueAddress(string queueName, string storageAccount)
         {

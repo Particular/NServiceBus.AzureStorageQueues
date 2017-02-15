@@ -12,7 +12,7 @@ namespace NServiceBus.AzureStorageQueues
     /// At-most-once receive strategy receives at most once, acking first, then processing the message.
     /// If the pipeline fails, the message is not processed any longer. No first or second level retries are executed.
     /// </summary>
-    sealed class AtMostOnceReceiveStrategy : ReceiveStrategy
+    class AtMostOnceReceiveStrategy : ReceiveStrategy
     {
         public AtMostOnceReceiveStrategy(Func<MessageContext, Task> pipeline, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe)
         {
