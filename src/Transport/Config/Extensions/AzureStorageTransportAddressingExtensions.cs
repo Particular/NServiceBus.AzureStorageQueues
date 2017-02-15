@@ -23,6 +23,7 @@ namespace NServiceBus
 
         public static TransportExtensions<AzureStorageQueueTransport> DefaultAccountAlias(this TransportExtensions<AzureStorageQueueTransport> transportExtensions, string alias)
         {
+            Guard.AgainstNull(nameof(transportExtensions), transportExtensions);
             transportExtensions.EnsureAccounts().MapLocalAccount(alias);
             return transportExtensions;
         }
