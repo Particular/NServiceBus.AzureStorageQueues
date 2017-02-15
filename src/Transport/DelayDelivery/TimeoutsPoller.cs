@@ -111,7 +111,7 @@
         Task BackoffOnError(CancellationToken cancellationToken)
         {
             // run as there was no messages at all
-            return backoffStrategy.OnBatch(TimeoutProcessedAtOnce, 0, cancellationToken);
+            return backoffStrategy.OnBatch(0, cancellationToken);
         }
 
         Task<bool> TryLease(CancellationToken cancellationToken)
@@ -186,7 +186,7 @@
                 }
             }
 
-            await backoffStrategy.OnBatch(TimeoutProcessedAtOnce, timeouts.Count, cancellationToken).ConfigureAwait(false);
+            await backoffStrategy.OnBatch(timeouts.Count, cancellationToken).ConfigureAwait(false);
         }
 
         async Task SafeDispatch(TimeoutEntity timeout, CancellationToken cancellationToken)
