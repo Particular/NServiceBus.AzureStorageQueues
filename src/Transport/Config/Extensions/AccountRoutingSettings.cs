@@ -16,6 +16,8 @@ namespace NServiceBus
         /// </summary>
         public void AddAccount(string alias, string connectionString)
         {
+            Guard.AgainstNullAndEmpty(nameof(alias), alias);
+            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
             accounts.Add(alias, connectionString);
         }
 

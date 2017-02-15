@@ -16,6 +16,8 @@ namespace NServiceBus
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> PeekInterval(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
+            Guard.AgainstNull(nameof(config), config);
+            Guard.AgainstNegativeAndZero(nameof(value), value);
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverPeekInterval, value);
             return config;
         }
@@ -25,6 +27,7 @@ namespace NServiceBus
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
+            Guard.AgainstNull(nameof(config), config);
             if (value < TimeSpan.FromMilliseconds(100) || value > TimeSpan.FromSeconds(60))
             {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be between 100ms and 60 seconds.");
@@ -39,6 +42,7 @@ namespace NServiceBus
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
+            Guard.AgainstNull(nameof(config), config);
             if (value < TimeSpan.FromSeconds(1) || value > TimeSpan.FromDays(7))
             {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be between 1 second and 7 days.");
@@ -52,6 +56,7 @@ namespace NServiceBus
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> BatchSize(this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
+            Guard.AgainstNull(nameof(config), config);
             if (value < 1 || value > 32)
             {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Batchsize must be between 1 and 32 messages.");
@@ -68,6 +73,7 @@ namespace NServiceBus
         public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this TransportExtensions<AzureStorageQueueTransport> config)
             where TSerializationDefinition : SerializationDefinition, new()
         {
+            Guard.AgainstNull(nameof(config), config);
             config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, new TSerializationDefinition());
             return config;
         }
@@ -77,6 +83,8 @@ namespace NServiceBus
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> UnwrapMessagesWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<CloudQueueMessage, MessageWrapper> unwrapper)
         {
+            Guard.AgainstNull(nameof(config), config);
+            Guard.AgainstNull(nameof(unwrapper), unwrapper);
             config.GetSettings().Set<IMessageEnvelopeUnwrapper>(new UserProvidedEnvelopeUnwrapper(unwrapper));
             return config;
         }
@@ -86,6 +94,7 @@ namespace NServiceBus
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> UseSha1ForShortening(this TransportExtensions<AzureStorageQueueTransport> config)
         {
+            Guard.AgainstNull(nameof(config), config);
             config.GetSettings().Set(WellKnownConfigurationKeys.Sha1Shortener, true);
             return config;
         }
@@ -95,6 +104,7 @@ namespace NServiceBus
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> DegreeOfReceiveParallelism(this TransportExtensions<AzureStorageQueueTransport> config, int degreeOfReceiveParallelism)
         {
+            Guard.AgainstNull(nameof(config), config);
             if (degreeOfReceiveParallelism < 1 || degreeOfReceiveParallelism > MaxDegreeOfReceiveParallelism)
             {
                 throw new ArgumentOutOfRangeException(nameof(degreeOfReceiveParallelism), degreeOfReceiveParallelism, "DegreeOfParallelism must be between 1 and 32.");

@@ -105,6 +105,7 @@
     <Compile Include="DelayDelivery\TimeoutEntity.cs" />
     <Compile Include="DelayDelivery\TimeoutsPoller.cs" />
     <Compile Include="Dispatcher.cs" />
+    <Compile Include="Guard.cs" />
     <Compile Include="IMessageEnvelopeUnwrapper.cs" />
     <Compile Include="DefaultMessageEnvelopeUnwrapper.cs" />
     <Compile Include="MessagePump.cs" />

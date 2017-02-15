@@ -23,6 +23,8 @@ namespace NServiceBus
 
         public override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
         {
+            Guard.AgainstNull(nameof(settings), settings);
+            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
             // configure JSON instead of XML as the default serializer:
             SetMainSerializer(settings, new JsonSerializer());
 
