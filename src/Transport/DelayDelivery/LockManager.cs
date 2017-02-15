@@ -33,12 +33,9 @@
                     return true;
                 }
                 catch (StorageException exception)
+                    when (exception.RequestInformation.ExtendedErrorInformation.ErrorCode == BlobErrorCodeStrings.LeaseAlreadyPresent)
                 {
-                    if (exception.RequestInformation.ExtendedErrorInformation.ErrorCode == BlobErrorCodeStrings.LeaseAlreadyPresent)
-                    {
-                        return false;
-                    }
-                    throw;
+                    return false;
                 }
             }
             try
@@ -47,13 +44,10 @@
                 return true;
             }
             catch (StorageException exception)
+                when (exception.RequestInformation.ExtendedErrorInformation.ErrorCode == BlobErrorCodeStrings.LeaseIdMismatchWithLeaseOperation)
             {
-                if (exception.RequestInformation.ExtendedErrorInformation.ErrorCode == BlobErrorCodeStrings.LeaseIdMismatchWithLeaseOperation)
-                {
-                    lease = null;
-                    return false;
-                }
-                throw;
+                lease = null;
+                return false;
             }
         }
 
