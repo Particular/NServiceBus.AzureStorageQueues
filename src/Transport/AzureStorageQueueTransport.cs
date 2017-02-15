@@ -32,7 +32,7 @@ namespace NServiceBus
             // register metadata of the wrapper for the sake of XML serializer
             settings.Get<MessageMetadataRegistry>().GetMessageMetadata(typeof(MessageWrapper));
 
-            new DefaultConfigurationValues().Apply(settings);
+            DefaultConfigurationValues.Apply(settings);
 
             return new AzureStorageQueueInfrastructure(settings, connectionString);
         }
