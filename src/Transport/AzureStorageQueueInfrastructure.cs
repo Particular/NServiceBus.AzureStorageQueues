@@ -8,6 +8,8 @@
     using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
     using DelayedDelivery;
+    using Microsoft.WindowsAzure.Storage;
+    using Microsoft.WindowsAzure.Storage.Table;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -39,7 +41,7 @@
             else
             {
                 var @true = Task.FromResult(true);
-                shouldDispatch = (u,y) => @true;
+                shouldDispatch = (u, y) => @true;
             }
             DeliveryConstraints = contraints;
         }
@@ -47,7 +49,7 @@
         public override IEnumerable<Type> DeliveryConstraints { get; }
 
         public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
-        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
+        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Multicast, OutboundRoutingType.Unicast);
 
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
@@ -132,12 +134,27 @@
         {
             var addressing = GetAddressing(settings, connectionString);
             var addressRetriever = GetAddressGenerator(settings);
-            return new Dispatcher(addressRetriever, addressing, serializer, shouldDispatch);
+
+            var table = GetSubscriptionTable();
+
+            return new Dispatcher(addressRetriever, addressing, serializer, shouldDispatch, table);
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
         {
-            throw new NotSupportedException("Azure Storage Queue transport doesn't support native pub sub");
+            var table = GetSubscriptionTable();
+
+            return new TransportSubscriptionInfrastructure(() => new TableStorageSubscriptionManager(table, settings.LocalAddress()));
+        }
+
+        CloudTable GetSubscriptionTable()
+        {
+            var account = CloudStorageAccount.Parse(connectionString);
+            var client = account.CreateCloudTableClient();
+            var table = client.GetTableReference("nservicebussubscriptions");
+
+            table.CreateIfNotExists();
+            return table;
         }
 
         public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance)

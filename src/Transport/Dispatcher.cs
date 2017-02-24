@@ -8,38 +8,51 @@
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
     using Extensibility;
     using Logging;
     using Microsoft.WindowsAzure.Storage.Queue;
+    using Microsoft.WindowsAzure.Storage.Table;
     using Transport;
     using Unicast.Queuing;
 
     class Dispatcher : IDispatchMessages
     {
-        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend, CloudTable subscriptionTable)
         {
             createQueueClients = new CreateQueueClients();
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
             this.serializer = serializer;
             this.shouldSend = shouldSend;
+            this.subscriptionTable = subscriptionTable;
         }
 
-        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
+        public async Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
         {
-            if (outgoingMessages.MulticastTransportOperations.Any())
-            {
-                throw new Exception("The Azure Storage Queue transport only supports unicast transport operations.");
-            }
-
             var sends = new List<Task>(outgoingMessages.UnicastTransportOperations.Count);
             foreach (var unicastTransportOperation in outgoingMessages.UnicastTransportOperations)
             {
                 sends.Add(Send(unicastTransportOperation, CancellationToken.None));
             }
 
-            return Task.WhenAll(sends);
+            foreach (var multicastOperation in outgoingMessages.MulticastTransportOperations)
+            {
+                var filter = new TableQuery<TableStorageSubscriptionManager.Subscription>().Where(
+     TableQuery.GenerateFilterCondition("PartitionKey",
+         QueryComparisons.Equal, multicastOperation.MessageType.FullName));
+
+                var subscribers = await subscriptionTable.ExecuteQueryAsync(filter, 1000, CancellationToken.None).ConfigureAwait(false);
+
+                foreach (var subscriber in subscribers)
+                {
+                    var unicastOperation = new UnicastTransportOperation(multicastOperation.Message, subscriber.RowKey, multicastOperation.RequiredDispatchConsistency, multicastOperation.DeliveryConstraints);
+                    sends.Add(Send(unicastOperation, CancellationToken.None));
+                }
+            }
+
+            await Task.WhenAll(sends).ConfigureAwait(false);
         }
 
         public async Task Send(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -146,5 +159,6 @@
         ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
         readonly MessageWrapperSerializer serializer;
         readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
+        readonly CloudTable subscriptionTable;
     }
 }
