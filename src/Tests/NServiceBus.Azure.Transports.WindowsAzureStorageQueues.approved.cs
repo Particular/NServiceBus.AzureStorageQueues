@@ -9,7 +9,7 @@ namespace NServiceBus
     {
         public void AddAccount(string alias, string connectionString) { }
     }
-    public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition, NServiceBus.Routing.IMessageDrivenSubscriptionTransport
+    public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition
     {
         public AzureStorageQueueTransport() { }
         public override string ExampleConnectionStringForErrorMessage { get; }

@@ -15,8 +15,8 @@ public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupport
 {
     public IEnumerable<Type> UnsupportedScenarioDescriptorTypes { get; } = new[]
     {
-        typeof(AllTransportsWithCentralizedPubSubSupport),
         typeof(AllDtcTransports),
+        typeof(AllTransportsWithMessageDrivenPubSub)
     };
 }
 
