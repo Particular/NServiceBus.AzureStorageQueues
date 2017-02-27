@@ -43,8 +43,14 @@
         internal ConnectionString Map(string alias)
         {
             ConnectionString connectionString;
+
             if (aliasToConnectionStringMap.TryGetValue(alias, out connectionString) == false)
             {
+                if (useLogicalQueueAddresses == false)
+                {
+                    return new ConnectionString(alias);
+                }
+
                 throw new KeyNotFoundException($"No account was mapped under following name '{alias}'. Please map it using AddStorageAccount method.");
             }
 
