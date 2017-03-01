@@ -6,16 +6,17 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using EndpointTemplates;
-    using Logging;
+    using Microsoft.WindowsAzure.Storage;
     using NUnit.Framework;
     using ScenarioDescriptors;
+    using LogLevel = Logging.LogLevel;
 
     public class When_dispatching_fails : NServiceBusAcceptanceTest
     {
         [Test]
         public void Should_log_send_related_error()
         {
-            Assert.ThrowsAsync<AggregateException>(() => Scenario.Define<Context>()
+            Assert.ThrowsAsync<StorageException>(() => Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((bus, c) => Send(bus)))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.Logs.Any(li => li.Message.Contains("Fail on proxy") && li.Level == LogLevel.Error))
@@ -28,7 +29,7 @@
         {
             const string queue = "non-existent";
 
-            Assert.ThrowsAsync<AggregateException>(() => Scenario.Define<Context>()
+            Assert.ThrowsAsync<Exception>(() => Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((bus, c) =>
                 {
                     var options = new SendOptions();

@@ -23,6 +23,8 @@ namespace NServiceBus
 
         public override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
         {
+            Guard.AgainstNull(nameof(settings), settings);
+            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
             // configure JSON instead of XML as the default serializer:
             SetMainSerializer(settings, new JsonSerializer());
 
@@ -32,7 +34,7 @@ namespace NServiceBus
             // register metadata of the wrapper for the sake of XML serializer
             settings.Get<MessageMetadataRegistry>().GetMessageMetadata(typeof(MessageWrapper));
 
-            new DefaultConfigurationValues().Apply(settings);
+            DefaultConfigurationValues.Apply(settings);
 
             return new AzureStorageQueueInfrastructure(settings, connectionString);
         }

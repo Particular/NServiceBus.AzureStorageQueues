@@ -5,7 +5,7 @@
     using AzureStorageQueues;
     using AzureStorageQueues.Config;
 
-    sealed class AzureStorageAddressingSettings
+    class AzureStorageAddressingSettings
     {
         internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, string> aliasToConnectionStringMap, bool shouldUseAccountAliases)
         {

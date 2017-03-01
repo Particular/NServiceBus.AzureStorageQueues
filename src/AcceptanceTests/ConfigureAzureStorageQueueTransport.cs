@@ -6,8 +6,10 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
+using NServiceBus.AcceptanceTests.Routing.MessageDrivenSubscriptions;
 using NServiceBus.AcceptanceTests.ScenarioDescriptors;
 using NUnit.Framework;
+using Conventions = NServiceBus.AcceptanceTesting.Customization.Conventions;
 
 public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupportedScenariosForTestExecution
 {
@@ -15,33 +17,45 @@ public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupport
     {
         typeof(AllTransportsWithCentralizedPubSubSupport),
         typeof(AllDtcTransports),
-        typeof(AllTransportsWithoutNativeDeferralAndWithAtomicSendAndReceive)
     };
 }
 
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
-    public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings)
+    public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
         var connectionString = settings.Get<string>("Transport.ConnectionString");
-        configuration
+        var transportConfig = configuration
             .UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
-            .MessageInvisibleTime(TimeSpan.FromSeconds(5));
+            .MessageInvisibleTime(TimeSpan.FromSeconds(30));
         //.SerializeMessageWrapperWith<JsonSerializer>();
 
-        configuration.UseSerialization<XmlSerializer>();
+        var routingConfig = transportConfig.Routing();
+
+        foreach (var publisher in publisherMetadata.Publishers)
+        {
+            foreach (var eventType in publisher.Events)
+            {
+                routingConfig.RegisterPublisher(eventType, publisher.PublisherName);
+            }
+        }
+
+        if (endpointName.StartsWith(Conventions.EndpointNamingConvention(typeof(When_unsubscribing_from_event.Publisher))))
+        {
+            Assert.Ignore("Ignored until issue #173 is resolved.");
+        }
 
         if (endpointName.StartsWith("RegisteringAdditionalDeserializers.CustomSerializationSender"))
         {
             Assert.Ignore("Ignored since this scenario is not supported by ASQ.");
         }
 
-        var props = TestContext.CurrentContext.Test.Properties;
+        configuration.UseSerialization<XmlSerializer>();
 
-        if (props.ContainsKey("QueuesCleaned") == false)
+        if (TestContext.CurrentContext.Test.Properties.ContainsKey("QueuesCleaned") == false)
         {
-            props.Add("QueuesCleaned", true);
+            TestContext.CurrentContext.Test.Properties.Add("QueuesCleaned", true);
 
             return CleanQueuesUsedByTest(connectionString);
         }

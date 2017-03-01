@@ -5,6 +5,7 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Config;
@@ -16,33 +17,39 @@
 
     class Dispatcher : IDispatchMessages
     {
-        public Dispatcher(CreateQueueClients createQueueClients, MessageWrapperSerializer messageSerializer, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend)
         {
-            this.createQueueClients = createQueueClients;
-            this.messageSerializer = messageSerializer;
+            createQueueClients = new CreateQueueClients();
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
+            this.serializer = serializer;
+            this.shouldSend = shouldSend;
         }
 
-        public async Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
+        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
         {
             if (outgoingMessages.MulticastTransportOperations.Any())
             {
                 throw new Exception("The Azure Storage Queue transport only supports unicast transport operations.");
             }
 
-            var sends = new List<Task>(outgoingMessages.UnicastTransportOperations.Count());
+            var sends = new List<Task>(outgoingMessages.UnicastTransportOperations.Count);
             foreach (var unicastTransportOperation in outgoingMessages.UnicastTransportOperations)
             {
-                sends.Add(Send(unicastTransportOperation));
+                sends.Add(Send(unicastTransportOperation, CancellationToken.None));
             }
 
-            await Task.WhenAll(sends).ConfigureAwait(false);
+            return Task.WhenAll(sends);
         }
 
-
-        async Task Send(UnicastTransportOperation operation)
+        public async Task Send(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
+            var dispatchDecision = await shouldSend(operation, cancellationToken).ConfigureAwait(false);
+            if (dispatchDecision == false)
+            {
+                return;
+            }
+
             // The destination might be in a queue@destination format
             var destination = operation.Destination;
 
@@ -84,9 +91,19 @@
                 timeToBeReceived = null;
             }
 
-            var rawMessage = SerializeMessage(operation, timeToBeReceived, queue);
+            var wrapper = BuildMessageWrapper(operation, timeToBeReceived, queue);
+            await Send(wrapper, sendQueue).ConfigureAwait(false);
+        }
 
-            await sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null).ConfigureAwait(false);
+        Task Send(MessageWrapper wrapper, CloudQueue sendQueue)
+        {
+            CloudQueueMessage rawMessage;
+            using (var stream = new MemoryStream())
+            {
+                serializer.Serialize(wrapper, stream);
+                rawMessage = new CloudQueueMessage(stream.ToArray());
+            }
+            return sendQueue.AddMessageAsync(rawMessage, wrapper.TimeToBeReceived != TimeSpan.MaxValue ? wrapper.TimeToBeReceived : default(TimeSpan?), null, null, null);
         }
 
         Task<bool> ExistsAsync(CloudQueue sendQueue)
@@ -95,43 +112,39 @@
             return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.ExistsAsync());
         }
 
-        CloudQueueMessage SerializeMessage(IOutgoingTransportOperation operation, TimeSpan? timeToBeReceived, QueueAddress destinationQueue)
+        MessageWrapper BuildMessageWrapper(IOutgoingTransportOperation operation, TimeSpan? timeToBeReceived, QueueAddress destinationQueue)
         {
-            using (var stream = new MemoryStream())
+            var msg = operation.Message;
+            var headers = new Dictionary<string, string>(msg.Headers);
+            addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
+
+            var messageIntent = default(MessageIntentEnum);
+            string messageIntentString;
+            if (headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
             {
-                var msg = operation.Message;
-                var headers = new Dictionary<string, string>(msg.Headers);
-                addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
-
-                var messageIntent = default(MessageIntentEnum);
-                string messageIntentString;
-                if (headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
-                {
-                    Enum.TryParse(messageIntentString, true, out messageIntent);
-                }
-
-                var toSend = new MessageWrapper
-                {
-                    Id = msg.MessageId,
-                    Body = msg.Body,
-                    CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
-                    Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
-                    ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
-                    TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
-                    Headers = headers,
-                    MessageIntent = messageIntent
-                };
-
-                messageSerializer.Serialize(toSend, stream);
-                return new CloudQueueMessage(stream.ToArray());
+                Enum.TryParse(messageIntentString, true, out messageIntent);
             }
+
+            return new MessageWrapper
+            {
+                Id = msg.MessageId,
+                Body = msg.Body,
+                CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
+                Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
+                ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
+                TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
+                Headers = headers,
+                MessageIntent = messageIntent
+            };
         }
 
         QueueAddressGenerator addressGenerator;
         AzureStorageAddressingSettings addressing;
-        CreateQueueClients createQueueClients;
-        ILog logger = LogManager.GetLogger(typeof(Dispatcher));
-        MessageWrapperSerializer messageSerializer;
+        readonly CreateQueueClients createQueueClients;
+
+        static ILog logger = LogManager.GetLogger<Dispatcher>();
         ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
+        readonly MessageWrapperSerializer serializer;
+        readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
     }
 }
