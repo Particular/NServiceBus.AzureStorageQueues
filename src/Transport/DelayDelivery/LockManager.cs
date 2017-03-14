@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
 {
     using System;
+    using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
@@ -33,7 +34,7 @@
                     return true;
                 }
                 catch (StorageException exception)
-                    when (exception.RequestInformation.ExtendedErrorInformation.ErrorCode == BlobErrorCodeStrings.LeaseAlreadyPresent)
+                    when (exception.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict)
                 {
                     return false;
                 }
