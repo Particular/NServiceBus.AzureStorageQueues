@@ -15,8 +15,8 @@ public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupport
 {
     public IEnumerable<Type> UnsupportedScenarioDescriptorTypes { get; } = new[]
     {
-        typeof(AllTransportsWithCentralizedPubSubSupport),
         typeof(AllDtcTransports),
+        typeof(AllTransportsWithMessageDrivenPubSub)
     };
 }
 
@@ -25,21 +25,12 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
         var connectionString = settings.Get<string>("Transport.ConnectionString");
-        var transportConfig = configuration
+            var transportConfig = configuration
             .UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(30));
-        //.SerializeMessageWrapperWith<JsonSerializer>();
 
-        var routingConfig = transportConfig.Routing();
 
-        foreach (var publisher in publisherMetadata.Publishers)
-        {
-            foreach (var eventType in publisher.Events)
-            {
-                routingConfig.RegisterPublisher(eventType, publisher.PublisherName);
-            }
-        }
 
         if (endpointName.StartsWith(Conventions.EndpointNamingConvention(typeof(When_unsubscribing_from_event.Publisher))))
         {

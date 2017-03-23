@@ -11,7 +11,7 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
-    
+
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
     {
         CloudTable timeoutTable;

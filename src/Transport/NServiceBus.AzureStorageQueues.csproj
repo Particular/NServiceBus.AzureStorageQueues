@@ -130,6 +130,7 @@
     <Compile Include="Shortener.cs" />
     <Compile Include="MessageWrapper.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="TableStorageSubscriptionManager.cs" />
     <Compile Include="TaskEx.cs" />
     <Compile Include="TransportOperationExtensions.cs" />
     <Compile Include="UserProvidedEnvelopeUnwrapper.cs" />
