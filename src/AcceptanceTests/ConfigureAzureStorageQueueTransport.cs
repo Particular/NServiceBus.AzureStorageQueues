@@ -11,20 +11,14 @@ using NServiceBus.AcceptanceTests.ScenarioDescriptors;
 using NUnit.Framework;
 using Conventions = NServiceBus.AcceptanceTesting.Customization.Conventions;
 
-public class ConfigureScenariosForAzureStorageQueueTransport : IConfigureSupportedScenariosForTestExecution
-{
-    public IEnumerable<Type> UnsupportedScenarioDescriptorTypes { get; } = new[]
-    {
-        typeof(AllTransportsWithCentralizedPubSubSupport),
-        typeof(AllDtcTransports),
-    };
-}
-
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
+    internal static string ConnectionString => EnvironmentHelper.GetEnvironmentVariable($"{nameof(AzureStorageQueueTransport)}.ConnectionString") ?? "UseDevelopmentStorage=true";
+
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
-        var connectionString = settings.Get<string>("Transport.ConnectionString");
+        var connectionString = ConnectionString;
+
         var transportConfig = configuration
             .UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)

@@ -154,9 +154,9 @@
                         .ConnectionString(anotherConnectionString);
 
                     Setup(extensions);
+                    cfg.AuditProcessedMessagesTo(AuditName);
                 });
                 CustomEndpointName(ReceiverName);
-                AuditTo(AuditName);
             }
 
             protected abstract void Setup(TransportExtensions<AzureStorageQueueTransport> cfg);

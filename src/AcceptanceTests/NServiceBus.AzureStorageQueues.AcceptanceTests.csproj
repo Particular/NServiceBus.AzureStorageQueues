@@ -293,6 +293,7 @@
     <Compile Include="Sending\When_dispatching_fails.cs" />
     <Compile Include="Sending\When_dispatching_to_other_account.cs" />
     <Compile Include="Sending\When_message_is_sent_with_time_to_be_received_set_to_more_than_7_days.cs" />
+    <Compile Include="TestSuiteConstraints.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>

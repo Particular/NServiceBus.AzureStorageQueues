@@ -82,7 +82,10 @@
         {
             public Endpoint()
             {
-                EndpointSetup<DefaultServer>().SendOnly();
+                EndpointSetup<DefaultServer>(endpointConfiguration =>
+                {
+                    endpointConfiguration.SendOnly();
+                });
             }
         }
 
