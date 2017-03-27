@@ -31,7 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NServiceBus.Core, Version=6.0.0.0, Culture=neutral, PublicKeyToken=9fc386479f8a226c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NServiceBus.6.1.3\lib\net452\NServiceBus.Core.dll</HintPath>
+      <HintPath>..\packages\NServiceBus.6.2.0-rc0001\lib\net452\NServiceBus.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="nunit.framework, Version=3.6.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
@@ -45,59 +45,60 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\DefaultTestingLoggerFactory.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\FakeBuilder.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\NamedLogger.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\OutgoingMessage.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\OutgoingMessageExtensions.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\PublishedMessage.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\RepliedMessage.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\SentMessage.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\Subscription.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableAuditContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableBatchDispatchContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableBehaviorContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableDispatchContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableEndpointInstance.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableForwardingContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableIncomingContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableIncomingLogicalMessageContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableIncomingPhysicalMessageContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableInvokeHandlerContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableMessageHandlerContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableMessageProcessingContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableMessageSession.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableOutgoingContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableOutgoingLogicalMessageContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableOutgoingPhysicalMessageContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableOutgoingPublishContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableOutgoingReplyContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableOutgoingSendContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestablePipelineContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableRoutingContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableSubscribeContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableTransportReceiveContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestableUnsubscribeContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TestingLoggerFactory.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\TextWriterLogger.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.1.3\Unsubscription.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\IConfigureTransportInfrastructure.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\NServiceBusTransportTest.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\TransportConfigurationResult.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\TypeScanner.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_failure_happens_after_send.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_message_is_available.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_on_error_throws.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_on_message_throws.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_on_message_throws_after_delayed_retry.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_on_message_throws_after_immediate_retry.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_requesting_immediate_retry.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_scope_complete_throws.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_scope_throws_after_successful_message_processing.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_sending_from_on_error.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_transaction_level_TransactionScope.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_user_aborts_processing.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.1.3\When_using_non_durable_delivery.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\DefaultTestingLoggerFactory.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\FakeBuilder.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\NamedLogger.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\OutgoingMessage.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\OutgoingMessageExtensions.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\PublishedMessage.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\RepliedMessage.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\SentMessage.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\Subscription.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableAuditContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableBatchDispatchContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableBehaviorContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableDispatchContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableEndpointInstance.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableForwardingContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableIncomingContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableIncomingLogicalMessageContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableIncomingPhysicalMessageContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableInvokeHandlerContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableMessageHandlerContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableMessageProcessingContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableMessageSession.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableOutgoingContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableOutgoingLogicalMessageContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableOutgoingPhysicalMessageContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableOutgoingPublishContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableOutgoingReplyContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableOutgoingSendContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestablePipelineContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableRoutingContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableSubscribeContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableTransportReceiveContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestableUnsubscribeContext.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TestingLoggerFactory.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\TextWriterLogger.cs" />
+    <Compile Include="App_Packages\NSB.Testing.Fakes.6.2.0-rc0001\Unsubscription.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\IConfigureTransportInfrastructure.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\NServiceBusTransportTest.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\TransportConfigurationResult.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\TypeScanner.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_failure_happens_after_isolated_send.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_failure_happens_after_send.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_message_is_available.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_on_error_throws.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_on_message_throws.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_on_message_throws_after_delayed_retry.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_on_message_throws_after_immediate_retry.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_requesting_immediate_retry.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_scope_complete_throws.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_scope_throws_after_successful_message_processing.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_sending_from_on_error.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_transaction_level_TransactionScope.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_user_aborts_processing.cs" />
+    <Compile Include="App_Packages\NSB.TransportTests.6.2.0-rc0001\When_using_non_durable_delivery.cs" />
     <Compile Include="ConfigureAzureStorageQueueTransportInfrastructure.cs" />
     <Compile Include="ConsoleLoggerFactory.cs" />
   </ItemGroup>
