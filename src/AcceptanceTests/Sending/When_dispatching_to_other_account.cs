@@ -4,9 +4,9 @@
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using AcceptanceTesting.Customization;
     using EndpointTemplates;
     using NUnit.Framework;
-    using ScenarioDescriptors;
 
     public class When_dispatching_to_another_account : NServiceBusAcceptanceTest
     {
@@ -43,7 +43,7 @@
 
         const string AnotherAccountName = "another";
         const string DefaultAccountName = "default";
-        static readonly string MainNamespaceConnectionString = Transports.Default.Settings.Get<string>("Transport.ConnectionString");
+        static readonly string MainNamespaceConnectionString = ConfigureEndpointAzureStorageQueueTransport.ConnectionString;
 
         public class Context : ScenarioContext
         {
@@ -61,8 +61,10 @@
                         .UseAccountAliasesInsteadOfConnectionStrings()
                         .DefaultAccountAlias(DefaultAccountName)
                         .AccountRouting()
-                        .AddAccount(AnotherAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString"));
-                }).AddMapping<MyMessage>(typeof(Receiver));
+                        .AddAccount(AnotherAccountName, ConfigureEndpointAzureStorageQueueTransport.ConnectionString);
+
+                    configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
+                });
             }
         }
 
@@ -76,7 +78,7 @@
                         .UseAccountAliasesInsteadOfConnectionStrings()
                         .DefaultAccountAlias(AnotherAccountName)
                         .AccountRouting()
-                        .AddAccount(DefaultAccountName, Transports.Default.Settings.Get<string>("Transport.ConnectionString"));
+                        .AddAccount(DefaultAccountName, ConfigureEndpointAzureStorageQueueTransport.ConnectionString);
                 });
             }
 
