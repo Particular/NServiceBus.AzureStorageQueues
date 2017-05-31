@@ -1,6 +1,7 @@
 namespace NServiceBus
 {
     using System;
+    using System.Collections.Generic;
     using System.Text.RegularExpressions;
     using Azure.Transports.WindowsAzureStorageQueues;
     using AzureStorageQueues;
@@ -8,6 +9,7 @@ namespace NServiceBus
     using Configuration.AdvanceExtensibility;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Serialization;
+    using Settings;
 
     public static class AzureStorageTransportExtensions
     {
@@ -135,6 +137,12 @@ namespace NServiceBus
 
             settings.Set(WellKnownConfigurationKeys.NativeTimeoutsTableName, timeoutTableName);
 
+            return config;
+        }
+
+        internal static TransportExtensions<AzureStorageQueueTransport> UseAddtionalHeaders(this TransportExtensions<AzureStorageQueueTransport> config, Lazy<Dictionary<string, string>> additionalHeaders)
+        {
+            config.GetSettings().Set(WellKnownConfigurationKeys.AdditionalHeaders, additionalHeaders);
             return config;
         }
 

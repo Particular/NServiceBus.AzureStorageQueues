@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Queue;
 using NServiceBus;
+using NServiceBus.AcceptanceTesting;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.AcceptanceTests.Routing.MessageDrivenSubscriptions;
 using NServiceBus.AcceptanceTests.ScenarioDescriptors;
+using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+using NServiceBus.Configuration.AdvanceExtensibility;
+using NServiceBus.MessageInterfaces;
+using NServiceBus.Serialization;
+using NServiceBus.Settings;
 using NUnit.Framework;
 using Conventions = NServiceBus.AcceptanceTesting.Customization.Conventions;
 
@@ -23,8 +27,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             .UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(30));
-        //.SerializeMessageWrapperWith<JsonSerializer>();
-
+        
         var routingConfig = transportConfig.Routing();
 
         foreach (var publisher in publisherMetadata.Publishers)
@@ -47,40 +50,15 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
 
         configuration.UseSerialization<XmlSerializer>();
 
-        if (TestContext.CurrentContext.Test.Properties.ContainsKey("QueuesCleaned") == false)
-        {
-            TestContext.CurrentContext.Test.Properties.Add("QueuesCleaned", true);
-
-            return CleanQueuesUsedByTest(connectionString);
-        }
+        configuration.Pipeline.Register("test-independence-skip", typeof(TestIndependence.SkipBehavior), "Skips messages from other runs");
+        transportConfig.SerializeMessageWrapperWith<TestIndependence.TestIdAppendingJSON>();
 
         return Task.FromResult(0);
     }
+    
 
     public Task Cleanup()
     {
         return Task.FromResult(0);
-    }
-
-    static Task CleanQueuesUsedByTest(string connectionString)
-    {
-        var storage = CloudStorageAccount.Parse(connectionString);
-        var client = storage.CreateCloudQueueClient();
-        var queues = GetTestRelatedQueues(client).ToArray();
-
-        var tasks = new Task[queues.Length];
-        for (var i = 0; i < queues.Length; i++)
-        {
-            tasks[i] = queues[i].ClearAsync();
-
-        }
-
-        return Task.WhenAll(tasks);
-    }
-
-    static IEnumerable<CloudQueue> GetTestRelatedQueues(CloudQueueClient queues)
-    {
-        // for now, return all
-        return queues.ListQueues();
     }
 }

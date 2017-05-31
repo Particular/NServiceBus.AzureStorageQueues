@@ -13,5 +13,6 @@
         public const string UseAccountNamesInsteadOfConnectionStrings = "Transport.AzureStorageQueue.UseAccountAliasesInsteadOfConnectionStrings";
         public const string NativeTimeouts = "Transport.AzureStorageQueue.NativeTimeouts";
         public const string NativeTimeoutsTableName = "Transport.AzureStorageQueue.NativeTimeoutsTableName";
+        public const string AdditionalHeaders = "Transport.AzureStorageQueue.AdditionalHeaders";
     }
 }
