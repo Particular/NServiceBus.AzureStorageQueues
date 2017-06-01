@@ -87,7 +87,7 @@
                     Id = rawMessage.Id,
                     Headers = new Dictionary<string, string>
                     {
-                        {TestIndependence.HeaderName,contextTestRunId.ToString() }
+                        {TestIndependence.HeaderName, contextTestRunId.ToString()}
                     },
                     Body = rawMessage.AsBytes
                 };
