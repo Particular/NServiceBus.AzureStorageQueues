@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using NServiceBus;
 using NServiceBus.AcceptanceTesting;
 using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
 using NServiceBus.MessageInterfaces;
@@ -12,7 +11,7 @@ using NServiceBus.Settings;
 
 public class TestIndependence 
 {
-    const string HeaderName = "$AcceptanceTesting.TestRunId";
+    public const string HeaderName = "$AcceptanceTesting.TestRunId";
 
     public class TestIdAppendingSerializationDefintion<TOriginalSerializationDefintion> : SerializationDefinition
         where TOriginalSerializationDefintion : SerializationDefinition, new()

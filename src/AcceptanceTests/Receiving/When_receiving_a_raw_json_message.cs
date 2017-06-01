@@ -1,5 +1,6 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Receiving
 {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
@@ -19,6 +20,12 @@
             var ctx = await Scenario.Define<Context>()
                 .WithEndpoint<Receiver>(b =>
                 {
+                    b.CustomConfig((cfg, context) =>
+                    {
+                        cfg.UseSerialization<NServiceBus.JsonSerializer>();
+                        cfg.UseTransport<AzureStorageQueueTransport>()
+                            .UnwrapMessagesWith(message => MyCustomUnwrapper(message, context.TestRunId));
+                    });
 
                     b.When((bus, c) =>
                     {
@@ -58,18 +65,11 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(config =>
-                {
-                    config.UseSerialization<NServiceBus.JsonSerializer>();
-                    config.UseTransport<AzureStorageQueueTransport>()
-                        .UnwrapMessagesWith(MyCustomUnwrapper);
-                });
+                EndpointSetup<DefaultServer>();
             }
         }
 
-
-
-        static MessageWrapper MyCustomUnwrapper(CloudQueueMessage rawMessage)
+        static MessageWrapper MyCustomUnwrapper(CloudQueueMessage rawMessage, Guid contextTestRunId)
         {
             using (var stream = new MemoryStream(rawMessage.AsBytes))
             using (var streamReader = new StreamReader(stream))
@@ -85,14 +85,16 @@
                 return new MessageWrapper
                 {
                     Id = rawMessage.Id,
-                    Headers = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>
+                    {
+                        {TestIndependence.HeaderName,contextTestRunId.ToString() }
+                    },
                     Body = rawMessage.AsBytes
                 };
             }
         }
 
         static JsonSerializer jsonSerializer = JsonSerializer.Create();
-
 
         public class MyMessage : IMessage
         {
