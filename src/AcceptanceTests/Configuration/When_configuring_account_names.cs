@@ -51,7 +51,7 @@
                         transport
                             .UseAccountAliasesInsteadOfConnectionStrings()
                             .ConnectionString(connectionString)
-                            .SerializeMessageWrapperWith<TestIndependence.TestIdAppendingJSON>();
+                            .SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefintion<JsonSerializer>>();
 
                         action(transport);
                     });
