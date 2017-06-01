@@ -13,7 +13,7 @@ public class TestIndependence
 {
     public const string HeaderName = "$AcceptanceTesting.TestRunId";
 
-    public class TestIdAppendingSerializationDefintion<TOriginalSerializationDefintion> : SerializationDefinition
+    public class TestIdAppendingSerializationDefinition<TOriginalSerializationDefintion> : SerializationDefinition
         where TOriginalSerializationDefintion : SerializationDefinition, new()
     {
         public override Func<IMessageMapper, IMessageSerializer> Configure(ReadOnlySettings settings)
