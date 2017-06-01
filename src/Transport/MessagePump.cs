@@ -1,9 +1,7 @@
 ﻿namespace NServiceBus.AzureStorageQueues
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Diagnostics;
-    using System.Linq;
     using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
@@ -36,13 +34,13 @@
 
         public void Start(PushRuntimeSettings limitations)
         {
-            runningReceiveTasks = new ConcurrentDictionary<Task, Task>();
-            concurrencyLimiter = new SemaphoreSlim(limitations.MaxConcurrency);
+            maximumConcurrency = limitations.MaxConcurrency;
+            concurrencyLimiter = new SemaphoreSlim(maximumConcurrency, maximumConcurrency);
             cancellationTokenSource = new CancellationTokenSource();
 
             if (!degreeOfReceiveParallelism.HasValue)
             {
-                degreeOfReceiveParallelism = EstimateDegreeOfReceiveParallelism(limitations.MaxConcurrency);
+                degreeOfReceiveParallelism = EstimateDegreeOfReceiveParallelism(maximumConcurrency);
             }
 
             messagePumpTasks = new Task[degreeOfReceiveParallelism.Value];
@@ -59,18 +57,27 @@
         {
             cancellationTokenSource.Cancel();
 
-            // ReSharper disable once MethodSupportsCancellation
-            var timeoutTask = Task.Delay(StoppingAllTasksTimeout);
-            var allTasks = runningReceiveTasks.Values.Concat(messagePumpTasks);
-            var finishedTask = await Task.WhenAny(Task.WhenAll(allTasks), timeoutTask).ConfigureAwait(false);
+            try
+            {
+                var tcs = new TaskCompletionSource<bool>();
+                using (var timeoutTokensource = new CancellationTokenSource(StoppingAllTasksTimeout))
+                using (timeoutTokensource.Token.Register(() => tcs.TrySetCanceled())) // ok to have closure alloc here
+                {
+                    while (concurrencyLimiter.CurrentCount != maximumConcurrency)
+                    {
+                        await Task.Delay(50, timeoutTokensource.Token).ConfigureAwait(false);
+                    }
 
-            if (finishedTask.Equals(timeoutTask))
+                    await Task.WhenAny(Task.WhenAll(messagePumpTasks), tcs.Task).ConfigureAwait(false);
+                    tcs.TrySetResult(true); // if we reach this WhenAll was successful
+                }
+            }
+            catch (OperationCanceledException)
             {
                 Logger.Error("The message pump failed to stop with in the time allowed(30s)");
             }
 
             concurrencyLimiter.Dispose();
-            runningReceiveTasks.Clear();
         }
 
         static int EstimateDegreeOfReceiveParallelism(int maxConcurrency)
@@ -116,24 +123,7 @@
                             return;
                         }
 
-                        var receiveTask = InnerReceive(message);
-
-                        runningReceiveTasks.TryAdd(receiveTask, receiveTask);
-
-                        // We insert the original task into the runningReceiveTasks because we want to await the completion
-                        // of the running receives. ExecuteSynchronously is a request to execute the continuation as part of
-                        // the transition of the antecedents completion phase. This means in most of the cases the continuation
-                        // will be executed during this transition and the antecedent task goes into the completion state only
-                        // after the continuation is executed. This is not always the case. When the TPL thread handling the
-                        // antecedent task is aborted the continuation will be scheduled. But in this case we don't need to await
-                        // the continuation to complete because only really care about the receive operations. The final operation
-                        // when shutting down is a clear of the running tasks anyway.
-                        receiveTask.ContinueWith((t, state) =>
-                        {
-                            var receiveTasks = (ConcurrentDictionary<Task, Task>) state;
-                            Task toBeRemoved;
-                            receiveTasks.TryRemove(t, out toBeRemoved);
-                        }, runningReceiveTasks, TaskContinuationOptions.ExecuteSynchronously).Ignore();
+                        InnerReceive(message).Ignore();
                     }
                 }
                 catch (OperationCanceledException)
@@ -188,10 +178,10 @@
         SemaphoreSlim concurrencyLimiter;
 
         Task[] messagePumpTasks;
-        ConcurrentDictionary<Task, Task> runningReceiveTasks;
         int? degreeOfReceiveParallelism;
         static ILog Logger = LogManager.GetLogger<MessagePump>();
         static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
+        int maximumConcurrency;
     }
 }
