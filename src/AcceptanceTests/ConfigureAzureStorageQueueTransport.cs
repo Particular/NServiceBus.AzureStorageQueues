@@ -1,17 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using NServiceBus;
-using NServiceBus.AcceptanceTesting;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.AcceptanceTests.Routing.MessageDrivenSubscriptions;
 using NServiceBus.AcceptanceTests.ScenarioDescriptors;
-using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-using NServiceBus.Configuration.AdvanceExtensibility;
-using NServiceBus.MessageInterfaces;
-using NServiceBus.Serialization;
-using NServiceBus.Settings;
 using NUnit.Framework;
 using Conventions = NServiceBus.AcceptanceTesting.Customization.Conventions;
 
