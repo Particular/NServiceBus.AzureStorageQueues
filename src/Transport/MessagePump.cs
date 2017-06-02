@@ -178,10 +178,10 @@
         SemaphoreSlim concurrencyLimiter;
 
         Task[] messagePumpTasks;
+        int maximumConcurrency;
         int? degreeOfReceiveParallelism;
         static ILog Logger = LogManager.GetLogger<MessagePump>();
         static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
-        int maximumConcurrency;
     }
 }
