@@ -88,15 +88,33 @@
 
             Assert.IsTrue(ctx.Received);
 
-            var rawMessage = await auditQueue.PeekMessageAsync();
-            JToken message;
-            using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(rawMessage.AsBytes))))
+            Dictionary<string, string> propertiesFlattened;
+            do
             {
-                message = JToken.ReadFrom(reader);
-            }
+                var rawMessage = await auditQueue.GetMessageAsync();
+                await auditQueue.DeleteMessageAsync(rawMessage);
+                if (rawMessage == null)
+                {
+                    Assert.Fail("No message in the audit queue to pick up.");
+                }
 
-            ctx.AllPropertiesFlattened = message.FindProperties(IsSimpleProperty)
-                .ToDictionary(jp => jp.Name, jp => ((JValue) jp.Value).Value<string>());
+                JToken message;
+                using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(rawMessage.AsBytes))))
+                {
+                    message = JToken.ReadFrom(reader);
+                }
+
+                propertiesFlattened = message.FindProperties(IsSimpleProperty)
+                    .ToDictionary(jp => jp.Name, jp => ((JValue)jp.Value).Value<string>());
+
+                if (propertiesFlattened.ContainsValue(ctx.TestRunId.ToString()))
+                {
+                    break;
+                }
+            } while (true);
+
+
+            ctx.AllPropertiesFlattened = propertiesFlattened;
 
             ctx.ContainingRawConnectionString = ctx.AllPropertiesFlattened.Where(kvp => kvp.Value.Contains(defaultConnectionString))
                 .Select(kvp => kvp.Key).ToArray();
