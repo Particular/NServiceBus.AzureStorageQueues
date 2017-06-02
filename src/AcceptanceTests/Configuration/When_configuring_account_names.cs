@@ -51,7 +51,7 @@
                         transport
                             .UseAccountAliasesInsteadOfConnectionStrings()
                             .ConnectionString(connectionString)
-                            .SerializeMessageWrapperWith<JsonSerializer>();
+                            .SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<JsonSerializer>>();
 
                         action(transport);
                     });
@@ -82,7 +82,10 @@
         {
             public Endpoint()
             {
-                EndpointSetup<DefaultServer>().SendOnly();
+                EndpointSetup<DefaultServer>(endpointConfiguration =>
+                {
+                    endpointConfiguration.SendOnly();
+                });
             }
         }
 

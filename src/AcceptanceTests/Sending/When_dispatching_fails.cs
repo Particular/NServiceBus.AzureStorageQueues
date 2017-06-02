@@ -5,10 +5,10 @@
     using System.Net;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using AcceptanceTesting.Customization;
     using EndpointTemplates;
     using Microsoft.WindowsAzure.Storage;
     using NUnit.Framework;
-    using ScenarioDescriptors;
     using LogLevel = Logging.LogLevel;
 
     public class When_dispatching_fails : NServiceBusAcceptanceTest
@@ -20,7 +20,6 @@
                 .WithEndpoint<Sender>(b => b.When((bus, c) => Send(bus)))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.Logs.Any(li => li.Message.Contains("Fail on proxy") && li.Level == LogLevel.Error))
-                .Repeat(r => r.For(Transports.Default))
                 .Run());
         }
 
@@ -38,7 +37,6 @@
                 }))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.Logs.Any(li => li.Message.Contains($"The queue {queue} was not found. Create the queue.") && li.Level == LogLevel.Error))
-                .Repeat(r => r.For(Transports.Default))
                 .Run());
         }
 
@@ -81,8 +79,7 @@
         {
             public Sender()
             {
-                EndpointSetup<DefaultServer>()
-                    .AddMapping<MyMessage>(typeof(Receiver));
+                EndpointSetup<DefaultServer>(cfg => cfg.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), typeof(Receiver)));
             }
         }
 

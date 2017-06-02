@@ -10,8 +10,9 @@
     using Microsoft.WindowsAzure.Storage.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using AcceptanceTesting.Customization;
     using NUnit.Framework;
-    
+
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
     {
         CloudTable timeoutTable;
@@ -120,7 +121,9 @@
                 {
                     var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
                     UseNativeTimeouts(extensions);
-                }).AddMapping<MyMessage>(typeof(Receiver));
+                    var routing = cfg.ConfigureTransport().Routing();
+                    routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
+                });
             }
         }
 
@@ -132,7 +135,7 @@
                 {
                     var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
                     UseNativeTimeouts(extensions);
-                    cfg.SendFailedMessagesTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(Receiver)));
+                    cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
                 });
             }
         }

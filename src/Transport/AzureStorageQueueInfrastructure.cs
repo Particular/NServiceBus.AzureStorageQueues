@@ -169,15 +169,15 @@
                 var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                 var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
                 poller = new TimeoutsPoller(connectionString, BuildDispatcher(), timeoutsTableName, new BackoffStrategy(maximumWaitTime, peekInterval));
-                cancellationSource = new CancellationTokenSource();
-                await poller.Start(settings, cancellationSource.Token).ConfigureAwait(false);
+                nativeTimeoutsCancellationSource = new CancellationTokenSource();
+                await poller.Start(settings, nativeTimeoutsCancellationSource.Token).ConfigureAwait(false);
                 await delayedDelivery.Init().ConfigureAwait(false);
             }
         }
 
         public override Task Stop()
         {
-            cancellationSource.Cancel();
+            nativeTimeoutsCancellationSource?.Cancel();
             return poller != null ? poller.Stop() : TaskEx.CompletedTask;
         }
 
@@ -189,6 +189,6 @@
         bool useNativeTimeouts;
         readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldDispatch;
         TimeoutsPoller poller;
-        CancellationTokenSource cancellationSource;
+        CancellationTokenSource nativeTimeoutsCancellationSource;
     }
 }
