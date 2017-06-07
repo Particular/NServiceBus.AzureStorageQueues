@@ -39,24 +39,24 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         [TestCaseSource(nameof(GetTestCases))]
         public async Task Should_preserve_fully_qualified_name_when_using_mappings(string destination, string replyTo)
         {
-            await Run<SenderUsingNamesInsteadOfConnectionStrings>(destination, replyTo);
+            await Run<SenderUsingNamesInsteadOfConnectionStrings>(destination, replyTo).ConfigureAwait(false);
         }
 
         [TestCaseSource(nameof(GetTestCases))]
         public async Task Should_preserve_fully_qualified_name_when_using_raw_connection_strings(string destination, string replyTo)
         {
-            await Run<SenderNotUsingNamesInsteadOfConnectionStrings>(destination, replyTo);
+            await Run<SenderNotUsingNamesInsteadOfConnectionStrings>(destination, replyTo).ConfigureAwait(false);
         }
 
         async Task Run<TSender>(string destination, string replyTo) where TSender : Sender
         {
             await Scenario.Define<Context>()
-                .WithEndpoint<TSender>(b => b.When(async s => { await Send(s, replyTo, destination); }))
+                .WithEndpoint<TSender>(b => b.When(async s => { await Send(s, replyTo, destination).ConfigureAwait(false); }))
                 .Done(c => true)
-                .Run();
+                .Run().ConfigureAwait(false);
 
-            var msg = await auditQueue.GetMessageAsync();
-            await auditQueue.DeleteMessageAsync(msg);
+            var msg = await auditQueue.GetMessageAsync().ConfigureAwait(false);
+            await auditQueue.DeleteMessageAsync(msg).ConfigureAwait(false);
 
             AssertReplyTo(msg, replyTo);
         }
@@ -87,7 +87,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
             var o = new SendOptions();
             o.RouteReplyTo(replyTo);
             o.SetDestination(destination);
-            await s.Send(new MyCommand(), o);
+            await s.Send(new MyCommand(), o).ConfigureAwait(false);
         }
 
         readonly CloudQueue auditQueue;

@@ -36,7 +36,7 @@
                 })
                 .WithEndpoint<Receiver>()
                 .Done(c => c.WasCalled)
-                .Run();
+                .Run().ConfigureAwait(false);
 
             Assert.IsTrue(context.WasCalled);
         }
