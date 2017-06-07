@@ -1,114 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{BC08A40C-A7F9-4D93-906E-BCD135DA2A72}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NServiceBus.Azure.Transports.WindowsAzureStorageQueues.TransportTests</RootNamespace>
-    <AssemblyName>NServiceBus.Azure.Transports.WindowsAzureStorageQueues.TransportTests</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
+    <TargetFramework>net452</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
+    <DebugSymbols>True</DebugSymbols>
     <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NServiceBus.Core, Version=6.0.0.0, Culture=neutral, PublicKeyToken=9fc386479f8a226c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NServiceBus.6.3.3\lib\net452\NServiceBus.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="nunit.framework, Version=3.7.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
-      <HintPath>..\packages\NUnit.3.7.1\lib\net45\nunit.framework.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Messaging" />
-    <Reference Include="System.Transactions" />
-    <Reference Include="Microsoft.CSharp" />
+    <PackageReference Include="NServiceBus" Version="6.3.3" />
+    <PackageReference Include="NUnit" Version="3.7.1" />
+    <PackageReference Include="NServiceBus.Testing.Fakes.Sources" Version="6.3.3" />
+    <PackageReference Include="NServiceBus.TransportTests.Sources" Version="6.3.3" />
+    <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj"/>
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\DefaultTestingLoggerFactory.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\FakeBuilder.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\NamedLogger.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\OutgoingMessage.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\OutgoingMessageExtensions.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\PublishedMessage.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\RepliedMessage.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\SentMessage.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\Subscription.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableAuditContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableBatchDispatchContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableBehaviorContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableDispatchContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableEndpointInstance.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableForwardingContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableIncomingContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableIncomingLogicalMessageContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableIncomingPhysicalMessageContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableInvokeHandlerContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableMessageHandlerContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableMessageProcessingContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableMessageSession.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableOutgoingContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableOutgoingLogicalMessageContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableOutgoingPhysicalMessageContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableOutgoingPublishContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableOutgoingReplyContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableOutgoingSendContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestablePipelineContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableRoutingContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableSubscribeContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableTransportReceiveContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestableUnsubscribeContext.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TestingLoggerFactory.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\TextWriterLogger.cs" />
-    <Compile Include="App_Packages\NSB.Testing.Fakes.6.3.3\Unsubscription.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\IConfigureTransportInfrastructure.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\NServiceBusTransportTest.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\TransportConfigurationResult.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\TypeScanner.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_failure_happens_after_isolated_send.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_failure_happens_after_send.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_message_is_available.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_on_error_throws.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_on_message_throws.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_on_message_throws_after_delayed_retry.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_on_message_throws_after_immediate_retry.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_requesting_immediate_retry.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_scope_complete_throws.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_scope_throws_after_successful_message_processing.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_sending_from_on_error.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_transaction_level_TransactionScope.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_user_aborts_processing.cs" />
-    <Compile Include="App_Packages\NSB.TransportTests.6.3.3\When_using_non_durable_delivery.cs" />
-    <Compile Include="ConfigureAzureStorageQueueTransportInfrastructure.cs" />
-    <Compile Include="ConsoleLoggerFactory.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj">
-      <Project>{b6d6406f-f5a4-46d7-a882-4a831128065e}</Project>
-      <Name>NServiceBus.AzureStorageQueues</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
