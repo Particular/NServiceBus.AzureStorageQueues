@@ -52,7 +52,7 @@
                 var exact = deliveryConstraint as DoNotDeliverBefore;
                 if (exact != null)
                 {
-                    value = UtcNow - exact.At;
+                    value = exact.At - UtcNow;
                 }
             }
 
