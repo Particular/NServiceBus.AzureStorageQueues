@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Reflection;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Microsoft.WindowsAzure.Storage;
@@ -96,17 +95,6 @@
             return (await timeoutTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false)).Results;
         }
 
-        static void UseNativeTimeouts(TransportExtensions<AzureStorageQueueTransport> cfg)
-        {
-            // a temporary fix for an internalized method UseNativeTimeouts
-            var method = typeof(AzureStorageTransportExtensions).GetMethod("UseNativeTimeouts", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-            method.Invoke(null, new object[]
-            {
-                cfg,
-                SenderTimeoutsTable
-            });
-        }
-
         public class Context : ScenarioContext
         {
             public bool WasCalled { get; set; }
@@ -120,7 +108,8 @@
                 EndpointSetup<DefaultServer>(cfg =>
                 {
                     var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
-                    UseNativeTimeouts(extensions);
+                    extensions.DelayedDelivery().TableName(SenderTimeoutsTable);
+                    extensions.DelayedDelivery().DisableTimeoutManager();
                     var routing = cfg.ConfigureTransport().Routing();
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
@@ -134,7 +123,8 @@
                 EndpointSetup<DefaultServer>(cfg =>
                 {
                     var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
-                    UseNativeTimeouts(extensions);
+                    extensions.DelayedDelivery().TableName(SenderTimeoutsTable);
+                    extensions.DelayedDelivery().DisableTimeoutManager();
                     cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
                 });
             }
