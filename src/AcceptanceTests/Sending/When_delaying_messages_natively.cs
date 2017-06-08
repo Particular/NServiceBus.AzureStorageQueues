@@ -46,7 +46,7 @@
                 }))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.WasCalled)
-                .Run(delay + TimeSpan.FromMinutes(1));
+                .Run(delay + TimeSpan.FromMinutes(1)).ConfigureAwait(false);
 
             Assert.True(context.WasCalled, "The message handler should be called");
             Assert.Greater(context.SW.Elapsed, delay);
@@ -65,12 +65,12 @@
                     sendOptions.SetDestination("thisisnonexistingqueuename");
                     await session.Send(new MyMessage { Id = c.TestRunId }, sendOptions).ConfigureAwait(false);
 
-                    var timeouts = await GetTimeouts();
+                    var timeouts = await GetTimeouts().ConfigureAwait(false);
                     await MoveBeforeNow(timeouts[0]).ConfigureAwait(false);
                 }))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.WasCalled)
-                .Run();
+                .Run().ConfigureAwait(false);
 
             Assert.True(context.WasCalled, "The message should have been moved to the error queue");
         }
