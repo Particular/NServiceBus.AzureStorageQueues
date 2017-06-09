@@ -27,12 +27,22 @@
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
             var delay = GetVisbilityDelay(operation);
-            if (delay == null)
+            if (delay != null)
             {
-                return true;
+                await ScheduleAt(operation, UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
+                return false;
             }
-            await ScheduleAt(operation, UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
-            return false;
+
+            UnicastTransportOperation operationToSchedule;
+            DateTimeOffset scheduleDate;
+
+            if (TryProcessDelayedRetry(operation, out operationToSchedule, out scheduleDate))
+            {
+                await ScheduleAt(operationToSchedule, scheduleDate, cancellationToken).ConfigureAwait(false);
+                return false;
+            }
+            
+            return true;
         }
 
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
@@ -65,6 +75,31 @@
             }
 
             return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
+        }
+
+        static bool TryProcessDelayedRetry(IOutgoingTransportOperation operation, out UnicastTransportOperation operationToSchedule, out DateTimeOffset scheduleDate)
+        {
+            string expire;
+            var messageHeaders = operation.Message.Headers;
+            if (messageHeaders.TryGetValue(TimeoutManagerHeaders.Expire, out expire))
+            {
+                var expiration = DateTimeExtensions.ToUtcDateTime(expire);
+                
+                var destination = messageHeaders[TimeoutManagerHeaders.RouteExpiredTimeoutTo];
+
+                messageHeaders.Remove(TimeoutManagerHeaders.Expire);
+                messageHeaders.Remove(TimeoutManagerHeaders.RouteExpiredTimeoutTo);
+
+                operationToSchedule = new UnicastTransportOperation(operation.Message, destination, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
+
+                scheduleDate = expiration;
+
+                return true;
+            }
+
+            operationToSchedule = null;
+            scheduleDate = default(DateTimeOffset);
+            return false;
         }
 
         Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken)
