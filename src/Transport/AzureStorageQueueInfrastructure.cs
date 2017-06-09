@@ -79,7 +79,7 @@
                     return new MessagePump(receiver, addressing, degreeOfReceiveParallelism);
                 },
                 () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings)),
-                () => Task.FromResult(StartupCheckResult.Success)
+                () => Task.FromResult(NativeDelayDelivery.CheckForInvalidSettings(settings))
                 );
         }
 

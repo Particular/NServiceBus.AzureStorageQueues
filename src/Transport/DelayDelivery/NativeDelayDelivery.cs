@@ -5,9 +5,11 @@
     using System.Threading;
     using System.Threading.Tasks;
     using DelayedDelivery;
+    using Features;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
     using Performance.TimeToBeReceived;
+    using Settings;
     using Transport;
 
     class NativeDelayDelivery
@@ -46,6 +48,18 @@
         }
 
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
+
+        public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
+        {
+            var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
+            
+            if (externalTimeoutManagerAddress)
+            {
+                return StartupCheckResult.Failed("An external timeout manager address cannot be configured because the timeout manager is not being used for delayed delivery.");
+            }
+
+            return StartupCheckResult.Success;
+        }
 
         static TimeSpan? GetVisbilityDelay(IOutgoingTransportOperation operation)
         {
