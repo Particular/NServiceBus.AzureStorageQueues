@@ -11,12 +11,14 @@
     <DebugSymbols>True</DebugSymbols>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <DocumentationFile>$(ProjectDir)bin\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <OutputPath>..\..\binaries\</OutputPath>
     <NoWarn>CS0419</NoWarn>
     <UpdateAssemblyInfo>true</UpdateAssemblyInfo>
     <NoWarn>1591, 0618</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="..\..\packaging\nuget\nservicebus.azurestoragequeues.nuspec" Link="nservicebus.azurestoragequeues.nuspec" />
     <PackageReference Include="Janitor.Fody" Version="1.4.1" />
     <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.0.4" />
     <PackageReference Include="Microsoft.Data.Edm" Version="5.8.2" />
@@ -32,11 +34,4 @@
     <PackageReference Include="NuGetPackager" Version="0.6.3" />
     <PackageReference Include="GitVersionTask" Version="4.0.0-beta0012" />
   </ItemGroup>
-  <Target Name="BeforeBuildPackages" BeforeTargets="BuildPackages">
-    <MakeDir Directories="$(SolutionDir)..\binaries" />
-    <ItemGroup>
-      <Files Include="$(TargetDir)$(TargetName).*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(Files)" DestinationFolder="$(SolutionDir)..\binaries" />
-  </Target>
 </Project>
