@@ -7,6 +7,7 @@
     using DelayedDelivery;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
+    using Performance.TimeToBeReceived;
     using Transport;
 
     class NativeDelayDelivery
@@ -38,21 +39,28 @@
 
         static TimeSpan? GetVisbilityDelay(IOutgoingTransportOperation operation)
         {
-            var deliveryConstraint = operation.DeliveryConstraints.FirstOrDefault(d => d is DelayedDeliveryConstraint);
+            var constraints = operation.DeliveryConstraints;
+            var deliveryConstraint = constraints.FirstOrDefault(d => d is DelayedDeliveryConstraint);
 
             var value = TimeSpan.Zero;
             if (deliveryConstraint != null)
             {
+                var exact = deliveryConstraint as DoNotDeliverBefore;
+                if (exact != null)
+                {
+                    value = exact.At - UtcNow;
+                }
+
                 var delay = deliveryConstraint as DelayDeliveryWith;
                 if (delay != null)
                 {
                     value = delay.Delay;
                     return value;
                 }
-                var exact = deliveryConstraint as DoNotDeliverBefore;
-                if (exact != null)
+
+                if (constraints.Any() && constraints.Any(d => d is DiscardIfNotReceivedBefore))
                 {
-                    value = exact.At - UtcNow;
+                    throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
                 }
             }
 
