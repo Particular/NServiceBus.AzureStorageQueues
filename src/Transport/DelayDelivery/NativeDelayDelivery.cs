@@ -1,11 +1,11 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
 {
     using System;
-    using System.Linq;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using DelayedDelivery;
-    using Features;
+    using DeliveryConstraints;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
     using Performance.TimeToBeReceived;
@@ -28,9 +28,15 @@
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
-            var delay = GetVisbilityDelay(operation);
+            var constraints = ((IOutgoingTransportOperation)operation).DeliveryConstraints;
+            var delay = GetVisbilityDelay(constraints);
             if (delay != null)
             {
+                if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)
+                {
+                    throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
+                }
+
                 await ScheduleAt(operation, UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
                 return false;
             }
@@ -43,7 +49,7 @@
                 await ScheduleAt(operationToSchedule, scheduleDate, cancellationToken).ConfigureAwait(false);
                 return false;
             }
-            
+
             return true;
         }
 
@@ -52,7 +58,7 @@
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
             var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
-            
+
             if (externalTimeoutManagerAddress)
             {
                 return StartupCheckResult.Failed("An external timeout manager address cannot be configured because the timeout manager is not being used for delayed delivery.");
@@ -61,33 +67,25 @@
             return StartupCheckResult.Success;
         }
 
-        static TimeSpan? GetVisbilityDelay(IOutgoingTransportOperation operation)
+        static TimeSpan? GetVisbilityDelay(List<DeliveryConstraint> constraints)
         {
-            var constraints = operation.DeliveryConstraints;
-            var deliveryConstraint = constraints.FirstOrDefault(d => d is DelayedDeliveryConstraint);
-
-            var value = TimeSpan.Zero;
-            if (deliveryConstraint != null)
+            var doNotDeliverBefore = FirstOrDefault<DoNotDeliverBefore>(constraints);
+            if (doNotDeliverBefore != null)
             {
-                var exact = deliveryConstraint as DoNotDeliverBefore;
-                if (exact != null)
-                {
-                    value = exact.At - UtcNow;
-                }
-
-                var delay = deliveryConstraint as DelayDeliveryWith;
-                if (delay != null)
-                {
-                    value = delay.Delay;
-                    return value;
-                }
-
-                if (constraints.Any() && constraints.Any(d => d is DiscardIfNotReceivedBefore))
-                {
-                    throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
-                }
+                return ToNullIfNegative(doNotDeliverBefore.At - UtcNow);
             }
 
+            var delay = FirstOrDefault<DelayDeliveryWith>(constraints);
+            if (delay != null)
+            {
+                return ToNullIfNegative(delay.Delay);
+            }
+
+            return null;
+        }
+
+        static TimeSpan? ToNullIfNegative(TimeSpan value)
+        {
             return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
         }
 
@@ -98,7 +96,7 @@
             if (messageHeaders.TryGetValue(TimeoutManagerHeaders.Expire, out expire))
             {
                 var expiration = DateTimeExtensions.ToUtcDateTime(expire);
-                
+
                 var destination = messageHeaders[TimeoutManagerHeaders.RouteExpiredTimeoutTo];
 
                 messageHeaders.Remove(TimeoutManagerHeaders.Expire);
@@ -126,6 +124,27 @@
 
             timeout.SetOperation(operation);
             return timeouts.ExecuteAsync(TableOperation.Insert(timeout), cancellationToken);
+        }
+
+        static TDeliveryConstraint FirstOrDefault<TDeliveryConstraint>(List<DeliveryConstraint> constraints)
+            where TDeliveryConstraint : DeliveryConstraint
+        {
+            if (constraints == null || constraints.Count == 0)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < constraints.Count; i++)
+            {
+                var c = constraints[i] as TDeliveryConstraint;
+
+                if (c != null)
+                {
+                    return c;
+                }
+            }
+
+            return null;
         }
     }
 }
