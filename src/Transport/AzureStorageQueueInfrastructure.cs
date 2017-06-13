@@ -8,6 +8,7 @@
     using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
     using DelayedDelivery;
+    using Features;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -23,6 +24,16 @@
             serializer = BuildSerializer(settings);
 
             delayedDeliverySettings = settings.GetOrCreate<DelayedDeliverySettings>();
+
+            var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
+            var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
+
+            if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
+            {
+                // TM is automatically disabled to do not throuw during check
+                delayedDeliverySettings.DisableTimeoutManager();
+            }
+            
             delayedDelivery = new Lazy<NativeDelayDelivery>(() => new NativeDelayDelivery(connectionString, GetDelayedQueueTableName()));
         }
 

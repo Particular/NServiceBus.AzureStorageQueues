@@ -6,6 +6,7 @@
     using System.Threading.Tasks;
     using DelayedDelivery;
     using DeliveryConstraints;
+    using Features;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
     using Performance.TimeToBeReceived;
@@ -58,12 +59,21 @@
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
             var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
-
+            var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
+            var timeoutManagerDisabled = (settings.GetOrDefault<DelayedDeliverySettings>()?.TimeoutManagerDisabled).GetValueOrDefault(false);
+            
             if (externalTimeoutManagerAddress)
             {
                 return StartupCheckResult.Failed("An external timeout manager address cannot be configured because the timeout manager is not being used for delayed delivery.");
             }
 
+            if (!timeoutManagerDisabled && !timeoutManagerFeatureActive)
+            {
+                return StartupCheckResult.Failed(
+                    "The timeout manager is not active, but the transport has not been properly configured for this. " +
+                                                 "Use 'EndpointConfiguration.UseTransport<AzureStorageQueueTransport>().DelayedDelivery().DisableTimeoutManager()' to ensure delayed messages can be sent properly.");
+            }
+            
             return StartupCheckResult.Success;
         }
 

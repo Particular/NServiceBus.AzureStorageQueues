@@ -76,7 +76,6 @@
                 throw new Exception($"Cannot parse ConnectionString to a CloudStorageAccount. ConnectionString: {connectionString}");
             }
             var tables = account.CreateCloudTableClient();
-            // TODO: fix the naming or add queue to the timeout
             var table = tables.GetTableReference(tableName);
             await table.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
             return table;
