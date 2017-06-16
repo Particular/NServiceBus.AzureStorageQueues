@@ -90,7 +90,7 @@
                     return new MessagePump(receiver, addressing, degreeOfReceiveParallelism);
                 },
                 () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings)),
-                () => Task.FromResult(NativeDelayDelivery.CheckForInvalidSettings(settings))
+                () => Task.FromResult(StartupCheckResult.Success)
                 );
         }
 
@@ -131,7 +131,7 @@
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()
         {
-            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(StartupCheckResult.Success));
+            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(NativeDelayDelivery.CheckForInvalidSettings(settings)));
         }
 
         Dispatcher BuildDispatcher()
