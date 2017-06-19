@@ -3,8 +3,11 @@
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
     using System.Linq;
     using WindowsAzureStorageQueues.DelayDelivery;
+    using Newtonsoft.Json;
     using NUnit.Framework;
     using NUnit.Framework.Interfaces;
 
@@ -17,6 +20,42 @@
             var actual = HeadersEncoder.Deserialize(bytes);
 
             CollectionAssert.AreEqual(values.OrderBy(kvp => kvp.Key), actual.OrderBy(kvp => kvp.Key), new KeyValuePairComparer());
+        }
+
+        [Test,Explicit("This is perf test")]
+        public void ComparePerformance()
+        {
+            const int n = 100000;
+
+            var headers = new Dictionary<string, string>
+            {
+                {Headers.ContentType, "type"},
+                {Headers.HostId, "somename"},
+                {Headers.OriginatingAddress, "someaddress"},
+                {Headers.CorrelationId, "E9CB2657-D5AC-49A6-8B5B-CF09DBFB407B"},
+            };
+
+            var sw = Stopwatch.StartNew();
+            for (var i = 0; i < n; i++)
+            {
+                GC.KeepAlive(HeadersEncoder.Serialize(headers));
+            }
+            sw.Stop();
+            Console.WriteLine(sw.Elapsed);
+
+            var serializer = new JsonSerializer();
+            
+            sw = Stopwatch.StartNew();
+            for (var i = 0; i < n; i++)
+            {
+                using (var writer = new StringWriter())
+                {
+                    serializer.Serialize(writer, headers);
+                    GC.KeepAlive(writer.ToString());
+                }
+            }
+            sw.Stop();
+            Console.WriteLine(sw.Elapsed);
         }
 
         static IEnumerable<ITestCaseData> HeaderValues()
