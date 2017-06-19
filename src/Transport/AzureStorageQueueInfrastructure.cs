@@ -30,11 +30,11 @@
 
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
-                // TM is automatically disabled to do not throuw during check
+                // TM is automatically disabled to do not throw during check
                 delayedDeliverySettings.DisableTimeoutManager();
             }
             
-            delayedDelivery = new Lazy<NativeDelayDelivery>(() => new NativeDelayDelivery(connectionString, GetDelayedQueueTableName()));
+            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedQueueTableName());
         }
 
         public override IEnumerable<Type> DeliveryConstraints
@@ -138,7 +138,7 @@
         {
             var addressing = GetAddressing(settings, connectionString);
             var addressRetriever = GetAddressGenerator(settings);
-            return new Dispatcher(addressRetriever, addressing, serializer, delayedDelivery.Value.ShouldDispatch);
+            return new Dispatcher(addressRetriever, addressing, serializer, delayedDelivery.ShouldDispatch);
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -175,7 +175,7 @@
             poller = new TimeoutsPoller(connectionString, BuildDispatcher(), GetDelayedQueueTableName(), new BackoffStrategy(maximumWaitTime, peekInterval));
             nativeTimeoutsCancellationSource = new CancellationTokenSource();
             await poller.Start(settings, nativeTimeoutsCancellationSource.Token).ConfigureAwait(false);
-            await delayedDelivery.Value.Init().ConfigureAwait(false);
+            await delayedDelivery.Init().ConfigureAwait(false);
         }
 
         public override Task Stop()
@@ -198,7 +198,7 @@
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
         readonly DelayedDeliverySettings delayedDeliverySettings;
-        Lazy<NativeDelayDelivery> delayedDelivery;
+        NativeDelayDelivery delayedDelivery;
         TimeoutsPoller poller;
         CancellationTokenSource nativeTimeoutsCancellationSource;
     }

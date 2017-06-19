@@ -29,7 +29,7 @@
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
-            var constraints = ((IOutgoingTransportOperation)operation).DeliveryConstraints;
+            var constraints = operation.DeliveryConstraints;
             var delay = GetVisbilityDelay(constraints);
             if (delay != null)
             {
