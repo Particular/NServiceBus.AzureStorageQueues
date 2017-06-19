@@ -1,52 +1,30 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
 {
     using System;
-    using System.Collections.Generic;
-    using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
-    using Newtonsoft.Json;
     using Transport;
 
     class TimeoutEntity : TableEntity
     {
-        static JsonSerializer serializer = new JsonSerializer();
         public string Destination { get; set; }
         public byte[] Body { get; set; }
         public string MessageId { get; set; }
-        public string Headers { get; set; }
-        
-        static string Serialize<T>(T value)
-        {
-            using (var stringWriter = new StringWriter())
-            {
-                serializer.Serialize(stringWriter, value);
-                return stringWriter.ToString();
-            }
-        }
-
-        static T Deserialize<T>(string value)
-        {
-            using (var stringReader = new StringReader(value))
-            using (var jsonReader = new JsonTextReader(stringReader))
-            {
-                return serializer.Deserialize<T>(jsonReader);
-            }
-        }
+        public byte[] Headers { get; set; }
 
         public void SetOperation(UnicastTransportOperation operation)
         {
             Destination = operation.Destination;
             Body = operation.Message.Body;
             MessageId = operation.Message.MessageId;
-            Headers = Serialize(operation.Message.Headers);
+            Headers = HeadersEncoder.Serialize(operation.Message.Headers);
         }
 
         public UnicastTransportOperation GetOperation()
         {
-            return new UnicastTransportOperation(new OutgoingMessage(MessageId, Deserialize<Dictionary<string, string>>(Headers), Body), Destination);
+            return new UnicastTransportOperation(new OutgoingMessage(MessageId, HeadersEncoder.Deserialize(Headers), Body), Destination);
         }
 
         const string PartitionKeyScope = "yyyyMMddHH";
