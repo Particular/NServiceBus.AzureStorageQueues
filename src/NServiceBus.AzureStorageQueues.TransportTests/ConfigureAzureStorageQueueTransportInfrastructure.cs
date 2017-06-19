@@ -33,7 +33,12 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
 
         var delayedDelivery = new DelayedDeliverySettings();
         settings.Set<DelayedDeliverySettings>(delayedDelivery);
-        delayedDelivery.TableName("timeouts");
+
+        typeof(DelayedDeliverySettings).GetMethod("TableName", BindingFlags.NonPublic | BindingFlags.Instance)
+            .Invoke(delayedDelivery, new object[]
+            {
+                "timeouts"
+            });
 
         return new TransportConfigurationResult
         {

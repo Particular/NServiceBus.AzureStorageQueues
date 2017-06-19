@@ -14,7 +14,7 @@ namespace NServiceBus
         /// <summary>
         /// Sets the table name for the table storing delayed messages.
         /// </summary>
-        public void TableName(string timeoutTableName)
+        internal void TableName(string timeoutTableName)
         {
             Guard.AgainstNullAndEmpty(nameof(timeoutTableName), timeoutTableName);
 
@@ -24,7 +24,7 @@ namespace NServiceBus
                 throw new ArgumentException($"{nameof(timeoutTableName)} must match the following regular expression '{tableNameRegex}'");
             }
             
-            Name = timeoutTableName;
+            Name = timeoutTableName.ToLower();
         }
 
         /// <summary>

@@ -108,8 +108,7 @@
                 EndpointSetup<DefaultServer>(cfg =>
                 {
                     var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
-                    extensions.DelayedDelivery().TableName(SenderTimeoutsTable);
-                    extensions.DelayedDelivery().DisableTimeoutManager();
+                    extensions.DelayedDelivery(SenderTimeoutsTable).DisableTimeoutManager();
                     var routing = cfg.ConfigureTransport().Routing();
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
@@ -123,8 +122,7 @@
                 EndpointSetup<DefaultServer>(cfg =>
                 {
                     var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
-                    extensions.DelayedDelivery().TableName(SenderTimeoutsTable);
-                    extensions.DelayedDelivery().DisableTimeoutManager();
+                    extensions.DelayedDelivery(SenderTimeoutsTable).DisableTimeoutManager();
                     cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
                 });
             }

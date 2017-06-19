@@ -54,9 +54,6 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
 
     static void EnableNativeDelayedDelivery(string endpointName, TransportExtensions<AzureStorageQueueTransport> transportConfig)
     {
-        var delayedDelivery = transportConfig.DelayedDelivery();
-
-        delayedDelivery.DisableTimeoutManager();
         byte[] hashedName;
         using (var sha1 = new SHA1Managed())
         {
@@ -65,7 +62,11 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         }
 
         var hashName = BitConverter.ToString(hashedName).Replace("-", string.Empty);
-        delayedDelivery.TableName("timeouts" + hashName);
+        var timeoutTableName = "timeouts" + hashName;
+
+        var delayedDelivery = transportConfig.DelayedDelivery(timeoutTableName);
+
+        delayedDelivery.DisableTimeoutManager();
     }
 
     public Task Cleanup()

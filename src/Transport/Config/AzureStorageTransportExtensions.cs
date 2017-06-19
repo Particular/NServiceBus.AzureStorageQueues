@@ -116,9 +116,11 @@ namespace NServiceBus
         /// <summary>
         /// Configures delayed delivery features of this transport.
         /// </summary>
-        public static DelayedDeliverySettings DelayedDelivery(this TransportExtensions<AzureStorageQueueTransport> config)
+        public static DelayedDeliverySettings DelayedDelivery(this TransportExtensions<AzureStorageQueueTransport> config, string timeoutTableName)
         {
-            return config.GetSettings().GetOrCreate<DelayedDeliverySettings>();
+            var delayedDeliverySettings = config.GetSettings().GetOrCreate<DelayedDeliverySettings>();
+            delayedDeliverySettings.TableName(timeoutTableName);
+            return delayedDeliverySettings;
         }
 
         internal const int MaxDegreeOfReceiveParallelism = 32;
