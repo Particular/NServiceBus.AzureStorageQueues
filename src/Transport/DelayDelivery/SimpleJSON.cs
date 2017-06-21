@@ -52,6 +52,7 @@
 
 #if !SIMPLE_JSON_NO_LINQ_EXPRESSION
 using System.Linq.Expressions;
+// ReSharper disable All
 #endif
 #if SIMPLE_JSON_DYNAMIC
 using System.Dynamic;
@@ -628,11 +629,10 @@ namespace SimpleJson
                 return jsonString;
 
             var sb = new StringBuilder();
-            char c;
 
             for (var i = 0; i < jsonString.Length;)
             {
-                c = jsonString[i++];
+                var c = jsonString[i++];
 
                 if (c == '\\')
                 {
@@ -683,7 +683,6 @@ namespace SimpleJson
         static IDictionary<string, object> ParseObject(char[] json, ref int index, ref bool success)
         {
             IDictionary<string, object> table = new JsonObject();
-            int token;
 
             // {
             NextToken(json, ref index);
@@ -691,7 +690,7 @@ namespace SimpleJson
             var done = false;
             while (!done)
             {
-                token = LookAhead(json, index);
+                var token = LookAhead(json, index);
                 if (token == TOKEN_NONE)
                 {
                     success = false;
@@ -802,12 +801,11 @@ namespace SimpleJson
         static string ParseString(char[] json, ref int index, ref bool success)
         {
             var s = new StringBuilder(BUILDER_CAPACITY);
-            char c;
 
             EatWhitespace(json, ref index);
 
             // "
-            c = json[index++];
+            var c = json[index++];
             var complete = false;
             while (!complete)
             {
@@ -1783,16 +1781,14 @@ namespace SimpleJson
             public static ConstructorInfo GetConstructorInfo(Type type, params Type[] argsType)
             {
                 var constructorInfos = GetConstructors(type);
-                int i;
-                bool matches;
                 foreach (var constructorInfo in constructorInfos)
                 {
                     var parameters = constructorInfo.GetParameters();
                     if (argsType.Length != parameters.Length)
                         continue;
 
-                    i = 0;
-                    matches = true;
+                    var i = 0;
+                    var matches = true;
                     foreach (var parameterInfo in constructorInfo.GetParameters())
                         if (parameterInfo.ParameterType != argsType[i])
                         {
