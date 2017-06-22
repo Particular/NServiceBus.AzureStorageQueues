@@ -31,6 +31,15 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
             throw new IgnoreException("ASQ uses a circuit breaker that is triggered after specific period of time. Critical errors are not reported immiediately");
         }
 
+        var delayedDelivery = new DelayedDeliverySettings();
+        settings.Set<DelayedDeliverySettings>(delayedDelivery);
+
+        typeof(DelayedDeliverySettings).GetMethod("TableName", BindingFlags.NonPublic | BindingFlags.Instance)
+            .Invoke(delayedDelivery, new object[]
+            {
+                "timeouts"
+            });
+
         return new TransportConfigurationResult
         {
             TransportInfrastructure = new AzureStorageQueueTransport().Initialize(settings, Environment.GetEnvironmentVariable("AzureStorageQueueTransport.ConnectionString")),

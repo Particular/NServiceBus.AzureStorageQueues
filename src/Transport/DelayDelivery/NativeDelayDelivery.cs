@@ -1,12 +1,16 @@
 ﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
 {
     using System;
-    using System.Linq;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using DelayedDelivery;
+    using DeliveryConstraints;
+    using Features;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
+    using Performance.TimeToBeReceived;
+    using Settings;
     using Transport;
 
     class NativeDelayDelivery
@@ -25,38 +29,99 @@
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
-            var delay = GetVisbilityDelay(operation);
-            if (delay == null)
+            var constraints = operation.DeliveryConstraints;
+            var delay = GetVisbilityDelay(constraints);
+            if (delay != null)
             {
-                return true;
+                if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)
+                {
+                    throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
+                }
+
+                await ScheduleAt(operation, UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
+                return false;
             }
-            await ScheduleAt(operation, UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
-            return false;
+
+            UnicastTransportOperation operationToSchedule;
+            DateTimeOffset scheduleDate;
+
+            if (TryProcessDelayedRetry(operation, out operationToSchedule, out scheduleDate))
+            {
+                await ScheduleAt(operationToSchedule, scheduleDate, cancellationToken).ConfigureAwait(false);
+                return false;
+            }
+
+            return true;
         }
 
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
 
-        static TimeSpan? GetVisbilityDelay(IOutgoingTransportOperation operation)
+        public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
-            var deliveryConstraint = operation.DeliveryConstraints.FirstOrDefault(d => d is DelayedDeliveryConstraint);
-
-            var value = TimeSpan.Zero;
-            if (deliveryConstraint != null)
+            var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
+            var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
+            var timeoutManagerDisabled = (settings.GetOrDefault<DelayedDeliverySettings>()?.TimeoutManagerDisabled).GetValueOrDefault(false);
+            
+            if (externalTimeoutManagerAddress)
             {
-                var delay = deliveryConstraint as DelayDeliveryWith;
-                if (delay != null)
-                {
-                    value = delay.Delay;
-                    return value;
-                }
-                var exact = deliveryConstraint as DoNotDeliverBefore;
-                if (exact != null)
-                {
-                    value = UtcNow - exact.At;
-                }
+                return StartupCheckResult.Failed("An external timeout manager address cannot be configured because the timeout manager is not being used for delayed delivery.");
             }
 
+            if (!timeoutManagerDisabled && !timeoutManagerFeatureActive)
+            {
+                return StartupCheckResult.Failed(
+                    "The timeout manager is not active, but the transport has not been properly configured for this. " +
+                                                 "Use 'EndpointConfiguration.UseTransport<AzureStorageQueueTransport>().DelayedDelivery().DisableTimeoutManager()' to ensure delayed messages can be sent properly.");
+            }
+            
+            return StartupCheckResult.Success;
+        }
+
+        static TimeSpan? GetVisbilityDelay(List<DeliveryConstraint> constraints)
+        {
+            var doNotDeliverBefore = FirstOrDefault<DoNotDeliverBefore>(constraints);
+            if (doNotDeliverBefore != null)
+            {
+                return ToNullIfNegative(doNotDeliverBefore.At - UtcNow);
+            }
+
+            var delay = FirstOrDefault<DelayDeliveryWith>(constraints);
+            if (delay != null)
+            {
+                return ToNullIfNegative(delay.Delay);
+            }
+
+            return null;
+        }
+
+        static TimeSpan? ToNullIfNegative(TimeSpan value)
+        {
             return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
+        }
+
+        static bool TryProcessDelayedRetry(IOutgoingTransportOperation operation, out UnicastTransportOperation operationToSchedule, out DateTimeOffset scheduleDate)
+        {
+            string expire;
+            var messageHeaders = operation.Message.Headers;
+            if (messageHeaders.TryGetValue(TimeoutManagerHeaders.Expire, out expire))
+            {
+                var expiration = DateTimeExtensions.ToUtcDateTime(expire);
+
+                var destination = messageHeaders[TimeoutManagerHeaders.RouteExpiredTimeoutTo];
+
+                messageHeaders.Remove(TimeoutManagerHeaders.Expire);
+                messageHeaders.Remove(TimeoutManagerHeaders.RouteExpiredTimeoutTo);
+
+                operationToSchedule = new UnicastTransportOperation(operation.Message, destination, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
+
+                scheduleDate = expiration;
+
+                return true;
+            }
+
+            operationToSchedule = null;
+            scheduleDate = default(DateTimeOffset);
+            return false;
         }
 
         Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken)
@@ -69,6 +134,27 @@
 
             timeout.SetOperation(operation);
             return timeouts.ExecuteAsync(TableOperation.Insert(timeout), cancellationToken);
+        }
+
+        static TDeliveryConstraint FirstOrDefault<TDeliveryConstraint>(List<DeliveryConstraint> constraints)
+            where TDeliveryConstraint : DeliveryConstraint
+        {
+            if (constraints == null || constraints.Count == 0)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < constraints.Count; i++)
+            {
+                var c = constraints[i] as TDeliveryConstraint;
+
+                if (c != null)
+                {
+                    return c;
+                }
+            }
+
+            return null;
         }
     }
 }

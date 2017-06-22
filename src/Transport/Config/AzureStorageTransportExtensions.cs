@@ -1,7 +1,6 @@
 namespace NServiceBus
 {
     using System;
-    using System.Text.RegularExpressions;
     using Azure.Transports.WindowsAzureStorageQueues;
     using AzureStorageQueues;
     using AzureStorageQueues.Config;
@@ -115,27 +114,13 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Switches transport to use timeouts based on the Azure Storage Queues capabilities.
+        /// Configures delayed delivery features of this transport.
         /// </summary>
-        // TODO: UseNativeTimeouts are internalized till doco and migration arrives.
-        internal static TransportExtensions<AzureStorageQueueTransport> UseNativeTimeouts(this TransportExtensions<AzureStorageQueueTransport> config, string timeoutTableName)
+        public static DelayedDeliverySettings DelayedDelivery(this TransportExtensions<AzureStorageQueueTransport> config, string timeoutTableName)
         {
-            var settings = config.GetSettings();
-
-            if (string.IsNullOrWhiteSpace(timeoutTableName))
-            {
-                throw new ArgumentException($"{nameof(timeoutTableName)} cannot be null nor empty nor whitespace", nameof(timeoutTableName));
-            }
-
-            const string tableNameRegex = "^[A-Za-z][A-Za-z0-9]{2,62}$";
-            if (new Regex(tableNameRegex).IsMatch(timeoutTableName) == false)
-            {
-                throw new ArgumentException($"{nameof(timeoutTableName)} must match the following regular expression '{tableNameRegex}'");
-            }
-
-            settings.Set(WellKnownConfigurationKeys.NativeTimeoutsTableName, timeoutTableName);
-
-            return config;
+            var delayedDeliverySettings = config.GetSettings().GetOrCreate<DelayedDeliverySettings>();
+            delayedDeliverySettings.TableName(timeoutTableName);
+            return delayedDeliverySettings;
         }
 
         internal const int MaxDegreeOfReceiveParallelism = 32;

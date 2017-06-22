@@ -11,7 +11,5 @@
         public const string Sha1Shortener = "Transport.AzureStorageQueue.Sha1Shortener";
         public const string DegreeOfReceiveParallelism = "Transport.AzureStorageQueue.DegreeOfReceiveParallelism";
         public const string UseAccountNamesInsteadOfConnectionStrings = "Transport.AzureStorageQueue.UseAccountAliasesInsteadOfConnectionStrings";
-        public const string NativeTimeouts = "Transport.AzureStorageQueue.NativeTimeouts";
-        public const string NativeTimeoutsTableName = "Transport.AzureStorageQueue.NativeTimeoutsTableName";
     }
 }

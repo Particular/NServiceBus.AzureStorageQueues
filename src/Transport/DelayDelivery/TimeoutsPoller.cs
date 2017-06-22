@@ -213,7 +213,7 @@
             errorQueue = settings.ErrorQueueAddress();
             var account = CloudStorageAccount.Parse(connectionString);
             table = await TimeoutEntity.BuiltTimeoutTableWithExplicitName(connectionString, tableName, cancellationToken).ConfigureAwait(false);
-            var container = account.CreateCloudBlobClient().GetContainerReference(table.Name.ToLower()); // TODO: can it be lowered?
+            var container = account.CreateCloudBlobClient().GetContainerReference(tableName);
             lockManager = new LockManager(container, LeaseLength);
             isAtMostOnce = settings.GetRequiredTransactionModeForReceives() == TransportTransactionMode.None;
         }

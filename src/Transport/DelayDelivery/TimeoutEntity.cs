@@ -2,17 +2,14 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
-    using Newtonsoft.Json;
     using Transport;
 
     class TimeoutEntity : TableEntity
     {
-        static JsonSerializer serializer = new JsonSerializer();
         public string Destination { get; set; }
         public byte[] Body { get; set; }
         public string MessageId { get; set; }
@@ -20,20 +17,12 @@
         
         static string Serialize<T>(T value)
         {
-            using (var stringWriter = new StringWriter())
-            {
-                serializer.Serialize(stringWriter, value);
-                return stringWriter.ToString();
-            }
+            return SimpleJson.SimpleJson.SerializeObject(value);
         }
 
         static T Deserialize<T>(string value)
         {
-            using (var stringReader = new StringReader(value))
-            using (var jsonReader = new JsonTextReader(stringReader))
-            {
-                return serializer.Deserialize<T>(jsonReader);
-            }
+            return SimpleJson.SimpleJson.DeserializeObject<T>(value);
         }
 
         public void SetOperation(UnicastTransportOperation operation)
@@ -76,7 +65,6 @@
                 throw new Exception($"Cannot parse ConnectionString to a CloudStorageAccount. ConnectionString: {connectionString}");
             }
             var tables = account.CreateCloudTableClient();
-            // TODO: fix the naming or add queue to the timeout
             var table = tables.GetTableReference(tableName);
             await table.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
             return table;

@@ -26,6 +26,7 @@ namespace NServiceBus
     {
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> BatchSize(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, int value) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DegreeOfReceiveParallelism(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, int degreeOfReceiveParallelism) { }
+        public static NServiceBus.DelayedDeliverySettings DelayedDelivery(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, string timeoutTableName) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MessageInvisibleTime(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> PeekInterval(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
@@ -34,96 +35,15 @@ namespace NServiceBus
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UnwrapMessagesWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Func<Microsoft.WindowsAzure.Storage.Queue.CloudQueueMessage, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> unwrapper) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseSha1ForShortening(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
     }
-    [System.ObsoleteAttribute("This class was replaced by extension methods on endpointConfiguration.UseTranspor" +
-        "t<AzureStorageQueue>(). Will be removed in version 8.0.0.", true)]
-    public class static ConfigureAzureMessageQueue { }
+    public class DelayedDeliverySettings
+    {
+        public DelayedDeliverySettings() { }
+        public void DisableTimeoutManager() { }
+    }
 }
 namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class AzureMessageQueueCreator
-    {
-        public AzureMessageQueueCreator() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class AzureMessageQueueReceiver
-    {
-        public AzureMessageQueueReceiver() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class AzureMessageQueueSender
-    {
-        public AzureMessageQueueSender() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class AzureMessageQueueUtils
-    {
-        public AzureMessageQueueUtils() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class AzureQueueNamingConvention
-    {
-        public AzureQueueNamingConvention() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class ConnectionStringParser
-    {
-        public ConnectionStringParser() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class CreateQueueClients
-    {
-        public CreateQueueClients() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class DeterminesBestConnectionStringForStorageQueues
-    {
-        public DeterminesBestConnectionStringForStorageQueues() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class DeterministicGuidBuilder
-    {
-        public DeterministicGuidBuilder() { }
-    }
-    [System.ObsoleteAttribute("This exception was used only within the library and was not thrown outside. As su" +
-        "ch it was marked as internal. Will be removed in version 8.0.0.", true)]
-    public class EnvelopeDeserializationFailed
-    {
-        public EnvelopeDeserializationFailed() { }
-    }
-    [System.ObsoleteAttribute("This interface served only internal implementations and as such was removed from " +
-        "the public API. For more information, refer to the documentation. Will be remove" +
-        "d in version 8.0.0.", true)]
-    public class ICreateQueueClients
-    {
-        public ICreateQueueClients() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class IsHostedIn
-    {
-        public IsHostedIn() { }
-    }
     public class MessageWrapper : NServiceBus.IMessage
     {
         public MessageWrapper() { }
@@ -136,68 +56,5 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public bool Recoverable { get; set; }
         public string ReplyToAddress { get; set; }
         public System.TimeSpan TimeToBeReceived { get; set; }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class PollingDequeueStrategy
-    {
-        public PollingDequeueStrategy() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class QueueAutoCreation
-    {
-        public QueueAutoCreation() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class ReceiveResourceManager
-    {
-        public ReceiveResourceManager() { }
-    }
-    [System.ObsoleteAttribute("This exception provided no value to the users, Exception is thrown in that place " +
-        "with a message that role environment variable was not found. Will be removed in " +
-        "version 8.0.0.", true)]
-    public class RoleEnvironmentUnavailableException
-    {
-        public RoleEnvironmentUnavailableException() { }
-    }
-    [System.ObsoleteAttribute("This exception was used only within the library and was not thrown outside. As su" +
-        "ch it was marked as internal. Will be removed in version 8.0.0.", true)]
-    public class SafeRoleEnvironment
-    {
-        public SafeRoleEnvironment() { }
-    }
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class SendResourceManager
-    {
-        public SendResourceManager() { }
-    }
-}
-namespace NServiceBus.Config
-{
-    
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class AzureQueueConfig
-    {
-        public AzureQueueConfig() { }
-    }
-}
-namespace NServiceBus.Features
-{
-    
-    [System.ObsoleteAttribute("This class served only internal purposes without providing any extensibility poin" +
-        "t and as such was removed from the public API. For more information, refer to th" +
-        "e documentation. Will be removed in version 8.0.0.", true)]
-    public class AzureStorageQueueTransport
-    {
-        public AzureStorageQueueTransport() { }
     }
 }

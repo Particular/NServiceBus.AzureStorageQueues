@@ -7,7 +7,7 @@
         public bool SupportsDtc { get; } = false;
         public bool SupportsCrossQueueTransactions { get; } = false;
         public bool SupportsNativePubSub { get; } = false;
-        public bool SupportsNativeDeferral { get; } = false;
+        public bool SupportsNativeDeferral { get; } = true;
         public bool SupportsOutbox { get; } = false;
         public IConfigureEndpointTestExecution CreateTransportConfiguration() => new ConfigureEndpointAzureStorageQueueTransport();
         public IConfigureEndpointTestExecution CreatePersistenceConfiguration() => new ConfigureEndpointInMemoryPersistence();
