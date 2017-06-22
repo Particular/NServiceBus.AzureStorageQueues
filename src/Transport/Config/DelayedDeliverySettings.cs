@@ -8,7 +8,7 @@ namespace NServiceBus
     /// </summary>
     public class DelayedDeliverySettings
     {
-        internal string Name { get; private set; }
+        internal string Name;
         internal bool TimeoutManagerDisabled;
 
         /// <summary>
