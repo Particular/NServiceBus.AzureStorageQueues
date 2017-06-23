@@ -56,6 +56,8 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public NServiceBus.MessageIntentEnum MessageIntent { get; set; }
         public bool Recoverable { get; set; }
         public string ReplyToAddress { get; set; }
+        [System.ObsoleteAttribute("Unnecessary property for MessageWrapper. Will be treated as an error from version" +
+            " 8.0.0. Will be removed in version 9.0.0.", false)]
         public System.TimeSpan TimeToBeReceived { get; set; }
     }
 }
