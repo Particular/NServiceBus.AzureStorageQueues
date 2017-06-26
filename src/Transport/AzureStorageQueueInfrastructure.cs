@@ -33,8 +33,12 @@
                 // TM is automatically disabled to do not throw during check
                 delayedDeliverySettings.DisableTimeoutManager();
             }
-            
-            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedQueueTableName());
+
+            string tableName;
+            if (IsNativeDelayedDeliveryCongifured(out tableName))
+            {
+                delayedDelivery = new NativeDelayDelivery(connectionString, tableName);
+            }
         }
 
         public override IEnumerable<Type> DeliveryConstraints
@@ -44,7 +48,7 @@
                 yield return typeof(DiscardIfNotReceivedBefore);
                 yield return typeof(NonDurableDelivery);
 
-                if (delayedDeliverySettings.TimeoutManagerDisabled)
+                if (delayedDelivery != null)
                 {
                     yield return typeof(DoNotDeliverBefore);
                     yield return typeof(DelayDeliveryWith);
@@ -138,7 +142,17 @@
         {
             var addressing = GetAddressing(settings, connectionString);
             var addressRetriever = GetAddressGenerator(settings);
-            return new Dispatcher(addressRetriever, addressing, serializer, delayedDelivery.ShouldDispatch);
+            
+            Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
+            if (delayedDelivery != null)
+            {
+                shouldSend = delayedDelivery.ShouldDispatch;
+            }
+            else
+            {
+                shouldSend = (_, __) => Task.FromResult(true);
+            }
+            return new Dispatcher(addressRetriever, addressing, serializer, shouldSend);
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -172,10 +186,15 @@
         {
             var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
             var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-            poller = new TimeoutsPoller(connectionString, BuildDispatcher(), GetDelayedQueueTableName(), new BackoffStrategy(maximumWaitTime, peekInterval));
-            nativeTimeoutsCancellationSource = new CancellationTokenSource();
-            await poller.Start(settings, nativeTimeoutsCancellationSource.Token).ConfigureAwait(false);
-            await delayedDelivery.Init().ConfigureAwait(false);
+
+            string tableName;
+            if (IsNativeDelayedDeliveryCongifured(out tableName))
+            {
+                nativeTimeoutsCancellationSource = new CancellationTokenSource();
+                poller = new TimeoutsPoller(connectionString, BuildDispatcher(), tableName, new BackoffStrategy(maximumWaitTime, peekInterval));
+                await poller.Start(settings, nativeTimeoutsCancellationSource.Token).ConfigureAwait(false);
+                await delayedDelivery.Init().ConfigureAwait(false);
+            }
         }
 
         public override Task Stop()
@@ -184,14 +203,16 @@
             return poller != null ? poller.Stop() : TaskEx.CompletedTask;
         }
 
-        string GetDelayedQueueTableName()
+        bool IsNativeDelayedDeliveryCongifured(out string tableName)
         {
             if (string.IsNullOrEmpty(delayedDeliverySettings.Name))
             {
-                throw new Exception("Native delayed delivery feature requires configuring a table suffix.");
+                tableName = null;
+                return false;
             }
 
-            return delayedDeliverySettings.Name;
+            tableName = delayedDeliverySettings.Name;
+            return true;
         }
 
         readonly ReadOnlySettings settings;
