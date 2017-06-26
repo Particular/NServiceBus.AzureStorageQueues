@@ -35,7 +35,7 @@
             }
 
             string tableName;
-            if (IsNativeDelayedDeliveryCongifured(out tableName))
+            if (IsNativeDelayedDeliveryConfigured(out tableName))
             {
                 delayedDelivery = new NativeDelayDelivery(connectionString, tableName);
             }
@@ -188,7 +188,7 @@
             var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
 
             string tableName;
-            if (IsNativeDelayedDeliveryCongifured(out tableName))
+            if (IsNativeDelayedDeliveryConfigured(out tableName))
             {
                 nativeTimeoutsCancellationSource = new CancellationTokenSource();
                 poller = new TimeoutsPoller(connectionString, BuildDispatcher(), tableName, new BackoffStrategy(maximumWaitTime, peekInterval));
@@ -203,7 +203,7 @@
             return poller != null ? poller.Stop() : TaskEx.CompletedTask;
         }
 
-        bool IsNativeDelayedDeliveryCongifured(out string tableName)
+        bool IsNativeDelayedDeliveryConfigured(out string tableName)
         {
             if (string.IsNullOrEmpty(delayedDeliverySettings.Name))
             {

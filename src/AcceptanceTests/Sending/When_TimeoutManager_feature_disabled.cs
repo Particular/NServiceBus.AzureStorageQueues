@@ -10,7 +10,7 @@
     using AcceptanceTesting.Customization;
     using Configuration.AdvanceExtensibility;
 
-    public class When_TimeoutManager_disabled : NServiceBusAcceptanceTest
+    public class When_TimeoutManager_feature_disabled : NServiceBusAcceptanceTest
     {
         [Test]
         public async Task Should_startup_properly_and_send_regular_messages()
