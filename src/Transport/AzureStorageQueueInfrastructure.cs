@@ -10,7 +10,6 @@
     using DelayedDelivery;
     using Features;
     using Logging;
-    using NServiceBus.Config;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
