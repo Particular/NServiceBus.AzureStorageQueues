@@ -153,7 +153,8 @@
             }
             else
             {
-                shouldSend = (_, __) => Task.FromResult(true);
+                var trueTask = Task.FromResult(true);
+                shouldSend = (_, __) => trueTask;
             }
             return new Dispatcher(addressRetriever, addressing, serializer, shouldSend);
         }
