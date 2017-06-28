@@ -9,6 +9,7 @@
     using Config;
     using DelayedDelivery;
     using Features;
+    using Logging;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -23,18 +24,23 @@
             this.connectionString = connectionString;
             serializer = BuildSerializer(settings);
 
-            delayedDeliverySettings = settings.GetOrCreate<DelayedDeliverySettings>();
+            delayedDeliverySettings = settings.GetOrDefault<DelayedDeliverySettings>();
 
             var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
             var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
 
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
+                // user configured delayed delivery. Even when TimeoutManager was not disabled via DD but using the feature, we'll disable it for user
                 // TM is automatically disabled to do not throw during check
-                delayedDeliverySettings.DisableTimeoutManager();
+                delayedDeliverySettings?.DisableTimeoutManager();
             }
-            
-            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedQueueTableName());
+
+            string tableName;
+            if (IsNativeDelayedDeliveryConfigured(out tableName))
+            {
+                delayedDelivery = new NativeDelayDelivery(connectionString, tableName);
+            }
         }
 
         public override IEnumerable<Type> DeliveryConstraints
@@ -44,7 +50,7 @@
                 yield return typeof(DiscardIfNotReceivedBefore);
                 yield return typeof(NonDurableDelivery);
 
-                if (delayedDeliverySettings.TimeoutManagerDisabled)
+                if (delayedDeliverySettings != null && delayedDeliverySettings.TimeoutManagerDisabled)
                 {
                     yield return typeof(DoNotDeliverBefore);
                     yield return typeof(DelayDeliveryWith);
@@ -131,14 +137,25 @@
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()
         {
-            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(NativeDelayDelivery.CheckForInvalidSettings(settings)));
+            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(StartupCheckResult.Success));
         }
 
         Dispatcher BuildDispatcher()
         {
             var addressing = GetAddressing(settings, connectionString);
             var addressRetriever = GetAddressGenerator(settings);
-            return new Dispatcher(addressRetriever, addressing, serializer, delayedDelivery.ShouldDispatch);
+
+            Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
+            if (delayedDelivery != null)
+            {
+                shouldSend = delayedDelivery.ShouldDispatch;
+            }
+            else
+            {
+                var trueTask = Task.FromResult(true);
+                shouldSend = (_, __) => trueTask;
+            }
+            return new Dispatcher(addressRetriever, addressing, serializer, shouldSend);
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -172,10 +189,19 @@
         {
             var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
             var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-            poller = new TimeoutsPoller(connectionString, BuildDispatcher(), GetDelayedQueueTableName(), new BackoffStrategy(maximumWaitTime, peekInterval));
-            nativeTimeoutsCancellationSource = new CancellationTokenSource();
-            await poller.Start(settings, nativeTimeoutsCancellationSource.Token).ConfigureAwait(false);
-            await delayedDelivery.Init().ConfigureAwait(false);
+
+            string tableName;
+            if (IsNativeDelayedDeliveryConfigured(out tableName))
+            {
+                nativeTimeoutsCancellationSource = new CancellationTokenSource();
+                poller = new TimeoutsPoller(connectionString, BuildDispatcher(), tableName, new BackoffStrategy(maximumWaitTime, peekInterval));
+                await poller.Start(settings, nativeTimeoutsCancellationSource.Token).ConfigureAwait(false);
+                await delayedDelivery.Init().ConfigureAwait(false);
+            }
+            else
+            {
+                Log.Warn($"This transport doesn't have native delayed delivery enabled. To enable it, use '{nameof(AzureStorageTransportExtensions.DelayedDelivery)}' when configuring ASQ transport.");
+            }
         }
 
         public override Task Stop()
@@ -184,14 +210,16 @@
             return poller != null ? poller.Stop() : TaskEx.CompletedTask;
         }
 
-        string GetDelayedQueueTableName()
+        bool IsNativeDelayedDeliveryConfigured(out string tableName)
         {
-            if (string.IsNullOrEmpty(delayedDeliverySettings.Name))
+            if (string.IsNullOrEmpty(delayedDeliverySettings?.Name))
             {
-                throw new Exception("Native delayed delivery feature requires configuring a table suffix.");
+                tableName = null;
+                return false;
             }
 
-            return delayedDeliverySettings.Name;
+            tableName = delayedDeliverySettings.Name;
+            return true;
         }
 
         readonly ReadOnlySettings settings;
@@ -201,5 +229,6 @@
         NativeDelayDelivery delayedDelivery;
         TimeoutsPoller poller;
         CancellationTokenSource nativeTimeoutsCancellationSource;
+        static readonly ILog Log = LogManager.GetLogger<AzureStorageQueueInfrastructure>();
     }
 }
