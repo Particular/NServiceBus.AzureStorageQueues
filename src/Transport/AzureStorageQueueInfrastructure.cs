@@ -23,15 +23,17 @@
             this.connectionString = connectionString;
             serializer = BuildSerializer(settings);
 
-            delayedDeliverySettings = settings.GetOrCreate<DelayedDeliverySettings>();
+            delayedDeliverySettings = settings.GetOrDefault<DelayedDeliverySettings>();
 
             var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
             var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
 
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
+                // user configured delayed delivery. Even when TimeoutManager was not disabled via DD but using the feature, we'll disable it for user
                 // TM is automatically disabled to do not throw during check
-                delayedDeliverySettings.DisableTimeoutManager();
+
+                delayedDeliverySettings?.DisableTimeoutManager();
             }
 
             string tableName;
@@ -48,7 +50,7 @@
                 yield return typeof(DiscardIfNotReceivedBefore);
                 yield return typeof(NonDurableDelivery);
 
-                if (delayedDeliverySettings.TimeoutManagerDisabled)
+                if (delayedDeliverySettings != null && delayedDeliverySettings.TimeoutManagerDisabled)
                 {
                     yield return typeof(DoNotDeliverBefore);
                     yield return typeof(DelayDeliveryWith);
@@ -135,14 +137,14 @@
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()
         {
-            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(NativeDelayDelivery.CheckForInvalidSettings(settings)));
+            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(StartupCheckResult.Success));
         }
 
         Dispatcher BuildDispatcher()
         {
             var addressing = GetAddressing(settings, connectionString);
             var addressRetriever = GetAddressGenerator(settings);
-            
+
             Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
             if (delayedDelivery != null)
             {
@@ -205,7 +207,7 @@
 
         bool IsNativeDelayedDeliveryConfigured(out string tableName)
         {
-            if (string.IsNullOrEmpty(delayedDeliverySettings.Name))
+            if (string.IsNullOrEmpty(delayedDeliverySettings?.Name))
             {
                 tableName = null;
                 return false;
