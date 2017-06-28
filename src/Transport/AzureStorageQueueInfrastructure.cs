@@ -9,6 +9,8 @@
     using Config;
     using DelayedDelivery;
     using Features;
+    using Logging;
+    using NServiceBus.Config;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -32,7 +34,6 @@
             {
                 // user configured delayed delivery. Even when TimeoutManager was not disabled via DD but using the feature, we'll disable it for user
                 // TM is automatically disabled to do not throw during check
-
                 delayedDeliverySettings?.DisableTimeoutManager();
             }
 
@@ -197,6 +198,10 @@
                 await poller.Start(settings, nativeTimeoutsCancellationSource.Token).ConfigureAwait(false);
                 await delayedDelivery.Init().ConfigureAwait(false);
             }
+            else
+            {
+                Log.Warn($"This transport doesn't have native delayed delivery enabled. To enable it, use '{nameof(AzureStorageTransportExtensions.DelayedDelivery)}' when configuring ASQ transport.");
+            }
         }
 
         public override Task Stop()
@@ -224,5 +229,6 @@
         NativeDelayDelivery delayedDelivery;
         TimeoutsPoller poller;
         CancellationTokenSource nativeTimeoutsCancellationSource;
+        static readonly ILog Log = LogManager.GetLogger<AzureStorageQueueInfrastructure>();
     }
 }
