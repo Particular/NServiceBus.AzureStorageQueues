@@ -15,22 +15,22 @@
 
     class NativeDelayDelivery
     {
-        CloudTable timeouts;
+        CloudTable delayedMessagesTable;
 
-        public NativeDelayDelivery(string connectionString, string timeoutTableName)
+        public NativeDelayDelivery(string connectionString, string delayedMessagesTableName)
         {
-            timeouts = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(timeoutTableName);
+            delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
         }
 
         public Task Init()
         {
-            return timeouts.CreateIfNotExistsAsync();
+            return delayedMessagesTable.CreateIfNotExistsAsync();
         }
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
             var constraints = operation.DeliveryConstraints;
-            var delay = GetVisbilityDelay(constraints);
+            var delay = GetVisibilityDelay(constraints);
             if (delay != null)
             {
                 if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)
@@ -60,7 +60,7 @@
         {
             var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
             var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
-            var timeoutManagerDisabled = (settings.GetOrDefault<DelayedDeliverySettings>()?.TimeoutManagerDisabled).GetValueOrDefault(false);
+            var timeoutManagerDisabled = settings.Get<DelayedDeliverySettings>().TimeoutManagerDisabled;
             
             if (externalTimeoutManagerAddress)
             {
@@ -77,7 +77,7 @@
             return StartupCheckResult.Success;
         }
 
-        static TimeSpan? GetVisbilityDelay(List<DeliveryConstraint> constraints)
+        static TimeSpan? GetVisibilityDelay(List<DeliveryConstraint> constraints)
         {
             var doNotDeliverBefore = FirstOrDefault<DoNotDeliverBefore>(constraints);
             if (doNotDeliverBefore != null)
@@ -126,14 +126,14 @@
 
         Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken)
         {
-            var timeout = new TimeoutEntity
+            var delayedMessageEntity = new DelayedMessageEntity
             {
-                PartitionKey = TimeoutEntity.GetPartitionKey(date),
-                RowKey = $"{TimeoutEntity.GetRawRowKeyPrefix(date)}_{Guid.NewGuid():N}",
+                PartitionKey = DelayedMessageEntity.GetPartitionKey(date),
+                RowKey = $"{DelayedMessageEntity.GetRawRowKeyPrefix(date)}_{Guid.NewGuid():N}",
             };
 
-            timeout.SetOperation(operation);
-            return timeouts.ExecuteAsync(TableOperation.Insert(timeout), cancellationToken);
+            delayedMessageEntity.SetOperation(operation);
+            return delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), cancellationToken);
         }
 
         static TDeliveryConstraint FirstOrDefault<TDeliveryConstraint>(List<DeliveryConstraint> constraints)

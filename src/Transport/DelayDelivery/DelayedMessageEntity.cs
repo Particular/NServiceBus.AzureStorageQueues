@@ -8,7 +8,10 @@
     using Microsoft.WindowsAzure.Storage.Table;
     using Transport;
 
-    class TimeoutEntity : TableEntity
+    /// <summary>
+    /// Represents a record in the native delays storage table which can be deferred message, saga timeouts, and delayed retries.
+    /// </summary>
+    class DelayedMessageEntity : TableEntity
     {
         public string Destination { get; set; }
         public byte[] Body { get; set; }
@@ -51,29 +54,12 @@
             return dto.ToString(RowKeyScope);
         }
 
-        public static Task<CloudTable> BuildTimeoutTableByQueueName(string connectionString, string queueName, CancellationToken cancellationToken)
+        public static async Task<CloudTable> BuildDelayedMessagesTable(CloudStorageAccount storageAccount, string tableName, CancellationToken cancellationToken)
         {
-            var tableName = BuildTimeoutTableName(queueName);
-            return BuiltTimeoutTableWithExplicitName(connectionString, tableName, cancellationToken);
-        }
-
-        public static async Task<CloudTable> BuiltTimeoutTableWithExplicitName(string connectionString, string tableName, CancellationToken cancellationToken)
-        {
-            CloudStorageAccount account;
-            if (!CloudStorageAccount.TryParse(connectionString, out account))
-            {
-                throw new Exception($"Cannot parse ConnectionString to a CloudStorageAccount. ConnectionString: {connectionString}");
-            }
-            var tables = account.CreateCloudTableClient();
+            var tables = storageAccount.CreateCloudTableClient();
             var table = tables.GetTableReference(tableName);
             await table.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
             return table;
         }
-
-        static string BuildTimeoutTableName(string queueName)
-        {
-            return $"Timeouts{queueName.Replace("-", "")}";
-        }
-
     }
 }

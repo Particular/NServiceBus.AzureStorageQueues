@@ -12,12 +12,12 @@
     using Settings;
     using Transport;
 
-    class TimeoutsPoller
+    class DelayedMessagesPoller
     {
-        const int TimeoutProcessedAtOnce = 50;
+        const int DelayedMessagesProcessedAtOnce = 50;
         static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
         static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
-        static ILog Logger = LogManager.GetLogger<TimeoutsPoller>();
+        static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
 
         readonly string connectionString;
         readonly Dispatcher dispatcher;
@@ -26,11 +26,11 @@
 
         CloudTable table;
         LockManager lockManager;
-        Task timeoutPollerTask;
+        Task delayedMessagesPollerTask;
         string errorQueue;
         bool isAtMostOnce;
 
-        public TimeoutsPoller(string connectionString, Dispatcher dispatcher, string tableName, BackoffStrategy backoffStrategy)
+        public DelayedMessagesPoller(string connectionString, Dispatcher dispatcher, string tableName, BackoffStrategy backoffStrategy)
         {
             this.connectionString = connectionString;
             this.dispatcher = dispatcher;
@@ -43,12 +43,12 @@
             await Init(settings, cancellationToken).ConfigureAwait(false);
             // No need to pass token to run. to avoid when token is cancelled the task changing into 
             // the cancelled state and when awaited while stopping rethrow the cancelled exception
-            timeoutPollerTask = Task.Run(() => Poll(cancellationToken));
+            delayedMessagesPollerTask = Task.Run(() => Poll(cancellationToken));
         }
 
         public Task Stop()
         {
-            return timeoutPollerTask;
+            return delayedMessagesPollerTask;
         }
 
         async Task Poll(CancellationToken cancellationToken)
@@ -66,7 +66,7 @@
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn("Failed to fetch timeouts from the timeout storage", ex);
+                    Logger.Warn("Failed to fetch delayed messages from the storage", ex);
                 }
             }
 
@@ -127,15 +127,15 @@
                 return;
             }
 
-            Logger.DebugFormat("Polling for timeouts at {0}.", now);
+            Logger.DebugFormat("Polling for delayed messages at {0}.", now);
 
-            var query = new TableQuery<TimeoutEntity>
+            var query = new TableQuery<DelayedMessageEntity>
             {
-                FilterString = $"(PartitionKey le '{TimeoutEntity.GetPartitionKey(now)}') and (RowKey le '{TimeoutEntity.GetRawRowKeyPrefix(now)}')",
-                TakeCount = TimeoutProcessedAtOnce // max batch size
+                FilterString = $"(PartitionKey le '{DelayedMessageEntity.GetPartitionKey(now)}') and (RowKey le '{DelayedMessageEntity.GetRawRowKeyPrefix(now)}')",
+                TakeCount = DelayedMessagesProcessedAtOnce // max batch size
             };
 
-            var timeouts = await table.ExecuteQueryAsync(query, TimeoutProcessedAtOnce, cancellationToken)
+            var delayedMessages = await table.ExecuteQueryAsync(query, DelayedMessagesProcessedAtOnce, cancellationToken)
                 .ConfigureAwait(false);
 
             if (await TryLease(cancellationToken).ConfigureAwait(false) == false)
@@ -145,7 +145,7 @@
 
             var stopwatch = Stopwatch.StartNew();
 
-            foreach (var timeout in timeouts)
+            foreach (var delayedMessage in delayedMessages)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -164,34 +164,34 @@
 
                 try
                 {
-                    var delete = TableOperation.Delete(timeout);
+                    var delete = TableOperation.Delete(delayedMessage);
 
                     if (isAtMostOnce)
                     {
                         // delete first, then dispatch
                         await table.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
-                        await SafeDispatch(timeout, cancellationToken).ConfigureAwait(false);
+                        await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
                         // dispatch first, then delete
-                        await SafeDispatch(timeout, cancellationToken).ConfigureAwait(false);
+                        await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
                         await table.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 catch (Exception exception)
                 {
                     // just log and move on with the rest
-                    Logger.Warn($"Failed at dispatching the timeout PK:'{timeout.PartitionKey}' RK: '{timeout.RowKey}' with message id '{timeout.MessageId}'", exception);
+                    Logger.Warn($"Failed at dispatching the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'", exception);
                 }
             }
 
-            await backoffStrategy.OnBatch(timeouts.Count, cancellationToken).ConfigureAwait(false);
+            await backoffStrategy.OnBatch(delayedMessages.Count, cancellationToken).ConfigureAwait(false);
         }
 
-        async Task SafeDispatch(TimeoutEntity timeout, CancellationToken cancellationToken)
+        async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
         {
-            var operation = timeout.GetOperation();
+            var operation = delayedMessage.GetOperation();
             try
             {
                 await dispatcher.Send(operation, cancellationToken).ConfigureAwait(false);
@@ -211,9 +211,9 @@
         async Task Init(ReadOnlySettings settings, CancellationToken cancellationToken)
         {
             errorQueue = settings.ErrorQueueAddress();
-            var account = CloudStorageAccount.Parse(connectionString);
-            table = await TimeoutEntity.BuiltTimeoutTableWithExplicitName(connectionString, tableName, cancellationToken).ConfigureAwait(false);
-            var container = account.CreateCloudBlobClient().GetContainerReference(tableName);
+            var storageAccount = CloudStorageAccount.Parse(connectionString);
+            table = await DelayedMessageEntity.BuildDelayedMessagesTable(storageAccount, tableName, cancellationToken).ConfigureAwait(false);
+            var container = storageAccount.CreateCloudBlobClient().GetContainerReference(tableName);
             lockManager = new LockManager(container, LeaseLength);
             isAtMostOnce = settings.GetRequiredTransactionModeForReceives() == TransportTransactionMode.None;
         }

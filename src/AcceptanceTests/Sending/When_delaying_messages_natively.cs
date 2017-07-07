@@ -14,17 +14,17 @@
 
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
     {
-        CloudTable timeoutTable;
+        CloudTable delayedMessagesTable;
 
         [SetUp]
         public new async Task SetUp()
         {
-            timeoutTable = CloudStorageAccount.Parse(Utils.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderTimeoutsTable);
-            if (await timeoutTable.ExistsAsync().ConfigureAwait(false))
+            delayedMessagesTable = CloudStorageAccount.Parse(Utils.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
+            if (await delayedMessagesTable.ExistsAsync().ConfigureAwait(false))
             {
-                foreach (var dte in await timeoutTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false))
+                foreach (var dte in await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false))
                 {
-                    await timeoutTable.ExecuteAsync(TableOperation.Delete(dte)).ConfigureAwait(false);
+                    await delayedMessagesTable.ExecuteAsync(TableOperation.Delete(dte)).ConfigureAwait(false);
                 }
             }
         }
@@ -39,8 +39,8 @@
                 {
                     var sendOptions = new SendOptions();
                     sendOptions.DelayDeliveryWith(delay);
-                    c.SW = new Stopwatch();
-                    c.SW.Start();
+                    c.stopwatch = new Stopwatch();
+                    c.stopwatch.Start();
                     return session.Send(new MyMessage { Id = c.TestRunId }, sendOptions);
                 }))
                 .WithEndpoint<Receiver>()
@@ -48,7 +48,7 @@
                 .Run(delay + TimeSpan.FromMinutes(1)).ConfigureAwait(false);
 
             Assert.True(context.WasCalled, "The message handler should be called");
-            Assert.Greater(context.SW.Elapsed, delay);
+            Assert.Greater(context.stopwatch.Elapsed, delay);
         }
 
         [Test]
@@ -64,8 +64,8 @@
                     sendOptions.SetDestination("thisisnonexistingqueuename");
                     await session.Send(new MyMessage { Id = c.TestRunId }, sendOptions).ConfigureAwait(false);
 
-                    var timeouts = await GetTimeouts().ConfigureAwait(false);
-                    await MoveBeforeNow(timeouts[0]).ConfigureAwait(false);
+                    var delayedMessages = await GetDelayedMessageEntities().ConfigureAwait(false);
+                    await MoveBeforeNow(delayedMessages[0]).ConfigureAwait(false);
                 }))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.WasCalled)
@@ -80,25 +80,25 @@
 
             var ctx = new OperationContext();
 
-            var earlierTimeout = new DynamicTableEntity();
-            earlierTimeout.ReadEntity(dte.WriteEntity(ctx), ctx);
+            var delayedMessageEntity = new DynamicTableEntity();
+            delayedMessageEntity.ReadEntity(dte.WriteEntity(ctx), ctx);
 
-            earlierTimeout.PartitionKey = earlier.ToString("yyyyMMddHH");
-            earlierTimeout.RowKey = earlier.ToString("yyyyMMddHHmmss");
+            delayedMessageEntity.PartitionKey = earlier.ToString("yyyyMMddHH");
+            delayedMessageEntity.RowKey = earlier.ToString("yyyyMMddHHmmss");
 
-            await timeoutTable.ExecuteAsync(TableOperation.Delete(dte)).ConfigureAwait(false);
-            await timeoutTable.ExecuteAsync(TableOperation.Insert(earlierTimeout)).ConfigureAwait(false);
+            await delayedMessagesTable.ExecuteAsync(TableOperation.Delete(dte)).ConfigureAwait(false);
+            await delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity)).ConfigureAwait(false);
         }
 
-        async Task<List<DynamicTableEntity>> GetTimeouts()
+        async Task<List<DynamicTableEntity>> GetDelayedMessageEntities()
         {
-            return (await timeoutTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false)).Results;
+            return (await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false)).Results;
         }
 
         public class Context : ScenarioContext
         {
             public bool WasCalled { get; set; }
-            public Stopwatch SW { get; set; }
+            public Stopwatch stopwatch { get; set; }
         }
 
         public class Sender : EndpointConfigurationBuilder
@@ -107,8 +107,8 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
-                    extensions.DelayedDelivery(SenderTimeoutsTable).DisableTimeoutManager();
+                    var transport = cfg.UseTransport<AzureStorageQueueTransport>();
+                    transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
                     var routing = cfg.ConfigureTransport().Routing();
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
@@ -121,8 +121,8 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
-                    extensions.DelayedDelivery(SenderTimeoutsTable).DisableTimeoutManager();
+                    var transport = cfg.UseTransport<AzureStorageQueueTransport>();
+                    transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
                     cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
                 });
             }
@@ -161,6 +161,6 @@
             public Guid Id { get; set; }
         }
 
-        const string SenderTimeoutsTable = "NativeTimeoutsSender";
+        const string SenderDelayedMessagesTable = "NativeDelayedMessagesForSender";
     }
 }

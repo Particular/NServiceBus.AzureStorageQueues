@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
@@ -22,7 +20,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(30));
 
-        EnableNativeDelayedDelivery(endpointName, transportConfig);
+        transportConfig.DelayedDelivery().DisableTimeoutManager();
 
         var routingConfig = transportConfig.Routing();
 
@@ -50,23 +48,6 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         transportConfig.SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<JsonSerializer>>();
 
         return Task.FromResult(0);
-    }
-
-    static void EnableNativeDelayedDelivery(string endpointName, TransportExtensions<AzureStorageQueueTransport> transportConfig)
-    {
-        byte[] hashedName;
-        using (var sha1 = new SHA1Managed())
-        {
-            sha1.Initialize();
-            hashedName = sha1.ComputeHash(Encoding.UTF8.GetBytes(endpointName));
-        }
-
-        var hashName = BitConverter.ToString(hashedName).Replace("-", string.Empty);
-        var timeoutTableName = "timeouts" + hashName;
-
-        var delayedDelivery = transportConfig.DelayedDelivery(timeoutTableName);
-
-        delayedDelivery.DisableTimeoutManager();
     }
 
     public Task Cleanup()
