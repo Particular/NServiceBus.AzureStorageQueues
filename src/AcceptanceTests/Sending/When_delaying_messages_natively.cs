@@ -39,8 +39,7 @@
                 {
                     var sendOptions = new SendOptions();
                     sendOptions.DelayDeliveryWith(delay);
-                    c.stopwatch = new Stopwatch();
-                    c.stopwatch.Start();
+                    c.Stopwatch = Stopwatch.StartNew();
                     return session.Send(new MyMessage { Id = c.TestRunId }, sendOptions);
                 }))
                 .WithEndpoint<Receiver>()
@@ -48,7 +47,7 @@
                 .Run(delay + TimeSpan.FromMinutes(1)).ConfigureAwait(false);
 
             Assert.True(context.WasCalled, "The message handler should be called");
-            Assert.Greater(context.stopwatch.Elapsed, delay);
+            Assert.Greater(context.Stopwatch.Elapsed, delay);
         }
 
         [Test]
@@ -98,7 +97,7 @@
         public class Context : ScenarioContext
         {
             public bool WasCalled { get; set; }
-            public Stopwatch stopwatch { get; set; }
+            public Stopwatch Stopwatch { get; set; }
         }
 
         public class Sender : EndpointConfigurationBuilder
