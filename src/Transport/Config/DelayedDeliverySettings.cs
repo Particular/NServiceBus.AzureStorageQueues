@@ -23,7 +23,7 @@ namespace NServiceBus
             {
                 throw new ArgumentException($"{nameof(delayedMessagesTableName)} must match the following regular expression '{tableNameRegex}'");
             }
-            
+
             TableName = delayedMessagesTableName.ToLower();
         }
 

@@ -17,7 +17,7 @@
         public byte[] Body { get; set; }
         public string MessageId { get; set; }
         public string Headers { get; set; }
-        
+
         static string Serialize<T>(T value)
         {
             return SimpleJson.SimpleJson.SerializeObject(value);

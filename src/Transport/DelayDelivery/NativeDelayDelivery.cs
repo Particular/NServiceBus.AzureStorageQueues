@@ -61,7 +61,7 @@
             var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
             var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
             var timeoutManagerDisabled = settings.Get<DelayedDeliverySettings>().TimeoutManagerDisabled;
-            
+
             if (externalTimeoutManagerAddress)
             {
                 return StartupCheckResult.Failed("An external timeout manager address cannot be configured because the timeout manager is not being used for delayed delivery.");
@@ -73,7 +73,7 @@
                     "The timeout manager is not active, but the transport has not been properly configured for this. " +
                                                  "Use 'EndpointConfiguration.UseTransport<AzureStorageQueueTransport>().DelayedDelivery().DisableTimeoutManager()' to ensure delayed messages can be sent properly.");
             }
-            
+
             return StartupCheckResult.Success;
         }
 

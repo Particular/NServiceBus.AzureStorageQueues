@@ -30,7 +30,7 @@
                 var delayedDeliveryTableName = GetDelayedDeliveryTableName(settings.EndpointName());
                 delayedDeliverySettings.UseTableName(delayedDeliveryTableName);
             }
-            
+
             var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
             var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
 

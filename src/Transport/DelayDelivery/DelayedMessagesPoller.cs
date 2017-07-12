@@ -41,7 +41,7 @@
         public async Task Start(ReadOnlySettings settings, CancellationToken cancellationToken)
         {
             await Init(settings, cancellationToken).ConfigureAwait(false);
-            // No need to pass token to run. to avoid when token is cancelled the task changing into 
+            // No need to pass token to run. to avoid when token is cancelled the task changing into
             // the cancelled state and when awaited while stopping rethrow the cancelled exception
             delayedMessagesPollerTask = Task.Run(() => Poll(cancellationToken));
         }
