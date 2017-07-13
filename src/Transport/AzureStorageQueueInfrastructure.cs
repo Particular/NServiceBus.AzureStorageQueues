@@ -194,7 +194,6 @@
             poller = new DelayedMessagesPoller(connectionString, BuildDispatcher(), delayedDeliverySettings.TableName, new BackoffStrategy(maximumWaitTime, peekInterval));
             nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
             await poller.Start(settings, nativeDelayedMessagesCancellationSource.Token).ConfigureAwait(false);
-            await delayedDelivery.Init().ConfigureAwait(false);
         }
 
         public override Task Stop()

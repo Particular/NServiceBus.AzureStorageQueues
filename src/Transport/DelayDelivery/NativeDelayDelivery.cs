@@ -22,11 +22,6 @@
             delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
         }
 
-        public Task Init()
-        {
-            return delayedMessagesTable.CreateIfNotExistsAsync();
-        }
-
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
             var constraints = operation.DeliveryConstraints;
