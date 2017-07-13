@@ -12,6 +12,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="NServiceBus.Azure.Transports.WindowsAzureStorageQueues.approved.cs" />
+    <Compile Remove="NServiceBus.Azure.Transports.WindowsAzureStorageQueues.received.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NServiceBus" Version="6.3.3" />

@@ -15,22 +15,20 @@
 
     class NativeDelayDelivery
     {
-        CloudTable timeouts;
+        CloudTable delayedMessagesTable;
 
-        public NativeDelayDelivery(string connectionString, string timeoutTableName)
+        public NativeDelayDelivery(string connectionString, string delayedMessagesTableName)
         {
-            timeouts = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(timeoutTableName);
-        }
-
-        public Task Init()
-        {
-            return timeouts.CreateIfNotExistsAsync();
+            delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
+            // In the constructor to ensure we do not force the calling code to remember to invoke any initialization method.
+            // Also, CreateIfNotExistsAsync() returns BEFORE the table is actually ready to be used, causing 404.
+            delayedMessagesTable.CreateIfNotExists();
         }
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
             var constraints = operation.DeliveryConstraints;
-            var delay = GetVisbilityDelay(constraints);
+            var delay = GetVisibilityDelay(constraints);
             if (delay != null)
             {
                 if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)
@@ -55,13 +53,14 @@
         }
 
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
+        public CloudTable Table => delayedMessagesTable;
 
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
             var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
             var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
-            var timeoutManagerDisabled = (settings.GetOrDefault<DelayedDeliverySettings>()?.TimeoutManagerDisabled).GetValueOrDefault(false);
-            
+            var timeoutManagerDisabled = settings.Get<DelayedDeliverySettings>().TimeoutManagerDisabled;
+
             if (externalTimeoutManagerAddress)
             {
                 return StartupCheckResult.Failed("An external timeout manager address cannot be configured because the timeout manager is not being used for delayed delivery.");
@@ -73,11 +72,11 @@
                     "The timeout manager is not active, but the transport has not been properly configured for this. " +
                                                  "Use 'EndpointConfiguration.UseTransport<AzureStorageQueueTransport>().DelayedDelivery().DisableTimeoutManager()' to ensure delayed messages can be sent properly.");
             }
-            
+
             return StartupCheckResult.Success;
         }
 
-        static TimeSpan? GetVisbilityDelay(List<DeliveryConstraint> constraints)
+        static TimeSpan? GetVisibilityDelay(List<DeliveryConstraint> constraints)
         {
             var doNotDeliverBefore = FirstOrDefault<DoNotDeliverBefore>(constraints);
             if (doNotDeliverBefore != null)
@@ -126,14 +125,14 @@
 
         Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken)
         {
-            var timeout = new TimeoutEntity
+            var delayedMessageEntity = new DelayedMessageEntity
             {
-                PartitionKey = TimeoutEntity.GetPartitionKey(date),
-                RowKey = $"{TimeoutEntity.GetRawRowKeyPrefix(date)}_{Guid.NewGuid():N}",
+                PartitionKey = DelayedMessageEntity.GetPartitionKey(date),
+                RowKey = $"{DelayedMessageEntity.GetRawRowKeyPrefix(date)}_{Guid.NewGuid():N}",
             };
 
-            timeout.SetOperation(operation);
-            return timeouts.ExecuteAsync(TableOperation.Insert(timeout), cancellationToken);
+            delayedMessageEntity.SetOperation(operation);
+            return delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), cancellationToken);
         }
 
         static TDeliveryConstraint FirstOrDefault<TDeliveryConstraint>(List<DeliveryConstraint> constraints)

@@ -28,17 +28,8 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
         var methodName = TestContext.CurrentContext.Test.MethodName;
         if (methodName == nameof(When_on_error_throws.Should_reinvoke_on_error_with_original_exception))
         {
-            throw new IgnoreException("ASQ uses a circuit breaker that is triggered after specific period of time. Critical errors are not reported immiediately");
+            throw new IgnoreException("ASQ uses a circuit breaker that is triggered after specific period of time. Critical errors are not reported immediately");
         }
-
-        var delayedDelivery = new DelayedDeliverySettings();
-        settings.Set<DelayedDeliverySettings>(delayedDelivery);
-
-        typeof(DelayedDeliverySettings).GetMethod("TableName", BindingFlags.NonPublic | BindingFlags.Instance)
-            .Invoke(delayedDelivery, new object[]
-            {
-                "timeouts"
-            });
 
         return new TransportConfigurationResult
         {
