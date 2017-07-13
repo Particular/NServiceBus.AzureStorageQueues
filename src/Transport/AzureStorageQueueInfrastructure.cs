@@ -36,7 +36,7 @@
 
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
-                // TM is automatically disabled to do not throw during check
+                // TimeoutManager is already not used. Indicate to Native Delayed Delivery that we're not in the hybrid mode.
                 delayedDeliverySettings.DisableTimeoutManager();
             }
 
