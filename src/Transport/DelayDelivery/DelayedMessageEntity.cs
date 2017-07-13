@@ -2,9 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
     using Transport;
 
@@ -52,14 +49,6 @@
         public static string GetRawRowKeyPrefix(DateTimeOffset dto)
         {
             return dto.ToString(RowKeyScope);
-        }
-
-        public static async Task<CloudTable> BuildDelayedMessagesTable(CloudStorageAccount storageAccount, string tableName, CancellationToken cancellationToken)
-        {
-            var tables = storageAccount.CreateCloudTableClient();
-            var table = tables.GetTableReference(tableName);
-            await table.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
-            return table;
         }
     }
 }

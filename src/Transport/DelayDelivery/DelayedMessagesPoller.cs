@@ -21,29 +21,37 @@
 
         readonly string connectionString;
         readonly Dispatcher dispatcher;
-        readonly string tableName;
         readonly BackoffStrategy backoffStrategy;
 
-        CloudTable table;
+        CloudTable delayedDeliveryTable;
         LockManager lockManager;
         Task delayedMessagesPollerTask;
         string errorQueue;
         bool isAtMostOnce;
 
-        public DelayedMessagesPoller(string connectionString, Dispatcher dispatcher, string tableName, BackoffStrategy backoffStrategy)
+        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, string connectionString, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
+            this.delayedDeliveryTable = delayedDeliveryTable;
             this.connectionString = connectionString;
             this.dispatcher = dispatcher;
-            this.tableName = tableName;
             this.backoffStrategy = backoffStrategy;
         }
 
-        public async Task Start(ReadOnlySettings settings, CancellationToken cancellationToken)
+        public void Start(ReadOnlySettings settings, CancellationToken cancellationToken)
         {
-            await Init(settings, cancellationToken).ConfigureAwait(false);
+            Init(settings);
             // No need to pass token to run. to avoid when token is cancelled the task changing into
             // the cancelled state and when awaited while stopping rethrow the cancelled exception
             delayedMessagesPollerTask = Task.Run(() => Poll(cancellationToken));
+        }
+
+        void Init(ReadOnlySettings settings)
+        {
+            errorQueue = settings.ErrorQueueAddress();
+            var storageAccount = CloudStorageAccount.Parse(connectionString);
+            var container = storageAccount.CreateCloudBlobClient().GetContainerReference(delayedDeliveryTable.Name);
+            lockManager = new LockManager(container, LeaseLength);
+            isAtMostOnce = settings.GetRequiredTransactionModeForReceives() == TransportTransactionMode.None;
         }
 
         public Task Stop()
@@ -135,7 +143,7 @@
                 TakeCount = DelayedMessagesProcessedAtOnce // max batch size
             };
 
-            var delayedMessages = await table.ExecuteQueryAsync(query, DelayedMessagesProcessedAtOnce, cancellationToken)
+            var delayedMessages = await delayedDeliveryTable.ExecuteQueryAsync(query, DelayedMessagesProcessedAtOnce, cancellationToken)
                 .ConfigureAwait(false);
 
             if (await TryLease(cancellationToken).ConfigureAwait(false) == false)
@@ -169,14 +177,14 @@
                     if (isAtMostOnce)
                     {
                         // delete first, then dispatch
-                        await table.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
+                        await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
                         await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
                         // dispatch first, then delete
                         await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
-                        await table.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
+                        await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 catch (Exception exception)
@@ -206,16 +214,6 @@
         UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
             return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
-        }
-
-        async Task Init(ReadOnlySettings settings, CancellationToken cancellationToken)
-        {
-            errorQueue = settings.ErrorQueueAddress();
-            var storageAccount = CloudStorageAccount.Parse(connectionString);
-            table = await DelayedMessageEntity.BuildDelayedMessagesTable(storageAccount, tableName, cancellationToken).ConfigureAwait(false);
-            var container = storageAccount.CreateCloudBlobClient().GetContainerReference(tableName);
-            lockManager = new LockManager(container, LeaseLength);
-            isAtMostOnce = settings.GetRequiredTransactionModeForReceives() == TransportTransactionMode.None;
         }
     }
 }

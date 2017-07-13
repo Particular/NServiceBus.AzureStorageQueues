@@ -187,13 +187,14 @@
             return queue.ToString();
         }
 
-        public override async Task Start()
+        public override Task Start()
         {
             var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
             var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-            poller = new DelayedMessagesPoller(connectionString, BuildDispatcher(), delayedDeliverySettings.TableName, new BackoffStrategy(maximumWaitTime, peekInterval));
+            poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
             nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-            await poller.Start(settings, nativeDelayedMessagesCancellationSource.Token).ConfigureAwait(false);
+            poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+            return TaskEx.CompletedTask;
         }
 
         public override Task Stop()

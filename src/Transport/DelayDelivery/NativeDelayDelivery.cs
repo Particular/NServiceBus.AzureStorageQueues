@@ -20,6 +20,9 @@
         public NativeDelayDelivery(string connectionString, string delayedMessagesTableName)
         {
             delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
+            // In the constructor to ensure we do not force the calling code to remember to invoke any initialization method.
+            // Also, CreateIfNotExistsAsync() returns BEFORE the table is actually ready to be used, causing 404.
+            delayedMessagesTable.CreateIfNotExists();
         }
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -50,6 +53,7 @@
         }
 
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
+        public CloudTable Table => delayedMessagesTable;
 
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
