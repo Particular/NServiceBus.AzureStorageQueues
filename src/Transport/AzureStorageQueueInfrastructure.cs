@@ -2,12 +2,14 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Security.Cryptography;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
     using DelayedDelivery;
+    using Features;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -16,35 +18,58 @@
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        internal AzureStorageQueueInfrastructure(ReadOnlySettings settings, string connectionString)
+        internal AzureStorageQueueInfrastructure(SettingsHolder settings, string connectionString)
         {
             this.settings = settings;
             this.connectionString = connectionString;
             serializer = BuildSerializer(settings);
 
-            timeoutsTableName = settings.GetOrDefault<string>(WellKnownConfigurationKeys.NativeTimeoutsTableName);
+            delayedDeliverySettings = settings.GetOrCreate<DelayedDeliverySettings>();
+            if (delayedDeliverySettings.TableNameWasNotOverridden)
+            {
+                var delayedDeliveryTableName = GetDelayedDeliveryTableName(settings.EndpointName());
+                delayedDeliverySettings.UseTableName(delayedDeliveryTableName);
+            }
 
-            var contraints = new List<Type>
+            var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
+            var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
+
+            if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
-                typeof(DiscardIfNotReceivedBefore),
-                typeof(NonDurableDelivery)
-            };
-            useNativeTimeouts = timeoutsTableName != null;
-            if (useNativeTimeouts)
-            {
-                contraints.Add(typeof(DelayedDeliveryConstraint));
-                delayedDelivery = new NativeDelayDelivery(connectionString, timeoutsTableName);
-                shouldDispatch = delayedDelivery.ShouldDispatch;
+                // TimeoutManager is already not used. Indicate to Native Delayed Delivery that we're not in the hybrid mode.
+                delayedDeliverySettings.DisableTimeoutManager();
             }
-            else
-            {
-                var @true = Task.FromResult(true);
-                shouldDispatch = (u,y) => @true;
-            }
-            DeliveryConstraints = contraints;
+
+            delayedDelivery = new NativeDelayDelivery(connectionString, delayedDeliverySettings.TableName);
         }
 
-        public override IEnumerable<Type> DeliveryConstraints { get; }
+        static string GetDelayedDeliveryTableName(string endpointName)
+        {
+            byte[] hashedName;
+            using (var sha1 = new SHA1Managed())
+            {
+                sha1.Initialize();
+                hashedName = sha1.ComputeHash(Encoding.UTF8.GetBytes(endpointName));
+            }
+
+            var hashName = BitConverter.ToString(hashedName).Replace("-", string.Empty);
+            return "delays" + hashName;
+        }
+
+        public override IEnumerable<Type> DeliveryConstraints
+        {
+            get
+            {
+                yield return typeof(DiscardIfNotReceivedBefore);
+                yield return typeof(NonDurableDelivery);
+
+                if (delayedDeliverySettings.TimeoutManagerDisabled)
+                {
+                    yield return typeof(DoNotDeliverBefore);
+                    yield return typeof(DelayDeliveryWith);
+                }
+            }
+        }
 
         public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
         public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
@@ -125,14 +150,14 @@
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()
         {
-            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(StartupCheckResult.Success));
+            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(NativeDelayDelivery.CheckForInvalidSettings(settings)));
         }
 
         Dispatcher BuildDispatcher()
         {
             var addressing = GetAddressing(settings, connectionString);
             var addressRetriever = GetAddressGenerator(settings);
-            return new Dispatcher(addressRetriever, addressing, serializer, shouldDispatch);
+            return new Dispatcher(addressRetriever, addressing, serializer, delayedDelivery.ShouldDispatch);
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -162,33 +187,28 @@
             return queue.ToString();
         }
 
-        public override async Task Start()
+        public override Task Start()
         {
-            if (useNativeTimeouts)
-            {
-                var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
-                var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-                poller = new TimeoutsPoller(connectionString, BuildDispatcher(), timeoutsTableName, new BackoffStrategy(maximumWaitTime, peekInterval));
-                nativeTimeoutsCancellationSource = new CancellationTokenSource();
-                await poller.Start(settings, nativeTimeoutsCancellationSource.Token).ConfigureAwait(false);
-                await delayedDelivery.Init().ConfigureAwait(false);
-            }
+            var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
+            var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
+            poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
+            nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
+            poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+            return TaskEx.CompletedTask;
         }
 
         public override Task Stop()
         {
-            nativeTimeoutsCancellationSource?.Cancel();
+            nativeDelayedMessagesCancellationSource?.Cancel();
             return poller != null ? poller.Stop() : TaskEx.CompletedTask;
         }
 
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
-        readonly string timeoutsTableName;
+        readonly DelayedDeliverySettings delayedDeliverySettings;
         NativeDelayDelivery delayedDelivery;
-        bool useNativeTimeouts;
-        readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldDispatch;
-        TimeoutsPoller poller;
-        CancellationTokenSource nativeTimeoutsCancellationSource;
+        DelayedMessagesPoller poller;
+        CancellationTokenSource nativeDelayedMessagesCancellationSource;
     }
 }

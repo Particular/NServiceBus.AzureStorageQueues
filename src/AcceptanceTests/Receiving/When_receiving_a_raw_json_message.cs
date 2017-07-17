@@ -49,7 +49,7 @@
                     });
                 })
                 .Done(c => c.GotMessage)
-                .Run();
+                .Run().ConfigureAwait(false);
 
             Assert.True(ctx.GotMessage);
             Assert.AreEqual("Test", ctx.MessageReceived.SomeProperty);

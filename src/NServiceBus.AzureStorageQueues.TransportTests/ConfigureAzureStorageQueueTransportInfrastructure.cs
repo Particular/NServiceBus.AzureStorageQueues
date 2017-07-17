@@ -28,7 +28,7 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
         var methodName = TestContext.CurrentContext.Test.MethodName;
         if (methodName == nameof(When_on_error_throws.Should_reinvoke_on_error_with_original_exception))
         {
-            throw new IgnoreException("ASQ uses a circuit breaker that is triggered after specific period of time. Critical errors are not reported immiediately");
+            throw new IgnoreException("ASQ uses a circuit breaker that is triggered after specific period of time. Critical errors are not reported immediately");
         }
 
         return new TransportConfigurationResult

@@ -23,7 +23,7 @@
                 .WithEndpoint<DefaultConfigurationEndpoint>(c => c
                     .When(e => e.SendLocal(new MyRequest())))
                 .Done(c => c.InvokedHandler)
-                .Run();
+                .Run().ConfigureAwait(false);
 
             Assert.IsTrue(context.InvokedHandler);
             Assert.IsTrue(context.SerializedWrapper);

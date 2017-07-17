@@ -28,7 +28,7 @@
         [Test]
         public async Task Is_disabled_Should_audit_with_raw_connection_strings()
         {
-            var ctx = await SendMessage<ReceiverUsingRawConnectionStrings>(ReceiverName);
+            var ctx = await SendMessage<ReceiverUsingRawConnectionStrings>(ReceiverName).ConfigureAwait(false);
 
             CollectionAssert.IsNotEmpty(ctx.ContainingRawConnectionString);
             foreach (var name in ctx.ContainingRawConnectionString)
@@ -40,7 +40,7 @@
         [Test]
         public async Task Is_enabled_and_single_account_is_used_Should_audit_just_queue_name_without_account()
         {
-            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>(ReceiverName);
+            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>(ReceiverName).ConfigureAwait(false);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             foreach (var propertyWithSenderName in ctx.AllPropertiesFlattened.Where(property => property.Value.Contains(SenderName)))
@@ -52,7 +52,7 @@
         [Test]
         public async Task Is_enabled_and_sending_to_another_account_Should_audit_fully_qualified_queue()
         {
-            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>(ReceiverName + "@" + AnotherConnectionStringName);
+            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}").ConfigureAwait(false);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             var excluded = new HashSet<string>
@@ -67,7 +67,7 @@
                     continue;
                 }
 
-                const string expected = SenderName + "@" + DefaultConnectionStringName;
+                var expected = $"{SenderName}@{DefaultConnectionStringName}";
                 Assert.AreEqual(expected, propertyWithSenderName.Value, propertyWithSenderName.Key);
             }
         }
@@ -84,15 +84,15 @@
                 }))
                 .WithEndpoint<TReceiver>()
                 .Done(c => c.Received)
-                .Run();
+                .Run().ConfigureAwait(false);
 
             Assert.IsTrue(ctx.Received);
 
             Dictionary<string, string> propertiesFlattened;
             do
             {
-                var rawMessage = await auditQueue.GetMessageAsync();
-                await auditQueue.DeleteMessageAsync(rawMessage);
+                var rawMessage = await auditQueue.GetMessageAsync().ConfigureAwait(false);
+                await auditQueue.DeleteMessageAsync(rawMessage).ConfigureAwait(false);
                 if (rawMessage == null)
                 {
                     Assert.Fail("No message in the audit queue to pick up.");

@@ -22,7 +22,7 @@
                     return s.Send(new MyMessage(), options);
                 }))
                 .Done(c => c.HandlerCalled)
-                .Run(TimeSpan.FromSeconds(15));
+                .Run(TimeSpan.FromSeconds(15)).ConfigureAwait(false);
 
             Assert.True(context.HandlerCalled);
         }

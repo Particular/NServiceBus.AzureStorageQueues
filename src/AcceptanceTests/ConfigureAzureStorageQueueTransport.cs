@@ -19,7 +19,9 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             .UseTransport<AzureStorageQueueTransport>()
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(30));
-        
+
+        transportConfig.DelayedDelivery().DisableTimeoutManager();
+
         var routingConfig = transportConfig.Routing();
 
         foreach (var publisher in publisherMetadata.Publishers)
@@ -47,7 +49,6 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
 
         return Task.FromResult(0);
     }
-    
 
     public Task Cleanup()
     {

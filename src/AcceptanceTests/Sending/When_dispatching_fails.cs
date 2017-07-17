@@ -47,7 +47,7 @@
             WebRequest.DefaultWebProxy = new ThrowingProxy();
             try
             {
-                await messageSession.Send(new MyMessage());
+                await messageSession.Send(new MyMessage()).ConfigureAwait(false);
             }
             finally
             {

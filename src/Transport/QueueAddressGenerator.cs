@@ -34,7 +34,7 @@
                 return queueName;
             }
 
-            var input = address.Replace('.', '-').ToLowerInvariant(); // this string was used in the past to calculate guid, should stay backward compat
+            var input = address.Replace('.', '-').ToLowerInvariant(); // this string was used in the past to calculate Guid, should stay backward compatible
             var shortenedName = shortener(input);
             queueName = $"{queueName.Substring(0, 63 - shortenedName.Length - 1).Trim('-')}-{shortenedName}";
             return queueName;
