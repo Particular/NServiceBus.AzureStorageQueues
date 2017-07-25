@@ -14,7 +14,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         public string ReplyToAddress { get; set; }
 
-        [ObsoleteEx(Message = "Unnecessary property for MessageWrapper.", TreatAsErrorFromVersion = "8", RemoveInVersion = "9")]
+        [Obsolete("Legacy property for backwards compatibility.", error: false)]
         public TimeSpan TimeToBeReceived { get; set; }
 
         public Dictionary<string, string> Headers { get; set; }
