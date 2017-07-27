@@ -1,6 +1,5 @@
 namespace NServiceBus.AzureStorageQueues
 {
-    using System;
     using System.IO;
     using System.Runtime.Serialization;
     using Azure.Transports.WindowsAzureStorageQueues;
@@ -32,10 +31,6 @@ namespace NServiceBus.AzureStorageQueues
             }
             m.Headers[Headers.CorrelationId] = m.CorrelationId;
 
-            if (m.TimeToBeReceived != TimeSpan.MaxValue)
-            {
-                m.Headers[Headers.TimeToBeReceived] = m.TimeToBeReceived.ToString();
-            }
             m.Headers[Headers.MessageIntent] = m.MessageIntent.ToString(); // message intent extension method
 
             return m;

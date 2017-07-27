@@ -56,6 +56,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public NServiceBus.MessageIntentEnum MessageIntent { get; set; }
         public bool Recoverable { get; set; }
         public string ReplyToAddress { get; set; }
+        [System.ObsoleteAttribute("Legacy property for backwards compatibility.", false)]
         public System.TimeSpan TimeToBeReceived { get; set; }
     }
 }

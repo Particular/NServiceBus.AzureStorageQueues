@@ -85,17 +85,11 @@
                 throw new InvalidOperationException($"TimeToBeReceived is set to more than 7 days (maximum for Azure Storage queue) for message type '{messageType}'.");
             }
 
-            // TimeToBeReceived was not specified on message - go for maximum set by SDK
-            if (timeToBeReceived == TimeSpan.MaxValue)
-            {
-                timeToBeReceived = null;
-            }
-
-            var wrapper = BuildMessageWrapper(operation, timeToBeReceived, queue);
-            await Send(wrapper, sendQueue).ConfigureAwait(false);
+            var wrapper = BuildMessageWrapper(operation, queue);
+            await Send(wrapper, sendQueue, timeToBeReceived).ConfigureAwait(false);
         }
 
-        Task Send(MessageWrapper wrapper, CloudQueue sendQueue)
+        Task Send(MessageWrapper wrapper, CloudQueue sendQueue, TimeSpan? timeToBeReceived)
         {
             CloudQueueMessage rawMessage;
             using (var stream = new MemoryStream())
@@ -103,7 +97,7 @@
                 serializer.Serialize(wrapper, stream);
                 rawMessage = new CloudQueueMessage(stream.ToArray());
             }
-            return sendQueue.AddMessageAsync(rawMessage, wrapper.TimeToBeReceived != TimeSpan.MaxValue ? wrapper.TimeToBeReceived : default(TimeSpan?), null, null, null);
+            return sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null);
         }
 
         Task<bool> ExistsAsync(CloudQueue sendQueue)
@@ -112,7 +106,7 @@
             return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.ExistsAsync());
         }
 
-        MessageWrapper BuildMessageWrapper(IOutgoingTransportOperation operation, TimeSpan? timeToBeReceived, QueueAddress destinationQueue)
+        MessageWrapper BuildMessageWrapper(IOutgoingTransportOperation operation, QueueAddress destinationQueue)
         {
             var msg = operation.Message;
             var headers = new Dictionary<string, string>(msg.Headers);
@@ -132,7 +126,6 @@
                 CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
                 Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
                 ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
-                TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
                 Headers = headers,
                 MessageIntent = messageIntent
             };
