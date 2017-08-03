@@ -92,7 +92,7 @@
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                     var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
 
-                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, addressGenerator, new BackoffStrategy(maximumWaitTime, peekInterval))
+                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, addressGenerator)
                     {
                         MessageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
 
@@ -106,7 +106,7 @@
                         degreeOfReceiveParallelism = parallelism;
                     }
 
-                    return new MessagePump(receiver, addressing, degreeOfReceiveParallelism);
+                    return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, maximumWaitTime, peekInterval);
                 },
                 () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings)),
                 () => Task.FromResult(StartupCheckResult.Success)

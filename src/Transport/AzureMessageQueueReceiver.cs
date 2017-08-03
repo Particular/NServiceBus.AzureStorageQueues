@@ -8,12 +8,11 @@ namespace NServiceBus.AzureStorageQueues
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, CloudQueueClient client, QueueAddressGenerator addressGenerator, BackoffStrategy backoffStrategy)
+        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, CloudQueueClient client, QueueAddressGenerator addressGenerator)
         {
             this.unwrapper = unwrapper;
             this.client = client;
             this.addressGenerator = addressGenerator;
-            this.backoffStrategy = backoffStrategy;
         }
 
         /// <summary>
@@ -51,7 +50,7 @@ namespace NServiceBus.AzureStorageQueues
             return queue;
         }
 
-        internal async Task<List<MessageRetrieved>> Receive(CancellationToken token)
+        internal async Task<List<MessageRetrieved>> Receive(BackoffStrategy backoffStrategy, CancellationToken token)
         {
             var rawMessages = await inputQueue.GetMessagesAsync(BatchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
 
@@ -79,7 +78,6 @@ namespace NServiceBus.AzureStorageQueues
         CloudQueue inputQueue;
         CloudQueue errorQueue;
         CloudQueueClient client;
-        readonly BackoffStrategy backoffStrategy;
 
         public string QueueName => inputQueue.Name;
 
