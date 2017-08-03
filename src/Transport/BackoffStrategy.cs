@@ -9,7 +9,7 @@ namespace NServiceBus.AzureStorageQueues
         readonly TimeSpan peekInterval;
         readonly TimeSpan maximumWaitTimeWhenIdle;
 
-        TimeSpan timeToDelayNextPeek;
+        TimeSpan timeToDelayUntilNextPeek;
         
         /// <summary>
         /// </summary>
@@ -23,21 +23,21 @@ namespace NServiceBus.AzureStorageQueues
 
         void OnSomethingProcessed()
         {
-            timeToDelayNextPeek = TimeSpan.Zero;
+            timeToDelayUntilNextPeek = TimeSpan.Zero;
         }
 
         Task OnNothingProcessed(CancellationToken token)
         {
-            if (timeToDelayNextPeek + peekInterval < maximumWaitTimeWhenIdle)
+            if (timeToDelayUntilNextPeek + peekInterval < maximumWaitTimeWhenIdle)
             {
-                timeToDelayNextPeek += peekInterval;
+                timeToDelayUntilNextPeek += peekInterval;
             }
             else
             {
-                timeToDelayNextPeek = maximumWaitTimeWhenIdle;
+                timeToDelayUntilNextPeek = maximumWaitTimeWhenIdle;
             }
 
-            return Task.Delay(timeToDelayNextPeek, token);
+            return Task.Delay(timeToDelayUntilNextPeek, token);
         }
 
         public Task OnBatch(int receivedBatchSize, CancellationToken token)
