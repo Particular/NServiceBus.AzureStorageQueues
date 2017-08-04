@@ -10,9 +10,11 @@
 
     class MessagePump : IPushMessages, IDisposable
     {
-        public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing, int? degreeOfReceiveParallelism)
+        public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing, int? degreeOfReceiveParallelism, TimeSpan maximumWaitTime, TimeSpan peekInterval)
         {
             this.degreeOfReceiveParallelism = degreeOfReceiveParallelism;
+            this.maximumWaitTime = maximumWaitTime;
+            this.peekInterval = peekInterval;
             this.messageReceiver = messageReceiver;
             this.addressing = addressing;
         }
@@ -49,7 +51,8 @@
 
             for (var i = 0; i < degreeOfReceiveParallelism; i++)
             {
-                messagePumpTasks[i] = Task.Run(ProcessMessages, CancellationToken.None);
+                var backoffStrategy = new BackoffStrategy(peekInterval, maximumWaitTime);
+                messagePumpTasks[i] = Task.Run(() => ProcessMessages(backoffStrategy), CancellationToken.None);
             }
         }
 
@@ -90,13 +93,13 @@
         }
 
         [DebuggerNonUserCode]
-        async Task ProcessMessages()
+        async Task ProcessMessages(BackoffStrategy backoffStrategy)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    await InnerProcessMessages().ConfigureAwait(false);
+                    await InnerProcessMessages(backoffStrategy).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -105,13 +108,13 @@
             }
         }
 
-        async Task InnerProcessMessages()
+        async Task InnerProcessMessages(BackoffStrategy backoffStrategy)
         {
             while (!cancellationTokenSource.IsCancellationRequested)
             {
                 try
                 {
-                    var retrieved = await messageReceiver.Receive(cancellationTokenSource.Token).ConfigureAwait(false);
+                    var retrieved = await messageReceiver.Receive(backoffStrategy, cancellationTokenSource.Token).ConfigureAwait(false);
                     circuitBreaker.Success();
 
                     foreach (var message in retrieved)
@@ -180,6 +183,8 @@
         Task[] messagePumpTasks;
         int maximumConcurrency;
         int? degreeOfReceiveParallelism;
+        readonly TimeSpan maximumWaitTime;
+        readonly TimeSpan peekInterval;
         static ILog Logger = LogManager.GetLogger<MessagePump>();
         static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
