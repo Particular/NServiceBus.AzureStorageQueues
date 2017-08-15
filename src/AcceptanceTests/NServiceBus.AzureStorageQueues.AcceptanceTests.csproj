@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net452</TargetFramework>
+    <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <DebugSymbols>True</DebugSymbols>
     <WarningLevel>4</WarningLevel>
@@ -9,17 +9,14 @@
     <NoWarn>PCR0001</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.0.4" />
-    <PackageReference Include="Microsoft.Data.Edm" Version="5.8.2" />
-    <PackageReference Include="Microsoft.Data.OData" Version="5.8.2" />
-    <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.2" />
-    <PackageReference Include="WindowsAzure.Storage" Version="8.1.4" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.2" />
-    <PackageReference Include="NServiceBus.AcceptanceTesting" Version="7.0.0-alpharelease0051" />
     <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="7.0.0-alpharelease0051" />
-    <PackageReference Include="NServiceBus" Version="7.0.0-alpharelease0051" />
     <PackageReference Include="NUnit" Version="3.7.1" />
-    <PackageReference Include="System.Spatial" Version="5.8.2" />
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
+
+    <!-- Remove package is updated to work with .NET Standard 2.0 -->
+    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="1.2.0-alpha0017" NoWarn="NU1701" />
   </ItemGroup>
 </Project>

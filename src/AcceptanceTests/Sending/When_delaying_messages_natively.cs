@@ -89,7 +89,7 @@
             await delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity)).ConfigureAwait(false);
         }
 
-        async Task<List<DynamicTableEntity>> GetDelayedMessageEntities()
+        async Task<IList<DynamicTableEntity>> GetDelayedMessageEntities()
         {
             return (await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false)).Results;
         }
