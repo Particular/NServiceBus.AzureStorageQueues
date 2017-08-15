@@ -26,7 +26,7 @@ namespace NServiceBus
             Guard.AgainstNull(nameof(settings), settings);
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
             // configure JSON instead of XML as the default serializer:
-            SetMainSerializer(settings, new JsonSerializer());
+            SetMainSerializer(settings, new NewtonsoftSerializer());
 
             // register the MessageWrapper as a system message to have it registered in mappings and serializers
             settings.GetOrCreate<Conventions>().AddSystemMessagesConventions(t => t == typeof(MessageWrapper));
