@@ -30,5 +30,6 @@
     <PackageReference Include="Particular.CodeRules" Version="0.2.0" />
     <PackageReference Include="NuGetPackager" Version="0.6.3" />
     <PackageReference Include="GitVersionTask" Version="4.0.0-beta0012" />
+    <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
   </ItemGroup>
 </Project>
