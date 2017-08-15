@@ -13,9 +13,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <OutputPath>..\..\binaries\</OutputPath>
-    <NoWarn>CS0419</NoWarn>
     <UpdateAssemblyInfo>true</UpdateAssemblyInfo>
-    <NoWarn>1591, 0618</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\..\packaging\nuget\nservicebus.azurestoragequeues.nuspec" Link="nservicebus.azurestoragequeues.nuspec" />

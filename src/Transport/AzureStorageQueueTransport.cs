@@ -16,11 +16,14 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
     {
+        /// <inheritdoc cref="RequiresConnectionString"/>
         public override bool RequiresConnectionString { get; } = true;
 
+        /// <inheritdoc cref="ExampleConnectionStringForErrorMessage"/>
         public override string ExampleConnectionStringForErrorMessage { get; } =
             "DefaultEndpointsProtocol=[http|https];AccountName=myAccountName;AccountKey=myAccountKey";
 
+        /// <inheritdoc cref="Initialize"/>
         public override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
         {
             Guard.AgainstNull(nameof(settings), settings);
