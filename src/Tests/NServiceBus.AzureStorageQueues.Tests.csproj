@@ -1,36 +1,39 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net452</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
-    <DebugType>full</DebugType>
-    <DebugSymbols>True</DebugSymbols>
-    <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Optimize>false</Optimize>
   </PropertyGroup>
+  
   <ItemGroup>
     <Compile Remove="NServiceBus.Azure.Transports.WindowsAzureStorageQueues.approved.cs" />
     <Compile Remove="NServiceBus.Azure.Transports.WindowsAzureStorageQueues.received.cs" />
   </ItemGroup>
+
   <ItemGroup>
-    <PackageReference Include="NServiceBus" Version="7.0.0-alpharelease0051" />
-    <PackageReference Include="ApprovalTests" Version="3.0.13" />
-    <PackageReference Include="ApprovalUtilities" Version="3.0.13" />
-    <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.0.4" />
-    <PackageReference Include="Microsoft.Data.Edm" Version="5.8.2" />
-    <PackageReference Include="Microsoft.Data.OData" Version="5.8.2" />
-    <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.2" />
-    <PackageReference Include="WindowsAzure.Storage" Version="8.1.4" />
-    <PackageReference Include="System.Spatial" Version="5.8.2" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0-beta6" />
-    <PackageReference Include="NServiceBus.AcceptanceTesting" Version="7.0.0-alpharelease0051" />
-    <PackageReference Include="NUnit" Version="3.7.1" />
-    <PackageReference Include="RhinoMocks" Version="3.6.1" />
-    <PackageReference Include="Particular.CodeRules" Version="0.2.0" />
+    <PackageReference Include="ApprovalTests" Version="3.0.13" NoWarn="NU1701" />
+    <PackageReference Include="ApprovalUtilities" Version="3.0.13" NoWarn="NU1701" />
     <PackageReference Include="ApiApprover" Version="6.1.0-beta2" />
-    <PackageReference Include="PublicApiGenerator" Version="6.1.0-beta2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.0-beta6" />
+    <PackageReference Include="NUnit" Version="3.7.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
+    <PackageReference Include="RhinoMocks" Version="3.6.1" NoWarn="NU1701" />
+    <PackageReference Include="Particular.CodeRules" Version="0.2.0" />
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
+    <PackageReference Include="PublicApiGenerator" Version="6.1.0-beta2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Remove package is updated to work with .NET Standard 2.0 -->
+    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="1.2.0-alpha0017" NoWarn="NU1701" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.2" />
   </ItemGroup>
 </Project>

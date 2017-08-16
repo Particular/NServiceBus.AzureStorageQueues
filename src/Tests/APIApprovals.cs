@@ -1,4 +1,6 @@
-﻿namespace NServiceBus.Azure.WindowsAzureServiceBus.Tests.API
+﻿#if NET452
+
+namespace NServiceBus.Azure.WindowsAzureServiceBus.Tests.API
 {
     using System.IO;
     using System.Reflection;
@@ -21,3 +23,5 @@
         }
     }
 }
+
+#endif
