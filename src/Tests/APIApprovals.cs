@@ -1,8 +1,11 @@
-﻿namespace NServiceBus.Azure.WindowsAzureServiceBus.Tests.API
+﻿#if NET452
+
+namespace NServiceBus.Azure.WindowsAzureServiceBus.Tests.API
 {
     using System.IO;
     using System.Reflection;
     using System.Runtime.CompilerServices;
+    using ApprovalTests;
     using ApprovalTests.Reporters;
     using NUnit.Framework;
     using PublicApiGenerator;
@@ -17,7 +20,10 @@
         {
             var combine = Path.Combine(TestContext.CurrentContext.TestDirectory, "NServiceBus.Azure.Transports.WindowsAzureStorageQueues.dll");
             var assembly = Assembly.LoadFile(combine);
-            ApiGenerator.GeneratePublicApi(assembly);
+            var publicApi = ApiGenerator.GeneratePublicApi(assembly);
+            Approvals.Verify(publicApi);
         }
     }
 }
+
+#endif
