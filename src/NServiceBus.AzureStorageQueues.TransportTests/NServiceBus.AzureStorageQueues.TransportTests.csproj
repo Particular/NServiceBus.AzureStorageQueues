@@ -10,6 +10,7 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
     <PackageReference Include="NServiceBus" Version="7.0.0-alpharelease0051" />
     <PackageReference Include="NUnit" Version="3.7.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
@@ -18,7 +19,9 @@
     <PackageReference Include="NServiceBus.TransportTests.Sources" Version="7.0.0-alpharelease0051" />
     <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.0.4" />
     <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.2" />
-    <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
+    
+    <!-- Force tests to run with the latest Storage library -->
+    <PackageReference Include="WindowsAzure.Storage" Version="8.*" />
   </ItemGroup>
 
   <ItemGroup>

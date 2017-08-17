@@ -29,6 +29,9 @@
     <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
     <PackageReference Include="RhinoMocks" Version="3.6.1" NoWarn="NU1701" />
     <PackageReference Include="Particular.CodeRules" Version="0.2.0" />
+
+    <!-- Force tests to run with the latest Storage library -->
+    <PackageReference Include="WindowsAzure.Storage" Version="8.*" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
