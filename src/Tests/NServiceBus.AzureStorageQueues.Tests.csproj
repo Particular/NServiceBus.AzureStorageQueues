@@ -7,6 +7,10 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Optimize>false</Optimize>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
+  </ItemGroup>
   
   <ItemGroup>
     <Compile Remove="NServiceBus.Azure.Transports.WindowsAzureStorageQueues.approved.cs" />
@@ -23,7 +27,6 @@
     <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
     <PackageReference Include="RhinoMocks" Version="3.6.1" NoWarn="NU1701" />
     <PackageReference Include="Particular.CodeRules" Version="0.2.0" />
-    <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
