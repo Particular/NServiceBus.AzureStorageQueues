@@ -21,7 +21,7 @@
     <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.2" />
     <PackageReference Include="WindowsAzure.Storage" Version="8.0.0" />
     <PackageReference Include="NServiceBus" Version="7.0.0-alpharelease0051" />
-    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="1.2.0-alpha0017" NoWarn="NU1701" />
+    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.0.0-*" NoWarn="NU1701" />
     <PackageReference Include="Fody" Version="2.1.2" />
     <PackageReference Include="Janitor.Fody" Version="1.5.1" />
     <PackageReference Include="Obsolete.Fody" Version="4.2.4" />

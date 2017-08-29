@@ -28,7 +28,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
     <PackageReference Include="RhinoMocks" Version="3.6.1" NoWarn="NU1701" />
-    <PackageReference Include="Particular.CodeRules" Version="0.2.0" />
 
     <!-- Force tests to run with the latest Storage library -->
     <PackageReference Include="WindowsAzure.Storage" Version="8.*" />
@@ -41,8 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Remove package is updated to work with .NET Standard 2.0 -->
-    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="1.2.0-alpha0017" NoWarn="NU1701" />
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.2" />
+    <!-- Remove when package is updated to work with .NET Standard 2.0 -->
+    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.0.0-*" NoWarn="NU1701" />
   </ItemGroup>
 </Project>
