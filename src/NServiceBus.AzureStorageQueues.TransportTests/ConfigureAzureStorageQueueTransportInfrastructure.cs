@@ -20,8 +20,11 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
         if (settings.TryGet(out registry) == false)
         {
             const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public |BindingFlags.NonPublic | BindingFlags.CreateInstance;
-
+            
+#pragma warning disable PC001 // API not supported on all platforms
             registry = (MessageMetadataRegistry) Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, new object[] {settings.GetOrCreate<Conventions>()}, CultureInfo.InvariantCulture);
+#pragma warning restore PC001 // API not supported on all platforms
+
             settings.Set<MessageMetadataRegistry>(registry);
         }
 
