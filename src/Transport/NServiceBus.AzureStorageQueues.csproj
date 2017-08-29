@@ -15,19 +15,23 @@
     <OutputPath>..\..\binaries\</OutputPath>
     <UpdateAssemblyInfo>true</UpdateAssemblyInfo>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</PackageId>
+    <Description>NServiceBus Transport for the Windows Azure Storage Queues</Description>
+  </PropertyGroup>
+
   <ItemGroup>
-    <None Include="..\..\packaging\nuget\nservicebus.azurestoragequeues.nuspec" Link="nservicebus.azurestoragequeues.nuspec" />
+    <!-- lock WindowsAzure.Storage to version 8.0.0 -->
+    <PackageReference Include="WindowsAzure.Storage" Version="8.0.0" />
     <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.0.4" />
     <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.2" />
-    <PackageReference Include="WindowsAzure.Storage" Version="8.0.0" />
     <PackageReference Include="NServiceBus" Version="7.0.0-*" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.0.0-*" />
     <PackageReference Include="Fody" Version="2.1.2" />
     <PackageReference Include="Janitor.Fody" Version="1.5.1" />
     <PackageReference Include="Obsolete.Fody" Version="4.2.4" />
-    <PackageReference Include="Particular.CodeRules" Version="0.2.0" />
-    <PackageReference Include="NuGetPackager" Version="0.6.3" />
-    <PackageReference Include="GitVersionTask" Version="4.0.0-beta0012" />
+    <PackageReference Include="Particular.CodeRules" Version="0.*" PrivateAssets="All" />
     <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
   </ItemGroup>
 </Project>

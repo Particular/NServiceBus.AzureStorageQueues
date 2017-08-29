@@ -1,20 +1,26 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.AzureStorageQueues", "Transport\NServiceBus.AzureStorageQueues.csproj", "{B6D6406F-F5A4-46D7-A882-4A831128065E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues", "Transport\NServiceBus.AzureStorageQueues.csproj", "{B6D6406F-F5A4-46D7-A882-4A831128065E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.AzureStorageQueues.AcceptanceTests", "AcceptanceTests\NServiceBus.AzureStorageQueues.AcceptanceTests.csproj", "{09996CDC-90AC-442F-A6CE-601F37CD1352}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues.AcceptanceTests", "AcceptanceTests\NServiceBus.AzureStorageQueues.AcceptanceTests.csproj", "{09996CDC-90AC-442F-A6CE-601F37CD1352}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.AzureStorageQueues.Tests", "Tests\NServiceBus.AzureStorageQueues.Tests.csproj", "{02FEF736-87DA-42FA-AC51-E384A9CA2926}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues.Tests", "Tests\NServiceBus.AzureStorageQueues.Tests.csproj", "{02FEF736-87DA-42FA-AC51-E384A9CA2926}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuget", "nuget", "{626DCEA0-9CAA-4226-8906-D387FFE5777F}"
 	ProjectSection(SolutionItems) = preProject
 		nuget.config = nuget.config
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.AzureStorageQueues.TransportTests", "NServiceBus.AzureStorageQueues.TransportTests\NServiceBus.AzureStorageQueues.TransportTests.csproj", "{BC08A40C-A7F9-4D93-906E-BCD135DA2A72}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues.TransportTests", "NServiceBus.AzureStorageQueues.TransportTests\NServiceBus.AzureStorageQueues.TransportTests.csproj", "{BC08A40C-A7F9-4D93-906E-BCD135DA2A72}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{253C1A0A-7D00-4DAC-858B-ECDD638D8802}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		Directory.Build.targets = Directory.Build.targets
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,5 +47,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F752B41C-0ABB-4F9D-8178-B274587239EB}
 	EndGlobalSection
 EndGlobal
