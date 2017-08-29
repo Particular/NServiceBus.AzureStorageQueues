@@ -46,7 +46,9 @@
         static string GetDelayedDeliveryTableName(string endpointName)
         {
             byte[] hashedName;
+#pragma warning disable PC001 // API not supported on all platforms
             using (var sha1 = new SHA1Managed())
+#pragma warning restore PC001 // API not supported on all platforms
             {
                 sha1.Initialize();
                 hashedName = sha1.ComputeHash(Encoding.UTF8.GetBytes(endpointName));
