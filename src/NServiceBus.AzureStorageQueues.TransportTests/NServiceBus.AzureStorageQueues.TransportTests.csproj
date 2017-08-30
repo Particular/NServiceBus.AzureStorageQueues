@@ -5,7 +5,6 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>PCR0001</NoWarn>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
@@ -13,17 +12,17 @@
   
   <ItemGroup>
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
-    <PackageReference Include="NServiceBus" Version="7.0.0-*" />
+    <PackageReference Include="NServiceBus" Version="[7.0.0-*, 8.0.0)" />
     <PackageReference Include="NUnit" Version="3.7.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.*" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
     <PackageReference Include="NServiceBus.Testing.Fakes.Sources" Version="7.0.0-*" />
     <PackageReference Include="NServiceBus.TransportTests.Sources" Version="7.0.0-*" />
-    <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.0.4" />
-    <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.2" />
+    <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="[2.*,3.0.0)" />
+    <PackageReference Include="Microsoft.Data.Services.Client" Version="[5.*, 6.0.0)" />
     
     <!-- Force tests to run with the latest Storage library -->
-    <PackageReference Include="WindowsAzure.Storage" Version="8.*" />
+    <PackageReference Include="WindowsAzure.Storage" Version="[8.*, 9.0.0]" />
   </ItemGroup>
 
 </Project>
