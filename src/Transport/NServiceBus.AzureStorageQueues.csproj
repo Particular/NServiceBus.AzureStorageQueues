@@ -4,12 +4,9 @@
     <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
     <AssemblyName>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</AssemblyName>
     <NuSpecFileName>nservicebus.azurestoragequeues</NuSpecFileName>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
-    <DebugType>full</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <UpdateAssemblyInfo>true</UpdateAssemblyInfo>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
@@ -20,10 +17,7 @@
 
   <ItemGroup>
     <!-- lock WindowsAzure.Storage to version 8.0.0 -->
-    <PackageReference Include="WindowsAzure.Storage" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.0.4" />
-    <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.2" />
-    <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
+    <PackageReference Include="WindowsAzure.Storage" Version="[8.4.0, 9.0.0]" />
     <PackageReference Include="NServiceBus" Version="[7.0.0-*,8.0.0)" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="[2.0.0-*, 3.0.0)" />
     <PackageReference Include="Fody" Version="2.*" PrivateAssets="All" />
