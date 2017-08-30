@@ -16,7 +16,6 @@
 
             do
             {
-                // TODO: review if passing these nulls is OK or not
                 var seg = await table.ExecuteQuerySegmentedAsync(query, token, null, null, cancellationToken).ConfigureAwait(false);
                 token = seg.ContinuationToken;
 

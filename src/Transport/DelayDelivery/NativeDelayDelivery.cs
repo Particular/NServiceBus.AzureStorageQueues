@@ -135,7 +135,6 @@
             };
 
             delayedMessageEntity.SetOperation(operation);
-            // TODO: review if passing these nulls is OK or not
             return delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), null, null, cancellationToken);
         }
 
