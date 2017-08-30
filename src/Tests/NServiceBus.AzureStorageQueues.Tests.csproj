@@ -13,19 +13,21 @@
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.*" />
-    <PackageReference Include="NUnit" Version="3.*" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
-
-    <!-- Force tests to run with the latest Storage library -->
-    <PackageReference Include="WindowsAzure.Storage" Version="8.*" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
-    <PackageReference Include="ApprovalTests" Version="3.0.13" NoWarn="NU1701" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0-beta6" />
-    <PackageReference Include="PublicApiGenerator" Version="6.1.0-beta2" />
+    <PackageReference Include="ApprovalTests" Version="3.*" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.0-*" />
+    <PackageReference Include="PublicApiGenerator" Version="6.1.0-*" />
   </ItemGroup>
 
+
+  <!-- Force latest versions -->
+  <ItemGroup>
+    <PackageReference Include="WindowsAzure.Storage" Version="8.*" />
+    <PackageReference Include="NServiceBus" Version="7.0.0-*" />
+    <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="7.0.0-*" />
+    <PackageReference Include="NUnit" Version="3.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.*" />
+    <!-- TODO: replace with "3.*" when NUnit bug is fixed -->
+    <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
+  </ItemGroup>
 </Project>
