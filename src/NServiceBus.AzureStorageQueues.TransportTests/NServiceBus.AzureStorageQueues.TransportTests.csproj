@@ -25,6 +25,7 @@
     <PackageReference Include="NServiceBus.TransportTests.Sources" Version="7.0.0-*" />
     <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.*" />
     <PackageReference Include="Microsoft.Data.Services.Client" Version="5.*" />
+    <PackageReference Include="System.Linq.Queryable" Version="4.*" />
   </ItemGroup>
 
 </Project>

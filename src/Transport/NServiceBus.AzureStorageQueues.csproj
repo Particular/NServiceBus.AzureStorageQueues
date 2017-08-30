@@ -16,12 +16,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- lock WindowsAzure.Storage to version 8.0.0 -->
-    <PackageReference Include="WindowsAzure.Storage" Version="[8.0.0, 9.0.0)" />
-    <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.*" />
-    <PackageReference Include="Microsoft.Data.Services.Client" Version="5.*" />
-    <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
-    <PackageReference Include="NServiceBus" Version="7.0.0-*" />
+    <!-- Minimum requried version for WindowsAzure.Storage is 8.2.0 -->
+    <PackageReference Include="WindowsAzure.Storage" Version="[8.2.0, 9.0.0)" />
+    <PackageReference Include="NServiceBus" Version="[7.0.0-*, 8.0.0)" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="[2.0.0-*, 3.0.0)" />
     <PackageReference Include="Fody" Version="2.*" PrivateAssets="All" />
     <PackageReference Include="Janitor.Fody" Version="1.*" PrivateAssets="All" />
