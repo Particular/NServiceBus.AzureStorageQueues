@@ -14,7 +14,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuget", "nuget", "{626DCEA0
 		nuget.config = nuget.config
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues.TransportTests", "NServiceBus.AzureStorageQueues.TransportTests\NServiceBus.AzureStorageQueues.TransportTests.csproj", "{BC08A40C-A7F9-4D93-906E-BCD135DA2A72}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues.TransportTests", "TransportTests\NServiceBus.AzureStorageQueues.TransportTests.csproj", "{BC08A40C-A7F9-4D93-906E-BCD135DA2A72}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{253C1A0A-7D00-4DAC-858B-ECDD638D8802}"
 	ProjectSection(SolutionItems) = preProject
