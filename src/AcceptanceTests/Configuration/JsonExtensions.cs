@@ -2,7 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
-    using Newtonsoft.Json.Linq;
+    using global::Newtonsoft.Json.Linq;
 
     public static class JsonExtensions
     {

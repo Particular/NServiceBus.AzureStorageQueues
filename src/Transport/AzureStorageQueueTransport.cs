@@ -16,17 +16,20 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
     {
+        /// <inheritdoc cref="RequiresConnectionString"/>
         public override bool RequiresConnectionString { get; } = true;
 
+        /// <inheritdoc cref="ExampleConnectionStringForErrorMessage"/>
         public override string ExampleConnectionStringForErrorMessage { get; } =
             "DefaultEndpointsProtocol=[http|https];AccountName=myAccountName;AccountKey=myAccountKey";
 
+        /// <inheritdoc cref="Initialize"/>
         public override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
         {
             Guard.AgainstNull(nameof(settings), settings);
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
             // configure JSON instead of XML as the default serializer:
-            SetMainSerializer(settings, new JsonSerializer());
+            SetMainSerializer(settings, new NewtonsoftSerializer());
 
             // register the MessageWrapper as a system message to have it registered in mappings and serializers
             settings.GetOrCreate<Conventions>().AddSystemMessagesConventions(t => t == typeof(MessageWrapper));

@@ -9,7 +9,9 @@
         public static string Md5(string test)
         {
             //use MD5 hash to get a 16-byte hash of the string
+#pragma warning disable PC001 // API not supported on all platforms
             using (var provider = new MD5CryptoServiceProvider())
+#pragma warning restore PC001 // API not supported on all platforms
             {
                 var inputBytes = Encoding.Default.GetBytes(test);
                 var hashBytes = provider.ComputeHash(inputBytes);
@@ -20,7 +22,9 @@
 
         public static string Sha1(string test)
         {
+#pragma warning disable PC001 // API not supported on all platforms
             using (var provider = new SHA1CryptoServiceProvider())
+#pragma warning restore PC001 // API not supported on all platforms
             {
                 var inputBytes = Encoding.Default.GetBytes(test);
                 var hashBytes = provider.ComputeHash(inputBytes);

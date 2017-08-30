@@ -22,7 +22,10 @@
             delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
             // In the constructor to ensure we do not force the calling code to remember to invoke any initialization method.
             // Also, CreateIfNotExistsAsync() returns BEFORE the table is actually ready to be used, causing 404.
-            delayedMessagesTable.CreateIfNotExists();
+
+            // TODO: original code was calling delayedMessagesTable.CreateIfNotExists(); as it was not affected by the bug the async version had.
+            // In case async version still returns before table is created, add a small delay.
+            delayedMessagesTable.CreateIfNotExistsAsync().GetAwaiter().GetResult();
         }
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -132,7 +135,7 @@
             };
 
             delayedMessageEntity.SetOperation(operation);
-            return delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), cancellationToken);
+            return delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), null, null, cancellationToken);
         }
 
         static TDeliveryConstraint FirstOrDefault<TDeliveryConstraint>(List<DeliveryConstraint> constraints)

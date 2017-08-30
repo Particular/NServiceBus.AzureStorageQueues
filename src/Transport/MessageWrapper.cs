@@ -3,6 +3,8 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
     using System;
     using System.Collections.Generic;
 
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     [Serializable]
     public class MessageWrapper : IMessage
     {
@@ -26,3 +28,4 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public bool Recoverable { get; set; }
     }
 }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

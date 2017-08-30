@@ -7,13 +7,12 @@
     using AcceptanceTesting;
     using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
+    using global::Newtonsoft.Json;
+    using global::Newtonsoft.Json.Linq;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
     using NUnit.Framework;
-    using Serializer = JsonSerializer;
-
+    
     public class When_sending_messages_with_mapped_account_names : NServiceBusAcceptanceTest
     {
         public When_sending_messages_with_mapped_account_names()
@@ -151,7 +150,7 @@
                 CustomEndpointName(SenderName);
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseSerialization<Serializer>();
+                    cfg.UseSerialization<NewtonsoftSerializer>();
                     cfg.UseTransport<AzureStorageQueueTransport>()
                         .UseAccountAliasesInsteadOfConnectionStrings()
                         .DefaultAccountAlias(DefaultConnectionStringName)
@@ -167,7 +166,7 @@
             {
                 EndpointSetup<DefaultPublisher>(cfg =>
                 {
-                    cfg.UseSerialization<Serializer>();
+                    cfg.UseSerialization<NewtonsoftSerializer>();
                     var extensions = cfg.UseTransport<AzureStorageQueueTransport>()
                         .ConnectionString(anotherConnectionString);
 

@@ -4,21 +4,14 @@
     <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
-    <Optimize>false</Optimize>
+    <NoWarn>PCR0001</NoWarn>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
   </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
-    <PackageReference Include="ApprovalTests" Version="3.*" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0-*" />
-    <PackageReference Include="PublicApiGenerator" Version="6.1.0-*" />
-  </ItemGroup>
-
 
   <!-- Force latest versions -->
   <ItemGroup>
@@ -28,5 +21,11 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.*" />
     <!-- TODO: replace with "3.*" when NUnit bug is fixed -->
     <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
+    <PackageReference Include="NServiceBus.Testing.Fakes.Sources" Version="7.0.0-*" />
+    <PackageReference Include="NServiceBus.TransportTests.Sources" Version="7.0.0-*" />
+    <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.*" />
+    <PackageReference Include="Microsoft.Data.Services.Client" Version="5.*" />
+    <PackageReference Include="System.Linq.Queryable" Version="4.*" />
   </ItemGroup>
+
 </Project>
