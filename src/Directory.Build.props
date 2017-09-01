@@ -4,7 +4,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-<!--  <ItemGroup>
+<!-- issue: https://github.com/terrajobst/platform-compat/issues/32
+  <ItemGroup>
     <PackageReference Include="Terrajobst.PlatformCompat.Analyzers" Version="0.0.95-alpha" PrivateAssets="All" />
   </ItemGroup>
 -->
