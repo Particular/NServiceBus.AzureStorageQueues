@@ -43,7 +43,7 @@
         static async Task Send(IMessageSession messageSession)
         {
             await messageSession.Send(new MyMessage()).ConfigureAwait(false);
-#pragma warning disable DE0003 // API is deprecated
+
             var previous = WebRequest.DefaultWebProxy;
             WebRequest.DefaultWebProxy = new ThrowingProxy();
             try
@@ -54,7 +54,6 @@
             {
                 WebRequest.DefaultWebProxy = previous;
             }
-#pragma warning restore DE0003 // API is deprecated
         }
 
         class ThrowingProxy : IWebProxy
