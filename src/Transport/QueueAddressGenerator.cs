@@ -2,14 +2,12 @@
 {
     using System;
     using System.Collections.Concurrent;
-    using Config;
-    using Settings;
 
     class QueueAddressGenerator
     {
-        public QueueAddressGenerator(ReadOnlySettings settings)
+        public QueueAddressGenerator(Func<string, string> sanitizer)
         {
-            sanitizer = settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.Sanitizer);
+            this.sanitizer = sanitizer;
         }
 
         public string GetQueueName(string address)
