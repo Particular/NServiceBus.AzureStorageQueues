@@ -107,7 +107,7 @@ namespace NServiceBus
                     throw new Exception("Registered queue name sanitizer threw an exception.", exception);
                 } 
             };
-            config.GetSettings().Set(WellKnownConfigurationKeys.Sanitizer, safeShortener);
+            config.GetSettings().Set(WellKnownConfigurationKeys.QueueSanitizer, safeShortener);
             return config;
         }
 

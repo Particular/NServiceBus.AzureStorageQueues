@@ -10,6 +10,6 @@
         public const string MessageWrapperSerializationDefinition = "Transport.AzureStorageQueue.MessageWrapperSerializationDefinition";
         public const string DegreeOfReceiveParallelism = "Transport.AzureStorageQueue.DegreeOfReceiveParallelism";
         public const string UseAccountNamesInsteadOfConnectionStrings = "Transport.AzureStorageQueue.UseAccountAliasesInsteadOfConnectionStrings";
-        public const string Sanitizer = "Transport.AzureStorageQueue.Sanitizer";
+        public const string QueueSanitizer = "Transport.AzureStorageQueue.QueueSanitizer";
     }
 }
