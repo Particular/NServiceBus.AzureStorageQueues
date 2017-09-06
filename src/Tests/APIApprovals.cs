@@ -1,6 +1,6 @@
 ﻿#if NET452
 
-namespace NServiceBus.Azure.WindowsAzureServiceBus.Tests.API
+namespace NServiceBus.Azure.AzureStorageQueues.Tests.API
 {
     using System.IO;
     using System.Reflection;
