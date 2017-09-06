@@ -13,6 +13,7 @@
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverPeekInterval, DefaultPeekInterval);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, DefaultMaximumWaitTimeWhenIdle);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverBatchSize, DefaultBatchSize);
+            settings.SetDefault(WellKnownConfigurationKeys.Sanitizer, (Func<string, string>) (entityName => entityName));
         }
 
         static TimeSpan DefaultMessageInvisibleTime = TimeSpan.FromSeconds(30);
