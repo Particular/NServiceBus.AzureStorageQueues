@@ -136,7 +136,7 @@
 
         static QueueAddressGenerator GetAddressGenerator(ReadOnlySettings settings)
         {
-            return new QueueAddressGenerator(settings);
+            return new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
 
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)

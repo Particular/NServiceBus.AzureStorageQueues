@@ -9,7 +9,7 @@ namespace NServiceBus
     using Serialization;
 
     /// <summary>Extension methods for <see cref="AzureStorageQueueTransport"/>.</summary>
-    public static class AzureStorageTransportExtensions
+    public static partial class AzureStorageTransportExtensions
     {
         /// <summary>
         /// Sets the amount of time to add to the time to wait before checking for a new message
@@ -89,12 +89,25 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Overrides default Md5 shortener for creating queue names with Sha1 shortener.
+        /// Registers a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
+        /// <remarks>By default no sanitization is performed.</remarks>
         /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> UseSha1ForShortening(this TransportExtensions<AzureStorageQueueTransport> config)
+        public static TransportExtensions<AzureStorageQueueTransport> SanitizeQueueNamesWith(this TransportExtensions<AzureStorageQueueTransport>config, Func<string, string> queueNameSanitizer)
         {
             Guard.AgainstNull(nameof(config), config);
-            config.GetSettings().Set(WellKnownConfigurationKeys.Sha1Shortener, true);
+            Guard.AgainstNull(nameof(queueNameSanitizer), queueNameSanitizer);
+            Func<string, string> safeShortener = entityName => 
+            {
+                try
+                {
+                    return queueNameSanitizer(entityName);
+                }
+                catch (Exception exception)
+                {
+                    throw new Exception("Registered queue name sanitizer threw an exception.", exception);
+                } 
+            };
+            config.GetSettings().Set(WellKnownConfigurationKeys.QueueSanitizer, safeShortener);
             return config;
         }
 

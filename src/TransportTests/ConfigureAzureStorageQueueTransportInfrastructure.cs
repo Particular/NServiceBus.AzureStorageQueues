@@ -32,6 +32,9 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
             throw new IgnoreException("ASQ uses a circuit breaker that is triggered after specific period of time. Critical errors are not reported immediately");
         }
 
+        var transportExtension = new TransportExtensions<AzureStorageQueueTransport>(settings);
+        transportExtension.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
+
         return new TransportConfigurationResult
         {
             TransportInfrastructure = new AzureStorageQueueTransport().Initialize(settings, Environment.GetEnvironmentVariable("AzureStorageQueueTransport.ConnectionString")),
