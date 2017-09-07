@@ -25,8 +25,8 @@ static class BackwardsCompatibleQueueNameSanitizerForTests
 
     static string SanitizeQueueName(string queueName)
     {
-        //rules for naming queues can be found at http://msdn.microsoft.com/en-us/library/windowsazure/dd179349.aspx"
-        var sanitized = invalidCharacters.Replace(queueName, "-"); // this can lead to multiple - occurrences in a row
+        // this can lead to multiple - occurrences in a row
+        var sanitized = invalidCharacters.Replace(queueName, "-");
         sanitized = multipleDashes.Replace(sanitized, "-");
         return sanitized;
     }
