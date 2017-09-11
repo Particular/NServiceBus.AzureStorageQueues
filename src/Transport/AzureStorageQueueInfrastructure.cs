@@ -41,6 +41,7 @@
             }
 
             delayedDelivery = new NativeDelayDelivery(connectionString, delayedDeliverySettings.TableName);
+            addressGenerator = new QueueAddressGenerator(settings);
         }
 
         static string GetDelayedDeliveryTableName(string endpointName)
@@ -88,7 +89,6 @@
                         settings.GetOrDefault<IMessageEnvelopeUnwrapper>() :
                         new DefaultMessageEnvelopeUnwrapper(serializer);
 
-                    var addressGenerator = GetAddressGenerator(settings);
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                     var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
 
@@ -108,7 +108,7 @@
 
                     return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, maximumWaitTime, peekInterval);
                 },
-                () => new AzureMessageQueueCreator(client, GetAddressGenerator(settings)),
+                () => new AzureMessageQueueCreator(client, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
                 );
         }
@@ -132,11 +132,6 @@
             return addressing;
         }
 
-        static QueueAddressGenerator GetAddressGenerator(ReadOnlySettings settings)
-        {
-            return new QueueAddressGenerator(settings);
-        }
-
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
         {
             SerializationDefinition wrapperSerializer;
@@ -156,8 +151,7 @@
         Dispatcher BuildDispatcher()
         {
             var addressing = GetAddressing(settings, connectionString);
-            var addressRetriever = GetAddressGenerator(settings);
-            return new Dispatcher(addressRetriever, addressing, serializer, delayedDelivery.ShouldDispatch);
+            return new Dispatcher(addressGenerator, addressing, serializer, delayedDelivery.ShouldDispatch);
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -184,7 +178,7 @@
                 queue.Append("." + logicalAddress.Qualifier);
             }
 
-            return queue.ToString();
+            return addressGenerator.GetQueueName(queue.ToString());
         }
 
         public override Task Start()
@@ -210,5 +204,6 @@
         NativeDelayDelivery delayedDelivery;
         DelayedMessagesPoller poller;
         CancellationTokenSource nativeDelayedMessagesCancellationSource;
+        QueueAddressGenerator addressGenerator;
     }
 }
