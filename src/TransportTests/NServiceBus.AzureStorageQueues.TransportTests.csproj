@@ -24,6 +24,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.*" />
     <!-- TODO: replace with "3.*" when NUnit bug is fixed -->
     <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.*" />
     <PackageReference Include="NServiceBus.Testing.Fakes.Sources" Version="7.0.0-*" />
     <PackageReference Include="NServiceBus.TransportTests.Sources" Version="7.0.0-*" />
     <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.*" />
