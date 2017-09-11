@@ -2,7 +2,6 @@
 {
     using System;
     using System.Linq;
-    using System.Net;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
@@ -44,32 +43,18 @@
         {
             await messageSession.Send(new MyMessage()).ConfigureAwait(false);
 
-            var previous = WebRequest.DefaultWebProxy;
-            WebRequest.DefaultWebProxy = new ThrowingProxy();
+            // https://github.com/Azure/azure-storage-net/issues/534
+            EventHandler<RequestEventArgs> failRequests = delegate { throw new Exception("Fail on proxy"); };
+            OperationContext.GlobalSendingRequest += failRequests;
+
             try
             {
                 await messageSession.Send(new MyMessage()).ConfigureAwait(false);
             }
             finally
             {
-                WebRequest.DefaultWebProxy = previous;
+                OperationContext.GlobalSendingRequest -= failRequests;
             }
-        }
-
-        class ThrowingProxy : IWebProxy
-        {
-            public Uri GetProxy(Uri destination)
-            {
-                throw ThrownException;
-            }
-
-            public bool IsBypassed(Uri host)
-            {
-                throw ThrownException;
-            }
-
-            public ICredentials Credentials { get; set; }
-            public static readonly Exception ThrownException = new Exception("Fail on proxy");
         }
 
         public class Context : ScenarioContext
