@@ -44,12 +44,17 @@
             await messageSession.Send(new MyMessage()).ConfigureAwait(false);
 
             // https://github.com/Azure/azure-storage-net/issues/534
-            OperationContext.GlobalSendingRequest += (sender, args) =>
-            {
-                throw new Exception("Fail on proxy");
-            };
+            EventHandler<RequestEventArgs> failRequests = delegate { throw new Exception("Fail on proxy"); };
+            OperationContext.GlobalSendingRequest += failRequests;
 
-            await messageSession.Send(new MyMessage()).ConfigureAwait(false);
+            try
+            {
+                await messageSession.Send(new MyMessage()).ConfigureAwait(false);
+            }
+            finally
+            {
+                OperationContext.GlobalSendingRequest -= failRequests;
+            }
         }
 
         public class Context : ScenarioContext
