@@ -4,10 +4,11 @@
     <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
-    <NoWarn>PCR0001</NoWarn>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+  
   <ItemGroup>
     <Compile Include="..\AcceptanceTests\BackwardsCompatibleQueueNameSanitizerForTests.cs" Link="BackwardsCompatibleQueueNameSanitizerForTests.cs" />
   </ItemGroup>
@@ -20,11 +21,10 @@
   <ItemGroup>
     <PackageReference Include="WindowsAzure.Storage" Version="8.*" />
     <PackageReference Include="NServiceBus" Version="7.0.0-*" />
-    <PackageReference Include="NUnit" Version="3.*" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.*" />
     <!-- TODO: replace with "3.*" when NUnit bug is fixed -->
     <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.*" />
+    <PackageReference Include="NUnit" Version="3.7.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
     <PackageReference Include="NServiceBus.Testing.Fakes.Sources" Version="7.0.0-*" />
     <PackageReference Include="NServiceBus.TransportTests.Sources" Version="7.0.0-*" />
     <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.*" />
