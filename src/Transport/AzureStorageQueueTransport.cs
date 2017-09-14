@@ -16,6 +16,8 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
     {
+        internal const string SerializerSettingsKey = "MainSerializer";
+
         /// <inheritdoc cref="RequiresConnectionString"/>
         public override bool RequiresConnectionString { get; } = true;
 
@@ -42,7 +44,7 @@ namespace NServiceBus
 
         internal static IMessageSerializer GetMainSerializer(IMessageMapper mapper, ReadOnlySettings settings)
         {
-            var definitionAndSettings = settings.Get<Tuple<SerializationDefinition, SettingsHolder>>("MainSerializer");
+            var definitionAndSettings = settings.Get<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey);
             var definition = definitionAndSettings.Item1;
             var serializerSettings = definitionAndSettings.Item2;
 
