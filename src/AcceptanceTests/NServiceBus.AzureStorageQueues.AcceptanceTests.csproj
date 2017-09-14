@@ -1,26 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  
+
   <PropertyGroup>
     <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
   </ItemGroup>
-  
+
   <!-- Force latest versions -->
   <ItemGroup>
     <PackageReference Include="WindowsAzure.Storage" Version="8.*" />
     <PackageReference Include="NServiceBus" Version="7.0.0-*" />
     <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="7.0.0-*" />
+    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.0.0-*" />
     <!-- TODO: replace with "3.*" when NUnit bug is fixed -->
     <PackageReference Include="NUnit3TestAdapter" Version="3.8.0-alpha1" />
     <PackageReference Include="NUnit" Version="3.7.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
   </ItemGroup>
-  
+
 </Project>
