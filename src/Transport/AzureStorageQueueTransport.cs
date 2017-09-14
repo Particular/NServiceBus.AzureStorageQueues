@@ -28,8 +28,6 @@ namespace NServiceBus
         {
             Guard.AgainstNull(nameof(settings), settings);
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
-            // configure JSON instead of XML as the default serializer:
-            SetMainSerializer(settings, new NewtonsoftSerializer());
 
             // register the MessageWrapper as a system message to have it registered in mappings and serializers
             settings.GetOrCreate<Conventions>().AddSystemMessagesConventions(t => t == typeof(MessageWrapper));
@@ -40,11 +38,6 @@ namespace NServiceBus
             DefaultConfigurationValues.Apply(settings);
 
             return new AzureStorageQueueInfrastructure(settings, connectionString);
-        }
-
-        static void SetMainSerializer(SettingsHolder settings, SerializationDefinition definition)
-        {
-            settings.SetDefault("MainSerializer", Tuple.Create(definition, new SettingsHolder()));
         }
 
         internal static IMessageSerializer GetMainSerializer(IMessageMapper mapper, ReadOnlySettings settings)
