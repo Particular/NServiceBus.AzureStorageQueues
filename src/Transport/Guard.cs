@@ -2,6 +2,9 @@
 
 namespace NServiceBus
 {
+    using Serialization;
+    using Settings;
+
     static class Guard
     {
         public static void AgainstNull(string argumentName, object value)
@@ -27,5 +30,12 @@ namespace NServiceBus
             }
         }
 
+        public static void AgainstUnsetSerializerSetting(SettingsHolder settings)
+        {
+            if (!settings.TryGet<Tuple<SerializationDefinition, SettingsHolder>>(AzureStorageQueueTransport.SerializerSettingsKey, out var _))
+            {
+                throw new Exception("Due to message size restrictions setting a serializer is mandatory. Use `endpointConfiguration.UseSerialization<T>();` to select a serializer. If you are upgrading, install the `NServiceBus.Newtonsoft.Json` NuGet package and consult the upgrade guide for further information.");
+            }
+        }
     }
 }
