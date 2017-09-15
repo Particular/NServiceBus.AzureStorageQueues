@@ -7,7 +7,7 @@
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
 
-    public class When_deferring_a_message_natively_and_delayed_delivery_is_disabled : NServiceBusAcceptanceTest
+    public class When_delaying_messages_and_delayed_delivery_is_disabled : NServiceBusAcceptanceTest
     {
         [Test]
         public async Task Should_throw()
