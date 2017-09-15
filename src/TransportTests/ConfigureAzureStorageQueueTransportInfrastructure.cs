@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using NServiceBus;
 using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.TransportTests;
 using NServiceBus.Logging;
+using NServiceBus.Serialization;
 using NServiceBus.Settings;
 using NServiceBus.TransportTests;
 using NServiceBus.Unicast.Messages;
@@ -16,8 +17,7 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
     {
         LogManager.UseFactory(new ConsoleLoggerFactory());
 
-        MessageMetadataRegistry registry;
-        if (settings.TryGet(out registry) == false)
+        if (settings.TryGet<MessageMetadataRegistry>(out var registry) == false)
         {
             const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public |BindingFlags.NonPublic | BindingFlags.CreateInstance;
             
@@ -31,6 +31,8 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
         {
             throw new IgnoreException("ASQ uses a circuit breaker that is triggered after specific period of time. Critical errors are not reported immediately");
         }
+
+        settings.Set(AzureStorageQueueTransport.SerializerSettingsKey, Tuple.Create<SerializationDefinition, SettingsHolder>(new XmlSerializer(), settings));
 
         var transportExtension = new TransportExtensions<AzureStorageQueueTransport>(settings);
         transportExtension.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);

@@ -38,8 +38,7 @@ namespace NServiceBus
         static AccountConfigurations EnsureAccounts(this ExposeSettings transportExtensions)
         {
             var settings = transportExtensions.GetSettings();
-            AccountConfigurations accounts;
-            if (settings.TryGet(out accounts))
+            if (settings.TryGet<AccountConfigurations>(out var accounts))
             {
                 return accounts;
             }

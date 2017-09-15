@@ -43,8 +43,7 @@
 
         public static QueueAddress Parse(string value)
         {
-            QueueAddress q;
-            if (TryParse(value, out q) == false)
+            if (TryParse(value, out var q) == false)
             {
                 throw new ArgumentException("Value cannot be parsed", nameof(value));
             }

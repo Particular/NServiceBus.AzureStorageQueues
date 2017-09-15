@@ -16,6 +16,8 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
     {
+        internal const string SerializerSettingsKey = "MainSerializer";
+
         /// <inheritdoc cref="RequiresConnectionString"/>
         public override bool RequiresConnectionString { get; } = true;
 
@@ -28,8 +30,8 @@ namespace NServiceBus
         {
             Guard.AgainstNull(nameof(settings), settings);
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
-            // configure JSON instead of XML as the default serializer:
-            SetMainSerializer(settings, new NewtonsoftSerializer());
+
+            Guard.AgainstUnsetSerializerSetting(settings);
 
             // register the MessageWrapper as a system message to have it registered in mappings and serializers
             settings.GetOrCreate<Conventions>().AddSystemMessagesConventions(t => t == typeof(MessageWrapper));
@@ -42,14 +44,9 @@ namespace NServiceBus
             return new AzureStorageQueueInfrastructure(settings, connectionString);
         }
 
-        static void SetMainSerializer(SettingsHolder settings, SerializationDefinition definition)
-        {
-            settings.SetDefault("MainSerializer", Tuple.Create(definition, new SettingsHolder()));
-        }
-
         internal static IMessageSerializer GetMainSerializer(IMessageMapper mapper, ReadOnlySettings settings)
         {
-            var definitionAndSettings = settings.Get<Tuple<SerializationDefinition, SettingsHolder>>("MainSerializer");
+            var definitionAndSettings = settings.Get<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey);
             var definition = definitionAndSettings.Item1;
             var serializerSettings = definitionAndSettings.Item2;
 

@@ -11,6 +11,7 @@
     <PackageProjectUrl>https://docs.particular.net/nuget/$(PackageId)</PackageProjectUrl>
     <PackageOutputPath>..\..\nugets</PackageOutputPath>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludePDBsInPackage</TargetsForTfmSpecificContentInPackage>
+    <LangVersion>7</LangVersion>
   </PropertyGroup>
 
   <Target Name="IncludePDBsInPackage" Condition="'$(IncludeBuildOutput)' != 'false'">

@@ -102,8 +102,7 @@
                     };
 
                     int? degreeOfReceiveParallelism = null;
-                    int parallelism;
-                    if (settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out parallelism))
+                    if (settings.TryGet<int>(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out var parallelism))
                     {
                         degreeOfReceiveParallelism = parallelism;
                     }
@@ -118,15 +117,13 @@
         static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-            object useAccountNames;
 
-            AccountConfigurations accounts;
-            if (settings.TryGet(out accounts) == false)
+            if (settings.TryGet<AccountConfigurations>(out var accounts) == false)
             {
                 accounts = new AccountConfigurations();
             }
 
-            var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out useAccountNames);
+            var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out object _);
 
             addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings, shouldUseAccountNames);
             addressing.Add(QueueAddress.DefaultStorageAccountAlias, connectionString, false);
@@ -136,8 +133,7 @@
 
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
         {
-            SerializationDefinition wrapperSerializer;
-            if (settings.TryGet(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, out wrapperSerializer))
+            if (settings.TryGet<SerializationDefinition>(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, out var wrapperSerializer))
             {
                 return new MessageWrapperSerializer(wrapperSerializer.Configure(settings)(MessageWrapperSerializer.GetMapper()));
             }

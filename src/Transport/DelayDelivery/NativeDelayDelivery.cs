@@ -43,10 +43,7 @@
                 return false;
             }
 
-            UnicastTransportOperation operationToSchedule;
-            DateTimeOffset scheduleDate;
-
-            if (TryProcessDelayedRetry(operation, out operationToSchedule, out scheduleDate))
+            if (TryProcessDelayedRetry(operation, out var operationToSchedule, out var scheduleDate))
             {
                 await ScheduleAt(operationToSchedule, scheduleDate, cancellationToken).ConfigureAwait(false);
                 return false;
@@ -103,9 +100,8 @@
 
         static bool TryProcessDelayedRetry(IOutgoingTransportOperation operation, out UnicastTransportOperation operationToSchedule, out DateTimeOffset scheduleDate)
         {
-            string expire;
             var messageHeaders = operation.Message.Headers;
-            if (messageHeaders.TryGetValue(TimeoutManagerHeaders.Expire, out expire))
+            if (messageHeaders.TryGetValue(TimeoutManagerHeaders.Expire, out var expire))
             {
                 var expiration = DateTimeExtensions.ToUtcDateTime(expire);
 
