@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using AzureStorageQueues.Config;
     using DelayedDelivery;
     using DeliveryConstraints;
     using Features;
@@ -59,7 +60,7 @@
         {
             var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
             var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
-            var timeoutManagerDisabled = settings.Get<DelayedDeliverySettings>().TimeoutManagerDisabled;
+            var timeoutManagerDisabled = settings.Get<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager);
 
             if (externalTimeoutManagerAddress)
             {
@@ -69,8 +70,8 @@
             if (!timeoutManagerDisabled && !timeoutManagerFeatureActive)
             {
                 return StartupCheckResult.Failed(
-                    "The timeout manager is not active, but the transport has not been properly configured for this. " +
-                                                 "Use 'EndpointConfiguration.UseTransport<AzureStorageQueueTransport>().DelayedDelivery().DisableTimeoutManager()' to ensure delayed messages can be sent properly.");
+                    "The timeout manager is not active, but the transport has not been properly configured for this. "
+                    + "Use 'EndpointConfiguration.UseTransport<AzureStorageQueueTransport>().DelayedDelivery().DisableTimeoutManager()' to ensure delayed messages can be sent properly.");
             }
 
             return StartupCheckResult.Success;
