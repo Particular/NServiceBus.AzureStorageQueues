@@ -40,7 +40,7 @@
         static string GetDelayedDeliveryTableName(SettingsHolder settings)
         {
             var delayedDeliveryTableName = settings.GetOrDefault<string>(WellKnownConfigurationKeys.DelayedDelivery.TableName);
-            var delayedDeliveryTableNameWasNotOverridden = settings.HasExplicitValue(WellKnownConfigurationKeys.DelayedDelivery.TableName);
+            var delayedDeliveryTableNameWasNotOverridden = string.IsNullOrEmpty(delayedDeliveryTableName);
 
             if (delayedDeliveryTableNameWasNotOverridden)
             {
@@ -61,7 +61,7 @@
             }
 
             var hashName = BitConverter.ToString(hashedName).Replace("-", string.Empty);
-            return "delays" + hashName;
+            return "delays" + hashName.ToLower();
         }
 
         public override IEnumerable<Type> DeliveryConstraints
