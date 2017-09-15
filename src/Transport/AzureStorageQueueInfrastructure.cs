@@ -24,32 +24,37 @@
             this.connectionString = connectionString;
             serializer = BuildSerializer(settings);
 
-            delayedDeliverySettings = settings.GetOrCreate<DelayedDeliverySettings>();
-            if (delayedDeliverySettings.TableNameWasNotOverridden)
-            {
-                var delayedDeliveryTableName = GetDelayedDeliveryTableName(settings.EndpointName());
-                delayedDeliverySettings.UseTableName(delayedDeliveryTableName);
-            }
-
             var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
             var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
 
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
                 // TimeoutManager is already not used. Indicate to Native Delayed Delivery that we're not in the hybrid mode.
-                delayedDeliverySettings.DisableTimeoutManager();
+                settings.Set(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager, true);
             }
 
-            delayedDelivery = new NativeDelayDelivery(connectionString, delayedDeliverySettings.TableName);
+            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings));
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
 
-        static string GetDelayedDeliveryTableName(string endpointName)
+        static string GetDelayedDeliveryTableName(SettingsHolder settings)
+        {
+            var delayedDeliveryTableName = settings.GetOrDefault<string>(WellKnownConfigurationKeys.DelayedDelivery.TableName);
+            var delayedDeliveryTableNameWasNotOverridden = settings.HasExplicitValue(WellKnownConfigurationKeys.DelayedDelivery.TableName);
+
+            if (delayedDeliveryTableNameWasNotOverridden)
+            {
+                delayedDeliveryTableName = GenerateDelayedDeliveryTableName(settings.EndpointName());
+                settings.Set(WellKnownConfigurationKeys.DelayedDelivery.TableName, delayedDeliveryTableName);
+            }
+
+            return delayedDeliveryTableName;
+        }
+
+        static string GenerateDelayedDeliveryTableName(string endpointName)
         {
             byte[] hashedName;
-#pragma warning disable PC001 // API not supported on all platforms
             using (var sha1 = new SHA1Managed())
-#pragma warning restore PC001 // API not supported on all platforms
             {
                 sha1.Initialize();
                 hashedName = sha1.ComputeHash(Encoding.UTF8.GetBytes(endpointName));
@@ -66,13 +71,17 @@
                 yield return typeof(DiscardIfNotReceivedBefore);
                 yield return typeof(NonDurableDelivery);
 
-                if (delayedDeliverySettings.TimeoutManagerDisabled)
+                if (DelayedDeliveryCanBeUsed())
                 {
                     yield return typeof(DoNotDeliverBefore);
                     yield return typeof(DelayDeliveryWith);
                 }
             }
         }
+
+        bool DelayedDeliveryCanBeUsed() => 
+            settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager)
+            && settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 
         public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
         public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
@@ -198,7 +207,6 @@
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
-        readonly DelayedDeliverySettings delayedDeliverySettings;
         NativeDelayDelivery delayedDelivery;
         DelayedMessagesPoller poller;
         CancellationTokenSource nativeDelayedMessagesCancellationSource;
