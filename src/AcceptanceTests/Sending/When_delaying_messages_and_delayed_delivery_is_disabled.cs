@@ -24,17 +24,9 @@
                         options.DelayDeliveryWith(delay);
                         options.RouteToThisEndpoint();
 
-                        try
-                        {
-                            return session.Send(new MyMessage(), options);
-                        }
-                        catch (Exception exception)
-                        {
-                            ctx.SendException = exception;
-                            return Task.FromResult(0);
-                        }
+                        return session.Send(new MyMessage(), options);
                     }))
-                    .Done(ctx => ctx.WasCalled)
+                    .Done(ctx => true)
                     .Run();
 
                 Assert.IsFalse(context.WasCalled, "Endpoint's handler should never be invoked.");
