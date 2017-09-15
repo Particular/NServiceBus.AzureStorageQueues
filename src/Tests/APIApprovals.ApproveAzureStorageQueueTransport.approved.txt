@@ -37,9 +37,9 @@ namespace NServiceBus
         [System.ObsoleteAttribute(@"Azure Storage Queues transport is no longer shortening queue names and requires sanitization algorithm to be provided using configuration API. Use `transport.SanitizeQueueNamesWith(Func<string, string>)` instead. The member currently throws a NotImplementedException. Will be removed in version 9.0.0.", true)]
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseSha1ForShortening(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
     }
-    public class DelayedDeliverySettings
+    public class DelayedDeliverySettings : NServiceBus.Configuration.AdvancedExtensibility.ExposeSettings
     {
-        public DelayedDeliverySettings() { }
+        public void DisableDelayedDelivery() { }
         public void DisableTimeoutManager() { }
         public void UseTableName(string delayedMessagesTableName) { }
     }
