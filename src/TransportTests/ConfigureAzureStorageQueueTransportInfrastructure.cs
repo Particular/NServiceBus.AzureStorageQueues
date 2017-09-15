@@ -17,8 +17,7 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
     {
         LogManager.UseFactory(new ConsoleLoggerFactory());
 
-        MessageMetadataRegistry registry;
-        if (settings.TryGet(out registry) == false)
+        if (settings.TryGet<MessageMetadataRegistry>(out var registry) == false)
         {
             const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public |BindingFlags.NonPublic | BindingFlags.CreateInstance;
             

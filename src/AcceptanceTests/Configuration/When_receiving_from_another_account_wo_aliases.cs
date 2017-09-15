@@ -32,7 +32,7 @@
             public bool HandlerCalled { get; set; }
         }
 
-        public class Receiver : EndpointConfigurationBuilder
+        class Receiver : EndpointConfigurationBuilder
         {
             public Receiver()
             {

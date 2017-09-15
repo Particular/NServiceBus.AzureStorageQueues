@@ -117,8 +117,7 @@
             addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
 
             var messageIntent = default(MessageIntentEnum);
-            string messageIntentString;
-            if (headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
+            if (headers.TryGetValue(Headers.MessageIntent, out var messageIntentString))
             {
                 Enum.TryParse(messageIntentString, true, out messageIntent);
             }

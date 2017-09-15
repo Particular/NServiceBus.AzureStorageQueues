@@ -42,9 +42,7 @@
         /// </summary>
         internal ConnectionString Map(string alias)
         {
-            ConnectionString connectionString;
-
-            if (aliasToConnectionStringMap.TryGetValue(alias, out connectionString) == false)
+            if (aliasToConnectionStringMap.TryGetValue(alias, out var connectionString) == false)
             {
                 if (useLogicalQueueAddresses == false)
                 {
@@ -64,11 +62,9 @@
         {
             foreach (var header in headersToApplyNameMapping)
             {
-                string headerValue;
-                if (headers.TryGetValue(header, out headerValue))
+                if (headers.TryGetValue(header, out var headerValue))
                 {
                     var address = QueueAddress.Parse(headerValue);
-                    string alias;
 
                     // no mapping if address is default
                     if (address.IsAccountDefault)
@@ -77,7 +73,7 @@
                     }
 
                     // try map as connection string
-                    if (TryMap(new ConnectionString(address.StorageAccount), out alias))
+                    if (TryMap(new ConnectionString(address.StorageAccount), out var alias))
                     {
                         headers[header] = new QueueAddress(address.QueueName, alias).ToString();
                     }
@@ -104,8 +100,7 @@
         {
             foreach (var header in headersToApplyNameMapping)
             {
-                string headerValue;
-                if (headers.TryGetValue(header, out headerValue))
+                if (headers.TryGetValue(header, out var headerValue))
                 {
                     var address = QueueAddress.Parse(headerValue);
 
