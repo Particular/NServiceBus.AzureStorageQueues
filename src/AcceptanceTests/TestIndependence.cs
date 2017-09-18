@@ -30,6 +30,7 @@ public class TestIndependence
             return new TestIdSerializer(serializer, GetTestRunId(scenarioContext));
         }
 
+        // All messages that have not yet been stamped (for example raw dispatches) will be stamped by the serializer as a last resort.
         class TestIdSerializer : IMessageSerializer
         {
             readonly IMessageSerializer serializer;
@@ -43,7 +44,11 @@ public class TestIndependence
 
             public void Serialize(object message, Stream stream)
             {
-                ((MessageWrapper) message).Headers[HeaderName] = testId;
+                var headers = ((MessageWrapper) message).Headers;
+                if (!headers.ContainsKey(HeaderName))
+                {
+                    headers[HeaderName] = testId;
+                }
                 serializer.Serialize(message, stream);
             }
 
@@ -70,6 +75,23 @@ public class TestIndependence
                 return Task.FromResult(0);
             }
 
+            return next(context);
+        }
+    }
+
+    // All messages that go out with outgoing logical pipelines will be stamped by this behavior.
+    public class StampOutgoingBehavior : IBehavior<IOutgoingLogicalMessageContext, IOutgoingLogicalMessageContext>
+    {
+        string testRunId;
+
+        public StampOutgoingBehavior(ScenarioContext scenarioContext)
+        {
+            testRunId = GetTestRunId(scenarioContext);
+        }
+
+        public Task Invoke(IOutgoingLogicalMessageContext context, Func<IOutgoingLogicalMessageContext, Task> next)
+        {
+            context.Headers[HeaderName] = testRunId;
             return next(context);
         }
     }
