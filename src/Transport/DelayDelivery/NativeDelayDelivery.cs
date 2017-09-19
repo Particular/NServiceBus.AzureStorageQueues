@@ -60,7 +60,7 @@
         {
             var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
             var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
-            var timeoutManagerDisabled = settings.Get<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager);
+            var timeoutManagerDisabled = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery);
 
             if (externalTimeoutManagerAddress)
             {
