@@ -89,9 +89,9 @@
             {
                 var seconds = Convert.ToInt64(Math.Ceiling(timeToBeReceived.Value.TotalSeconds));
 
-                if (seconds < 0)
+                if (seconds <= 0)
                 {
-                    throw new Exception($"Message cannot be sent with a delay less than 1 second. Provided delay was {timeToBeReceived.Value.TotalMilliseconds} ms.");
+                    throw new Exception($"Message cannot be sent with a provided delay of {timeToBeReceived.Value.TotalMilliseconds} ms.");
                 }
                 timeToBeReceived = TimeSpan.FromSeconds(seconds);
             }
