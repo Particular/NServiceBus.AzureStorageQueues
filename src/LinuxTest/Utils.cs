@@ -4,6 +4,6 @@ public static class Utils
 {
     public static string GetEnvConfiguredConnectionString()
     {
-        return Environment.GetEnvironmentVariable("AzureStorageQueueTransport.ConnectionString");
+        return Environment.GetEnvironmentVariable("AzureStorageQueueTransportConnectionString");
     }
 }
