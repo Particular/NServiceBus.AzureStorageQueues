@@ -6,7 +6,7 @@
     {
         public static string GetEnvConfiguredConnectionString()
         {
-            return Environment.GetEnvironmentVariable("AzureStorageQueueTransport.ConnectionString");
+            return Environment.GetEnvironmentVariable("AzureStorageQueueTransportConnectionString");
         }
 
         public static string BuildAnotherConnectionString(string connectionString)
