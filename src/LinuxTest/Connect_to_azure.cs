@@ -13,6 +13,7 @@ public class Connect_to_Azure
     public async Task Should_parse_namespace_from_azure_storage_connectionstring()
     {
         Console.WriteLine("    Connection String :: " + Utils.GetEnvConfiguredConnectionString());
+        var connectionString = Utils.GetEnvConfiguredConnectionString().Replace("\\;", ";");
         var cloudStorageAccount = CloudStorageAccount.Parse(Utils.GetEnvConfiguredConnectionString());
         var queueClient = cloudStorageAccount.CreateCloudQueueClient();
         var result = await queueClient.ListQueuesSegmentedAsync(new QueueContinuationToken());
