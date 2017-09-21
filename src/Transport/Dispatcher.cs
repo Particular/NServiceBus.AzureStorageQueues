@@ -91,7 +91,7 @@
 
                 if (seconds < 0)
                 {
-                    throw new Exception($"Message cannot be sent with a delay less than 1 second. Provided delay was {timeToBeReceived.Value.TotalMilliseconds} mSec.");
+                    throw new Exception($"Message cannot be sent with a delay less than 1 second. Provided delay was {timeToBeReceived.Value.TotalMilliseconds} ms.");
                 }
                 timeToBeReceived = TimeSpan.FromSeconds(seconds);
             }
