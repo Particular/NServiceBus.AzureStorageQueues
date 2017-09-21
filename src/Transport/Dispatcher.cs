@@ -85,6 +85,17 @@
                 throw new InvalidOperationException($"TimeToBeReceived is set to more than 7 days (maximum for Azure Storage queue) for message type '{messageType}'.");
             }
 
+            if (timeToBeReceived.HasValue)
+            {
+                var seconds = Convert.ToInt64(Math.Ceiling(timeToBeReceived.Value.TotalSeconds));
+
+                if (seconds <= 0)
+                {
+                    throw new Exception($"Message cannot be sent with a provided delay of {timeToBeReceived.Value.TotalMilliseconds} ms.");
+                }
+                timeToBeReceived = TimeSpan.FromSeconds(seconds);
+            }
+
             var wrapper = BuildMessageWrapper(operation, queue);
             await Send(wrapper, sendQueue, timeToBeReceived).ConfigureAwait(false);
         }
@@ -101,6 +112,7 @@
                 rawMessage = CloudQueueMessage.CreateCloudQueueMessageFromByteArray(stream.ToArray());
 #endif
             }
+
             return sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null);
         }
 
