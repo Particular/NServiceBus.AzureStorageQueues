@@ -15,7 +15,7 @@
         [OneTimeSetUp]
         public void SetUp()
         {
-            var client = CloudStorageAccount.Parse(Utils.GetEnvConfiguredConnectionString());
+            var client = CloudStorageAccount.Parse(Testing.Utillities.GetEnvConfiguredConnectionString());
             _blobs = client.CreateCloudBlobClient();
         }
 

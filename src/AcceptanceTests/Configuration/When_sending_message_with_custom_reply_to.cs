@@ -5,7 +5,6 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
     using System.IO;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
     using global::Newtonsoft.Json;
     using global::Newtonsoft.Json.Linq;
@@ -18,8 +17,8 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
     {
         static When_sending_message_with_custom_reply_to()
         {
-            connectionString = Utils.GetEnvConfiguredConnectionString();
-            anotherConnectionString = Utils.BuildAnotherConnectionString(connectionString);
+            connectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
+            anotherConnectionString = Testing.Utillities.BuildAnotherConnectionString(connectionString);
             RawReplyTo = "q@" + anotherConnectionString;
         }
 

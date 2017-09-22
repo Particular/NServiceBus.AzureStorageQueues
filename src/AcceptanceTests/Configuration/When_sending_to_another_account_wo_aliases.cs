@@ -4,7 +4,6 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
-    using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
     using NUnit.Framework;
 
@@ -14,9 +13,9 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         public async Task Should_properly_handle_it()
         {
             var queue = Conventions.EndpointNamingConvention(typeof(Receiver));
-            var connectionString = Utils.GetEnvConfiguredConnectionString();
+            var connectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
 
-            var another = Utils.BuildAnotherConnectionString(connectionString);
+            var another = Testing.Utillities.BuildAnotherConnectionString(connectionString);
             var queueAddress = queue + "@" + another;
             
             var context = await Scenario.Define<Context>()
