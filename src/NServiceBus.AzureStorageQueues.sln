@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.12
+VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues", "Transport\NServiceBus.AzureStorageQueues.csproj", "{B6D6406F-F5A4-46D7-A882-4A831128065E}"
 EndProject
@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{253C1A0A
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinuxTest", "LinuxTest\LinuxTest.csproj", "{908FBE91-CF2D-4A63-B0A7-E05A4F43DA3C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,6 +46,10 @@ Global
 		{BC08A40C-A7F9-4D93-906E-BCD135DA2A72}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC08A40C-A7F9-4D93-906E-BCD135DA2A72}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BC08A40C-A7F9-4D93-906E-BCD135DA2A72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{908FBE91-CF2D-4A63-B0A7-E05A4F43DA3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{908FBE91-CF2D-4A63-B0A7-E05A4F43DA3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{908FBE91-CF2D-4A63-B0A7-E05A4F43DA3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{908FBE91-CF2D-4A63-B0A7-E05A4F43DA3C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
