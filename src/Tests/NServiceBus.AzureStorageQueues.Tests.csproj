@@ -9,7 +9,7 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
   </ItemGroup>
@@ -20,7 +20,6 @@
     <PackageReference Include="PublicApiGenerator" Version="6.1.0-*" />
   </ItemGroup>
 
-
   <!-- Force latest versions -->
   <ItemGroup>
     <PackageReference Include="WindowsAzure.Storage" Version="8.*" />
@@ -30,4 +29,9 @@
     <PackageReference Include="NUnit" Version="3.7.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
+  </ItemGroup>
+ 
 </Project>
