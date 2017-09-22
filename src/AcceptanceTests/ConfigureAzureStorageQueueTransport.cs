@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.AcceptanceTests.Routing.MessageDrivenSubscriptions;
-using NServiceBus.AcceptanceTests.ScenarioDescriptors;
 using NUnit.Framework;
 using Conventions = NServiceBus.AcceptanceTesting.Customization.Conventions;
 using NServiceBus.AcceptanceTests.Routing;
@@ -11,7 +10,7 @@ using NServiceBus.AcceptanceTests.Versioning;
 
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
-    internal static string ConnectionString => EnvironmentHelper.GetEnvironmentVariable($"{nameof(AzureStorageQueueTransport)}.ConnectionString") ?? "UseDevelopmentStorage=true";
+    internal static string ConnectionString => Testing.Utillities.GetEnvConfiguredConnectionString();
 
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {

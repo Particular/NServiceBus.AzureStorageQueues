@@ -3,7 +3,6 @@
     using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
     using NUnit.Framework;
 
@@ -11,8 +10,8 @@
     {
         public When_configuring_account_names()
         {
-            connectionString = Utils.GetEnvConfiguredConnectionString();
-            anotherConnectionString = Utils.BuildAnotherConnectionString(connectionString);
+            connectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
+            anotherConnectionString = Testing.Utillities.BuildAnotherConnectionString(connectionString);
         }
 
         [Test]

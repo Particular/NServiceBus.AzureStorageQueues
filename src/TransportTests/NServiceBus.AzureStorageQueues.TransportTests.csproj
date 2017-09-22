@@ -32,4 +32,8 @@
     <PackageReference Include="System.Linq.Queryable" Version="4.*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
+  </ItemGroup>
+
 </Project>

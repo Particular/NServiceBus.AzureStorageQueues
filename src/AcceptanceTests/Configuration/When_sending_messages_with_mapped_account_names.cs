@@ -5,7 +5,6 @@
     using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
     using global::Newtonsoft.Json;
     using global::Newtonsoft.Json.Linq;
@@ -17,8 +16,8 @@
     {
         public When_sending_messages_with_mapped_account_names()
         {
-            defaultConnectionString = Utils.GetEnvConfiguredConnectionString();
-            anotherConnectionString = Utils.BuildAnotherConnectionString(defaultConnectionString);
+            defaultConnectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
+            anotherConnectionString = Testing.Utillities.BuildAnotherConnectionString(defaultConnectionString);
 
             var account = CloudStorageAccount.Parse(defaultConnectionString);
             auditQueue = account.CreateCloudQueueClient().GetQueueReference(AuditName);
