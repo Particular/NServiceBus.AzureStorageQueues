@@ -2,7 +2,7 @@
 {
     using System;
 
-    class QueueAddress : IEquatable<QueueAddress>
+    struct QueueAddress : IEquatable<QueueAddress>
     {
         public QueueAddress(string queueName, string storageAccount)
         {
@@ -20,20 +20,12 @@
             StorageAccount = storageAccount;
         }
 
-        public string QueueName { get; }
-        public string StorageAccount { get; }
+        public readonly string QueueName;
+        public readonly string StorageAccount;
 
         public bool Equals(QueueAddress other)
         {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-            return string.Equals(QueueName, other.QueueName) && string.Equals(StorageAccount, other.StorageAccount);
+            return string.Equals(QueueName, other.QueueName, StringComparison.OrdinalIgnoreCase) && string.Equals(StorageAccount, other.StorageAccount, StringComparison.OrdinalIgnoreCase);
         }
 
         static bool IsQueueNameValid(string queueName)
@@ -48,10 +40,10 @@
                 throw new ArgumentException("Value cannot be parsed", nameof(value));
             }
 
-            return q;
+            return q.Value;
         }
 
-        public static bool TryParse(string inputQueue, out QueueAddress queue)
+        public static bool TryParse(string inputQueue, out QueueAddress? queue)
         {
             if (inputQueue == null)
             {
@@ -91,11 +83,7 @@
             {
                 return false;
             }
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-            return obj is QueueAddress && Equals((QueueAddress) obj);
+            return obj is QueueAddress address && Equals(address);
         }
 
         public override int GetHashCode()

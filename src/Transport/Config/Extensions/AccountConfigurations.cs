@@ -18,12 +18,17 @@ namespace NServiceBus
             defaultAlias = alias;
         }
 
-        public void Add(string alias, string connectionStringValue)
+        public AccountInfo Add(string alias, string connectionStringValue)
         {
-            mappings.Add(alias, connectionStringValue);
+            if(!mappings.TryGetValue(alias, out var accountInfo))
+            {
+                accountInfo = new AccountInfo(alias, connectionStringValue);
+                mappings.Add(alias, accountInfo);
+            }
+            return accountInfo;
         }
 
-        internal Dictionary<string, string> mappings = new Dictionary<string, string>();
+        internal Dictionary<string, AccountInfo> mappings = new Dictionary<string, AccountInfo>();
         internal string defaultAlias;
     }
 }
