@@ -1,21 +1,14 @@
 ﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Sending
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
     using EndpointTemplates;
     using NUnit.Framework;
 
-    public class When_dispatching_to_another_account : NServiceBusAcceptanceTest
+    public class When_dispatching_to_another_account_with_registered_endpoint : NServiceBusAcceptanceTest
     {
-        [Test]
-        public void Connection_string_should_throw()
-        {
-            Assert.ThrowsAsync<KeyNotFoundException>(() => RunTest(MainNamespaceConnectionString));
-        }
-
         [Test]
         public Task Account_mapped_should_be_respected()
         {
@@ -27,12 +20,7 @@
             var context = await Scenario.Define<Context>()
                 .WithEndpoint<Endpoint>(b =>
                 {
-                    b.When((bus, c) =>
-                    {
-                        var options = new SendOptions();
-                        options.SetDestination("DispatchingToAnotherAccount.Receiver@" + connectionStringOrName);
-                        return bus.Send(new MyMessage(), options);
-                    });
+                    b.When((bus, c) => bus.Send(new MyMessage()));
                 })
                 .WithEndpoint<Receiver>()
                 .Done(c => c.WasCalled)
@@ -43,7 +31,6 @@
 
         const string AnotherAccountName = "another";
         const string DefaultAccountName = "default";
-        static readonly string MainNamespaceConnectionString = ConfigureEndpointAzureStorageQueueTransport.ConnectionString;
 
         public class Context : ScenarioContext
         {
@@ -57,12 +44,14 @@
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    configuration.UseTransport<AzureStorageQueueTransport>()
+                    var routing = configuration.UseTransport<AzureStorageQueueTransport>()
                         .UseAccountAliasesInsteadOfConnectionStrings()
                         .DefaultAccountAlias(DefaultAccountName)
                         .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
-                        .AccountRouting()
-                        .AddAccount(AnotherAccountName, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                        .AccountRouting();
+
+                    var anotherAccount = routing.AddAccount(AnotherAccountName, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                    anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Receiver)));
 
                     configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
@@ -76,7 +65,7 @@
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
-                        .DefaultAccountAlias(AnotherAccountName)
+                        .UseAccountAliasesInsteadOfConnectionStrings()
                         .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
                 });
             }

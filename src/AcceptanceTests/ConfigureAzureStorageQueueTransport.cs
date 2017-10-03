@@ -11,6 +11,7 @@ using NServiceBus.AcceptanceTests.Versioning;
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
     internal static string ConnectionString => Testing.Utillities.GetEnvConfiguredConnectionString();
+    internal static string AnotherConnectionString => Testing.Utillities.GetEnvConfiguredConnectionString2();
 
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {

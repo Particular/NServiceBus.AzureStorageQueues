@@ -15,12 +15,24 @@
             }
 
             return connectionString;
+        }
 
-            string GetEnvironmentVariable(string variable)
+        public static string GetEnvConfiguredConnectionString2()
+        {
+            var environmentVartiableName = $"{nameof(AzureStorageQueueTransport)}_ConnectionString_2";
+            var connectionString = GetEnvironmentVariable(environmentVartiableName);
+            if (string.IsNullOrEmpty(connectionString))
             {
-                var candidate = Environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.User);
-                return string.IsNullOrWhiteSpace(candidate) ? Environment.GetEnvironmentVariable(variable) : candidate;
+                throw new Exception($"Oh no! We couldn't find an environment variable '{environmentVartiableName}' with Azure Storage connection string.");
             }
+
+            return connectionString;
+        }
+
+        static string GetEnvironmentVariable(string variable)
+        {
+            var candidate = Environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.User);
+            return string.IsNullOrWhiteSpace(candidate) ? Environment.GetEnvironmentVariable(variable) : candidate;
         }
 
         public static string BuildAnotherConnectionString(string connectionString)
