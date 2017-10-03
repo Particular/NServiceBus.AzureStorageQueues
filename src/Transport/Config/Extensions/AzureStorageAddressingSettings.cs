@@ -7,6 +7,9 @@
 
     class AzureStorageAddressingSettings
     {
+
+        QueueAddressGenerator addressGenerator;
+
         internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, AccountInfo> aliasToConnectionStringMap, bool shouldUseAccountAliases)
         {
             var hasAnyMapping = aliasToConnectionStringMap != null && aliasToConnectionStringMap.Count > 0;
@@ -37,12 +40,24 @@
             }
         }
 
+        internal void SetAddressGenerator(QueueAddressGenerator addressGenerator)
+        {
+            this.addressGenerator = addressGenerator;
+        }
+
         /// <summary>
         /// Maps the account name to a connection string, throwing when no mapping found.
         /// </summary>
         internal ConnectionString Map(QueueAddress address)
         {
-            if (aliasToAccountInfoMap.TryGetValue(address.StorageAccount, out var accountInfo) == false)
+            if (registeredEndpoints.TryGetValue(address.QueueName, out var accountInfo))
+            {
+                if (useLogicalQueueAddresses == false)
+                {
+                    return new ConnectionString(accountInfo.ConnectionString);
+                }
+            }
+            else if (aliasToAccountInfoMap.TryGetValue(address.StorageAccount, out accountInfo) == false)
             {
                 if (useLogicalQueueAddresses == false)
                 {
@@ -144,10 +159,17 @@
                 aliasToAccountInfoMap[accountInfo.Alias] = accountInfo;
                 connectionStringToAliasMap[accountInfo.Connection] = accountInfo.Alias;
             }
+
+            foreach (var registeredEndpoint in accountInfo.RegisteredEndpoints)
+            {
+                var queue = addressGenerator.GetQueueName(registeredEndpoint);
+                registeredEndpoints[queue] = accountInfo;
+            }
         }
 
         Dictionary<ConnectionString, string> connectionStringToAliasMap = new Dictionary<ConnectionString, string>();
         Dictionary<string, AccountInfo> aliasToAccountInfoMap = new Dictionary<string, AccountInfo>();
+        Dictionary<string, AccountInfo> registeredEndpoints = new Dictionary<string, AccountInfo>();
 
         string defaultConnectionStringAlias;
         bool useLogicalQueueAddresses;
