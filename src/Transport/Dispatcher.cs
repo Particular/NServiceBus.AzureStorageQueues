@@ -54,7 +54,7 @@
             var destination = operation.Destination;
 
             var queue = QueueAddress.Parse(destination);
-            var connectionString = addressing.Map(queue);
+            var connectionString = addressing.Map(queue, ignoreAliasses: true);
 
             var sendClient = createQueueClients.Create(connectionString);
             var q = addressGenerator.GetQueueName(queue.QueueName);

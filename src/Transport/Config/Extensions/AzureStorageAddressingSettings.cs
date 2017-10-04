@@ -48,18 +48,22 @@
         /// <summary>
         /// Maps the account name to a connection string, throwing when no mapping found.
         /// </summary>
-        internal ConnectionString Map(QueueAddress address)
+        internal ConnectionString Map(QueueAddress address, bool ignoreAliasses = false)
         {
             if (registeredEndpoints.TryGetValue(address.QueueName, out var accountInfo))
             {
-                if (useLogicalQueueAddresses == false)
+                if (useLogicalQueueAddresses == false || ignoreAliasses)
                 {
                     return new ConnectionString(accountInfo.ConnectionString);
+                }
+                else
+                {
+                    return new ConnectionString(accountInfo.Alias);
                 }
             }
             else if (aliasToAccountInfoMap.TryGetValue(address.StorageAccount, out accountInfo) == false)
             {
-                if (useLogicalQueueAddresses == false)
+                if (useLogicalQueueAddresses == false || ignoreAliasses)
                 {
                     return new ConnectionString(address.StorageAccount);
                 }

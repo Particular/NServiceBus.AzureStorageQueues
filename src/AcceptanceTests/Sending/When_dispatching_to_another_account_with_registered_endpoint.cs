@@ -10,14 +10,9 @@
     public class When_dispatching_to_another_account_with_registered_endpoint : NServiceBusAcceptanceTest
     {
         [Test]
-        public Task Account_mapped_should_be_respected()
+        public async Task Account_mapped_should_be_respected()
         {
-            return RunTest(AnotherAccountName);
-        }
-
-        static async Task RunTest(string connectionStringOrName)
-        {
-            var context = await Scenario.Define<Context>()
+           var context = await Scenario.Define<Context>()
                 .WithEndpoint<Endpoint>(b =>
                 {
                     b.When((bus, c) => bus.Send(new MyMessage()));
