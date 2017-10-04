@@ -5,9 +5,16 @@
 namespace NServiceBus
 {
     
+    public class AccountInfo
+    {
+        public AccountInfo(string alias, string connectionString) { }
+        public string Alias { get; }
+        public string ConnectionString { get; }
+        public System.Collections.Generic.HashSet<string> RegisteredEndpoints { get; }
+    }
     public class AccountRoutingSettings
     {
-        public void AddAccount(string alias, string connectionString) { }
+        public NServiceBus.AccountInfo AddAccount(string alias, string connectionString) { }
     }
     public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition, NServiceBus.Routing.IMessageDrivenSubscriptionTransport
     {
