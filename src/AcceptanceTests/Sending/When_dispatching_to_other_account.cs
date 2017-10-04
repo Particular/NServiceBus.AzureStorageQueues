@@ -8,12 +8,12 @@
     using EndpointTemplates;
     using NUnit.Framework;
 
-    public class When_dispatching_to_another_account : NServiceBusAcceptanceTest
+    public class When_dispatching_to_another_account_using_aliases : NServiceBusAcceptanceTest
     {
         [Test]
         public void Connection_string_should_throw()
         {
-            Assert.ThrowsAsync<KeyNotFoundException>(() => RunTest(MainNamespaceConnectionString));
+            Assert.ThrowsAsync<Exception>(() => RunTest(MainNamespaceConnectionString));
         }
 
         [Test]

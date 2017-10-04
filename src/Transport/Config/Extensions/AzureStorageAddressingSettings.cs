@@ -48,27 +48,23 @@
         /// <summary>
         /// Maps the account name to a connection string, throwing when no mapping found.
         /// </summary>
-        internal ConnectionString Map(QueueAddress address, bool ignoreAliasses = false)
+        internal ConnectionString Map(QueueAddress address)
         {
+            var account = address.StorageAccount;
+
             if (registeredEndpoints.TryGetValue(address.QueueName, out var accountInfo))
             {
-                if (useLogicalQueueAddresses == false || ignoreAliasses)
-                {
-                    return new ConnectionString(accountInfo.ConnectionString);
-                }
-                else
-                {
-                    return new ConnectionString(accountInfo.Alias);
-                }
+                account = accountInfo.Alias;
             }
-            else if (aliasToAccountInfoMap.TryGetValue(address.StorageAccount, out accountInfo) == false)
+
+            if (aliasToAccountInfoMap.TryGetValue(account, out accountInfo) == false)
             {
-                if (useLogicalQueueAddresses == false || ignoreAliasses)
+                if (useLogicalQueueAddresses == false)
                 {
-                    return new ConnectionString(address.StorageAccount);
+                    return new ConnectionString(account);
                 }
 
-                throw new KeyNotFoundException($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
+                throw new Exception($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
             }
 
             return accountInfo.Connection;
@@ -103,7 +99,7 @@
                             // it must be a logical name, try to find it, otherwise throw
                             if (aliasToAccountInfoMap.ContainsKey(address.StorageAccount) == false)
                             {
-                                throw new KeyNotFoundException($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
+                                throw new Exception($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
                             }
                         }
                     }
