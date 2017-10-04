@@ -29,7 +29,7 @@
                     b.When((bus, c) =>
                     {
                         var options = new SendOptions();
-                        options.SetDestination("DispatchingToAnotherAccount.Receiver@" + connectionStringOrName);
+                        options.SetDestination(Conventions.EndpointNamingConvention(typeof(Receiver)) + "@" + connectionStringOrName);
                         return bus.Send(new MyMessage(), options);
                     });
                 })

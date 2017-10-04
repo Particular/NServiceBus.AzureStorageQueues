@@ -50,13 +50,12 @@
         /// </summary>
         internal ConnectionString Map(QueueAddress address)
         {
-            var account = address.StorageAccount;
-
             if (registeredEndpoints.TryGetValue(address.QueueName, out var accountInfo))
             {
-                account = accountInfo.Alias;
+                return accountInfo.Connection;
             }
 
+            var account = address.StorageAccount;
             if (aliasToAccountInfoMap.TryGetValue(account, out accountInfo) == false)
             {
                 if (useLogicalQueueAddresses == false)
