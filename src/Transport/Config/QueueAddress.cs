@@ -101,7 +101,7 @@
 
         public bool IsAccountDefault => StorageAccount == DefaultStorageAccountAlias;
 
-        public const string DefaultStorageAccountAlias = "default";
+        public const string DefaultStorageAccountAlias = "";
         public const string Separator = "@";
     }
 }
