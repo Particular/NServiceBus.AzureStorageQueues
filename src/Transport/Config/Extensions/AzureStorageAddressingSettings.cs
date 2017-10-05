@@ -7,9 +7,6 @@
 
     class AzureStorageAddressingSettings
     {
-
-        QueueAddressGenerator addressGenerator;
-
         internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, AccountInfo> aliasToConnectionStringMap, bool shouldUseAccountAliases)
         {
             var hasAnyMapping = aliasToConnectionStringMap != null && aliasToConnectionStringMap.Count > 0;
@@ -63,7 +60,7 @@
                     return new ConnectionString(account);
                 }
 
-                throw new Exception($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
+                throw new Exception($"No account was mapped under following name '{address.StorageAccount}'. Please map it using .AccountRouting().AddAccount() method.");
             }
 
             return accountInfo.Connection;
@@ -98,7 +95,7 @@
                             // it must be a logical name, try to find it, otherwise throw
                             if (aliasToAccountInfoMap.ContainsKey(address.StorageAccount) == false)
                             {
-                                throw new Exception($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
+                                throw new Exception($"No account was mapped under following name '{address.StorageAccount}'. Please map it using .AccountRouting().AddAccount() method.");
                             }
                         }
                     }
@@ -165,6 +162,8 @@
                 registeredEndpoints[queue] = accountInfo;
             }
         }
+
+        QueueAddressGenerator addressGenerator;
 
         Dictionary<ConnectionString, string> connectionStringToAliasMap = new Dictionary<ConnectionString, string>();
         Dictionary<string, AccountInfo> aliasToAccountInfoMap = new Dictionary<string, AccountInfo>();

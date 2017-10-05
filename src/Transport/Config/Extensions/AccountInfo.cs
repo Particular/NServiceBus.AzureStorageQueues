@@ -14,6 +14,7 @@ namespace NServiceBus
         /// </summary>
         public AccountInfo(string alias, string connectionString)
         {
+            Guard.AgainstNullAndEmpty(nameof(alias), alias);
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
             
             Alias = alias;
