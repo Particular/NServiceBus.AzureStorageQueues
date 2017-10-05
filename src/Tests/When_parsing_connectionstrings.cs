@@ -29,6 +29,6 @@ public class When_parsing_connectionstrings
     public void Should_not_parse_whitespace_queue_name(string name)
     {
         Assert.IsFalse(QueueAddress.TryParse(name, out var queue));
-        Assert.IsNull(queue);
+        Assert.IsFalse(queue.HasValue);
     }
 }

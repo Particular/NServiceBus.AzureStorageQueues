@@ -2,8 +2,37 @@
 {
     using System;
 
-    class ConnectionString : IEquatable<ConnectionString>
+    struct ConnectionString
     {
+        public bool Equals(ConnectionString other)
+        {
+            return string.Equals(Value, other.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+            return obj is ConnectionString s && Equals(s);
+        }
+
+        public override int GetHashCode()
+        {
+            return StringComparer.OrdinalIgnoreCase.GetHashCode(Value);
+        }
+
+        public static bool operator ==(ConnectionString left, ConnectionString right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(ConnectionString left, ConnectionString right)
+        {
+            return !left.Equals(right);
+        }
+
         public ConnectionString(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -14,44 +43,9 @@
             Value = value;
         }
 
-        public bool Equals(ConnectionString other)
-        {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-            return string.Equals(Value, other.Value);
-        }
-
         public override string ToString()
         {
             return Value;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-            if (obj.GetType() != GetType())
-            {
-                return false;
-            }
-            return Equals((ConnectionString) obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return Value.GetHashCode();
         }
 
         public readonly string Value;

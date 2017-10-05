@@ -7,7 +7,7 @@
 
     class AzureStorageAddressingSettings
     {
-        internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, string> aliasToConnectionStringMap, bool shouldUseAccountAliases)
+        internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, AccountInfo> aliasToConnectionStringMap, bool shouldUseAccountAliases)
         {
             var hasAnyMapping = aliasToConnectionStringMap != null && aliasToConnectionStringMap.Count > 0;
             if (hasAnyMapping == false)
@@ -26,33 +26,44 @@
             foreach (var kvp in aliasToConnectionStringMap)
             {
                 var name = kvp.Key;
-                var connectionString = kvp.Value;
+                var accountInfo = kvp.Value;
 
                 if (name == QueueAddress.DefaultStorageAccountAlias)
                 {
                     throw new ArgumentException("Don't use default empty name for mapping connection strings", nameof(aliasToConnectionStringMap));
                 }
 
-                Add(name, connectionString);
+                Add(accountInfo);
             }
+        }
+
+        internal void SetAddressGenerator(QueueAddressGenerator addressGenerator)
+        {
+            this.addressGenerator = addressGenerator;
         }
 
         /// <summary>
         /// Maps the account name to a connection string, throwing when no mapping found.
         /// </summary>
-        internal ConnectionString Map(string alias)
+        internal ConnectionString Map(QueueAddress address)
         {
-            if (aliasToConnectionStringMap.TryGetValue(alias, out var connectionString) == false)
+            if (registeredEndpoints.TryGetValue(address.QueueName, out var accountInfo))
+            {
+                return accountInfo.Connection;
+            }
+
+            var account = address.StorageAccount;
+            if (aliasToAccountInfoMap.TryGetValue(account, out accountInfo) == false)
             {
                 if (useLogicalQueueAddresses == false)
                 {
-                    return new ConnectionString(alias);
+                    return new ConnectionString(account);
                 }
 
-                throw new KeyNotFoundException($"No account was mapped under following name '{alias}'. Please map it using AddStorageAccount method.");
+                throw new Exception($"No account was mapped under following name '{address.StorageAccount}'. Please map it using .AccountRouting().AddAccount() method.");
             }
 
-            return connectionString;
+            return accountInfo.Connection;
         }
 
         /// <summary>
@@ -82,9 +93,9 @@
                         if (useLogicalQueueAddresses)
                         {
                             // it must be a logical name, try to find it, otherwise throw
-                            if (aliasToConnectionStringMap.ContainsKey(address.StorageAccount) == false)
+                            if (aliasToAccountInfoMap.ContainsKey(address.StorageAccount) == false)
                             {
-                                throw new KeyNotFoundException($"No account was mapped under following name '{address.StorageAccount}'. Please map it using AddStorageAccount method.");
+                                throw new Exception($"No account was mapped under following name '{address.StorageAccount}'. Please map it using .AccountRouting().AddAccount() method.");
                             }
                         }
                     }
@@ -120,7 +131,7 @@
                     }
                     else
                     {
-                        var connectionString = Map(address.StorageAccount);
+                        var connectionString = Map(address);
                         headers[header] = new QueueAddress(address.QueueName, connectionString.Value).ToString();
                     }
                 }
@@ -132,23 +143,31 @@
             return connectionStringToAliasMap.TryGetValue(connectionString, out alias);
         }
 
-        internal void Add(string name, string connectionString, bool throwOnExistingEntry = true)
+        internal void Add(AccountInfo accountInfo, bool throwOnExistingEntry = true)
         {
-            var value = new ConnectionString(connectionString);
             if (throwOnExistingEntry)
             {
-                aliasToConnectionStringMap.Add(name, value);
-                connectionStringToAliasMap.Add(value, name);
+                aliasToAccountInfoMap.Add(accountInfo.Alias, accountInfo);
+                connectionStringToAliasMap.Add(accountInfo.Connection, accountInfo.Alias);
             }
             else
             {
-                aliasToConnectionStringMap[name] = value;
-                connectionStringToAliasMap[value] = name;
+                aliasToAccountInfoMap[accountInfo.Alias] = accountInfo;
+                connectionStringToAliasMap[accountInfo.Connection] = accountInfo.Alias;
+            }
+
+            foreach (var registeredEndpoint in accountInfo.RegisteredEndpoints)
+            {
+                var queue = addressGenerator.GetQueueName(registeredEndpoint);
+                registeredEndpoints[queue] = accountInfo;
             }
         }
 
+        QueueAddressGenerator addressGenerator;
+
         Dictionary<ConnectionString, string> connectionStringToAliasMap = new Dictionary<ConnectionString, string>();
-        Dictionary<string, ConnectionString> aliasToConnectionStringMap = new Dictionary<string, ConnectionString>();
+        Dictionary<string, AccountInfo> aliasToAccountInfoMap = new Dictionary<string, AccountInfo>();
+        Dictionary<string, AccountInfo> registeredEndpoints = new Dictionary<string, AccountInfo>();
 
         string defaultConnectionStringAlias;
         bool useLogicalQueueAddresses;

@@ -123,7 +123,7 @@
                 );
         }
 
-        static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
+        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
 
@@ -134,8 +134,9 @@
 
             var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out object _);
 
+            addressing.SetAddressGenerator(addressGenerator);
             addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings, shouldUseAccountNames);
-            addressing.Add(QueueAddress.DefaultStorageAccountAlias, connectionString, false);
+            addressing.Add(new AccountInfo(QueueAddress.DefaultStorageAccountAlias, connectionString), false);
 
             return addressing;
         }
