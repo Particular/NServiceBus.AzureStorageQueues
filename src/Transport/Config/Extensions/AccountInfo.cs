@@ -5,12 +5,12 @@ namespace NServiceBus
     using AzureStorageQueues;
 
     /// <summary>
-    /// 
+    /// An account info instance unifies an alias with a connection string and potentially registered endpoint instances.
     /// </summary>
     public class AccountInfo
     {
         /// <summary>
-        /// 
+        /// Creates a new instance of an AccountInfo. 
         /// </summary>
         public AccountInfo(string alias, string connectionString)
         {
@@ -23,17 +23,17 @@ namespace NServiceBus
         }
         
         /// <summary>
-        /// 
+        /// The alias provided for the connection string represented by this account info instance.
         /// </summary>
         public string Alias { get; }
         
         /// <summary>
-        /// 
+        /// The connection string.
         /// </summary>
         public string ConnectionString => Connection.Value;
         
         /// <summary>
-        /// 
+        /// The endpoints that belong to this account info instance.
         /// </summary>
         public HashSet<string> RegisteredEndpoints { get; }
         
