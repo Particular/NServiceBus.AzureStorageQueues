@@ -183,7 +183,7 @@
 
             if (logicalAddress.Qualifier != null)
             {
-                queue.Append("." + logicalAddress.Qualifier);
+                queue.Append("-" + logicalAddress.Qualifier);
             }
 
             return addressGenerator.GetQueueName(queue.ToString());
