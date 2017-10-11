@@ -7,13 +7,19 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <!-- <GeneratePackageOnBuild>true</GeneratePackageOnBuild> -->
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageId>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</PackageId>
     <Description>NServiceBus Transport for the Windows Azure Storage Queues</Description>
   </PropertyGroup>
+
+  <!-- issue: https://github.com/terrajobst/platform-compat/issues/32
+  <ItemGroup>
+    <PackageReference Include="Terrajobst.PlatformCompat.Analyzers" Version="0.0.95-alpha" PrivateAssets="All" />
+  </ItemGroup>
+-->
 
   <ItemGroup>
     <!-- Minimum requried version for WindowsAzure.Storage is 8.2.0 -->
@@ -23,5 +29,6 @@
     <PackageReference Include="Janitor.Fody" Version="1.*" PrivateAssets="All" />
     <PackageReference Include="Obsolete.Fody" Version="4.*" PrivateAssets="All" />
     <PackageReference Include="Particular.CodeRules" Version="*" PrivateAssets="All" />
+    <PackageReference Include="Particular.Packaging" Version="*" PrivateAssets="All" />
   </ItemGroup>
 </Project>
