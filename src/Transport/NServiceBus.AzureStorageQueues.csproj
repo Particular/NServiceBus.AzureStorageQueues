@@ -1,25 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
     <AssemblyName>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</AssemblyName>
-    <NuSpecFileName>nservicebus.azurestoragequeues</NuSpecFileName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!-- <GeneratePackageOnBuild>true</GeneratePackageOnBuild> -->
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageId>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</PackageId>
     <Description>NServiceBus Transport for the Windows Azure Storage Queues</Description>
   </PropertyGroup>
-
-  <!-- issue: https://github.com/terrajobst/platform-compat/issues/32
-  <ItemGroup>
-    <PackageReference Include="Terrajobst.PlatformCompat.Analyzers" Version="0.0.95-alpha" PrivateAssets="All" />
-  </ItemGroup>
--->
 
   <ItemGroup>
     <!-- Minimum requried version for WindowsAzure.Storage is 8.2.0 -->
@@ -31,4 +22,5 @@
     <PackageReference Include="Particular.CodeRules" Version="*" PrivateAssets="All" />
     <PackageReference Include="Particular.Packaging" Version="*" PrivateAssets="All" />
   </ItemGroup>
+
 </Project>
