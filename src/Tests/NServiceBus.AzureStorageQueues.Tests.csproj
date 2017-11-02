@@ -1,23 +1,20 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFrameworks>net452;netcoreapp2.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
     <Optimize>false</Optimize>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
     <PackageReference Include="ApprovalTests" Version="3.*" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0-*" />
-    <PackageReference Include="PublicApiGenerator" Version="6.1.0-*" />
+    <PackageReference Include="PublicApiGenerator" Version="6.*" />
   </ItemGroup>
 
   <!-- Force latest versions -->
@@ -33,5 +30,5 @@
   <ItemGroup>
     <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
   </ItemGroup>
- 
+
 </Project>
