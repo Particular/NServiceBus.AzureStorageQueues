@@ -8,6 +8,7 @@
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
+    using ConsistencyGuarantees;
     using DelayedDelivery;
     using Features;
     using Performance.TimeToBeReceived;
@@ -25,7 +26,7 @@
             serializer = BuildSerializer(settings);
 
             var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
-            var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
+            sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
 
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
@@ -36,6 +37,24 @@
             delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings));
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
+
+        public override IEnumerable<Type> DeliveryConstraints
+        {
+            get
+            {
+                yield return typeof(DiscardIfNotReceivedBefore);
+                yield return typeof(NonDurableDelivery);
+
+                if (DelayedDeliveryCanBeUsed())
+                {
+                    yield return typeof(DoNotDeliverBefore);
+                    yield return typeof(DelayDeliveryWith);
+                }
+            }
+        }
+
+        public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
+        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
 
         static string GetDelayedDeliveryTableName(SettingsHolder settings)
         {
@@ -64,27 +83,9 @@
             return "delays" + hashName.ToLower();
         }
 
-        public override IEnumerable<Type> DeliveryConstraints
-        {
-            get
-            {
-                yield return typeof(DiscardIfNotReceivedBefore);
-                yield return typeof(NonDurableDelivery);
-
-                if (DelayedDeliveryCanBeUsed())
-                {
-                    yield return typeof(DoNotDeliverBefore);
-                    yield return typeof(DelayDeliveryWith);
-                }
-            }
-        }
-
-        bool DelayedDeliveryCanBeUsed() => 
+        bool DelayedDeliveryCanBeUsed() =>
             settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager)
             && settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
-
-        public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
-        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
 
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
@@ -96,9 +97,7 @@
                 {
                     var addressing = GetAddressing(settings, connectionString);
 
-                    var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ?
-                        settings.GetOrDefault<IMessageEnvelopeUnwrapper>() :
-                        new DefaultMessageEnvelopeUnwrapper(serializer);
+                    var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ? settings.GetOrDefault<IMessageEnvelopeUnwrapper>() : new DefaultMessageEnvelopeUnwrapper(serializer);
 
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                     var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
@@ -120,7 +119,7 @@
                 },
                 () => new AzureMessageQueueCreator(client, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
-                );
+            );
         }
 
         AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
@@ -191,11 +190,12 @@
 
         public override Task Start()
         {
+            var isAtMostOnce = !sendOnlyEndpoint && settings.GetRequiredTransactionModeForReceives() == TransportTransactionMode.None;
             var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
             var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-            poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
+            poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
             nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-            poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+            poller.Start(nativeDelayedMessagesCancellationSource.Token);
             return TaskEx.CompletedTask;
         }
 
@@ -212,5 +212,6 @@
         DelayedMessagesPoller poller;
         CancellationTokenSource nativeDelayedMessagesCancellationSource;
         QueueAddressGenerator addressGenerator;
+        bool sendOnlyEndpoint;
     }
 }
