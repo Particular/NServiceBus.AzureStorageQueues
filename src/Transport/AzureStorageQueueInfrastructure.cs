@@ -8,7 +8,6 @@
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using Config;
-    using ConsistencyGuarantees;
     using DelayedDelivery;
     using Features;
     using Performance.TimeToBeReceived;
@@ -26,7 +25,7 @@
             serializer = BuildSerializer(settings);
 
             var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
-            sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
+            var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
 
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
@@ -190,7 +189,7 @@
 
         public override Task Start()
         {
-            var isAtMostOnce = !sendOnlyEndpoint && settings.GetRequiredTransactionModeForReceives() == TransportTransactionMode.None;
+            var isAtMostOnce = GetRequiredTransactionMode(settings) == TransportTransactionMode.None;
             var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
             var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
             poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
@@ -205,6 +204,24 @@
             return poller != null ? poller.Stop() : TaskEx.CompletedTask;
         }
 
+        static TransportTransactionMode GetRequiredTransactionMode(ReadOnlySettings settings)
+        {
+            var transportTransactionSupport = settings.Get<TransportInfrastructure>().TransactionMode;
+
+            //if user haven't asked for a explicit level use what the transport supports
+            if (!settings.TryGet(out TransportTransactionMode requestedTransportTransactionMode))
+            {
+                return transportTransactionSupport;
+            }
+
+            if (requestedTransportTransactionMode > transportTransactionSupport)
+            {
+                throw new Exception($"Requested transaction mode `{requestedTransportTransactionMode}` can't be satisfied since the transport only supports `{transportTransactionSupport}`");
+            }
+
+            return requestedTransportTransactionMode;
+        }
+
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
@@ -212,6 +229,5 @@
         DelayedMessagesPoller poller;
         CancellationTokenSource nativeDelayedMessagesCancellationSource;
         QueueAddressGenerator addressGenerator;
-        bool sendOnlyEndpoint;
     }
 }
