@@ -19,9 +19,10 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
 
         if (settings.TryGet<MessageMetadataRegistry>(out var registry) == false)
         {
-            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public |BindingFlags.NonPublic | BindingFlags.CreateInstance;
-            
-            registry = (MessageMetadataRegistry) Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, new object[] {settings.GetOrCreate<Conventions>()}, CultureInfo.InvariantCulture);
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.CreateInstance;
+
+            var conventions = settings.GetOrCreate<Conventions>();
+            registry = (MessageMetadataRegistry)Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, new object[] { new Func<Type, bool>(t => conventions.IsMessageType(t)) }, CultureInfo.InvariantCulture);
 
             settings.Set<MessageMetadataRegistry>(registry);
         }

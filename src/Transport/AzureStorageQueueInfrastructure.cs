@@ -37,6 +37,24 @@
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
 
+        public override IEnumerable<Type> DeliveryConstraints
+        {
+            get
+            {
+                yield return typeof(DiscardIfNotReceivedBefore);
+                yield return typeof(NonDurableDelivery);
+
+                if (DelayedDeliveryCanBeUsed())
+                {
+                    yield return typeof(DoNotDeliverBefore);
+                    yield return typeof(DelayDeliveryWith);
+                }
+            }
+        }
+
+        public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
+        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
+
         static string GetDelayedDeliveryTableName(SettingsHolder settings)
         {
             var delayedDeliveryTableName = settings.GetOrDefault<string>(WellKnownConfigurationKeys.DelayedDelivery.TableName);
@@ -64,27 +82,9 @@
             return "delays" + hashName.ToLower();
         }
 
-        public override IEnumerable<Type> DeliveryConstraints
-        {
-            get
-            {
-                yield return typeof(DiscardIfNotReceivedBefore);
-                yield return typeof(NonDurableDelivery);
-
-                if (DelayedDeliveryCanBeUsed())
-                {
-                    yield return typeof(DoNotDeliverBefore);
-                    yield return typeof(DelayDeliveryWith);
-                }
-            }
-        }
-
-        bool DelayedDeliveryCanBeUsed() => 
+        bool DelayedDeliveryCanBeUsed() =>
             settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager)
             && settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
-
-        public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
-        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
 
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
@@ -96,9 +96,7 @@
                 {
                     var addressing = GetAddressing(settings, connectionString);
 
-                    var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ?
-                        settings.GetOrDefault<IMessageEnvelopeUnwrapper>() :
-                        new DefaultMessageEnvelopeUnwrapper(serializer);
+                    var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ? settings.GetOrDefault<IMessageEnvelopeUnwrapper>() : new DefaultMessageEnvelopeUnwrapper(serializer);
 
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                     var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
@@ -120,7 +118,7 @@
                 },
                 () => new AzureMessageQueueCreator(client, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
-                );
+            );
         }
 
         AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
@@ -191,11 +189,12 @@
 
         public override Task Start()
         {
+            var isAtMostOnce = GetRequiredTransactionMode(settings) == TransportTransactionMode.None;
             var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
             var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-            poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
+            poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
             nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-            poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+            poller.Start(nativeDelayedMessagesCancellationSource.Token);
             return TaskEx.CompletedTask;
         }
 
@@ -203,6 +202,24 @@
         {
             nativeDelayedMessagesCancellationSource?.Cancel();
             return poller != null ? poller.Stop() : TaskEx.CompletedTask;
+        }
+
+        static TransportTransactionMode GetRequiredTransactionMode(ReadOnlySettings settings)
+        {
+            var transportTransactionSupport = settings.Get<TransportInfrastructure>().TransactionMode;
+
+            //if user haven't asked for a explicit level use what the transport supports
+            if (!settings.TryGet(out TransportTransactionMode requestedTransportTransactionMode))
+            {
+                return transportTransactionSupport;
+            }
+
+            if (requestedTransportTransactionMode > transportTransactionSupport)
+            {
+                throw new Exception($"Requested transaction mode `{requestedTransportTransactionMode}` can't be satisfied since the transport only supports `{transportTransactionSupport}`");
+            }
+
+            return requestedTransportTransactionMode;
         }
 
         readonly ReadOnlySettings settings;
