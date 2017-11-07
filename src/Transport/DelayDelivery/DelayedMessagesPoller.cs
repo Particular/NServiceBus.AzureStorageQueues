@@ -45,7 +45,7 @@
 
             // No need to pass token to run. to avoid when token is canceled the task changing into
             // the canceled state and when awaited while stopping rethrow the canceled exception
-            delayedMessagesPollerTask = Task.Run(() => Poll(cancellationToken));
+            delayedMessagesPollerTask = Task.Run(() => Poll(cancellationToken), CancellationToken.None);
         }
 
         public Task Stop()
@@ -62,11 +62,7 @@
                     await InnerPoll(cancellationToken)
                         .ConfigureAwait(false);
                 }
-                catch (OperationCanceledException)
-                {
-                    // ok, since the InnerPoll could observe the token
-                }
-                catch (Exception ex)
+                catch (Exception ex) when(!(ex is OperationCanceledException))
                 {
                     Logger.Warn("Failed to fetch delayed messages from the storage", ex);
                 }
@@ -95,7 +91,7 @@
                         await SpinOnce(cancellationToken)
                             .ConfigureAwait(false);
                     }
-                    catch (Exception ex)
+                    catch (Exception ex) when (!(ex is OperationCanceledException))
                     {
                         Logger.Warn("Failed at spinning the poller", ex);
                         await BackoffOnError(cancellationToken)
