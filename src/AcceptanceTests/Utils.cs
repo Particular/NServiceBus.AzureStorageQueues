@@ -35,9 +35,9 @@
             return string.IsNullOrWhiteSpace(candidate) ? Environment.GetEnvironmentVariable(variable) : candidate;
         }
 
-        public static string BuildAnotherConnectionString(string connectionString)
+        public static string BuildAnotherConnectionString()
         {
-            return connectionString + ";BlobEndpoint=https://notusedatall.blob.core.windows.net";
+            return GetEnvConfiguredConnectionString2();
         }
     }
 
