@@ -13,9 +13,8 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         public async Task Should_properly_handle_it()
         {
             var queue = Conventions.EndpointNamingConvention(typeof(Receiver));
-            var connectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
 
-            var another = Testing.Utillities.BuildAnotherConnectionString(connectionString);
+            var another = ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString;
             var queueAddress = queue + "@" + another;
             
             var context = await Scenario.Define<Context>()
@@ -38,7 +37,11 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>();
+                EndpointSetup<DefaultServer>(configuration =>
+                {
+                    configuration.UseTransport<AzureStorageQueueTransport>()
+                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                });
             }
         }
 

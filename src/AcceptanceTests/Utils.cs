@@ -34,11 +34,5 @@
             var candidate = Environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.User);
             return string.IsNullOrWhiteSpace(candidate) ? Environment.GetEnvironmentVariable(variable) : candidate;
         }
-
-        public static string BuildAnotherConnectionString(string connectionString)
-        {
-            return connectionString + ";BlobEndpoint=https://notusedatall.blob.core.windows.net";
-        }
     }
-
 }
