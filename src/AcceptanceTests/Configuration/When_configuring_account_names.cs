@@ -11,7 +11,7 @@
         public When_configuring_account_names()
         {
             connectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
-            anotherConnectionString = Testing.Utillities.BuildAnotherConnectionString();
+            anotherConnectionString = Testing.Utillities.GetEnvConfiguredConnectionString2();
         }
 
         [Test]
