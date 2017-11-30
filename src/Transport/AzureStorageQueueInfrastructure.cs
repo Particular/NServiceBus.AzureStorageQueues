@@ -189,12 +189,16 @@
 
         public override Task Start()
         {
-            var isAtMostOnce = GetRequiredTransactionMode(settings) == TransportTransactionMode.None;
-            var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
-            var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-            poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
-            nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-            poller.Start(nativeDelayedMessagesCancellationSource.Token);
+            if (DelayedDeliveryCanBeUsed())
+            {
+                var isAtMostOnce = GetRequiredTransactionMode(settings) == TransportTransactionMode.None;
+                var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
+                var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
+                poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
+                nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
+                poller.Start(nativeDelayedMessagesCancellationSource.Token);
+            }
+           
             return TaskEx.CompletedTask;
         }
 
