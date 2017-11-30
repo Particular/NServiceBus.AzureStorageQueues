@@ -44,6 +44,9 @@
             addressGenerator = new QueueAddressGenerator(settings);
         }
 
+        bool DelayedDeliveryCanBeUsed() => delayedDeliverySettings.TimeoutManagerDisabled;
+
+
         static string GetDelayedDeliveryTableName(string endpointName)
         {
             byte[] hashedName;
@@ -64,7 +67,7 @@
                 yield return typeof(DiscardIfNotReceivedBefore);
                 yield return typeof(NonDurableDelivery);
 
-                if (delayedDeliverySettings.TimeoutManagerDisabled)
+                if (DelayedDeliveryCanBeUsed())
                 {
                     yield return typeof(DoNotDeliverBefore);
                     yield return typeof(DelayDeliveryWith);
@@ -185,9 +188,12 @@
         {
             var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
             var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-            poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
-            nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-            poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+            if (DelayedDeliveryCanBeUsed())
+            {
+                poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
+                nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
+                poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+            }
             return TaskEx.CompletedTask;
         }
 
