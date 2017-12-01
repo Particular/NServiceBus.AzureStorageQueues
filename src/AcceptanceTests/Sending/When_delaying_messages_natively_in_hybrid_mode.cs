@@ -2,11 +2,9 @@
 {
     using System;
     using System.Diagnostics;
-    using System.Reflection;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Configuration.AdvanceExtensibility;
-    using Features;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
     using NServiceBus.AcceptanceTests;
@@ -70,13 +68,11 @@
 
                     var delayedDeliverySettings = transport.DelayedDelivery();
                     delayedDeliverySettings.UseTableName(SenderDelayedMessagesTable);
-                    
-                    // run in hybrid mode, i.e. timeout manager and native delayed delivery need to be enabled
-                    // delayedDeliverySettings.DisableTimeoutManager(); is invoked by IConfigureEndpointTestExecution - need to undo it to allow hybrid mode
-                    var fieldInfo = typeof(DelayedDeliverySettings).GetField("TimeoutManagerDisabled", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                    fieldInfo.SetValue(delayedDeliverySettings, false);
-                    // re-enable timeout manager back again
-                    transport.GetSettings().Set(typeof(TimeoutManager).FullName, FeatureState.Enabled);
+
+                    // Enforce hybrid mode.
+                    // Undo delayedDeliverySettings.DisableTimeoutManager() invoked in IConfigureEndpointTestExecution.
+                    // this will force the transport to continue using TimeoutManager for incoming delayes and send delayed messages using native
+                    transport.GetSettings().Set("WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager", false);
                 });
             }
 

@@ -24,27 +24,34 @@
             this.connectionString = connectionString;
             serializer = BuildSerializer(settings);
 
-            delayedDeliverySettings = settings.GetOrCreate<DelayedDeliverySettings>();
-            if (delayedDeliverySettings.TableNameWasNotOverridden)
-            {
-                var delayedDeliveryTableName = GetDelayedDeliveryTableName(settings.EndpointName());
-                delayedDeliverySettings.UseTableName(delayedDeliveryTableName);
-            }
-
             var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
             var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
 
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
                 // TimeoutManager is already not used. Indicate to Native Delayed Delivery that we're not in the hybrid mode.
-                delayedDeliverySettings.DisableTimeoutManager();
+                settings.Set(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager, true);
             }
 
-            delayedDelivery = new NativeDelayDelivery(connectionString, delayedDeliverySettings.TableName);
+            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings));
             addressGenerator = new QueueAddressGenerator(settings);
         }
 
-        static string GetDelayedDeliveryTableName(string endpointName)
+        static string GetDelayedDeliveryTableName(SettingsHolder settings)
+        {
+            var delayedDeliveryTableName = settings.GetOrDefault<string>(WellKnownConfigurationKeys.DelayedDelivery.TableName);
+            var delayedDeliveryTableNameWasNotOverridden = string.IsNullOrEmpty(delayedDeliveryTableName);
+
+            if (delayedDeliveryTableNameWasNotOverridden)
+            {
+                delayedDeliveryTableName = GenerateDelayedDeliveryTableName(settings.EndpointName());
+                settings.Set(WellKnownConfigurationKeys.DelayedDelivery.TableName, delayedDeliveryTableName);
+            }
+
+            return delayedDeliveryTableName;
+        }
+
+        static string GenerateDelayedDeliveryTableName(string endpointName)
         {
             byte[] hashedName;
             using (var sha1 = new SHA1Managed())
@@ -54,8 +61,13 @@
             }
 
             var hashName = BitConverter.ToString(hashedName).Replace("-", string.Empty);
-            return "delays" + hashName;
+            return "delays" + hashName.ToLower();
         }
+
+        bool DelayedDeliveryCanBeUsed() =>
+            settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager)
+            && settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
+
 
         public override IEnumerable<Type> DeliveryConstraints
         {
@@ -64,7 +76,7 @@
                 yield return typeof(DiscardIfNotReceivedBefore);
                 yield return typeof(NonDurableDelivery);
 
-                if (delayedDeliverySettings.TimeoutManagerDisabled)
+                if (DelayedDeliveryCanBeUsed())
                 {
                     yield return typeof(DoNotDeliverBefore);
                     yield return typeof(DelayDeliveryWith);
@@ -183,11 +195,14 @@
 
         public override Task Start()
         {
-            var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
-            var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-            poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
-            nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-            poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+            if (DelayedDeliveryCanBeUsed())
+            {
+                var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
+                var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
+                poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
+                nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
+                poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+            }
             return TaskEx.CompletedTask;
         }
 
@@ -200,7 +215,6 @@
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
-        readonly DelayedDeliverySettings delayedDeliverySettings;
         NativeDelayDelivery delayedDelivery;
         DelayedMessagesPoller poller;
         CancellationTokenSource nativeDelayedMessagesCancellationSource;

@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using AzureStorageQueues.Config;
     using DelayedDelivery;
     using DeliveryConstraints;
     using Features;
@@ -59,7 +60,7 @@
         {
             var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
             var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
-            var timeoutManagerDisabled = settings.Get<DelayedDeliverySettings>().TimeoutManagerDisabled;
+            var timeoutManagerDisabled = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager);
 
             if (externalTimeoutManagerAddress)
             {
