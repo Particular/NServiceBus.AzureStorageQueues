@@ -35,9 +35,10 @@ namespace NServiceBus
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UnwrapMessagesWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Func<Microsoft.WindowsAzure.Storage.Queue.CloudQueueMessage, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> unwrapper) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseSha1ForShortening(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
     }
-    public class DelayedDeliverySettings
+    public class DelayedDeliverySettings : NServiceBus.Configuration.AdvanceExtensibility.ExposeSettings
     {
         public DelayedDeliverySettings() { }
+        public void DisableDelayedDelivery() { }
         public void DisableTimeoutManager() { }
         public void UseTableName(string delayedMessagesTableName) { }
     }

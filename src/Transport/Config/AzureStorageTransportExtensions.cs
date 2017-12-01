@@ -118,7 +118,7 @@ namespace NServiceBus
         /// </summary>
         public static DelayedDeliverySettings DelayedDelivery(this TransportExtensions<AzureStorageQueueTransport> config)
         {
-            return config.GetSettings().GetOrCreate<DelayedDeliverySettings>();
+            return new DelayedDeliverySettings(config.GetSettings());
         }
 
         internal const int MaxDegreeOfReceiveParallelism = 32;
