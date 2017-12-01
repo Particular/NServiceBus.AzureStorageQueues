@@ -10,6 +10,8 @@ namespace NServiceBus
     /// <summary>Configures native delayed delivery.</summary>
     public class DelayedDeliverySettings : ExposeSettings
     {
+        public DelayedDeliverySettings() : base(new SettingsHolder()) { }
+
         internal DelayedDeliverySettings(SettingsHolder settings) : base(settings) { }
 
         /// <summary>Override the default table name used for storing delayed messages.</summary>
