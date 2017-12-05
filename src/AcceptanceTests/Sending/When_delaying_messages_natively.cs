@@ -17,7 +17,7 @@
         CloudTable delayedMessagesTable;
 
         [SetUp]
-        public new async Task SetUp()
+        public async Task SetUpLocal()
         {
             delayedMessagesTable = CloudStorageAccount.Parse(Testing.Utillities.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
             if (await delayedMessagesTable.ExistsAsync().ConfigureAwait(false))

@@ -16,7 +16,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests
     public class When_delaying_messages_natively_with_send_only : NServiceBusAcceptanceTest
     {
         [SetUp]
-        public new async Task SetUp()
+        public async Task SetUpLocal()
         {
             delayedMessagesTable = CloudStorageAccount.Parse(Utillities.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
             if (await delayedMessagesTable.ExistsAsync().ConfigureAwait(false))
