@@ -86,6 +86,8 @@
             settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager)
             && settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 
+        bool PollerCanBeUsed() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
+
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
             var connectionObject = new ConnectionString(connectionString);
@@ -189,7 +191,7 @@
 
         public override Task Start()
         {
-            if (DelayedDeliveryCanBeUsed())
+            if (PollerCanBeUsed())
             {
                 var isAtMostOnce = GetRequiredTransactionMode(settings) == TransportTransactionMode.None;
                 var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
