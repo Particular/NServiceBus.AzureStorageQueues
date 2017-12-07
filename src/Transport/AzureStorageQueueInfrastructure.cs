@@ -68,6 +68,8 @@
             settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager)
             && settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 
+        bool PollerCanBeUsed() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
+
 
         public override IEnumerable<Type> DeliveryConstraints
         {
@@ -195,7 +197,7 @@
 
         public override Task Start()
         {
-            if (DelayedDeliveryCanBeUsed())
+            if (PollerCanBeUsed())
             {
                 var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                 var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
