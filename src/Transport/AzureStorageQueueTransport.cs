@@ -2,14 +2,12 @@ namespace NServiceBus
 {
     using System;
     using System.Reflection;
-    using Azure.Transports.WindowsAzureStorageQueues;
     using AzureStorageQueues;
     using MessageInterfaces;
     using Routing;
     using Serialization;
     using Settings;
     using Transport;
-    using Unicast.Messages;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
@@ -32,12 +30,6 @@ namespace NServiceBus
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
             Guard.AgainstUnsetSerializerSetting(settings);
-
-            // register the MessageWrapper as a system message to have it registered in mappings and serializers
-            settings.GetOrCreate<Conventions>().AddSystemMessagesConventions(t => t == typeof(MessageWrapper));
-
-            // register metadata of the wrapper for the sake of XML serializer
-            settings.Get<MessageMetadataRegistry>().GetMessageMetadata(typeof(MessageWrapper));
 
             DefaultConfigurationValues.Apply(settings);
 
