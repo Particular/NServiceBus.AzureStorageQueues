@@ -3,6 +3,7 @@
     using System.IO;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
     using Microsoft.WindowsAzure.Storage;
@@ -14,6 +15,7 @@
     public class When_using_alias_instead_of_connection_string_for_default_account : NServiceBusAcceptanceTest
     {
         CloudQueue destinationQueue;
+        const string EndpointName = nameof(SenderEndpoint);
 
         public When_using_alias_instead_of_connection_string_for_default_account()
         {
@@ -45,7 +47,8 @@
                 var headers = token["Headers"];
                 var replyTo = headers[Headers.ReplyToAddress];
 
-                StringAssert.EndsWith("defaultAlias", ((JValue)replyTo).Value.ToString());
+                StringAssert.AreEqualIgnoringCase(EndpointName, ((JValue)token[nameof(MessageWrapper.ReplyToAddress)]).Value.ToString());
+                StringAssert.AreEqualIgnoringCase(EndpointName, ((JValue)replyTo).Value.ToString());
             }
         }
 
@@ -65,6 +68,8 @@
                     var transport = endpointConfiguration.UseTransport<AzureStorageQueueTransport>();
                     transport.UseAccountAliasesInsteadOfConnectionStrings();
                     transport.DefaultAccountAlias("defaultAlias");
+
+                    endpointConfiguration.OverrideLocalAddress(EndpointName);
                 });
             }
         }
