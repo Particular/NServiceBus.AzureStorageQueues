@@ -15,7 +15,7 @@
     public class When_using_alias_instead_of_connection_string_for_default_account : NServiceBusAcceptanceTest
     {
         CloudQueue destinationQueue;
-        const string EndpointName = nameof(SenderEndpoint);
+        static string EndpointName = AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(SenderEndpoint));
 
         public When_using_alias_instead_of_connection_string_for_default_account()
         {
