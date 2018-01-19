@@ -9,6 +9,9 @@
     {
         internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, AccountInfo> aliasToConnectionStringMap, bool shouldUseAccountAliases)
         {
+            this.defaultConnectionStringAlias = defaultConnectionStringAlias;
+            useLogicalQueueAddresses = shouldUseAccountAliases;
+
             var hasAnyMapping = aliasToConnectionStringMap != null && aliasToConnectionStringMap.Count > 0;
             if (hasAnyMapping == false)
             {
@@ -19,9 +22,6 @@
             {
                 throw new Exception("The mapping of account names instead of connection strings is enabled, but the default connection string name isn\'t provided. Provide the default connection string name when adding more accounts");
             }
-
-            this.defaultConnectionStringAlias = defaultConnectionStringAlias;
-            useLogicalQueueAddresses = shouldUseAccountAliases;
 
             foreach (var kvp in aliasToConnectionStringMap)
             {
