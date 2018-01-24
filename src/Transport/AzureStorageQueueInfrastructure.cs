@@ -193,7 +193,7 @@
         {
             if (PollerCanBeUsed())
             {
-                var isAtMostOnce = GetRequiredTransactionMode(settings) == TransportTransactionMode.None;
+                var isAtMostOnce = GetRequiredTransactionMode() == TransportTransactionMode.None;
                 var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                 var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
                 poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
@@ -210,9 +210,9 @@
             return poller != null ? poller.Stop() : TaskEx.CompletedTask;
         }
 
-        static TransportTransactionMode GetRequiredTransactionMode(ReadOnlySettings settings)
+        TransportTransactionMode GetRequiredTransactionMode()
         {
-            var transportTransactionSupport = settings.Get<TransportInfrastructure>().TransactionMode;
+            var transportTransactionSupport = TransactionMode;
 
             //if user haven't asked for a explicit level use what the transport supports
             if (!settings.TryGet(out TransportTransactionMode requestedTransportTransactionMode))
