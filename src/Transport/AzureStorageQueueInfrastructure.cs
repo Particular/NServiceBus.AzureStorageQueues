@@ -205,9 +205,20 @@
         }
 
         public override Task Stop()
+        public override async Task Stop()
         {
             nativeDelayedMessagesCancellationSource?.Cancel();
-            return poller != null ? poller.Stop() : TaskEx.CompletedTask;
+
+            try
+            {
+                if (poller != null)
+                {
+                    await poller.Stop().ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
         }
 
         static TransportTransactionMode GetRequiredTransactionMode(ReadOnlySettings settings)
