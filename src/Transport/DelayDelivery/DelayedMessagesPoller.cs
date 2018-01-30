@@ -62,7 +62,11 @@
                     await InnerPoll(cancellationToken)
                         .ConfigureAwait(false);
                 }
-                catch (Exception ex) when(!(ex is OperationCanceledException))
+                catch (OperationCanceledException)
+                {
+                    // graceful shutdown
+                }
+                catch (Exception ex)
                 {
                     Logger.Warn("Failed to fetch delayed messages from the storage", ex);
                 }
