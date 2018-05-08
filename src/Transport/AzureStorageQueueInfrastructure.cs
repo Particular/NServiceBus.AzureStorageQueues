@@ -34,8 +34,26 @@
             }
 
             delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings));
-            addressGenerator = new QueueAddressGenerator(settings);
+            addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
+
+        public override IEnumerable<Type> DeliveryConstraints
+        {
+            get
+            {
+                yield return typeof(DiscardIfNotReceivedBefore);
+                yield return typeof(NonDurableDelivery);
+
+                if (DelayedDeliveryCanBeUsed())
+                {
+                    yield return typeof(DoNotDeliverBefore);
+                    yield return typeof(DelayDeliveryWith);
+                }
+            }
+        }
+
+        public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
+        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
 
         static string GetDelayedDeliveryTableName(SettingsHolder settings)
         {
@@ -70,25 +88,6 @@
 
         bool PollerCanBeUsed() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 
-
-        public override IEnumerable<Type> DeliveryConstraints
-        {
-            get
-            {
-                yield return typeof(DiscardIfNotReceivedBefore);
-                yield return typeof(NonDurableDelivery);
-
-                if (DelayedDeliveryCanBeUsed())
-                {
-                    yield return typeof(DoNotDeliverBefore);
-                    yield return typeof(DelayDeliveryWith);
-                }
-            }
-        }
-
-        public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
-        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
-
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
             var connectionObject = new ConnectionString(connectionString);
@@ -99,9 +98,7 @@
                 {
                     var addressing = GetAddressing(settings, connectionString);
 
-                    var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ?
-                        settings.GetOrDefault<IMessageEnvelopeUnwrapper>() :
-                        new DefaultMessageEnvelopeUnwrapper(serializer);
+                    var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ? settings.GetOrDefault<IMessageEnvelopeUnwrapper>() : new DefaultMessageEnvelopeUnwrapper(serializer);
 
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                     var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
@@ -114,8 +111,7 @@
                     };
 
                     int? degreeOfReceiveParallelism = null;
-                    int parallelism;
-                    if (settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out parallelism))
+                    if (settings.TryGet<int>(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out var parallelism))
                     {
                         degreeOfReceiveParallelism = parallelism;
                     }
@@ -124,32 +120,30 @@
                 },
                 () => new AzureMessageQueueCreator(client, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
-                );
+            );
         }
 
-        static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
+        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-            object useAccountNames;
 
-            AccountConfigurations accounts;
-            if (settings.TryGet(out accounts) == false)
+            if (settings.TryGet<AccountConfigurations>(out var accounts) == false)
             {
                 accounts = new AccountConfigurations();
             }
 
-            var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out useAccountNames);
+            var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out object _);
 
+            addressing.SetAddressGenerator(addressGenerator);
             addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings, shouldUseAccountNames);
-            addressing.Add(QueueAddress.DefaultStorageAccountAlias, connectionString, false);
+            addressing.Add(new AccountInfo(QueueAddress.DefaultStorageAccountAlias, connectionString), false);
 
             return addressing;
         }
 
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
         {
-            SerializationDefinition wrapperSerializer;
-            if (settings.TryGet(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, out wrapperSerializer))
+            if (settings.TryGet<SerializationDefinition>(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, out var wrapperSerializer))
             {
                 return new MessageWrapperSerializer(wrapperSerializer.Configure(settings)(MessageWrapperSerializer.GetMapper()));
             }
@@ -189,7 +183,7 @@
 
             if (logicalAddress.Qualifier != null)
             {
-                queue.Append("." + logicalAddress.Qualifier);
+                queue.Append("-" + logicalAddress.Qualifier);
             }
 
             return addressGenerator.GetQueueName(queue.ToString());
@@ -199,12 +193,14 @@
         {
             if (PollerCanBeUsed())
             {
+                var isAtMostOnce = GetRequiredTransactionMode() == TransportTransactionMode.None;
                 var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                 var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-                poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
+                poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
                 nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-                poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+                poller.Start(nativeDelayedMessagesCancellationSource.Token);
             }
+           
             return TaskEx.CompletedTask;
         }
 
@@ -212,6 +208,24 @@
         {
             nativeDelayedMessagesCancellationSource?.Cancel();
             return poller != null ? poller.Stop() : TaskEx.CompletedTask;
+        }
+
+        TransportTransactionMode GetRequiredTransactionMode()
+        {
+            var transportTransactionSupport = TransactionMode;
+
+            //if user haven't asked for a explicit level use what the transport supports
+            if (!settings.TryGet(out TransportTransactionMode requestedTransportTransactionMode))
+            {
+                return transportTransactionSupport;
+            }
+
+            if (requestedTransportTransactionMode > transportTransactionSupport)
+            {
+                throw new Exception($"Requested transaction mode `{requestedTransportTransactionMode}` can't be satisfied since the transport only supports `{transportTransactionSupport}`");
+            }
+
+            return requestedTransportTransactionMode;
         }
 
         readonly ReadOnlySettings settings;

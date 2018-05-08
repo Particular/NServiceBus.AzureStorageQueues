@@ -1,25 +1,24 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Sending
+namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Sending
 {
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using AcceptanceTesting.Customization;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
-    using AcceptanceTesting.Customization;
     using NUnit.Framework;
+    using Testing;
 
-    public class When_delaying_messages_natively : NServiceBusAcceptanceTest
+    public class When_delaying_messages_natively_with_send_only : NServiceBusAcceptanceTest
     {
-        CloudTable delayedMessagesTable;
-
         [SetUp]
         public async Task SetUpLocal()
         {
-            delayedMessagesTable = CloudStorageAccount.Parse(Testing.Utillities.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
+            delayedMessagesTable = CloudStorageAccount.Parse(Utillities.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
             if (await delayedMessagesTable.ExistsAsync().ConfigureAwait(false))
             {
                 foreach (var dte in await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false))
@@ -40,7 +39,10 @@
                     var sendOptions = new SendOptions();
                     sendOptions.DelayDeliveryWith(delay);
                     c.Stopwatch = Stopwatch.StartNew();
-                    return session.Send(new MyMessage { Id = c.TestRunId }, sendOptions);
+                    return session.Send(new MyMessage
+                    {
+                        Id = c.TestRunId
+                    }, sendOptions);
                 }))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.WasCalled)
@@ -61,7 +63,10 @@
                     var sendOptions = new SendOptions();
                     sendOptions.DelayDeliveryWith(delay);
                     sendOptions.SetDestination("thisisnonexistingqueuename");
-                    await session.Send(new MyMessage { Id = c.TestRunId }, sendOptions).ConfigureAwait(false);
+                    await session.Send(new MyMessage
+                    {
+                        Id = c.TestRunId
+                    }, sendOptions).ConfigureAwait(false);
 
                     var delayedMessages = await GetDelayedMessageEntities().ConfigureAwait(false);
                     await MoveBeforeNow(delayedMessages[0]).ConfigureAwait(false);
@@ -94,6 +99,10 @@
             return (await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false)).Results;
         }
 
+        CloudTable delayedMessagesTable;
+
+        const string SenderDelayedMessagesTable = "NativeDelayedMessagesForSenderSendOnly";
+
         public class Context : ScenarioContext
         {
             public bool WasCalled { get; set; }
@@ -106,6 +115,8 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
+                    cfg.SendOnly();
+
                     var transport = cfg.UseTransport<AzureStorageQueueTransport>();
                     transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
                     var routing = cfg.ConfigureTransport().Routing();
@@ -120,6 +131,8 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
+                    cfg.SendOnly();
+
                     var transport = cfg.UseTransport<AzureStorageQueueTransport>();
                     transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
                     cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
@@ -131,10 +144,7 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(cfg =>
-                {
-                    cfg.UseTransport<AzureStorageQueueTransport>();
-                });
+                EndpointSetup<DefaultServer>(cfg => { cfg.UseTransport<AzureStorageQueueTransport>(); });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
@@ -159,7 +169,5 @@
         {
             public Guid Id { get; set; }
         }
-
-        const string SenderDelayedMessagesTable = "NativeDelayedMessagesForSender";
     }
 }

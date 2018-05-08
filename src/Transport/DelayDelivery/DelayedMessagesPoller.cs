@@ -5,11 +5,9 @@
     using System.Threading;
     using System.Threading.Tasks;
     using AzureStorageQueues;
-    using ConsistencyGuarantees;
     using Logging;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
-    using Settings;
     using Transport;
 
     class DelayedMessagesPoller
@@ -26,32 +24,28 @@
         CloudTable delayedDeliveryTable;
         LockManager lockManager;
         Task delayedMessagesPollerTask;
-        string errorQueue;
         bool isAtMostOnce;
+        string errorQueue;
 
-        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, string connectionString, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
+        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, string connectionString, string errorQueue, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
+            this.errorQueue = errorQueue;
+            this.isAtMostOnce = isAtMostOnce;
             this.delayedDeliveryTable = delayedDeliveryTable;
             this.connectionString = connectionString;
             this.dispatcher = dispatcher;
             this.backoffStrategy = backoffStrategy;
         }
 
-        public void Start(ReadOnlySettings settings, CancellationToken cancellationToken)
+        public void Start(CancellationToken cancellationToken)
         {
-            Init(settings);
-            // No need to pass token to run. to avoid when token is cancelled the task changing into
-            // the cancelled state and when awaited while stopping rethrow the cancelled exception
-            delayedMessagesPollerTask = Task.Run(() => Poll(cancellationToken));
-        }
-
-        void Init(ReadOnlySettings settings)
-        {
-            errorQueue = settings.ErrorQueueAddress();
             var storageAccount = CloudStorageAccount.Parse(connectionString);
             var container = storageAccount.CreateCloudBlobClient().GetContainerReference(delayedDeliveryTable.Name);
             lockManager = new LockManager(container, LeaseLength);
-            isAtMostOnce = settings.GetRequiredTransactionModeForReceives() == TransportTransactionMode.None;
+
+            // No need to pass token to run. to avoid when token is canceled the task changing into
+            // the canceled state and when awaited while stopping rethrow the canceled exception
+            delayedMessagesPollerTask = Task.Run(() => Poll(cancellationToken), CancellationToken.None);
         }
 
         public Task Stop()
@@ -70,7 +64,7 @@
                 }
                 catch (OperationCanceledException)
                 {
-                    // ok, since the InnerPoll could observe the token
+                    // graceful shutdown
                 }
                 catch (Exception ex)
                 {
@@ -101,7 +95,7 @@
                         await SpinOnce(cancellationToken)
                             .ConfigureAwait(false);
                     }
-                    catch (Exception ex)
+                    catch (Exception ex) when (!(ex is OperationCanceledException))
                     {
                         Logger.Warn("Failed at spinning the poller", ex);
                         await BackoffOnError(cancellationToken)
@@ -177,14 +171,16 @@
                     if (isAtMostOnce)
                     {
                         // delete first, then dispatch
-                        await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
+                        // TODO: raise an issue with the client library about missing overload accepting operation and cancellation token only
+                        await delayedDeliveryTable.ExecuteAsync(delete, null, null, cancellationToken).ConfigureAwait(false);
                         await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
                         // dispatch first, then delete
                         await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
-                        await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
+                        // TODO: raise an issue with the client library about missing overload accepting operation and cancellation token only
+                        await delayedDeliveryTable.ExecuteAsync(delete, null, null, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 catch (Exception exception)

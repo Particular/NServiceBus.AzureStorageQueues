@@ -5,30 +5,24 @@
     using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
+    using global::Newtonsoft.Json;
+    using global::Newtonsoft.Json.Linq;
     using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Queue;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
     using NUnit.Framework;
-    using Serializer = JsonSerializer;
-
+    
     public class When_sending_messages_with_mapped_account_names : NServiceBusAcceptanceTest
     {
         public When_sending_messages_with_mapped_account_names()
         {
-            defaultConnectionString = Utils.GetEnvConfiguredConnectionString();
-            anotherConnectionString = Utils.BuildAnotherConnectionString(defaultConnectionString);
-
-            var account = CloudStorageAccount.Parse(defaultConnectionString);
-            auditQueue = account.CreateCloudQueueClient().GetQueueReference(AuditName);
+            defaultConnectionString = ConfigureEndpointAzureStorageQueueTransport.ConnectionString;
+            anotherConnectionString = ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString;
         }
 
         [Test]
         public async Task Is_disabled_Should_audit_with_raw_connection_strings()
         {
-            var ctx = await SendMessage<ReceiverUsingRawConnectionStrings>(ReceiverName).ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingRawConnectionStrings>(ReceiverName, defaultConnectionString).ConfigureAwait(false);
 
             CollectionAssert.IsNotEmpty(ctx.ContainingRawConnectionString);
             foreach (var name in ctx.ContainingRawConnectionString)
@@ -40,7 +34,7 @@
         [Test]
         public async Task Is_enabled_and_single_account_is_used_Should_audit_just_queue_name_without_account()
         {
-            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>(ReceiverName).ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingOneMappedConnectionString>(ReceiverName, defaultConnectionString).ConfigureAwait(false);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             foreach (var propertyWithSenderName in ctx.AllPropertiesFlattened.Where(property => property.Value.Contains(SenderName)))
@@ -52,7 +46,7 @@
         [Test]
         public async Task Is_enabled_and_sending_to_another_account_Should_audit_fully_qualified_queue()
         {
-            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}").ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}", anotherConnectionString).ConfigureAwait(false);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             var excluded = new HashSet<string>
@@ -72,7 +66,7 @@
             }
         }
 
-        async Task<Context> SendMessage<TReceiver>(string destination)
+        async Task<Context> SendMessage<TReceiver>(string destination, string destinationConnectionString)
             where TReceiver : EndpointConfigurationBuilder
         {
             var ctx = await Scenario.Define<Context>()
@@ -91,8 +85,11 @@
             Dictionary<string, string> propertiesFlattened;
             do
             {
-                var rawMessage = await auditQueue.GetMessageAsync().ConfigureAwait(false);
-                await auditQueue.DeleteMessageAsync(rawMessage).ConfigureAwait(false);
+                var account = CloudStorageAccount.Parse(destinationConnectionString);
+                var receiverAuditQueue = account.CreateCloudQueueClient().GetQueueReference(AuditName);
+
+                var rawMessage = await receiverAuditQueue.GetMessageAsync().ConfigureAwait(false);
+                await receiverAuditQueue.DeleteMessageAsync(rawMessage).ConfigureAwait(false);
                 if (rawMessage == null)
                 {
                     Assert.Fail("No message in the audit queue to pick up.");
@@ -128,7 +125,6 @@
             return jValue != null && jValue.Type != JTokenType.Null;
         }
 
-        readonly CloudQueue auditQueue;
         const string SenderName = "mapping-names-sender";
         const string ReceiverName = "mapping-names-receiver";
         const string AuditName = "mapping-names-audit";
@@ -148,16 +144,16 @@
         {
             public Sender()
             {
-                CustomEndpointName(SenderName);
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseSerialization<Serializer>();
+                    cfg.UseSerialization<NewtonsoftSerializer>();
                     cfg.UseTransport<AzureStorageQueueTransport>()
                         .UseAccountAliasesInsteadOfConnectionStrings()
                         .DefaultAccountAlias(DefaultConnectionStringName)
                         .AccountRouting()
                         .AddAccount(AnotherConnectionStringName, anotherConnectionString);
                 });
+                CustomEndpointName(SenderName);
             }
         }
 
@@ -167,9 +163,8 @@
             {
                 EndpointSetup<DefaultPublisher>(cfg =>
                 {
-                    cfg.UseSerialization<Serializer>();
-                    var extensions = cfg.UseTransport<AzureStorageQueueTransport>()
-                        .ConnectionString(anotherConnectionString);
+                    cfg.UseSerialization<NewtonsoftSerializer>();
+                    var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
 
                     Setup(extensions);
                     cfg.AuditProcessedMessagesTo(AuditName);
@@ -184,6 +179,7 @@
         {
             protected override void Setup(TransportExtensions<AzureStorageQueueTransport> cfg)
             {
+                cfg.ConnectionString(defaultConnectionString);
             }
         }
 
@@ -191,10 +187,24 @@
         {
             protected override void Setup(TransportExtensions<AzureStorageQueueTransport> cfg)
             {
+                cfg.ConnectionString(anotherConnectionString);
+
                 cfg.UseAccountAliasesInsteadOfConnectionStrings()
                     .DefaultAccountAlias(AnotherConnectionStringName)
                     .AccountRouting()
                     .AddAccount(DefaultConnectionStringName, defaultConnectionString);
+            }
+        }
+        class ReceiverUsingOneMappedConnectionString : Receiver
+        {
+            protected override void Setup(TransportExtensions<AzureStorageQueueTransport> cfg)
+            {
+                cfg.ConnectionString(defaultConnectionString);
+
+                cfg.UseAccountAliasesInsteadOfConnectionStrings()
+                    .DefaultAccountAlias(DefaultConnectionStringName)
+                    .AccountRouting()
+                    .AddAccount(AnotherConnectionStringName, anotherConnectionString);
             }
         }
 

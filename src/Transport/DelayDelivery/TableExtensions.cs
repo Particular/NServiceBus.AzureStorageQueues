@@ -16,7 +16,7 @@
 
             do
             {
-                var seg = await table.ExecuteQuerySegmentedAsync(query, token, cancellationToken).ConfigureAwait(false);
+                var seg = await table.ExecuteQuerySegmentedAsync(query, token, null, null, cancellationToken).ConfigureAwait(false);
                 token = seg.ContinuationToken;
 
                 if (items.Count + seg.Results.Count > take)

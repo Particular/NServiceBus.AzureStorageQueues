@@ -1,10 +1,14 @@
 namespace NServiceBus
 {
     using AzureStorageQueues.Config;
-    using Configuration.AdvanceExtensibility;
+    using Configuration.AdvancedExtensibility;
 
+    /// <summary>Transport addressing extensions.</summary>
     public static class AzureStorageTransportAddressingExtensions
     {
+        /// <summary>
+        /// Configure the transport to use account aliases instead of raw connection strings.
+        /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> UseAccountAliasesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config)
         {
             Guard.AgainstNull(nameof(config), config);
@@ -21,6 +25,9 @@ namespace NServiceBus
             return new AccountRoutingSettings(transportExtensions.EnsureAccounts());
         }
 
+        /// <summary>
+        /// Set default account alias.
+        /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> DefaultAccountAlias(this TransportExtensions<AzureStorageQueueTransport> transportExtensions, string alias)
         {
             Guard.AgainstNull(nameof(transportExtensions), transportExtensions);
@@ -31,8 +38,7 @@ namespace NServiceBus
         static AccountConfigurations EnsureAccounts(this ExposeSettings transportExtensions)
         {
             var settings = transportExtensions.GetSettings();
-            AccountConfigurations accounts;
-            if (settings.TryGet(out accounts))
+            if (settings.TryGet<AccountConfigurations>(out var accounts))
             {
                 return accounts;
             }

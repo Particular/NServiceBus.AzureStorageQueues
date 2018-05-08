@@ -30,7 +30,7 @@
             {
                 try
                 {
-                    lease = await container.AcquireLeaseAsync(span, null, cancellationToken).ConfigureAwait(false);
+                    lease = await container.AcquireLeaseAsync(span, null, null, null, null, cancellationToken).ConfigureAwait(false);
                     return true;
                 }
                 catch (StorageException exception)
@@ -41,7 +41,7 @@
             }
             try
             {
-                await container.RenewLeaseAsync(AccessCondition.GenerateLeaseCondition(lease), cancellationToken).ConfigureAwait(false);
+                await container.RenewLeaseAsync(AccessCondition.GenerateLeaseCondition(lease), null, null, cancellationToken).ConfigureAwait(false);
                 return true;
             }
             catch (StorageException exception)
@@ -60,7 +60,7 @@
             {
                 try
                 {
-                    await container.ReleaseLeaseAsync(AccessCondition.GenerateLeaseCondition(lease), cancellationToken).ConfigureAwait(false);
+                    await container.ReleaseLeaseAsync(AccessCondition.GenerateLeaseCondition(lease), null, null, cancellationToken).ConfigureAwait(false);
                 }
                 catch (StorageException)
                 {
@@ -72,7 +72,7 @@
         {
             if (created == false)
             {
-                await container.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+                await container.CreateIfNotExistsAsync(BlobContainerPublicAccessType.Container, null,null, cancellationToken).ConfigureAwait(false);
                 created = true;
             }
         }

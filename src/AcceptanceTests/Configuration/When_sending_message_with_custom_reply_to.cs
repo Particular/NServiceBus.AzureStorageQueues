@@ -5,51 +5,41 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
     using System.IO;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
+    using global::Newtonsoft.Json;
+    using global::Newtonsoft.Json.Linq;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
     using NUnit.Framework;
     using NUnit.Framework.Interfaces;
-    using Serializer = JsonSerializer;
 
     public class When_sending_message_with_custom_reply_to : NServiceBusAcceptanceTest
     {
         static When_sending_message_with_custom_reply_to()
         {
-            connectionString = Utils.GetEnvConfiguredConnectionString();
-            anotherConnectionString = Utils.BuildAnotherConnectionString(connectionString);
+            connectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
+            anotherConnectionString = ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString;
             RawReplyTo = "q@" + anotherConnectionString;
         }
 
-        public When_sending_message_with_custom_reply_to()
+        [TestCaseSource(nameof(GetTestCases))]
+        public async Task Should_preserve_fully_qualified_name_when_using_mappings(string destination, string replyTo, string auditConnectionString)
         {
-            var account = CloudStorageAccount.Parse(connectionString);
-            auditQueue = account.CreateCloudQueueClient().GetQueueReference(AuditName);
-        }
-
-        [OneTimeSetUp]
-        public Task OneTimeSetup()
-        {
-            return auditQueue.CreateIfNotExistsAsync();
+            await Run<SenderUsingNamesInsteadOfConnectionStrings>(destination, replyTo, auditConnectionString).ConfigureAwait(false);
         }
 
         [TestCaseSource(nameof(GetTestCases))]
-        public async Task Should_preserve_fully_qualified_name_when_using_mappings(string destination, string replyTo)
+        public async Task Should_preserve_fully_qualified_name_when_using_raw_connection_strings(string destination, string replyTo, string auditConnectionString)
         {
-            await Run<SenderUsingNamesInsteadOfConnectionStrings>(destination, replyTo).ConfigureAwait(false);
+            await Run<SenderNotUsingNamesInsteadOfConnectionStrings>(destination, replyTo, auditConnectionString).ConfigureAwait(false);
         }
 
-        [TestCaseSource(nameof(GetTestCases))]
-        public async Task Should_preserve_fully_qualified_name_when_using_raw_connection_strings(string destination, string replyTo)
+        async Task Run<TSender>(string destination, string replyTo, string auditConnectionString) where TSender : Sender
         {
-            await Run<SenderNotUsingNamesInsteadOfConnectionStrings>(destination, replyTo).ConfigureAwait(false);
-        }
+            var account = CloudStorageAccount.Parse(auditConnectionString);
+            var auditQueue = account.CreateCloudQueueClient().GetQueueReference(AuditName);
+            await auditQueue.CreateIfNotExistsAsync();
 
-        async Task Run<TSender>(string destination, string replyTo) where TSender : Sender
-        {
             await Scenario.Define<Context>()
                 .WithEndpoint<TSender>(b => b.When(async s => { await Send(s, replyTo, destination).ConfigureAwait(false); }))
                 .Done(c => true)
@@ -76,10 +66,10 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         static IEnumerable<ITestCaseData> GetTestCases()
         {
             // combinatorial
-            yield return new TestCaseData(AuditName, RawReplyTo);
-            yield return new TestCaseData(AuditName, MappedReplyTo);
-            yield return new TestCaseData(AuditNameAtAnotherAccount, RawReplyTo);
-            yield return new TestCaseData(AuditNameAtAnotherAccount, MappedReplyTo);
+            yield return new TestCaseData(AuditName, RawReplyTo, connectionString);
+            yield return new TestCaseData(AuditName, MappedReplyTo, connectionString);
+            yield return new TestCaseData(AuditNameAtAnotherAccount, RawReplyTo, anotherConnectionString);
+            yield return new TestCaseData(AuditNameAtAnotherAccount, MappedReplyTo, anotherConnectionString);
         }
 
         static async Task Send(IMessageSession s, string replyTo, string destination)
@@ -90,7 +80,6 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
             await s.Send(new MyCommand(), o).ConfigureAwait(false);
         }
 
-        readonly CloudQueue auditQueue;
         const string AuditName = "custom-reply-to-destination";
         const string AuditNameAtAnotherAccount = AuditName + "@" + AnotherConnectionStringName;
         const string DefaultConnectionStringName = "default_account";
@@ -112,7 +101,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
                 CustomEndpointName("custom-reply-to-sender");
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseSerialization<Serializer>();
+                    cfg.UseSerialization<NewtonsoftSerializer>();
 
                     var transport = cfg.UseTransport<AzureStorageQueueTransport>()
                         .ConnectionString(() => connectionString);

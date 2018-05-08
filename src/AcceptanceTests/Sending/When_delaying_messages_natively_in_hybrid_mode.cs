@@ -4,7 +4,7 @@
     using System.Diagnostics;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Configuration.AdvanceExtensibility;
+    using Configuration.AdvancedExtensibility;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
     using NServiceBus.AcceptanceTests;
@@ -16,9 +16,9 @@
         CloudTable delayedMessagesTable;
 
         [SetUp]
-        public new async Task SetUp()
+        public async Task SetUpLocal()
         {
-            delayedMessagesTable = CloudStorageAccount.Parse(Utils.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
+            delayedMessagesTable = CloudStorageAccount.Parse(Testing.Utillities.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
             var tableExists = await delayedMessagesTable.ExistsAsync().ConfigureAwait(false);
             if (tableExists)
             {

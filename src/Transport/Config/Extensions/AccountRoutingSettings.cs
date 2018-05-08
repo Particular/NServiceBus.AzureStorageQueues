@@ -14,11 +14,9 @@ namespace NServiceBus
         /// <summary>
         /// Adds the mapping between the <paramref alias="alias" /> and its <paramref alias="connectionString" />.
         /// </summary>
-        public void AddAccount(string alias, string connectionString)
+        public AccountInfo AddAccount(string alias, string connectionString)
         {
-            Guard.AgainstNullAndEmpty(nameof(alias), alias);
-            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
-            accounts.Add(alias, connectionString);
+            return accounts.Add(alias, connectionString);
         }
 
         readonly AccountConfigurations accounts;

@@ -5,9 +5,9 @@
     using System.IO;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using global::Newtonsoft.Json;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using Newtonsoft.Json;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -22,7 +22,7 @@
                 {
                     b.CustomConfig((cfg, context) =>
                     {
-                        cfg.UseSerialization<NServiceBus.JsonSerializer>();
+                        cfg.UseSerialization<NewtonsoftSerializer>();
                         cfg.UseTransport<AzureStorageQueueTransport>()
                             .UnwrapMessagesWith(message => MyCustomUnwrapper(message, context.TestRunId));
                     });
@@ -40,7 +40,7 @@
 
                         var cloudQueueMessage = new CloudQueueMessage(jsonPayload);
 
-                        var connectionString = Utils.GetEnvConfiguredConnectionString();
+                        var connectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
                         var storageAccount = CloudStorageAccount.Parse(connectionString);
                         var queueClient = storageAccount.CreateCloudQueueClient();
                         var queue = queueClient.GetQueueReference("receivingarawjsonmessage-receiver");

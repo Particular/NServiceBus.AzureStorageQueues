@@ -19,8 +19,7 @@ namespace NServiceBus.AzureStorageQueues
 
         static CloudQueueClient BuildClient(ConnectionString connectionString)
         {
-            CloudStorageAccount account;
-            if (CloudStorageAccount.TryParse(connectionString.Value, out account))
+            if (CloudStorageAccount.TryParse(connectionString.Value, out var account))
             {
                 return account.CreateCloudQueueClient();
             }

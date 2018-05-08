@@ -14,31 +14,31 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
     {
+        internal const string SerializerSettingsKey = "MainSerializer";
+
+        /// <inheritdoc cref="RequiresConnectionString"/>
         public override bool RequiresConnectionString { get; } = true;
 
+        /// <inheritdoc cref="ExampleConnectionStringForErrorMessage"/>
         public override string ExampleConnectionStringForErrorMessage { get; } =
             "DefaultEndpointsProtocol=[http|https];AccountName=myAccountName;AccountKey=myAccountKey";
 
+        /// <inheritdoc cref="Initialize"/>
         public override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
         {
             Guard.AgainstNull(nameof(settings), settings);
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
-            // configure JSON instead of XML as the default serializer:
-            SetMainSerializer(settings, new JsonSerializer());
+
+            Guard.AgainstUnsetSerializerSetting(settings);
 
             DefaultConfigurationValues.Apply(settings);
 
             return new AzureStorageQueueInfrastructure(settings, connectionString);
         }
 
-        static void SetMainSerializer(SettingsHolder settings, SerializationDefinition definition)
-        {
-            settings.SetDefault("MainSerializer", Tuple.Create(definition, new SettingsHolder()));
-        }
-
         internal static IMessageSerializer GetMainSerializer(IMessageMapper mapper, ReadOnlySettings settings)
         {
-            var definitionAndSettings = settings.Get<Tuple<SerializationDefinition, SettingsHolder>>("MainSerializer");
+            var definitionAndSettings = settings.Get<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey);
             var definition = definitionAndSettings.Item1;
             var serializerSettings = definitionAndSettings.Item2;
 

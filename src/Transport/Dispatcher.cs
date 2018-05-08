@@ -54,7 +54,7 @@
             var destination = operation.Destination;
 
             var queue = QueueAddress.Parse(destination);
-            var connectionString = addressing.Map(queue.StorageAccount);
+            var connectionString = addressing.Map(queue);
 
             var sendClient = createQueueClients.Create(connectionString);
             var q = addressGenerator.GetQueueName(queue.QueueName);
@@ -85,25 +85,35 @@
                 throw new InvalidOperationException($"TimeToBeReceived is set to more than 7 days (maximum for Azure Storage queue) for message type '{messageType}'.");
             }
 
-            // TimeToBeReceived was not specified on message - go for maximum set by SDK
-            if (timeToBeReceived == TimeSpan.MaxValue)
+            if (timeToBeReceived.HasValue)
             {
-                timeToBeReceived = null;
+                var seconds = Convert.ToInt64(Math.Ceiling(timeToBeReceived.Value.TotalSeconds));
+
+                if (seconds <= 0)
+                {
+                    throw new Exception($"Message cannot be sent with a provided delay of {timeToBeReceived.Value.TotalMilliseconds} ms.");
+                }
+                timeToBeReceived = TimeSpan.FromSeconds(seconds);
             }
 
-            var wrapper = BuildMessageWrapper(operation, timeToBeReceived, queue);
-            await Send(wrapper, sendQueue).ConfigureAwait(false);
+            var wrapper = BuildMessageWrapper(operation, queue);
+            await Send(wrapper, sendQueue, timeToBeReceived).ConfigureAwait(false);
         }
 
-        Task Send(MessageWrapper wrapper, CloudQueue sendQueue)
+        Task Send(MessageWrapper wrapper, CloudQueue sendQueue, TimeSpan? timeToBeReceived)
         {
             CloudQueueMessage rawMessage;
             using (var stream = new MemoryStream())
             {
                 serializer.Serialize(wrapper, stream);
+#if NET452
                 rawMessage = new CloudQueueMessage(stream.ToArray());
+#else
+                rawMessage = CloudQueueMessage.CreateCloudQueueMessageFromByteArray(stream.ToArray());
+#endif
             }
-            return sendQueue.AddMessageAsync(rawMessage, wrapper.TimeToBeReceived != TimeSpan.MaxValue ? wrapper.TimeToBeReceived : default(TimeSpan?), null, null, null);
+
+            return sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null);
         }
 
         Task<bool> ExistsAsync(CloudQueue sendQueue)
@@ -112,15 +122,14 @@
             return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.ExistsAsync());
         }
 
-        MessageWrapper BuildMessageWrapper(IOutgoingTransportOperation operation, TimeSpan? timeToBeReceived, QueueAddress destinationQueue)
+        MessageWrapper BuildMessageWrapper(IOutgoingTransportOperation operation, QueueAddress destinationQueue)
         {
             var msg = operation.Message;
             var headers = new Dictionary<string, string>(msg.Headers);
             addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
 
             var messageIntent = default(MessageIntentEnum);
-            string messageIntentString;
-            if (headers.TryGetValue(Headers.MessageIntent, out messageIntentString))
+            if (headers.TryGetValue(Headers.MessageIntent, out var messageIntentString))
             {
                 Enum.TryParse(messageIntentString, true, out messageIntent);
             }
@@ -132,7 +141,6 @@
                 CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
                 Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
                 ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
-                TimeToBeReceived = timeToBeReceived ?? TimeSpan.MaxValue,
                 Headers = headers,
                 MessageIntent = messageIntent
             };

@@ -3,17 +3,15 @@
     using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests;
     using EndpointTemplates;
     using NUnit.Framework;
-    using Serializer = JsonSerializer;
 
     public class When_configuring_account_names : NServiceBusAcceptanceTest
     {
         public When_configuring_account_names()
         {
-            connectionString = Utils.GetEnvConfiguredConnectionString();
-            anotherConnectionString = Utils.BuildAnotherConnectionString(connectionString);
+            connectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
+            anotherConnectionString = Testing.Utillities.GetEnvConfiguredConnectionString2();
         }
 
         [Test]
@@ -46,12 +44,12 @@
                 {
                     cfg.CustomConfig(c =>
                     {
-                        c.UseSerialization<Serializer>();
+                        c.UseSerialization<NewtonsoftSerializer>();
                         var transport = c.UseTransport<AzureStorageQueueTransport>();
                         transport
                             .UseAccountAliasesInsteadOfConnectionStrings()
                             .ConnectionString(connectionString)
-                            .SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<JsonSerializer>>();
+                            .SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>>();
 
                         action(transport);
                     });
@@ -95,7 +93,7 @@
             {
                 EndpointSetup<DefaultServer>(c =>
                 {
-                    c.UseSerialization<Serializer>();
+                    c.UseSerialization<NewtonsoftSerializer>();
                     c.UseTransport<AzureStorageQueueTransport>();
                 });
             }
