@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>net452</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -11,9 +12,10 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>PCR0001</NoWarn>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="NServiceBus" Version="6.3.3" />
-    <PackageReference Include="NUnit" Version="3.7.1" />
+    <PackageReference Include="NUnit" Version="3.10.1" />
     <PackageReference Include="NServiceBus.Testing.Fakes.Sources" Version="6.3.3" />
     <PackageReference Include="NServiceBus.TransportTests.Sources" Version="6.3.3" />
     <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="2.0.4" />
@@ -23,4 +25,5 @@
     <PackageReference Include="WindowsAzure.Storage" Version="8.1.4" />
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
   </ItemGroup>
+
 </Project>
