@@ -196,7 +196,7 @@
                 var isAtMostOnce = GetRequiredTransactionMode() == TransportTransactionMode.None;
                 var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                 var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-                poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(maximumWaitTime, peekInterval));
+                poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(peekInterval, maximumWaitTime));
                 nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
                 poller.Start(nativeDelayedMessagesCancellationSource.Token);
             }
