@@ -158,9 +158,9 @@ map = e => e.RequestUri;
             }
         }
 
-        public class SlowlyPeekingSender : EndpointConfigurationBuilder
+        class SlowlyPeekingSender : EndpointConfigurationBuilder
         {
-            public static readonly TimeSpan PeekInterval = TimeSpan.FromSeconds(1);
+            static readonly TimeSpan PeekInterval = TimeSpan.FromSeconds(1);
 
             public SlowlyPeekingSender()
             {
