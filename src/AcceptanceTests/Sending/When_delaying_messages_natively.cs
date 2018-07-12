@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Microsoft.WindowsAzure.Storage;
@@ -10,6 +11,7 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using AcceptanceTesting.Customization;
+    using AzureStorageQueues.AcceptanceTests;
     using NUnit.Framework;
 
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
@@ -48,6 +50,47 @@
 
             Assert.True(context.WasCalled, "The message handler should be called");
             Assert.Greater(context.Stopwatch.Elapsed, delay);
+        }
+
+        [Test]
+        public async Task Should_not_query_frequently_when_no_messages()
+        {
+            using (var requests = new CaptureSendingRequests())
+            {
+                var delay = Task.Delay(TimeSpan.FromSeconds(15));
+
+                await Scenario.Define<Context>()
+                    .WithEndpoint<SlowlyPeekingSender>()
+                    .Done(c => delay.IsCompleted)
+                    .Run()
+
+                    .ConfigureAwait(false);
+
+                Func<RequestEventArgs, Uri> map;
+#if NETCOREAPP
+map = e => e.RequestUri;
+#else
+                map = e => e.Request.RequestUri;
+#endif
+                var requestCount = requests.Events
+                    .Where(e =>
+                    {
+                        var lowered = map(e).ToString().ToLowerInvariant();
+                        return lowered.Contains(SenderDelayedMessagesTable.ToLowerInvariant()) && lowered.Contains("$filter");
+                    })
+                    .Count();
+
+                // the wait times for next peeks for SlowlyPeekingSender
+                // peek number  |wait (seconds)| cumulative wait (seconds)
+                // 1 | 0 | 0
+                // 2 | 1 | 1
+                // 3 | 2 | 3
+                // 4 | 3 | 6
+                // 5 | 4 | 10
+                // 6 | 5 | 15
+                // 7 | 6 | 21 <- this is the boundary
+                Assert.LessOrEqual(requestCount, 7);
+            }
         }
 
         [Test]
@@ -110,6 +153,21 @@
                     transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
                     var routing = cfg.ConfigureTransport().Routing();
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
+                });
+            }
+        }
+
+        class SlowlyPeekingSender : EndpointConfigurationBuilder
+        {
+            static readonly TimeSpan PeekInterval = TimeSpan.FromSeconds(1);
+
+            public SlowlyPeekingSender()
+            {
+                EndpointSetup<DefaultServer>(cfg =>
+                {
+                    var transport = cfg.UseTransport<AzureStorageQueueTransport>();
+                    transport.PeekInterval(PeekInterval);
+                    transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
                 });
             }
         }
