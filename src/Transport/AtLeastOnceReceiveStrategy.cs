@@ -1,6 +1,7 @@
 namespace NServiceBus.AzureStorageQueues
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
@@ -23,7 +24,7 @@ namespace NServiceBus.AzureStorageQueues
             {
                 using (var tokenSource = new CancellationTokenSource())
                 {
-                    var pushContext = new MessageContext(message.Id, message.Headers, body, new TransportTransaction(), tokenSource, new ContextBag());
+                    var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), tokenSource, new ContextBag());
                     await pipeline(pushContext).ConfigureAwait(false);
 
                     if (tokenSource.IsCancellationRequested)
