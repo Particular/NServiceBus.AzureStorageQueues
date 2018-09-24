@@ -145,9 +145,7 @@
 
             for (var i = 0; i < constraints.Count; i++)
             {
-                var c = constraints[i] as TDeliveryConstraint;
-
-                if (c != null)
+                if (constraints[i] is TDeliveryConstraint c)
                 {
                     return c;
                 }

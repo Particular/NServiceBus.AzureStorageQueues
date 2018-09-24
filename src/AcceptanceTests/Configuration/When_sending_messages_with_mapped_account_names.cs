@@ -10,7 +10,7 @@
     using global::Newtonsoft.Json.Linq;
     using Microsoft.WindowsAzure.Storage;
     using NUnit.Framework;
-    
+
     public class When_sending_messages_with_mapped_account_names : NServiceBusAcceptanceTest
     {
         public When_sending_messages_with_mapped_account_names()
@@ -121,8 +121,7 @@
 
         static bool IsSimpleProperty(JProperty p)
         {
-            var jValue = p.Value as JValue;
-            return jValue != null && jValue.Type != JTokenType.Null;
+            return p.Value is JValue jValue && jValue.Type != JTokenType.Null;
         }
 
         const string SenderName = "mapping-names-sender";
