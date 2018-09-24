@@ -19,7 +19,9 @@ namespace NServiceBus
             Guard.AgainstNullAndEmpty(nameof(delayedMessagesTableName), delayedMessagesTableName);
 
             if (tableNameRegex.IsMatch(delayedMessagesTableName) == false)
+            {
                 throw new ArgumentException($"{nameof(delayedMessagesTableName)} must match the following regular expression '{tableNameRegex}'");
+            }
 
             this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.TableName, delayedMessagesTableName.ToLower());
         }

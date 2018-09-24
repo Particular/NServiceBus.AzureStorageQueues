@@ -86,8 +86,7 @@
 
             public void Serialize(object message, Stream stream)
             {
-                var wrapper = message as MessageWrapper;
-                if (wrapper != null)
+                if (message is MessageWrapper)
                 {
                     scenarioContext.SerializedWrapper = true;
                 }
@@ -103,8 +102,7 @@
                 stream.Position = 0;
                 var message = serializer.Deserialize(stream);
 
-                var wrapper = message as MessageWrapper;
-                if (wrapper != null)
+                if (message is MessageWrapper)
                 {
                     scenarioContext.DeserializedWrapper = true;
                 }
