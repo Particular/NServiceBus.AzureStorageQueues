@@ -1,10 +1,9 @@
-﻿namespace NServiceBus.Transports.AzureStorageQueues.DelayDelivery
+﻿namespace NServiceBus.Transports.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using DelayedDelivery;
     using DeliveryConstraints;
     using Features;
