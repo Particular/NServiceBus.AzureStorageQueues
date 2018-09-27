@@ -2,11 +2,10 @@ namespace NServiceBus
 {
     using System;
     using Azure.Transports.WindowsAzureStorageQueues;
-    using AzureStorageQueues;
-    using AzureStorageQueues.Config;
     using Configuration.AdvancedExtensibility;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Serialization;
+    using Transports.AzureStorageQueues;
 
     /// <summary>Extension methods for <see cref="AzureStorageQueueTransport"/>.</summary>
     public static partial class AzureStorageTransportExtensions

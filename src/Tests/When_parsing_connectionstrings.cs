@@ -1,4 +1,4 @@
-﻿using NServiceBus.AzureStorageQueues.Config;
+﻿using NServiceBus.Transports.AzureStorageQueues;
 using NUnit.Framework;
 
 [TestFixture]

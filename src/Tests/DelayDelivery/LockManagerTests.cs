@@ -3,9 +3,9 @@
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using WindowsAzureStorageQueues.DelayDelivery;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
+    using NServiceBus.Transports.AzureStorageQueues.DelayDelivery;
     using NUnit.Framework;
 
     public class LockManagerTests

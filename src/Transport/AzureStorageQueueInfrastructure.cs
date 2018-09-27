@@ -6,8 +6,7 @@
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
-    using Config;
+    using DelayDelivery;
     using DelayedDelivery;
     using Features;
     using Performance.TimeToBeReceived;

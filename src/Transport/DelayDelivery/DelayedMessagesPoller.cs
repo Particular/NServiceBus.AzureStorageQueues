@@ -4,6 +4,7 @@
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
+    using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
     using AzureStorageQueues;
     using Logging;
     using Microsoft.WindowsAzure.Storage;

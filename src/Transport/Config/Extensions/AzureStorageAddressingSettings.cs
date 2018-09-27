@@ -2,8 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using AzureStorageQueues;
-    using AzureStorageQueues.Config;
 
     class AzureStorageAddressingSettings
     {
