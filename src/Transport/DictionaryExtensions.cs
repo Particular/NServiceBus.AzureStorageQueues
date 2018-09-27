@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AzureStorageQueues
+﻿namespace NServiceBus.Transports.AzureStorageQueues
 {
     using System.Collections.Generic;
 

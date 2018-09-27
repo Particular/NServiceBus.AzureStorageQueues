@@ -1,4 +1,4 @@
-namespace NServiceBus.AzureStorageQueues
+namespace NServiceBus.Transports.AzureStorageQueues
 {
     using System.IO;
     using System.Runtime.Serialization;

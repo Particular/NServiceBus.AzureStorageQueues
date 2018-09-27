@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
+﻿namespace NServiceBus.Transports.AzureStorageQueues.DelayDelivery
 {
     using System;
     using System.Collections.Generic;

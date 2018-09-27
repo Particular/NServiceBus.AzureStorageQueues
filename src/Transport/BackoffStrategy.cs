@@ -1,4 +1,4 @@
-namespace NServiceBus.AzureStorageQueues
+namespace NServiceBus.Transports.AzureStorageQueues
 {
     using System;
     using System.Threading;
@@ -10,7 +10,7 @@ namespace NServiceBus.AzureStorageQueues
         readonly TimeSpan maximumWaitTimeWhenIdle;
 
         TimeSpan timeToDelayUntilNextPeek;
-        
+
         /// <summary>
         /// </summary>
         /// <param name="peekInterval">The amount of time, in milliseconds, to add to the time to wait before checking for a new message</param>

@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AzureStorageQueues.Config
+﻿namespace NServiceBus.Transports.AzureStorageQueues
 {
     static class WellKnownConfigurationKeys
     {
