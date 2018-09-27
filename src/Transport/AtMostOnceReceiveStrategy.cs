@@ -1,6 +1,7 @@
-namespace NServiceBus.AzureStorageQueues
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
@@ -27,7 +28,7 @@ namespace NServiceBus.AzureStorageQueues
 
             try
             {
-                var pushContext = new MessageContext(message.Id, message.Headers, body, new TransportTransaction(), new CancellationTokenSource(), new ContextBag());
+                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new CancellationTokenSource(), new ContextBag());
                 await pipeline(pushContext).ConfigureAwait(false);
             }
             catch (Exception ex)

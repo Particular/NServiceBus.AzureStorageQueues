@@ -24,7 +24,7 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
             var conventions = settings.GetOrCreate<Conventions>();
             registry = (MessageMetadataRegistry)Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, new object[] { new Func<Type, bool>(t => conventions.IsMessageType(t)) }, CultureInfo.InvariantCulture);
 
-            settings.Set<MessageMetadataRegistry>(registry);
+            settings.Set(registry);
         }
 
         var methodName = TestContext.CurrentContext.Test.MethodName;

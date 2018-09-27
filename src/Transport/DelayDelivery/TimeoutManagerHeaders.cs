@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     static class TimeoutManagerHeaders
     {

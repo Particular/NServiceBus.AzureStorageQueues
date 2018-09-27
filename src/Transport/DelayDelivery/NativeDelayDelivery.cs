@@ -1,10 +1,9 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using AzureStorageQueues.Config;
     using DelayedDelivery;
     using DeliveryConstraints;
     using Features;
@@ -145,9 +144,7 @@
 
             for (var i = 0; i < constraints.Count; i++)
             {
-                var c = constraints[i] as TDeliveryConstraint;
-
-                if (c != null)
+                if (constraints[i] is TDeliveryConstraint c)
                 {
                     return c;
                 }

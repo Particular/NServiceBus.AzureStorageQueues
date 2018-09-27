@@ -1,9 +1,7 @@
-﻿namespace NServiceBus
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
-    using AzureStorageQueues;
-    using AzureStorageQueues.Config;
 
     class AzureStorageAddressingSettings
     {

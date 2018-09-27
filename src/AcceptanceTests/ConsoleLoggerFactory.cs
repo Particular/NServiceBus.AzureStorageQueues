@@ -111,7 +111,10 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests
             void Log(string message, LogLevel messageSeverity)
             {
                 if (level > messageSeverity)
+                {
                     return;
+                }
+
                 Console.WriteLine($"{name}: {message}");
             }
 

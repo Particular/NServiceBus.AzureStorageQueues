@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.DelayDelivery
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Net;
@@ -45,7 +45,7 @@
                 return true;
             }
             catch (StorageException exception)
-                when (exception.RequestInformation.ExtendedErrorInformation.ErrorCode == BlobErrorCodeStrings.LeaseIdMismatchWithLeaseOperation)
+                when (exception.RequestInformation.ErrorCode == BlobErrorCodeStrings.LeaseIdMismatchWithLeaseOperation)
             {
                 lease = null;
                 return false;

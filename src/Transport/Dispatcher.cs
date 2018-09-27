@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -8,7 +8,6 @@
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
-    using Config;
     using Extensibility;
     using Logging;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -79,10 +78,10 @@
             }
 
             // user explicitly specified TimeToBeReceived that is not TimeSpan.MaxValue - fail
-            if (timeToBeReceived != null && timeToBeReceived.Value > CloudQueueMessage.MaxTimeToLive && timeToBeReceived != TimeSpan.MaxValue)
+            if (timeToBeReceived != null && timeToBeReceived.Value > CloudQueueMessageMaxTimeToLive && timeToBeReceived != TimeSpan.MaxValue)
             {
                 var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
-                throw new InvalidOperationException($"TimeToBeReceived is set to more than 7 days (maximum for Azure Storage queue) for message type '{messageType}'.");
+                throw new InvalidOperationException($"TimeToBeReceived is set to more than 30 days for message type '{messageType}'.");
             }
 
             if (timeToBeReceived.HasValue)
@@ -93,14 +92,15 @@
                 {
                     throw new Exception($"Message cannot be sent with a provided delay of {timeToBeReceived.Value.TotalMilliseconds} ms.");
                 }
+
                 timeToBeReceived = TimeSpan.FromSeconds(seconds);
             }
 
             var wrapper = BuildMessageWrapper(operation, queue);
-            await Send(wrapper, sendQueue, timeToBeReceived).ConfigureAwait(false);
+            await Send(wrapper, sendQueue, timeToBeReceived ?? CloudQueueMessageMaxTimeToLive).ConfigureAwait(false);
         }
 
-        Task Send(MessageWrapper wrapper, CloudQueue sendQueue, TimeSpan? timeToBeReceived)
+        Task Send(MessageWrapper wrapper, CloudQueue sendQueue, TimeSpan timeToBeReceived)
         {
             CloudQueueMessage rawMessage;
             using (var stream = new MemoryStream())
@@ -146,13 +146,15 @@
             };
         }
 
-        QueueAddressGenerator addressGenerator;
-        AzureStorageAddressingSettings addressing;
         readonly CreateQueueClients createQueueClients;
-
-        static ILog logger = LogManager.GetLogger<Dispatcher>();
-        ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
         readonly MessageWrapperSerializer serializer;
         readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
+
+        readonly QueueAddressGenerator addressGenerator;
+        readonly AzureStorageAddressingSettings addressing;
+        readonly ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
+
+        static readonly TimeSpan CloudQueueMessageMaxTimeToLive = TimeSpan.FromDays(30);
+        static readonly ILog logger = LogManager.GetLogger<Dispatcher>();
     }
 }
