@@ -2,11 +2,10 @@ namespace NServiceBus
 {
     using System;
     using Azure.Transports.WindowsAzureStorageQueues;
-    using AzureStorageQueues;
-    using AzureStorageQueues.Config;
     using Configuration.AdvancedExtensibility;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Serialization;
+    using Transport.AzureStorageQueues;
 
     /// <summary>Extension methods for <see cref="AzureStorageQueueTransport"/>.</summary>
     public static partial class AzureStorageTransportExtensions
@@ -96,7 +95,7 @@ namespace NServiceBus
         {
             Guard.AgainstNull(nameof(config), config);
             Guard.AgainstNull(nameof(queueNameSanitizer), queueNameSanitizer);
-            Func<string, string> safeShortener = entityName => 
+            Func<string, string> safeShortener = entityName =>
             {
                 try
                 {
@@ -105,7 +104,7 @@ namespace NServiceBus
                 catch (Exception exception)
                 {
                     throw new Exception("Registered queue name sanitizer threw an exception.", exception);
-                } 
+                }
             };
             config.GetSettings().Set(WellKnownConfigurationKeys.QueueSanitizer, safeShortener);
             return config;

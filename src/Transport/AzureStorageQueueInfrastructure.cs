@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
@@ -6,8 +6,6 @@
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Azure.Transports.WindowsAzureStorageQueues.DelayDelivery;
-    using Config;
     using DelayedDelivery;
     using Features;
     using Performance.TimeToBeReceived;
@@ -200,7 +198,7 @@
                 nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
                 poller.Start(nativeDelayedMessagesCancellationSource.Token);
             }
-           
+
             return TaskEx.CompletedTask;
         }
 

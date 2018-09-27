@@ -2,12 +2,12 @@ namespace NServiceBus
 {
     using System;
     using System.Reflection;
-    using AzureStorageQueues;
     using MessageInterfaces;
     using Routing;
     using Serialization;
     using Settings;
     using Transport;
+    using Transport.AzureStorageQueues;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue

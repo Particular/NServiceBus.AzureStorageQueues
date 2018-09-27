@@ -2,10 +2,10 @@ namespace NServiceBus
 {
     using System;
     using System.Text.RegularExpressions;
-    using AzureStorageQueues.Config;
     using Configuration.AdvancedExtensibility;
     using Features;
     using Settings;
+    using Transport.AzureStorageQueues;
 
     /// <summary>Configures native delayed delivery.</summary>
     public class DelayedDeliverySettings : ExposeSettings

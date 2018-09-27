@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
 
