@@ -5,7 +5,7 @@ namespace NServiceBus
     using Configuration.AdvancedExtensibility;
     using Features;
     using Settings;
-    using Transports.AzureStorageQueues;
+    using Transport.AzureStorageQueues;
 
     /// <summary>Configures native delayed delivery.</summary>
     public class DelayedDeliverySettings : ExposeSettings

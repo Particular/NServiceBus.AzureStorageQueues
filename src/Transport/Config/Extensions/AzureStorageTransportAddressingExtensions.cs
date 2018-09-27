@@ -1,7 +1,7 @@
 namespace NServiceBus
 {
     using Configuration.AdvancedExtensibility;
-    using Transports.AzureStorageQueues;
+    using Transport.AzureStorageQueues;
 
     /// <summary>Transport addressing extensions.</summary>
     public static class AzureStorageTransportAddressingExtensions

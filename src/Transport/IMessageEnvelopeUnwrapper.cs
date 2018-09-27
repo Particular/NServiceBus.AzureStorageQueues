@@ -1,4 +1,4 @@
-namespace NServiceBus.Transports.AzureStorageQueues
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage.Queue;

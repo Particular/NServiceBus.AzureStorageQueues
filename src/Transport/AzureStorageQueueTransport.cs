@@ -7,7 +7,7 @@ namespace NServiceBus
     using Serialization;
     using Settings;
     using Transport;
-    using Transports.AzureStorageQueues;
+    using Transport.AzureStorageQueues;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue

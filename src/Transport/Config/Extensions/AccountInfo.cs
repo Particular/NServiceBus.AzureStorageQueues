@@ -2,7 +2,7 @@ namespace NServiceBus
 {
     using System;
     using System.Collections.Generic;
-    using Transports.AzureStorageQueues;
+    using Transport.AzureStorageQueues;
 
     /// <summary>
     /// An account info instance unifies an alias with a connection string and potentially registered endpoint instances.
