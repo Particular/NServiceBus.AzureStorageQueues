@@ -199,7 +199,7 @@
                 nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
                 poller.Start(nativeDelayedMessagesCancellationSource.Token);
             }
-           
+
             return TaskEx.CompletedTask;
         }
 

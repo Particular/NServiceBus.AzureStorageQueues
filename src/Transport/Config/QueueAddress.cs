@@ -93,7 +93,7 @@
                 return (QueueName.GetHashCode()*397) ^ StorageAccount.GetHashCode();
             }
         }
-        
+
         public override string ToString()
         {
             return IsAccountDefault ? QueueName : $"{QueueName}@{StorageAccount}";
