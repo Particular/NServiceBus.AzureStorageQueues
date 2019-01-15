@@ -43,12 +43,6 @@
                 return false;
             }
 
-            if (TryProcessDelayedRetry(operation, out var operationToSchedule, out var scheduleDate))
-            {
-                await ScheduleAt(operationToSchedule, scheduleDate, cancellationToken).ConfigureAwait(false);
-                return false;
-            }
-
             return true;
         }
 
@@ -57,14 +51,8 @@
 
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
-            var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
             var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
             var timeoutManagerDisabled = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager);
-
-            if (externalTimeoutManagerAddress)
-            {
-                return StartupCheckResult.Failed("An external timeout manager address cannot be configured because the timeout manager is not being used for delayed delivery.");
-            }
 
             if (!timeoutManagerDisabled && !timeoutManagerFeatureActive)
             {
@@ -96,30 +84,6 @@
         static TimeSpan? ToNullIfNegative(TimeSpan value)
         {
             return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
-        }
-
-        static bool TryProcessDelayedRetry(IOutgoingTransportOperation operation, out UnicastTransportOperation operationToSchedule, out DateTimeOffset scheduleDate)
-        {
-            var messageHeaders = operation.Message.Headers;
-            if (messageHeaders.TryGetValue(TimeoutManagerHeaders.Expire, out var expire))
-            {
-                var expiration = DateTimeExtensions.ToUtcDateTime(expire);
-
-                var destination = messageHeaders[TimeoutManagerHeaders.RouteExpiredTimeoutTo];
-
-                messageHeaders.Remove(TimeoutManagerHeaders.Expire);
-                messageHeaders.Remove(TimeoutManagerHeaders.RouteExpiredTimeoutTo);
-
-                operationToSchedule = new UnicastTransportOperation(operation.Message, destination, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
-
-                scheduleDate = expiration;
-
-                return true;
-            }
-
-            operationToSchedule = null;
-            scheduleDate = default(DateTimeOffset);
-            return false;
         }
 
         Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken)

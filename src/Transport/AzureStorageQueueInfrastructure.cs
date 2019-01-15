@@ -25,6 +25,8 @@
             var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
             var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
 
+            settings.SetDefault(WellKnownConfigurationKeys.DelayedDelivery.EnableMigrationMode, !timeoutManagerFeatureDisabled && !sendOnlyEndpoint);
+
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
                 // TimeoutManager is already not used. Indicate to Native Delayed Delivery that we're not in the hybrid mode.
@@ -35,20 +37,7 @@
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
 
-        public override IEnumerable<Type> DeliveryConstraints
-        {
-            get
-            {
-                yield return typeof(DiscardIfNotReceivedBefore);
-                yield return typeof(NonDurableDelivery);
-
-                if (DelayedDeliveryCanBeUsed())
-                {
-                    yield return typeof(DoNotDeliverBefore);
-                    yield return typeof(DelayDeliveryWith);
-                }
-            }
-        }
+        public override IEnumerable<Type> DeliveryConstraints => new List<Type> {typeof(DiscardIfNotReceivedBefore), typeof(NonDurableDelivery), typeof(DoNotDeliverBefore), typeof(DelayDeliveryWith)};
 
         public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
         public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
@@ -79,10 +68,6 @@
             var hashName = BitConverter.ToString(hashedName).Replace("-", string.Empty);
             return "delays" + hashName.ToLower();
         }
-
-        bool DelayedDeliveryCanBeUsed() =>
-            settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager)
-            && settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 
         bool PollerCanBeUsed() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 
