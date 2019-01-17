@@ -15,9 +15,8 @@
         public static class DelayedDelivery
         {
             public const string TableName = "Transport.AzureStorageQueue.TableName";
-            public const string DisableTimeoutManager = "Transport.AzureStorageQueue.DisableTimeoutManager";
             public const string DisableDelayedDelivery = "Transport.AzureStorageQueue.DisableDelayedDelivery";
-            public const string EnableMigrationMode = "NServiceBus.TimeoutManager.EnableMigrationMode";
+            public const string EnableTimeoutManager = "NServiceBus.TimeoutManager.EnableMigrationMode";
         }
     }
 }

@@ -22,15 +22,15 @@
             this.connectionString = connectionString;
             serializer = BuildSerializer(settings);
 
+            settings.SetDefault(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, true);
+
             var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
             var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
-
-            settings.SetDefault(WellKnownConfigurationKeys.DelayedDelivery.EnableMigrationMode, !timeoutManagerFeatureDisabled && !sendOnlyEndpoint);
 
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
             {
                 // TimeoutManager is already not used. Indicate to Native Delayed Delivery that we're not in the hybrid mode.
-                settings.Set(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager, true);
+                settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
             }
 
             delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings));

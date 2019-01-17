@@ -52,9 +52,9 @@
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
             var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
-            var timeoutManagerDisabled = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager);
+            var timeoutManagerShouldBeEnabled = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager);
 
-            if (!timeoutManagerDisabled && !timeoutManagerFeatureActive)
+            if (timeoutManagerShouldBeEnabled && !timeoutManagerFeatureActive)
             {
                 return StartupCheckResult.Failed(
                     "The timeout manager is not active, but the transport has not been properly configured for this. "

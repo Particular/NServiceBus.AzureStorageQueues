@@ -31,8 +31,7 @@ namespace NServiceBus
         /// </summary>
         public void DisableTimeoutManager()
         {
-            this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager, true);
-            this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.EnableMigrationMode, false);
+            this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
         }
 
         /// <summary>
@@ -49,7 +48,7 @@ namespace NServiceBus
             this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery, true);
 
             // disable timeout manager
-            this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.EnableMigrationMode, false);
+            this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
         }
 
         static readonly Regex tableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
