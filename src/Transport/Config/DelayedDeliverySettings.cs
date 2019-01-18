@@ -3,6 +3,7 @@ namespace NServiceBus
     using System;
     using System.Text.RegularExpressions;
     using Configuration.AdvancedExtensibility;
+    using Features;
     using Settings;
     using Transport.AzureStorageQueues;
 
@@ -48,7 +49,7 @@ namespace NServiceBus
             this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery, true);
 
             // disable timeout manager
-            this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
+            this.GetSettings().Set(typeof(TimeoutManager).Name, FeatureState.Disabled);
         }
 
         static readonly Regex tableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
