@@ -51,7 +51,7 @@
 
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
-            var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
+            var timeoutManagerFeatureActive = settings.IsFeatureActive(typeof(TimeoutManager));
             var timeoutManagerShouldBeEnabled = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager);
 
             if (timeoutManagerShouldBeEnabled && !timeoutManagerFeatureActive)

@@ -24,7 +24,7 @@
 
             settings.SetDefault(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, true);
 
-            var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
+            var timeoutManagerFeatureDisabled = !settings.IsFeatureEnabled(typeof(TimeoutManager));
             var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
 
             if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
