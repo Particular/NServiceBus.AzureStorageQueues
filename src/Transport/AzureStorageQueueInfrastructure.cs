@@ -30,7 +30,7 @@
                 settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
             }
 
-            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings));
+            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings), settings.Get<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery));
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
 

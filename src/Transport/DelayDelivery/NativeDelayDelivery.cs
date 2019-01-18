@@ -15,17 +15,22 @@
 
     class NativeDelayDelivery
     {
+        readonly bool delayedDeliveryDisabled;
         CloudTable delayedMessagesTable;
 
-        public NativeDelayDelivery(string connectionString, string delayedMessagesTableName)
+        public NativeDelayDelivery(string connectionString, string delayedMessagesTableName, bool delayedDeliveryDisabled)
         {
-            delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
-            // In the constructor to ensure we do not force the calling code to remember to invoke any initialization method.
-            // Also, CreateIfNotExistsAsync() returns BEFORE the table is actually ready to be used, causing 404.
+            this.delayedDeliveryDisabled = delayedDeliveryDisabled;
+            if (!delayedDeliveryDisabled)
+            {
+                delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
+                // In the constructor to ensure we do not force the calling code to remember to invoke any initialization method.
+                // Also, CreateIfNotExistsAsync() returns BEFORE the table is actually ready to be used, causing 404.
 
-            // TODO: original code was calling delayedMessagesTable.CreateIfNotExists(); as it was not affected by the bug the async version had.
-            // In case async version still returns before table is created, add a small delay.
-            delayedMessagesTable.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+                // TODO: original code was calling delayedMessagesTable.CreateIfNotExists(); as it was not affected by the bug the async version had.
+                // In case async version still returns before table is created, add a small delay.
+                delayedMessagesTable.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+            }
         }
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -34,6 +39,11 @@
             var delay = GetVisibilityDelay(constraints);
             if (delay != null)
             {
+                if (delayedDeliveryDisabled)
+                {
+                    throw new Exception("Message dispatch has been requested with a delayed delivery. Remove the 'endpointConfiguration.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.");
+                }
+
                 if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)
                 {
                     throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
