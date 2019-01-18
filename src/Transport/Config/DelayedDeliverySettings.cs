@@ -40,7 +40,7 @@ namespace NServiceBus
         /// <remarks>
         /// Disabling delayed delivery reduces costs associated with polling Azure Storage service for delayed messages that need
         /// to be dispatched.
-        /// Do not use this setting if your endpoint required delayed messages, timeouts, or delayed retries.
+        /// Do not use this setting if your endpoint requires delayed messages, timeouts, or delayed retries.
         /// </remarks>
         /// </summary>
         public void DisableDelayedDelivery()
