@@ -24,10 +24,7 @@
 
             settings.SetDefault(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, true);
 
-            var timeoutManagerFeatureDisabled = !settings.IsFeatureEnabled(typeof(TimeoutManager));
-            var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
-
-            if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
+            if (!settings.IsFeatureEnabled(typeof(TimeoutManager)) || settings.GetOrDefault<bool>("Endpoint.SendOnly"))
             {
                 // TimeoutManager is already not used. Indicate to Native Delayed Delivery that we're not in the hybrid mode.
                 settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
