@@ -41,7 +41,7 @@
             {
                 if (delayedDeliveryDisabled)
                 {
-                    throw new Exception("Message dispatch has been requested with a delayed delivery. Remove the 'endpointConfiguration.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.");
+                    throw new Exception("Cannot delay delivery of messages when delayed delivery has been disabled. Remove the 'endpointConfiguration.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.");
                 }
 
                 if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)

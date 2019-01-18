@@ -33,7 +33,7 @@
             }
             catch (Exception exception)
             {
-                Assert.True(exception.Message.Contains("Cannot delay delivery of messages when TimeoutManager is disabled or there is no infrastructure support for delayed messages"));
+                Assert.True(exception.Message.Contains("Cannot delay delivery of messages when delayed delivery has been disabled. Remove the 'endpointConfiguration.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery."));
             }
         }
 
