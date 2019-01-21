@@ -44,7 +44,7 @@ namespace NServiceBus
             }
 
             accounts = new AccountConfigurations();
-            settings.Set<AccountConfigurations>(accounts);
+            settings.Set(accounts);
             return accounts;
         }
     }

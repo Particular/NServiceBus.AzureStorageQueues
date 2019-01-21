@@ -15,17 +15,22 @@
 
     class NativeDelayDelivery
     {
+        readonly bool delayedDeliveryDisabled;
         CloudTable delayedMessagesTable;
 
-        public NativeDelayDelivery(string connectionString, string delayedMessagesTableName)
+        public NativeDelayDelivery(string connectionString, string delayedMessagesTableName, bool delayedDeliveryDisabled)
         {
-            delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
-            // In the constructor to ensure we do not force the calling code to remember to invoke any initialization method.
-            // Also, CreateIfNotExistsAsync() returns BEFORE the table is actually ready to be used, causing 404.
+            this.delayedDeliveryDisabled = delayedDeliveryDisabled;
+            if (!delayedDeliveryDisabled)
+            {
+                delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
+                // In the constructor to ensure we do not force the calling code to remember to invoke any initialization method.
+                // Also, CreateIfNotExistsAsync() returns BEFORE the table is actually ready to be used, causing 404.
 
-            // TODO: original code was calling delayedMessagesTable.CreateIfNotExists(); as it was not affected by the bug the async version had.
-            // In case async version still returns before table is created, add a small delay.
-            delayedMessagesTable.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+                // TODO: Original code was calling delayedMessagesTable.CreateIfNotExists(); as it was not affected by the bug the async version had.
+                // In case async version still returns before table is created, add a small delay.
+                delayedMessagesTable.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+            }
         }
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -34,18 +39,17 @@
             var delay = GetVisibilityDelay(constraints);
             if (delay != null)
             {
+                if (delayedDeliveryDisabled)
+                {
+                    throw new Exception("Cannot delay delivery of messages when delayed delivery has been disabled. Remove the 'endpointConfiguration.UseTransport<AzureStorageQueues>.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.");
+                }
+
                 if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)
                 {
                     throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
                 }
 
                 await ScheduleAt(operation, UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
-                return false;
-            }
-
-            if (TryProcessDelayedRetry(operation, out var operationToSchedule, out var scheduleDate))
-            {
-                await ScheduleAt(operationToSchedule, scheduleDate, cancellationToken).ConfigureAwait(false);
                 return false;
             }
 
@@ -57,16 +61,10 @@
 
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
-            var externalTimeoutManagerAddress = settings.GetOrDefault<string>("NServiceBus.ExternalTimeoutManagerAddress") != null;
-            var timeoutManagerFeatureActive = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Active;
-            var timeoutManagerDisabled = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager);
+            var timeoutManagerFeatureActive = settings.IsFeatureActive(typeof(TimeoutManager));
+            var timeoutManagerShouldBeEnabled = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager);
 
-            if (externalTimeoutManagerAddress)
-            {
-                return StartupCheckResult.Failed("An external timeout manager address cannot be configured because the timeout manager is not being used for delayed delivery.");
-            }
-
-            if (!timeoutManagerDisabled && !timeoutManagerFeatureActive)
+            if (timeoutManagerShouldBeEnabled && !timeoutManagerFeatureActive)
             {
                 return StartupCheckResult.Failed(
                     "The timeout manager is not active, but the transport has not been properly configured for this. "
@@ -96,30 +94,6 @@
         static TimeSpan? ToNullIfNegative(TimeSpan value)
         {
             return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
-        }
-
-        static bool TryProcessDelayedRetry(IOutgoingTransportOperation operation, out UnicastTransportOperation operationToSchedule, out DateTimeOffset scheduleDate)
-        {
-            var messageHeaders = operation.Message.Headers;
-            if (messageHeaders.TryGetValue(TimeoutManagerHeaders.Expire, out var expire))
-            {
-                var expiration = DateTimeExtensions.ToUtcDateTime(expire);
-
-                var destination = messageHeaders[TimeoutManagerHeaders.RouteExpiredTimeoutTo];
-
-                messageHeaders.Remove(TimeoutManagerHeaders.Expire);
-                messageHeaders.Remove(TimeoutManagerHeaders.RouteExpiredTimeoutTo);
-
-                operationToSchedule = new UnicastTransportOperation(operation.Message, destination, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
-
-                scheduleDate = expiration;
-
-                return true;
-            }
-
-            operationToSchedule = null;
-            scheduleDate = default(DateTimeOffset);
-            return false;
         }
 
         Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken)
