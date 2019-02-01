@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Diagnostics;
@@ -37,12 +37,21 @@
         public void Start(PushRuntimeSettings limitations)
         {
             maximumConcurrency = limitations.MaxConcurrency;
+            Logger.Warn(maximumConcurrency.ToString());
             concurrencyLimiter = new SemaphoreSlim(maximumConcurrency, maximumConcurrency);
             cancellationTokenSource = new CancellationTokenSource();
 
             if (!degreeOfReceiveParallelism.HasValue)
             {
-                degreeOfReceiveParallelism = EstimateDegreeOfReceiveParallelism(maximumConcurrency);
+                if (maximumConcurrency <= messageReceiver.BatchSize)
+                {
+                    degreeOfReceiveParallelism = 1;
+                    messageReceiver.BatchSize = maximumConcurrency;
+                }
+                else
+                {
+                    degreeOfReceiveParallelism = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(maximumConcurrency) / messageReceiver.BatchSize));
+                }
             }
 
             messagePumpTasks = new Task[degreeOfReceiveParallelism.Value];
@@ -81,15 +90,6 @@
             }
 
             concurrencyLimiter.Dispose();
-        }
-
-        static int EstimateDegreeOfReceiveParallelism(int maxConcurrency)
-        {
-            /*
-             * Degree of parallelism = square root of MaxConcurrency (rounded)
-             *  (concurrency 1 = 1, concurrency 10 = 3, concurrency 20 = 4, concurrency 50 = 7, concurrency 100 [default] = 10, concurrency 200 = 14, concurrency 1000 = 32)
-             */
-            return Math.Min(Convert.ToInt32(Math.Round(Math.Sqrt(Convert.ToDouble(maxConcurrency)))), AzureStorageTransportExtensions.MaxDegreeOfReceiveParallelism);
         }
 
         [DebuggerNonUserCode]
