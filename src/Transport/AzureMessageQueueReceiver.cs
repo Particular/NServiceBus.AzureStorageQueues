@@ -26,11 +26,6 @@ namespace NServiceBus.AzureStorageQueues
         /// </summary>
         public TimeSpan MessageInvisibleTime { get; set; }
 
-        /// <summary>
-        /// Controls the number of messages that will be read in bulk from the queue
-        /// </summary>
-        public int BatchSize { get; set; }
-
         public async Task Init(string inputQueueAddress, string errorQueueAddress)
         {
             inputQueue = await GetQueue(inputQueueAddress).ConfigureAwait(false);
@@ -50,25 +45,17 @@ namespace NServiceBus.AzureStorageQueues
             return queue;
         }
 
-        internal async Task<List<MessageRetrieved>> Receive(BackoffStrategy backoffStrategy, CancellationToken token)
+        internal async Task Receive(int batchSize, List<MessageRetrieved> receivedMessages, BackoffStrategy backoffStrategy, CancellationToken token)
         {
-            var rawMessages = await inputQueue.GetMessagesAsync(BatchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
+            var rawMessages = await inputQueue.GetMessagesAsync(batchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
 
-            var messageFound = false;
-            List<MessageRetrieved> messages = null;
+            // ReSharper disable once LoopCanBeConvertedToQuery
             foreach (var rawMessage in rawMessages)
             {
-                if (!messageFound)
-                {
-                    messages = new List<MessageRetrieved>(BatchSize);
-                    messageFound = true;
-                }
-
-                messages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue, errorQueue));
+                receivedMessages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue, errorQueue));
             }
 
-            await backoffStrategy.OnBatch(messageFound ? messages.Count : 0, token).ConfigureAwait(false);
-            return messageFound ? messages : noMessagesFound;
+            await backoffStrategy.OnBatch(receivedMessages.Count, token).ConfigureAwait(false);
         }
 
         IMessageEnvelopeUnwrapper unwrapper;
@@ -80,7 +67,5 @@ namespace NServiceBus.AzureStorageQueues
         CloudQueueClient client;
 
         public string QueueName => inputQueue.Name;
-
-        static List<MessageRetrieved> noMessagesFound = new List<MessageRetrieved>();
     }
 }
