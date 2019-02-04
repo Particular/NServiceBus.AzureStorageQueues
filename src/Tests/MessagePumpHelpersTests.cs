@@ -32,7 +32,18 @@ namespace NServiceBus.AzureStorageQueues.Tests
                     null, null, 33, new List<ReceiverConfiguration>
                     {
                         new ReceiverConfiguration(batchSize: 32),
-                        new ReceiverConfiguration(batchSize: 2)
+                        new ReceiverConfiguration(batchSize: 8)
+                    }
+                };
+
+                yield return new object[]
+                {
+                    null, null, 105, new List<ReceiverConfiguration>
+                    {
+                        new ReceiverConfiguration(batchSize: 32),
+                        new ReceiverConfiguration(batchSize: 32),
+                        new ReceiverConfiguration(batchSize: 32),
+                        new ReceiverConfiguration(batchSize: 30)
                     }
                 };
 
@@ -48,6 +59,7 @@ namespace NServiceBus.AzureStorageQueues.Tests
                 {
                     5, null, 13, new List<ReceiverConfiguration>
                     {
+                        new ReceiverConfiguration(batchSize: 5),
                         new ReceiverConfiguration(batchSize: 5),
                         new ReceiverConfiguration(batchSize: 5),
                         new ReceiverConfiguration(batchSize: 5),
@@ -85,8 +97,8 @@ namespace NServiceBus.AzureStorageQueues.Tests
                 {
                     null, 2, 32, new List<ReceiverConfiguration>
                     {
-                        new ReceiverConfiguration(batchSize: 20),
-                        new ReceiverConfiguration(batchSize: 20)
+                        new ReceiverConfiguration(batchSize: 19),
+                        new ReceiverConfiguration(batchSize: 19)
                     }
                 };
 
