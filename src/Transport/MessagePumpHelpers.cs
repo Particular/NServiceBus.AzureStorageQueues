@@ -9,6 +9,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public static ReadOnlyCollection<ReceiverConfiguration> DetermineReceiverConfiguration(int? receiveBatchSize, int? degreeOfReceiveParallelism, int maximumConcurrency)
         {
             var maximumBatchSize = receiveBatchSize ?? DefaultConfigurationValues.DefaultBatchSize;
+            // make sure we get 20% more to decrease latency and fetch overhead
+            var maximumConcurrencyWithOverfetching = Convert.ToInt32(Math.Ceiling(ReceiveBatchMultiplier * maximumConcurrency));
             int receiveParallelism;
 
             if (!degreeOfReceiveParallelism.HasValue)
@@ -19,7 +21,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 }
                 else
                 {
-                    receiveParallelism = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(maximumConcurrency) / maximumBatchSize));
+                    receiveParallelism = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(maximumConcurrencyWithOverfetching) / maximumBatchSize));
                 }
             }
             else
@@ -28,7 +30,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
 
             var receiverConfigurations = new List<ReceiverConfiguration>();
-            var remainder = maximumConcurrency;
+            var remainder = maximumConcurrencyWithOverfetching;
             for (var i = 0; i < receiveParallelism; i++)
             {
                 int? batchSizeForReceiver = null;
@@ -36,7 +38,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 if (degreeOfReceiveParallelism.HasValue)
                 {
                     // make sure we get 20% more to decrease latency and fetch overhead
-                    batchSizeForReceiver = Math.Min(maximumBatchSize, Convert.ToInt32(Math.Max(1, Math.Ceiling(ReceiveBatchMultiplier * (maximumConcurrency / receiveParallelism)))));
+                    batchSizeForReceiver = Math.Min(maximumBatchSize, Math.Max(1, Convert.ToInt32(Math.Ceiling(Convert.ToDouble(maximumConcurrencyWithOverfetching / receiveParallelism)))));
                 }
 
                 // if the user has chosen a batch size value always respect that even when degree of parallelism has been set
@@ -54,8 +56,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     }
                     else
                     {
-                        // make sure we get 20% more to decrease latency and fetch overhead
-                        batchSizeForReceiver = Math.Min(maximumBatchSize, Convert.ToInt32(Math.Ceiling(Convert.ToDouble(remainder) * ReceiveBatchMultiplier)));
+                        batchSizeForReceiver = Math.Min(maximumBatchSize, remainder);
                     }
 
                     remainder -= maximumBatchSize;
