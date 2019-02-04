@@ -22,33 +22,19 @@
             this.connectionString = connectionString;
             serializer = BuildSerializer(settings);
 
-            var timeoutManagerFeatureDisabled = settings.GetOrDefault<FeatureState>(typeof(TimeoutManager).FullName) == FeatureState.Disabled;
-            var sendOnlyEndpoint = settings.GetOrDefault<bool>("Endpoint.SendOnly");
+            settings.SetDefault(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, true);
 
-            if (timeoutManagerFeatureDisabled || sendOnlyEndpoint)
+            if (!settings.IsFeatureEnabled(typeof(TimeoutManager)) || settings.GetOrDefault<bool>("Endpoint.SendOnly"))
             {
                 // TimeoutManager is already not used. Indicate to Native Delayed Delivery that we're not in the hybrid mode.
-                settings.Set(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager, true);
+                settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
             }
 
-            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings));
+            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings), settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery));
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
 
-        public override IEnumerable<Type> DeliveryConstraints
-        {
-            get
-            {
-                yield return typeof(DiscardIfNotReceivedBefore);
-                yield return typeof(NonDurableDelivery);
-
-                if (DelayedDeliveryCanBeUsed())
-                {
-                    yield return typeof(DoNotDeliverBefore);
-                    yield return typeof(DelayDeliveryWith);
-                }
-            }
-        }
+        public override IEnumerable<Type> DeliveryConstraints => new List<Type> {typeof(DiscardIfNotReceivedBefore), typeof(NonDurableDelivery), typeof(DoNotDeliverBefore), typeof(DelayDeliveryWith)};
 
         public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
         public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
@@ -79,10 +65,6 @@
             var hashName = BitConverter.ToString(hashedName).Replace("-", string.Empty);
             return "delays" + hashName.ToLower();
         }
-
-        bool DelayedDeliveryCanBeUsed() =>
-            settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableTimeoutManager)
-            && settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 
         bool PollerCanBeUsed() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 

@@ -10,11 +10,10 @@
     public class When_delaying_messages_and_delayed_delivery_is_disabled : NServiceBusAcceptanceTest
     {
         [Test]
-        public async Task Should_throw()
+        public void Should_throw()
         {
-            try
-            {
-                var context = await Scenario.Define<Context>()
+            Context context = null;
+            var exception = Assert.ThrowsAsync<Exception>(async () => await Scenario.Define<Context>(ctx => context = ctx)
                     .WithEndpoint<Endpoint>(b => b.When((session, ctx) =>
                     {
                         var delay = TimeSpan.FromSeconds(2);
@@ -27,14 +26,11 @@
                         return session.Send(new MyMessage(), options);
                     }))
                     .Done(ctx => true)
-                    .Run();
+                    .Run());
 
-                Assert.IsFalse(context.WasCalled, "Endpoint's handler should never be invoked.");
-            }
-            catch (Exception exception)
-            {
-                Assert.True(exception.Message.Contains("Cannot delay delivery of messages when TimeoutManager is disabled or there is no infrastructure support for delayed messages"));
-            }
+            Assert.AreEqual("Cannot delay delivery of messages when delayed delivery has been disabled. Remove the 'endpointConfiguration.UseTransport<AzureStorageQueues>.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.", exception.Message, "Exception message does not match");
+
+            Assert.IsFalse(context.WasCalled, "Endpoint's handler should never be invoked.");
         }
 
         public class Context : ScenarioContext
