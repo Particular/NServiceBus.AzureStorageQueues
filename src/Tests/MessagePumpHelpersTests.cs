@@ -8,7 +8,7 @@ namespace NServiceBus.AzureStorageQueues.Tests
     [TestFixture]
     class MessagePumpHelpersTests
     {
-        public static IEnumerable<object[]> Configuration
+        static IEnumerable<object[]> ConcurrencyBased
         {
             get
             {
@@ -17,7 +17,7 @@ namespace NServiceBus.AzureStorageQueues.Tests
                 {
                     null, null, 1, new List<ReceiverConfiguration>
                     {
-                        new ReceiverConfiguration(batchSize: 2)
+                        new ReceiverConfiguration(batchSize: 1)
                     }
                 };
                 yield return new object[]
@@ -25,7 +25,6 @@ namespace NServiceBus.AzureStorageQueues.Tests
                     null, null, 32, new List<ReceiverConfiguration>
                     {
                         new ReceiverConfiguration(batchSize: 32),
-                        new ReceiverConfiguration(batchSize: 7)
                     }
                 };
                 yield return new object[]
@@ -33,7 +32,7 @@ namespace NServiceBus.AzureStorageQueues.Tests
                     null, null, 33, new List<ReceiverConfiguration>
                     {
                         new ReceiverConfiguration(batchSize: 32),
-                        new ReceiverConfiguration(batchSize: 8)
+                        new ReceiverConfiguration(batchSize: 1)
                     }
                 };
 
@@ -44,10 +43,16 @@ namespace NServiceBus.AzureStorageQueues.Tests
                         new ReceiverConfiguration(batchSize: 32),
                         new ReceiverConfiguration(batchSize: 32),
                         new ReceiverConfiguration(batchSize: 32),
-                        new ReceiverConfiguration(batchSize: 30)
+                        new ReceiverConfiguration(batchSize: 9)
                     }
                 };
+            }
+        }
 
+        static IEnumerable<object[]> FixedBatchSize
+        {
+            get
+            {
                 // explicit batch size
                 yield return new object[]
                 {
@@ -62,8 +67,7 @@ namespace NServiceBus.AzureStorageQueues.Tests
                     {
                         new ReceiverConfiguration(batchSize: 5),
                         new ReceiverConfiguration(batchSize: 5),
-                        new ReceiverConfiguration(batchSize: 5),
-                        new ReceiverConfiguration(batchSize: 5),
+                        new ReceiverConfiguration(batchSize: 5)
                     }
                 };
                 yield return new object[]
@@ -75,6 +79,13 @@ namespace NServiceBus.AzureStorageQueues.Tests
                     }
                 };
 
+            }
+        }
+
+        static IEnumerable<object[]> FixedDegreeOfParallelism
+        {
+            get
+            {
                 // explicit degree of parallelism
                 yield return new object[]
                 {
@@ -89,8 +100,8 @@ namespace NServiceBus.AzureStorageQueues.Tests
                 {
                     null, 2, 15, new List<ReceiverConfiguration>
                     {
-                        new ReceiverConfiguration(batchSize: 9),
-                        new ReceiverConfiguration(batchSize: 9)
+                        new ReceiverConfiguration(batchSize: 8),
+                        new ReceiverConfiguration(batchSize: 8)
                     }
                 };
 
@@ -98,8 +109,8 @@ namespace NServiceBus.AzureStorageQueues.Tests
                 {
                     null, 2, 32, new List<ReceiverConfiguration>
                     {
-                        new ReceiverConfiguration(batchSize: 19),
-                        new ReceiverConfiguration(batchSize: 19)
+                        new ReceiverConfiguration(batchSize: 16),
+                        new ReceiverConfiguration(batchSize: 16)
                     }
                 };
 
@@ -107,8 +118,8 @@ namespace NServiceBus.AzureStorageQueues.Tests
                 {
                     null, 2, 62, new List<ReceiverConfiguration>
                     {
-                        new ReceiverConfiguration(batchSize: 32),
-                        new ReceiverConfiguration(batchSize: 32)
+                        new ReceiverConfiguration(batchSize: 31),
+                        new ReceiverConfiguration(batchSize: 31)
                     }
                 };
 
@@ -129,7 +140,13 @@ namespace NServiceBus.AzureStorageQueues.Tests
                         new ReceiverConfiguration(batchSize: 32)
                     }
                 };
+            }
+        }
 
+        static IEnumerable<object[]> FixedDegreeOfParallelismAndBatchSize
+        {
+            get
+            {
                 // control both
                 yield return new object[]
                 {
@@ -151,8 +168,44 @@ namespace NServiceBus.AzureStorageQueues.Tests
         }
 
         [Test]
-        [TestCaseSource("Configuration")]
-        public void Should_determine_receiver_configuration(int? receiveBatchSize, int? degreeOfReceiverParallelism, int maximumConcurrency, IEnumerable<ReceiverConfiguration> expected)
+        [TestCaseSource("ConcurrencyBased")]
+        public void Should_calculate_degree_of_parallelism_and_batch_sized_based_on_concurrency(int? receiveBatchSize, int? degreeOfReceiverParallelism, int maximumConcurrency, IEnumerable<ReceiverConfiguration> expected)
+        {
+            var result = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiverParallelism, maximumConcurrency);
+
+            var expectedString = string.Join(";", expected.Select(x => x.BatchSize));
+            var resultString = string.Join(";", result.Select(x => x.BatchSize));
+
+            CollectionAssert.AreEquivalent(expected, result, $"Expected: {expectedString}\r\nResult: {resultString}");
+        }
+
+        [Test]
+        [TestCaseSource("FixedBatchSize")]
+        public void Should_calculate_degree_of_parallelism_based_on_fixed_batch_size(int? receiveBatchSize, int? degreeOfReceiverParallelism, int maximumConcurrency, IEnumerable<ReceiverConfiguration> expected)
+        {
+            var result = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiverParallelism, maximumConcurrency);
+
+            var expectedString = string.Join(";", expected.Select(x => x.BatchSize));
+            var resultString = string.Join(";", result.Select(x => x.BatchSize));
+
+            CollectionAssert.AreEquivalent(expected, result, $"Expected: {expectedString}\r\nResult: {resultString}");
+        }
+
+        [Test]
+        [TestCaseSource("FixedDegreeOfParallelism")]
+        public void Should_calculate_batch_size_based_on_fixed_degree_of_parallelism(int? receiveBatchSize, int? degreeOfReceiverParallelism, int maximumConcurrency, IEnumerable<ReceiverConfiguration> expected)
+        {
+            var result = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiverParallelism, maximumConcurrency);
+
+            var expectedString = string.Join(";", expected.Select(x => x.BatchSize));
+            var resultString = string.Join(";", result.Select(x => x.BatchSize));
+
+            CollectionAssert.AreEquivalent(expected, result, $"Expected: {expectedString}\r\nResult: {resultString}");
+        }
+
+        [Test]
+        [TestCaseSource("FixedDegreeOfParallelismAndBatchSize")]
+        public void Should_use_fixed_batch_size_and_degree_if_provided(int? receiveBatchSize, int? degreeOfReceiverParallelism, int maximumConcurrency, IEnumerable<ReceiverConfiguration> expected)
         {
             var result = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiverParallelism, maximumConcurrency);
 
