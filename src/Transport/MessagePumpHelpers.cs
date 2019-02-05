@@ -8,36 +8,36 @@ namespace NServiceBus.Transport.AzureStorageQueues
     {
         public static ReadOnlyCollection<ReceiverConfiguration> DetermineReceiverConfiguration(int? receiveBatchSize, int? degreeOfReceiveParallelism, int maximumConcurrency)
         {
-            // When user overrides both paramters we stick with user choices
+            // When user overrides both parameters we stick with user choices
             if (receiveBatchSize.HasValue && degreeOfReceiveParallelism.HasValue)
             {
                 return BuildConfiguration(degreeOfReceiveParallelism.Value * receiveBatchSize.Value, receiveBatchSize.Value);
             }
 
-            var totalMessagesWithOverfetching = Convert.ToInt32(Math.Ceiling(ReceiveBatchMultiplier * maximumConcurrency));
+            var totalMessagesWithOverfetching = Math.Ceiling(ReceiveBatchMultiplier * maximumConcurrency);
 
-            // By default we overfetch by 20%
+            // By default we don't over-fetch
             if (receiveBatchSize.HasValue == false && degreeOfReceiveParallelism.HasValue == false)
             {
-                return BuildConfiguration(totalMessagesWithOverfetching, DefaultConfigurationValues.DefaultBatchSize);
+                return BuildConfiguration(Convert.ToInt32(totalMessagesWithOverfetching), DefaultConfigurationValues.DefaultBatchSize);
             }
 
             int maximumBatchSize;
             int receiveParallelism;
 
-            // In other cases we adujst unset paramter to make sure we do not over-fetch by more than 20%
+            // In other cases we adjust unset parameter to make sure we do not over-fetch by more than 20%
             if (receiveBatchSize.HasValue == false)
             {
                 maximumBatchSize = DefaultConfigurationValues.DefaultBatchSize;
                 receiveParallelism = degreeOfReceiveParallelism.Value;
 
-                var batchSizeForReceiver = Math.Min(maximumBatchSize, Math.Max(1, Convert.ToInt32(Math.Ceiling(Convert.ToDouble(totalMessagesWithOverfetching / receiveParallelism)))));
+                var batchSizeForReceiver = Math.Min(maximumBatchSize, Math.Max(1, Convert.ToInt32(Math.Ceiling(totalMessagesWithOverfetching / receiveParallelism))));
 
                 return BuildConfiguration(receiveParallelism * batchSizeForReceiver, batchSizeForReceiver);
             }
 
             maximumBatchSize = receiveBatchSize.Value;
-            receiveParallelism = Math.Max(1, Convert.ToInt32(Math.Ceiling(Convert.ToDouble(totalMessagesWithOverfetching) / maximumBatchSize)));
+            receiveParallelism = Math.Max(1, Convert.ToInt32(Math.Ceiling(totalMessagesWithOverfetching / maximumBatchSize)));
 
             return BuildConfiguration(receiveParallelism * receiveBatchSize.Value, receiveBatchSize.Value);
         }
@@ -57,6 +57,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return new ReadOnlyCollection<ReceiverConfiguration>(configurations);
         }
 
-        static readonly double ReceiveBatchMultiplier = 1.2;
+        // currently we are doing no over-fetching, this could be exposed in the future if needed.
+        const double ReceiveBatchMultiplier = 1.0;
     }
 }
