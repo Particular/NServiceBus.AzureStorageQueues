@@ -42,7 +42,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             concurrencyLimiter = new SemaphoreSlim(maximumConcurrency, maximumConcurrency);
             cancellationTokenSource = new CancellationTokenSource();
 
-
             var receiverConfigurations = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiveParallelism, maximumConcurrency);
 
             messagePumpTasks = new Task[receiverConfigurations.Count];
@@ -108,6 +107,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             {
                 try
                 {
+
                     await messageReceiver.Receive(batchSizeForReceive, receivedMessages, backoffStrategy, cancellationTokenSource.Token).ConfigureAwait(false);
                     circuitBreaker.Success();
 

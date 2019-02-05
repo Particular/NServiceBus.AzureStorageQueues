@@ -8,64 +8,53 @@ namespace NServiceBus.Transport.AzureStorageQueues
     {
         public static ReadOnlyCollection<ReceiverConfiguration> DetermineReceiverConfiguration(int? receiveBatchSize, int? degreeOfReceiveParallelism, int maximumConcurrency)
         {
-            var maximumBatchSize = receiveBatchSize ?? DefaultConfigurationValues.DefaultBatchSize;
-            // make sure we get 20% more to decrease latency and fetch overhead
-            var maximumConcurrencyWithOverfetching = Convert.ToInt32(Math.Ceiling(ReceiveBatchMultiplier * maximumConcurrency));
+            // When user overrides both paramters we stick with user choices
+            if (receiveBatchSize.HasValue && degreeOfReceiveParallelism.HasValue)
+            {
+                return BuildConfiguration(degreeOfReceiveParallelism.Value * receiveBatchSize.Value, receiveBatchSize.Value);
+            }
+
+            var totalMessagesWithOverfetching = Convert.ToInt32(Math.Ceiling(ReceiveBatchMultiplier * maximumConcurrency));
+
+            // By default we overfetch by 20%
+            if (receiveBatchSize.HasValue == false && degreeOfReceiveParallelism.HasValue == false)
+            {
+                return BuildConfiguration(totalMessagesWithOverfetching, DefaultConfigurationValues.DefaultBatchSize);
+            }
+
+            int maximumBatchSize;
             int receiveParallelism;
 
-            if (!degreeOfReceiveParallelism.HasValue)
+            // In other cases we adujst unset paramter to make sure we do not over-fetch by more than 20%
+            if (receiveBatchSize.HasValue == false)
             {
-                if (maximumConcurrency <= maximumBatchSize)
-                {
-                    receiveParallelism = 1;
-                }
-                else
-                {
-                    receiveParallelism = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(maximumConcurrencyWithOverfetching) / maximumBatchSize));
-                }
-            }
-            else
-            {
+                maximumBatchSize = DefaultConfigurationValues.DefaultBatchSize;
                 receiveParallelism = degreeOfReceiveParallelism.Value;
+
+                var batchSizeForReceiver = Math.Min(maximumBatchSize, Math.Max(1, Convert.ToInt32(Math.Ceiling(Convert.ToDouble(totalMessagesWithOverfetching / receiveParallelism)))));
+
+                return BuildConfiguration(receiveParallelism * batchSizeForReceiver, batchSizeForReceiver);
             }
 
-            var receiverConfigurations = new List<ReceiverConfiguration>();
-            var remainder = maximumConcurrencyWithOverfetching;
-            for (var i = 0; i < receiveParallelism; i++)
+            maximumBatchSize = receiveBatchSize.Value;
+            receiveParallelism = Math.Max(1, Convert.ToInt32(Math.Ceiling(Convert.ToDouble(totalMessagesWithOverfetching) / maximumBatchSize)));
+
+            return BuildConfiguration(receiveParallelism * receiveBatchSize.Value, receiveBatchSize.Value);
+        }
+
+        static ReadOnlyCollection<ReceiverConfiguration> BuildConfiguration(int totalMessages, int maxBatchSize)
+        {
+            var configurations = new List<ReceiverConfiguration>();
+
+            while (totalMessages > 0)
             {
-                int? batchSizeForReceiver = null;
-                // in case a user set the degree of parallelism try to determine the batch size in accordance to that but cap it at max DefaultConfigurationValues.DefaultBatchSize
-                if (degreeOfReceiveParallelism.HasValue)
-                {
-                    // make sure we get 20% more to decrease latency and fetch overhead
-                    batchSizeForReceiver = Math.Min(maximumBatchSize, Math.Max(1, Convert.ToInt32(Math.Ceiling(Convert.ToDouble(maximumConcurrencyWithOverfetching / receiveParallelism)))));
-                }
+                var batchSize = Math.Min(maxBatchSize, totalMessages);
+                configurations.Add(new ReceiverConfiguration(batchSize));
 
-                // if the user has chosen a batch size value always respect that even when degree of parallelism has been set
-                if (receiveBatchSize.HasValue)
-                {
-                    batchSizeForReceiver = receiveBatchSize.Value;
-                }
-
-                // if batchSizeForReceiver hasn't been calculated yet try to calculate it
-                if (!batchSizeForReceiver.HasValue)
-                {
-                    if (remainder > maximumBatchSize)
-                    {
-                        batchSizeForReceiver = maximumBatchSize;
-                    }
-                    else
-                    {
-                        batchSizeForReceiver = Math.Min(maximumBatchSize, remainder);
-                    }
-
-                    remainder -= maximumBatchSize;
-                }
-
-                receiverConfigurations.Add(new ReceiverConfiguration(batchSizeForReceiver.Value));
+                totalMessages -= batchSize;
             }
 
-            return new ReadOnlyCollection<ReceiverConfiguration>(receiverConfigurations);
+            return new ReadOnlyCollection<ReceiverConfiguration>(configurations);
         }
 
         static readonly double ReceiveBatchMultiplier = 1.2;

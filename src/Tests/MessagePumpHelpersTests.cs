@@ -24,7 +24,8 @@ namespace NServiceBus.AzureStorageQueues.Tests
                 {
                     null, null, 32, new List<ReceiverConfiguration>
                     {
-                        new ReceiverConfiguration(batchSize: 32)
+                        new ReceiverConfiguration(batchSize: 32),
+                        new ReceiverConfiguration(batchSize: 7)
                     }
                 };
                 yield return new object[]
