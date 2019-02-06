@@ -109,8 +109,6 @@
                     var receiver = new AzureMessageQueueReceiver(unwrapper, client, addressGenerator)
                     {
                         MessageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
-
-                        BatchSize = settings.Get<int>(WellKnownConfigurationKeys.ReceiverBatchSize)
                     };
 
                     int? degreeOfReceiveParallelism = null;
@@ -120,7 +118,14 @@
                         degreeOfReceiveParallelism = parallelism;
                     }
 
-                    return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, maximumWaitTime, peekInterval);
+                    int? batchSize = null;
+                    int size;
+                    if (settings.TryGet(WellKnownConfigurationKeys.ReceiverBatchSize, out size))
+                    {
+                        batchSize = size;
+                    }
+
+                    return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, batchSize, maximumWaitTime, peekInterval);
                 },
                 () => new AzureMessageQueueCreator(client, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
