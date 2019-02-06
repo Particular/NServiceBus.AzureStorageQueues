@@ -3,6 +3,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using NServiceBus.AzureStorageQueues;
 
     static class MessagePumpHelpers
     {
