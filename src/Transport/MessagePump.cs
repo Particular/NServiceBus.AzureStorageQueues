@@ -1,17 +1,18 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
     using Logging;
-    using Transport;
 
     class MessagePump : IPushMessages, IDisposable
     {
-        public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing, int? degreeOfReceiveParallelism, TimeSpan maximumWaitTime, TimeSpan peekInterval)
+        public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing, int? degreeOfReceiveParallelism, int? receiveBatchSize, TimeSpan maximumWaitTime, TimeSpan peekInterval)
         {
+            this.receiveBatchSize = receiveBatchSize;
             this.degreeOfReceiveParallelism = degreeOfReceiveParallelism;
             this.maximumWaitTime = maximumWaitTime;
             this.peekInterval = peekInterval;
@@ -37,22 +38,21 @@
         public void Start(PushRuntimeSettings limitations)
         {
             maximumConcurrency = limitations.MaxConcurrency;
+            Logger.Warn(maximumConcurrency.ToString());
             concurrencyLimiter = new SemaphoreSlim(maximumConcurrency, maximumConcurrency);
             cancellationTokenSource = new CancellationTokenSource();
 
-            if (!degreeOfReceiveParallelism.HasValue)
-            {
-                degreeOfReceiveParallelism = EstimateDegreeOfReceiveParallelism(maximumConcurrency);
-            }
+            var receiverConfigurations = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiveParallelism, maximumConcurrency);
 
-            messagePumpTasks = new Task[degreeOfReceiveParallelism.Value];
+            messagePumpTasks = new Task[receiverConfigurations.Count];
 
             cancellationToken = cancellationTokenSource.Token;
 
-            for (var i = 0; i < degreeOfReceiveParallelism; i++)
+            for (var i = 0; i < receiverConfigurations.Count; i++)
             {
                 var backoffStrategy = new BackoffStrategy(peekInterval, maximumWaitTime);
-                messagePumpTasks[i] = Task.Run(() => ProcessMessages(backoffStrategy), CancellationToken.None);
+                var batchSizeForReceive = receiverConfigurations[i].BatchSize;
+                messagePumpTasks[i] = Task.Run(() => ProcessMessages(batchSizeForReceive, backoffStrategy), CancellationToken.None);
             }
         }
 
@@ -83,23 +83,14 @@
             concurrencyLimiter.Dispose();
         }
 
-        static int EstimateDegreeOfReceiveParallelism(int maxConcurrency)
-        {
-            /*
-             * Degree of parallelism = square root of MaxConcurrency (rounded)
-             *  (concurrency 1 = 1, concurrency 10 = 3, concurrency 20 = 4, concurrency 50 = 7, concurrency 100 [default] = 10, concurrency 200 = 14, concurrency 1000 = 32)
-             */
-            return Math.Min(Convert.ToInt32(Math.Round(Math.Sqrt(Convert.ToDouble(maxConcurrency)))), AzureStorageTransportExtensions.MaxDegreeOfReceiveParallelism);
-        }
-
         [DebuggerNonUserCode]
-        async Task ProcessMessages(BackoffStrategy backoffStrategy)
+        async Task ProcessMessages(int batchSizeForReceive, BackoffStrategy backoffStrategy)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    await InnerProcessMessages(backoffStrategy).ConfigureAwait(false);
+                    await InnerProcessMessages(batchSizeForReceive, backoffStrategy).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -108,16 +99,19 @@
             }
         }
 
-        async Task InnerProcessMessages(BackoffStrategy backoffStrategy)
+        async Task InnerProcessMessages(int batchSizeForReceive, BackoffStrategy backoffStrategy)
         {
+            var receivedMessages = new List<MessageRetrieved>(batchSizeForReceive);
+
             while (!cancellationTokenSource.IsCancellationRequested)
             {
                 try
                 {
-                    var retrieved = await messageReceiver.Receive(backoffStrategy, cancellationTokenSource.Token).ConfigureAwait(false);
+
+                    await messageReceiver.Receive(batchSizeForReceive, receivedMessages, backoffStrategy, cancellationTokenSource.Token).ConfigureAwait(false);
                     circuitBreaker.Success();
 
-                    foreach (var message in retrieved)
+                    foreach (var message in receivedMessages)
                     {
                         await concurrencyLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -138,6 +132,10 @@
                 {
                     Logger.Warn("Receiving from the queue failed", ex);
                     await circuitBreaker.Failure(ex).ConfigureAwait(false);
+                }
+                finally
+                {
+                    receivedMessages.Clear();
                 }
             }
         }
@@ -169,6 +167,9 @@
             }
         }
 
+        readonly TimeSpan maximumWaitTime;
+        readonly TimeSpan peekInterval;
+
         ReceiveStrategy receiveStrategy;
 
         AzureStorageAddressingSettings addressing;
@@ -183,8 +184,7 @@
         Task[] messagePumpTasks;
         int maximumConcurrency;
         int? degreeOfReceiveParallelism;
-        readonly TimeSpan maximumWaitTime;
-        readonly TimeSpan peekInterval;
+        int? receiveBatchSize;
         static ILog Logger = LogManager.GetLogger<MessagePump>();
         static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
