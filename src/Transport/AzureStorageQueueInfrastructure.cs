@@ -119,7 +119,8 @@
                     }
 
                     int? batchSize = null;
-                    if (settings.TryGet<int>(WellKnownConfigurationKeys.ReceiverBatchSize, out var size))
+                    int size;
+                    if (settings.TryGet(WellKnownConfigurationKeys.ReceiverBatchSize, out size))
                     {
                         batchSize = size;
                     }
