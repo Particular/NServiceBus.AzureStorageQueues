@@ -38,7 +38,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public void Start(PushRuntimeSettings limitations)
         {
             maximumConcurrency = limitations.MaxConcurrency;
-            Logger.Warn(maximumConcurrency.ToString());
             concurrencyLimiter = new SemaphoreSlim(maximumConcurrency, maximumConcurrency);
             cancellationTokenSource = new CancellationTokenSource();
 
