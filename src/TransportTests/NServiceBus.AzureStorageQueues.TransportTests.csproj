@@ -17,17 +17,14 @@
     <PackageReference Include="NUnit3TestAdapter" Version="3.12.0" />
     <PackageReference Include="NUnit" Version="3.11.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
-    <PackageReference Include="NServiceBus.TransportTests.Sources" Version="7.1.6" GeneratePathProperty="true" />
+    <PackageReference Include="NServiceBus.TransportTests.Sources" Version="7.1.6"/>
   </ItemGroup>
 
   <!-- Replaces transport tests/infrastructure from Core 7.1.6. See KTLO issue https://github.com/Particular/KeepTheLightsOn/issues/218  -->
   <ItemGroup>
-    <Compile Remove="$(PkgNServiceBus_TransportTests_Sources)\**\When_on_error_throws.cs" />
-    <Compile Remove="$(PkgNServiceBus_TransportTests_Sources)\**\NServiceBusTransportTest.cs" />
-    <Compile Remove="$(PkgNServiceBus_TransportTests_Sources)\**\TransportTestLoggerFactory.cs" />
-    <Compile Include="NServiceBusTransportTest.cs" />
-    <Compile Include="TransportTestLoggerFactory.cs" />
-    <Compile Include="When_on_error_throws.cs" />
+    <Compile Remove="\**\NServiceBus.TransportTests.Sources\**\When_on_error_throws.cs" />
+    <Compile Remove="\**\NServiceBus.TransportTests.Sources\**\NServiceBusTransportTest.cs" />
+    <Compile Remove="\**\NServiceBus.TransportTests.Sources\**\TransportTestLoggerFactory.cs" />
   </ItemGroup>
 
   <ItemGroup>
