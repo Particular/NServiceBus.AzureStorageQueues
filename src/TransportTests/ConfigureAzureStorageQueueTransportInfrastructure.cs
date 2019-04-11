@@ -9,7 +9,6 @@ using NServiceBus.Serialization;
 using NServiceBus.Settings;
 using NServiceBus.TransportTests;
 using NServiceBus.Unicast.Messages;
-using NUnit.Framework;
 
 public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTransportInfrastructure
 {
@@ -25,12 +24,6 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
             registry = (MessageMetadataRegistry)Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, new object[] { new Func<Type, bool>(t => conventions.IsMessageType(t)) }, CultureInfo.InvariantCulture);
 
             settings.Set(registry);
-        }
-
-        var methodName = TestContext.CurrentContext.Test.MethodName;
-        if (methodName == nameof(When_on_error_throws.Should_reinvoke_on_error_with_original_exception))
-        {
-            throw new IgnoreException("ASQ uses a circuit breaker that is triggered after specific period of time. Critical errors are not reported immediately");
         }
 
         settings.Set(AzureStorageQueueTransport.SerializerSettingsKey, Tuple.Create<SerializationDefinition, SettingsHolder>(new XmlSerializer(), settings));
