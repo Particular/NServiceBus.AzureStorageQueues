@@ -5,7 +5,6 @@
     using System.Threading;
     using System.Threading.Tasks;
     using AzureStorageQueues;
-    using ConsistencyGuarantees;
     using Logging;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;

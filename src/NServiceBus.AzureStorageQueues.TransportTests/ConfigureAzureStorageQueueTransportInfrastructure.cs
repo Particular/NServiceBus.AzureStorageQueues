@@ -8,7 +8,6 @@ using NServiceBus.Logging;
 using NServiceBus.Settings;
 using NServiceBus.TransportTests;
 using NServiceBus.Unicast.Messages;
-using NUnit.Framework;
 
 public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTransportInfrastructure
 {

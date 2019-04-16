@@ -11,6 +11,7 @@
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>PCR0001</NoWarn>
+    <LangVersion>7</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
