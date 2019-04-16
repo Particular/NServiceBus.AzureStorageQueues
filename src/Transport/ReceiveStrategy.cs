@@ -9,7 +9,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     {
         public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message);
 
-        public static ReceiveStrategy BuildReceiveStrategy(Func<MessageContext, Task> pipe, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, TransportTransactionMode transactionMode)
+        public static ReceiveStrategy BuildReceiveStrategy(Func<MessageContext, Task> pipe, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, TransportTransactionMode transactionMode, CriticalError criticalError)
         {
             // ReSharper disable once SwitchStatementMissingSomeCases
             switch (transactionMode)
@@ -17,7 +17,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 case TransportTransactionMode.None:
                     return new AtMostOnceReceiveStrategy(pipe, errorPipe);
                 case TransportTransactionMode.ReceiveOnly:
-                    return new AtLeastOnceReceiveStrategy(pipe, errorPipe);
+                    return new AtLeastOnceReceiveStrategy(pipe, errorPipe, criticalError);
                 default:
                     throw new NotSupportedException($"The TransportTransactionMode {transactionMode} is not supported");
             }
