@@ -135,15 +135,14 @@
         static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-            object useAccountNames;
-
+           
             AccountConfigurations accounts;
             if (settings.TryGet(out accounts) == false)
             {
                 accounts = new AccountConfigurations();
             }
 
-            var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out useAccountNames);
+            var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out object _);
 
             addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings, shouldUseAccountNames);
             addressing.Add(QueueAddress.DefaultStorageAccountAlias, connectionString, false);
@@ -208,7 +207,7 @@
                 var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
                 poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(peekInterval, maximumWaitTime));
                 nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-                poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+                poller.Start(TransactionMode, settings, nativeDelayedMessagesCancellationSource.Token);
             }
             return TaskEx.CompletedTask;
         }

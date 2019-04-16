@@ -32,7 +32,7 @@ namespace NServiceBus.AzureStorageQueues
             circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
             messageReceiver.PurgeOnStartup = settings.PurgeOnStartup;
 
-            receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, settings.RequiredTransactionMode);
+            receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, settings.RequiredTransactionMode, criticalError);
 
             return messageReceiver.Init(settings.InputQueue, settings.ErrorQueue);
         }

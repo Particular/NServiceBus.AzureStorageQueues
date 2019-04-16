@@ -5,7 +5,6 @@
     using System.Threading;
     using System.Threading.Tasks;
     using AzureStorageQueues;
-    using ConsistencyGuarantees;
     using Logging;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
@@ -37,21 +36,17 @@
             this.backoffStrategy = backoffStrategy;
         }
 
-        public void Start(ReadOnlySettings settings, CancellationToken cancellationToken)
-        {
-            Init(settings);
-            // No need to pass token to run. to avoid when token is cancelled the task changing into
-            // the cancelled state and when awaited while stopping rethrow the cancelled exception
-            delayedMessagesPollerTask = Task.Run(() => Poll(cancellationToken));
-        }
-
-        void Init(ReadOnlySettings settings)
+        public void Start(TransportTransactionMode transactionMode, ReadOnlySettings settings, CancellationToken cancellationToken)
         {
             errorQueue = settings.ErrorQueueAddress();
             var storageAccount = CloudStorageAccount.Parse(connectionString);
             var container = storageAccount.CreateCloudBlobClient().GetContainerReference(delayedDeliveryTable.Name);
             lockManager = new LockManager(container, LeaseLength);
-            isAtMostOnce = settings.GetRequiredTransactionModeForReceives() == TransportTransactionMode.None;
+            isAtMostOnce = transactionMode == TransportTransactionMode.None;
+            
+            // No need to pass token to run. to avoid when token is cancelled the task changing into
+            // the cancelled state and when awaited while stopping rethrow the cancelled exception
+            delayedMessagesPollerTask = Task.Run(() => Poll(cancellationToken));
         }
 
         public Task Stop()
