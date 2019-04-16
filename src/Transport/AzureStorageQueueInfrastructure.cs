@@ -135,15 +135,14 @@
         static AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-            object useAccountNames;
-
+           
             AccountConfigurations accounts;
             if (settings.TryGet(out accounts) == false)
             {
                 accounts = new AccountConfigurations();
             }
 
-            var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out useAccountNames);
+            var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out object _);
 
             addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings, shouldUseAccountNames);
             addressing.Add(QueueAddress.DefaultStorageAccountAlias, connectionString, false);
