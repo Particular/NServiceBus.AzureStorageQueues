@@ -208,7 +208,7 @@
                 var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
                 poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, BuildDispatcher(), new BackoffStrategy(peekInterval, maximumWaitTime));
                 nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-                poller.Start(settings, nativeDelayedMessagesCancellationSource.Token);
+                poller.Start(TransactionMode, settings, nativeDelayedMessagesCancellationSource.Token);
             }
             return TaskEx.CompletedTask;
         }
