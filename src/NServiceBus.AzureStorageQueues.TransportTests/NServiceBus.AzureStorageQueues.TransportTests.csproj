@@ -28,4 +28,11 @@
     <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
   </ItemGroup>
 
+  <!-- Replaces transport tests/infrastructure from Core 7.1.6. See KTLO issue https://github.com/Particular/KeepTheLightsOn/issues/218  -->
+  <ItemGroup>
+    <Compile Remove="\**\NServiceBus.TransportTests.Sources\**\When_on_error_throws.cs" />
+    <Compile Remove="\**\NServiceBus.TransportTests.Sources\**\NServiceBusTransportTest.cs" />
+    <Compile Remove="\**\NServiceBus.TransportTests.Sources\**\TransportTestLoggerFactory.cs" />
+  </ItemGroup>
+
 </Project>

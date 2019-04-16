@@ -25,12 +25,6 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
             settings.Set<MessageMetadataRegistry>(registry);
         }
 
-        var methodName = TestContext.CurrentContext.Test.MethodName;
-        if (methodName == nameof(When_on_error_throws.Should_reinvoke_on_error_with_original_exception))
-        {
-            throw new IgnoreException("ASQ uses a circuit breaker that is triggered after specific period of time. Critical errors are not reported immediately");
-        }
-
         return new TransportConfigurationResult
         {
             TransportInfrastructure = new AzureStorageQueueTransport().Initialize(settings, Environment.GetEnvironmentVariable("AzureStorageQueueTransport_ConnectionString")),
