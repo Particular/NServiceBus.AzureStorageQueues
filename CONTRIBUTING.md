@@ -39,7 +39,6 @@ Follow these steps to run the acceptance tests locally:
 
 ## Submitting Changes
 
-* Sign the [Contributor License Agreement](http://www.particular.net/contributors-license-agreement-consent).
 * Push your changes to a feature branch in your fork of the repository.
 * Submit a pull request to the NServiceBus repository
 
