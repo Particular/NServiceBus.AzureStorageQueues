@@ -154,7 +154,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             catch (SerializationException ex)
             {
-                Logger.Warn(ex.Message, ex);
+                Logger.Error(ex.Message, ex);
             }
             catch (Exception ex)
             {
