@@ -20,7 +20,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message)
         {
-            Logger.Debug("Receiving message");
+            Logger.Debug("Pushing received message through pipeline.");
             var body = message.Body ?? new byte[0];
             try
             {
