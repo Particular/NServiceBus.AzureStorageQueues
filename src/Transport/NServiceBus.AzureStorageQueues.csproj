@@ -16,7 +16,7 @@
     <!-- Minimum requried version for WindowsAzure.Storage is 8.2.0 -->
     <PackageReference Include="WindowsAzure.Storage" Version="[9.0.0, 10.0.0)" />
     <PackageReference Include="NServiceBus" Version="[7.1.6, 8.0.0)" />
-    <PackageReference Include="Fody" Version="6.1.0" PrivateAssets="All" />
+    <PackageReference Include="Fody" Version="6.1.1" PrivateAssets="All" />
     <PackageReference Include="Janitor.Fody" Version="1.8.0" PrivateAssets="All" />
     <PackageReference Include="Obsolete.Fody" Version="5.2.0" PrivateAssets="All" />
     <PackageReference Include="Particular.CodeRules" Version="0.2.1" PrivateAssets="All" />
