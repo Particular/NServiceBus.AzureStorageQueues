@@ -10,8 +10,8 @@
     {
         public When_configuring_account_names()
         {
-            connectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
-            anotherConnectionString = Testing.Utillities.GetEnvConfiguredConnectionString2();
+            connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
+            anotherConnectionString = Testing.Utilities.GetEnvConfiguredConnectionString2();
         }
 
         [Test]

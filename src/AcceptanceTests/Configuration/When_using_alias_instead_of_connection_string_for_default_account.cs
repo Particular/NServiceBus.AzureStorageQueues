@@ -18,7 +18,7 @@
 
         public When_using_alias_instead_of_connection_string_for_default_account()
         {
-            var connectionString = Utillities.GetEnvConfiguredConnectionString();
+            var connectionString = Utilities.GetEnvConfiguredConnectionString();
             var account = CloudStorageAccount.Parse(connectionString);
             destinationQueue = account.CreateCloudQueueClient().GetQueueReference("destination");
         }

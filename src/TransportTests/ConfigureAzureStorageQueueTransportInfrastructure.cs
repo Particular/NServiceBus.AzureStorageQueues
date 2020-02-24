@@ -33,7 +33,7 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
 
         return new TransportConfigurationResult
         {
-            TransportInfrastructure = new AzureStorageQueueTransport().Initialize(settings, Testing.Utillities.GetEnvConfiguredConnectionString()),
+            TransportInfrastructure = new AzureStorageQueueTransport().Initialize(settings, Testing.Utilities.GetEnvConfiguredConnectionString()),
             PurgeInputQueueOnStartup = false
         };
     }
