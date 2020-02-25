@@ -8,7 +8,7 @@
     using System.Threading.Tasks;
     using DelayedDelivery;
     using Features;
-    using NServiceBus.Logging;
+    using Logging;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;

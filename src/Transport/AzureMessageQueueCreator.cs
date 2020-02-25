@@ -5,7 +5,7 @@
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Logging;
+    using Logging;
     using Transport;
 
     /// <summary>

@@ -6,7 +6,7 @@
     using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Logging;
+    using Logging;
 
     class MessageRetrieved
     {

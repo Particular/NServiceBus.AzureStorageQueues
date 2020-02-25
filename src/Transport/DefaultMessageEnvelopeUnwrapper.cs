@@ -4,7 +4,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Runtime.Serialization;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Logging;
+    using Logging;
 
     class DefaultMessageEnvelopeUnwrapper : IMessageEnvelopeUnwrapper
     {

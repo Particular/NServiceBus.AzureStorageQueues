@@ -5,7 +5,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
-    using NServiceBus.Logging;
+    using Logging;
 
     class AzureMessageQueueReceiver
     {
