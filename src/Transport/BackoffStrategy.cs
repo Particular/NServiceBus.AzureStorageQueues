@@ -26,7 +26,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         void OnSomethingProcessed()
         {
-            Logger.Debug("Processed message, setting delay until next peek to 0");
+            Logger.Debug("Processed message, setting delay of the next peek to 0 seconds");
             timeToDelayUntilNextPeek = TimeSpan.Zero;
         }
 
