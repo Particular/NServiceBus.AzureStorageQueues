@@ -29,7 +29,7 @@
         {
             try
             {
-                Logger.DebugFormat("Unwrappinbg message ID: '{0}'", rawMessage.Id);
+                Logger.DebugFormat("Unwrapping message with native ID: '{0}'", rawMessage.Id);
                 return unwrapper.Unwrap(rawMessage);
             }
             catch (Exception ex)
