@@ -15,7 +15,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public MessageWrapper Unwrap(CloudQueueMessage rawMessage)
         {
-            Logger.DebugFormat("Unwrapping native message (ID: '{0}')", rawMessage.Id);
+            Logger.DebugFormat("Unwrapping native message (native ID: '{0}')", rawMessage.Id);
             MessageWrapper m;
             using (var stream = new MemoryStream(rawMessage.AsBytes))
             {
