@@ -148,10 +148,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         async Task InnerReceive(MessageRetrieved retrieved)
         {
-            Logger.Debug("Unwrapping message");
             try
             {
                 var message = await retrieved.Unwrap().ConfigureAwait(false);
+                Logger.DebugFormat("Unwrapped message Id: '{0}'", message.Id);
+
                 addressing.ApplyMappingToAliases(message.Headers);
 
                 await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);

@@ -1,5 +1,6 @@
 namespace NServiceBus.Transport.AzureStorageQueues
 {
+    using NServiceBus.Logging;
     using System;
     using System.Threading;
     using System.Threading.Tasks;
@@ -10,6 +11,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly TimeSpan maximumWaitTimeWhenIdle;
 
         TimeSpan timeToDelayUntilNextPeek;
+
+        static readonly ILog Logger = LogManager.GetLogger<BackoffStrategy>();
 
         /// <summary>
         /// </summary>
@@ -23,11 +26,14 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         void OnSomethingProcessed()
         {
+            Logger.Debug("Processed message, setting delay until next peek to 0");
             timeToDelayUntilNextPeek = TimeSpan.Zero;
         }
 
         Task OnNothingProcessed(CancellationToken token)
         {
+            Logger.Debug("Nothing processed, increasing delay until next peek");
+
             if (timeToDelayUntilNextPeek + peekInterval < maximumWaitTimeWhenIdle)
             {
                 timeToDelayUntilNextPeek += peekInterval;

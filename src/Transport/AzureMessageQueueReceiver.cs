@@ -5,6 +5,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage.Queue;
+    using NServiceBus.Logging;
 
     class AzureMessageQueueReceiver
     {
@@ -47,6 +48,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         internal async Task Receive(int batchSize, List<MessageRetrieved> receivedMessages, BackoffStrategy backoffStrategy, CancellationToken token)
         {
+            Logger.DebugFormat("Getting messages from queue with max batch size of {0}", batchSize);
             var rawMessages = await inputQueue.GetMessagesAsync(batchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
 
             // ReSharper disable once LoopCanBeConvertedToQuery
@@ -67,5 +69,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         CloudQueueClient client;
 
         public string QueueName => inputQueue.Name;
+
+        static readonly ILog Logger = LogManager.GetLogger<AzureMessageQueueReceiver>();
     }
 }

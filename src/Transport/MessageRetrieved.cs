@@ -6,6 +6,7 @@
     using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
+    using NServiceBus.Logging;
 
     class MessageRetrieved
     {
@@ -28,6 +29,7 @@
         {
             try
             {
+                Logger.DebugFormat("Unwrappinbg message ID: '{0}'", rawMessage.Id);
                 return unwrapper.Unwrap(rawMessage);
             }
             catch (Exception ex)
@@ -88,6 +90,8 @@
         readonly CloudQueueMessage rawMessage;
         readonly CloudQueue errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
+
+        static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }
 
     class LeaseTimeoutException : Exception

@@ -31,7 +31,7 @@
             }
 
             timer.Change(Timeout.Infinite, Timeout.Infinite);
-            Logger.InfoFormat("The circuit breaker for {0} is now disarmed", name);
+            Logger.DebugFormat("The circuit breaker for {0} is now disarmed", name);
         }
 
         public Task Failure(Exception exception)

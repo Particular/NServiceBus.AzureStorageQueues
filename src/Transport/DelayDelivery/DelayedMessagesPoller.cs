@@ -200,7 +200,7 @@
 
         async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
         {
-            Logger.Debug("Dispatching delayed message");
+            Logger.DebugFormat("Dispatching delayed message ID: '{0}'", delayedMessage.MessageId);
             var operation = delayedMessage.GetOperation();
             try
             {

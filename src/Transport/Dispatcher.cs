@@ -43,6 +43,8 @@
 
         public async Task Send(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
+            logger.DebugFormat("Sending message (ID: '{0}') to {1}", operation.Message.MessageId, operation.Destination);
+
             var dispatchDecision = await shouldSend(operation, cancellationToken).ConfigureAwait(false);
             if (dispatchDecision == false)
             {

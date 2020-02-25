@@ -5,6 +5,7 @@
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
+    using NServiceBus.Logging;
     using Transport;
 
     /// <summary>
@@ -27,6 +28,7 @@
 
         async Task CreateQueue(string address)
         {
+            Logger.DebugFormat("Creating queue '{0}'", address);
             var queueName = addressGenerator.GetQueueName(address);
             try
             {
@@ -56,5 +58,6 @@
 
         QueueAddressGenerator addressGenerator;
         CloudQueueClient client;
+        static readonly ILog Logger = LogManager.GetLogger<AzureMessageQueueCreator>();
     }
 }

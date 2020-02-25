@@ -4,6 +4,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Runtime.Serialization;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage.Queue;
+    using NServiceBus.Logging;
 
     class DefaultMessageEnvelopeUnwrapper : IMessageEnvelopeUnwrapper
     {
@@ -14,6 +15,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public MessageWrapper Unwrap(CloudQueueMessage rawMessage)
         {
+            Logger.DebugFormat("Unwrapping native message (ID: '{0}')", rawMessage.Id);
             MessageWrapper m;
             using (var stream = new MemoryStream(rawMessage.AsBytes))
             {
@@ -37,5 +39,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         }
 
         MessageWrapperSerializer messageWrapperSerializer;
+
+        static ILog Logger = LogManager.GetLogger<DefaultMessageEnvelopeUnwrapper>();
     }
 }
