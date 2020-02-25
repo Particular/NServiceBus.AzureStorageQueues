@@ -151,7 +151,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             try
             {
                 var message = await retrieved.Unwrap().ConfigureAwait(false);
-                Logger.DebugFormat("Unwrapped message Id: '{0}'", message.Id);
+                Logger.DebugFormat("Unwrapped message ID: '{0}'", message.Id);
 
                 addressing.ApplyMappingToAliases(message.Headers);
 
