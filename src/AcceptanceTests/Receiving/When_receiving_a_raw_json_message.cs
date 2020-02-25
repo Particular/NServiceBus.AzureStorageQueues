@@ -40,7 +40,7 @@
 
                         var cloudQueueMessage = new CloudQueueMessage(jsonPayload);
 
-                        var connectionString = Testing.Utillities.GetEnvConfiguredConnectionString();
+                        var connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
                         var storageAccount = CloudStorageAccount.Parse(connectionString);
                         var queueClient = storageAccount.CreateCloudQueueClient();
                         var queue = queueClient.GetQueueReference("receivingarawjsonmessage-receiver");

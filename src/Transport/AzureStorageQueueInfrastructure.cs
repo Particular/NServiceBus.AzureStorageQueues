@@ -8,6 +8,7 @@
     using System.Threading.Tasks;
     using DelayedDelivery;
     using Features;
+    using Logging;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -70,6 +71,7 @@
 
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
+            Logger.Debug("Configuring receive infrastructure");
             var connectionObject = new ConnectionString(connectionString);
             var client = CreateQueueClients.CreateReceiver(connectionObject);
 
@@ -177,6 +179,8 @@
         {
             if (PollerCanBeUsed())
             {
+                Logger.Debug("Starting poller");
+
                 var isAtMostOnce = GetRequiredTransactionMode() == TransportTransactionMode.None;
                 var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                 var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
@@ -219,5 +223,7 @@
         DelayedMessagesPoller poller;
         CancellationTokenSource nativeDelayedMessagesCancellationSource;
         QueueAddressGenerator addressGenerator;
+
+        static readonly ILog Logger = LogManager.GetLogger<AzureStorageQueueInfrastructure>();
     }
 }

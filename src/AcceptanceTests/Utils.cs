@@ -3,15 +3,15 @@
     using System;
     using NServiceBus;
 
-    public static class Utillities
+    public static class Utilities
     {
         public static string GetEnvConfiguredConnectionString()
         {
-            var environmentVartiableName = $"{nameof(AzureStorageQueueTransport)}_ConnectionString";
-            var connectionString = GetEnvironmentVariable(environmentVartiableName);
+            var environmentVariableName = $"{nameof(AzureStorageQueueTransport)}_ConnectionString";
+            var connectionString = GetEnvironmentVariable(environmentVariableName);
             if (string.IsNullOrEmpty(connectionString))
             {
-                throw new Exception($"Oh no! We couldn't find an environment variable '{environmentVartiableName}' with Azure Storage connection string.");
+                throw new Exception($"Oh no! We couldn't find an environment variable '{environmentVariableName}' with Azure Storage connection string.");
             }
 
             return connectionString;
@@ -19,11 +19,11 @@
 
         public static string GetEnvConfiguredConnectionString2()
         {
-            var environmentVartiableName = $"{nameof(AzureStorageQueueTransport)}_ConnectionString_2";
-            var connectionString = GetEnvironmentVariable(environmentVartiableName);
+            var environmentVariableName = $"{nameof(AzureStorageQueueTransport)}_ConnectionString_2";
+            var connectionString = GetEnvironmentVariable(environmentVariableName);
             if (string.IsNullOrEmpty(connectionString))
             {
-                throw new Exception($"Oh no! We couldn't find an environment variable '{environmentVartiableName}' with Azure Storage connection string.");
+                throw new Exception($"Oh no! We couldn't find an environment variable '{environmentVariableName}' with Azure Storage connection string.");
             }
 
             return connectionString;

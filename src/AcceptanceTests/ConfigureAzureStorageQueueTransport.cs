@@ -8,8 +8,8 @@ using Conventions = NServiceBus.AcceptanceTesting.Customization.Conventions;
 
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
-    internal static string ConnectionString => Testing.Utillities.GetEnvConfiguredConnectionString();
-    internal static string AnotherConnectionString => Testing.Utillities.GetEnvConfiguredConnectionString2();
+    internal static string ConnectionString => Testing.Utilities.GetEnvConfiguredConnectionString();
+    internal static string AnotherConnectionString => Testing.Utilities.GetEnvConfiguredConnectionString2();
 
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {

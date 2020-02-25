@@ -27,6 +27,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public Task Init(Func<MessageContext, Task> onMessage, Func<ErrorContext, Task<ErrorHandleResult>> onError, CriticalError criticalError, PushSettings settings)
         {
+            Logger.Debug("Initializing the message pump");
+
             circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
             messageReceiver.PurgeOnStartup = settings.PurgeOnStartup;
 
@@ -40,6 +42,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
             maximumConcurrency = limitations.MaxConcurrency;
             concurrencyLimiter = new SemaphoreSlim(maximumConcurrency, maximumConcurrency);
             cancellationTokenSource = new CancellationTokenSource();
+
+            Logger.DebugFormat("Starting the message pump with max concurrency: {0}", maximumConcurrency);
 
             var receiverConfigurations = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiveParallelism, maximumConcurrency);
 
@@ -57,6 +61,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public async Task Stop()
         {
+            Logger.Debug("Stopping the message pump");
             cancellationTokenSource.Cancel();
 
             try
@@ -76,7 +81,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             catch (OperationCanceledException)
             {
-                Logger.Error("The message pump failed to stop with in the time allowed(30s)");
+                Logger.Error("The message pump failed to stop within the time allowed (30s)");
             }
 
             concurrencyLimiter.Dispose();
@@ -85,6 +90,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         [DebuggerNonUserCode]
         async Task ProcessMessages(int batchSizeForReceive, BackoffStrategy backoffStrategy)
         {
+            Logger.Debug("Processing messages");
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
@@ -101,6 +107,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         async Task InnerProcessMessages(int batchSizeForReceive, BackoffStrategy backoffStrategy)
         {
             var receivedMessages = new List<MessageRetrieved>(batchSizeForReceive);
+            Logger.DebugFormat("Fetching {0} messages", batchSizeForReceive);
 
             while (!cancellationTokenSource.IsCancellationRequested)
             {
@@ -144,6 +151,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
             try
             {
                 var message = await retrieved.Unwrap().ConfigureAwait(false);
+                Logger.DebugFormat("Unwrapped message ID: '{0}'", message.Id);
+
                 addressing.ApplyMappingToAliases(message.Headers);
 
                 await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);
@@ -154,7 +163,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             catch (SerializationException ex)
             {
-                Logger.Warn(ex.Message, ex);
+                Logger.Error(ex.Message, ex);
             }
             catch (Exception ex)
             {

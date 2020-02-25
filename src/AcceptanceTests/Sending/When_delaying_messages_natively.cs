@@ -21,7 +21,7 @@
         [SetUp]
         public async Task SetUpLocal()
         {
-            delayedMessagesTable = CloudStorageAccount.Parse(Testing.Utillities.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
+            delayedMessagesTable = CloudStorageAccount.Parse(Testing.Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
             if (await delayedMessagesTable.ExistsAsync().ConfigureAwait(false))
             {
                 foreach (var dte in await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false))

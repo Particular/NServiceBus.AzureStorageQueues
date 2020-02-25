@@ -38,6 +38,8 @@
 
         public void Start(CancellationToken cancellationToken)
         {
+            Logger.Debug("Starting delayed message poller");
+
             var storageAccount = CloudStorageAccount.Parse(connectionString);
             var container = storageAccount.CreateCloudBlobClient().GetContainerReference(delayedDeliveryTable.Name);
             lockManager = new LockManager(container, LeaseLength);
@@ -49,6 +51,7 @@
 
         public Task Stop()
         {
+            Logger.Debug("Stopping delayed message poller");
             return delayedMessagesPollerTask;
         }
 
@@ -86,6 +89,8 @@
         {
             while (!cancellationToken.IsCancellationRequested)
             {
+                Logger.Debug("Checking for delayed messages");
+
                 if (await TryLease(cancellationToken)
                     .ConfigureAwait(false))
                 {
@@ -111,6 +116,7 @@
 
         Task BackoffOnError(CancellationToken cancellationToken)
         {
+            Logger.Debug("Backing off from polling for delayed messages");
             // run as there was no messages at all
             return backoffStrategy.OnBatch(0, cancellationToken);
         }
@@ -194,14 +200,16 @@
 
         async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
         {
+            Logger.DebugFormat("Dispatching delayed message ID: '{0}'", delayedMessage.MessageId);
             var operation = delayedMessage.GetOperation();
             try
             {
                 await dispatcher.Send(operation, cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
                 // if send fails for any reason
+                Logger.Warn($"Failed to send the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'", exception);
                 await dispatcher.Send(CreateOperationForErrorQueue(operation), cancellationToken).ConfigureAwait(false);
             }
         }
