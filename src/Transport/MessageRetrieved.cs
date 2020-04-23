@@ -34,10 +34,13 @@
             }
             catch (Exception ex)
             {
-                await errorQueue.AddMessageAsync(rawMessage).ConfigureAwait(false);
-                await inputQueue.DeleteMessageAsync(rawMessage).ConfigureAwait(false);
+                var messageId = rawMessage.Id;
+                var messagePopReceipt = rawMessage.PopReceipt;
 
-                throw new SerializationException($"Failed to deserialize message envelope for message with id {rawMessage.Id}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
+                await errorQueue.AddMessageAsync(rawMessage).ConfigureAwait(false);
+                await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt).ConfigureAwait(false);
+
+                throw new SerializationException($"Failed to deserialize message envelope for message with id {messageId}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
             }
         }
 
