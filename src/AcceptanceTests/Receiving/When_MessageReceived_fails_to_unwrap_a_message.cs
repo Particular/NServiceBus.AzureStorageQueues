@@ -49,7 +49,7 @@
                     config.SendFailedMessagesTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(ErrorSpy)));
                     config.UseSerialization<NewtonsoftSerializer>();
                     config.LimitMessageProcessingConcurrencyTo(1);
-                    var transport = config.UseTransport<AzureStorageQueueTransport>();
+                    var transport = config.ConfigureAsqTransport();
                     transport.UnwrapMessagesWith(message => throw new Exception("Custom unwrapper failed"));
                     transport.DelayedDelivery().DisableDelayedDelivery();
                 });
@@ -62,7 +62,7 @@
             {
                 EndpointSetup<DefaultServer>(config =>
                 {
-                    var transport = config.UseTransport<AzureStorageQueueTransport>();
+                    var transport = config.ConfigureAsqTransport();
                     config.UseSerialization<NewtonsoftSerializer>();
                     transport.DelayedDelivery().DisableDelayedDelivery();
                 });
