@@ -34,6 +34,9 @@
             }
             catch (Exception ex)
             {
+                // When a CloudQueueMessage retrieved from a is en-queued directly, message's ID and PopReceipt are mutated.
+                // To be able to delete the original message, original message ID and PopReceipt have to be stored aside.
+
                 var messageId = rawMessage.Id;
                 var messagePopReceipt = rawMessage.PopReceipt;
 
