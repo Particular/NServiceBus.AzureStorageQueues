@@ -23,7 +23,7 @@
                     b.CustomConfig((cfg, context) =>
                     {
                         cfg.UseSerialization<NServiceBus.JsonSerializer>();
-                        cfg.UseTransport<AzureStorageQueueTransport>()
+                        cfg.ConfigureAsqTransport()
                             .UnwrapMessagesWith(message => MyCustomUnwrapper(message, context.TestRunId));
                     });
 
