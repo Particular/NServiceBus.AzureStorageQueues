@@ -63,10 +63,7 @@
 
             if (!await ExistsAsync(sendQueue).ConfigureAwait(false))
             {
-                throw new QueueNotFoundException
-                {
-                    Queue = queue.ToString()
-                };
+                throw new QueueNotFoundException(queue.ToString(), $"Destination queue '{queue}' does not exist. This queue may have to be created manually.", null);
             }
 
             var toBeReceived = operation.GetTimeToBeReceived();
