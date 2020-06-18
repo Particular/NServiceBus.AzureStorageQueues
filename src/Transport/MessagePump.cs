@@ -87,6 +87,10 @@ namespace NServiceBus.AzureStorageQueues
         [DebuggerNonUserCode]
         async Task ProcessMessages(int batchSizeForReceive, BackoffStrategy backoffStrategy)
         {
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.Debug("Processing messages");
+            }
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
@@ -103,6 +107,10 @@ namespace NServiceBus.AzureStorageQueues
         async Task InnerProcessMessages(int batchSizeForReceive, BackoffStrategy backoffStrategy)
         {
             var receivedMessages = new List<MessageRetrieved>(batchSizeForReceive);
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.DebugFormat("Fetching {0} messages", batchSizeForReceive);
+            }
 
             while (!cancellationTokenSource.IsCancellationRequested)
             {
@@ -146,6 +154,10 @@ namespace NServiceBus.AzureStorageQueues
             try
             {
                 var message = await retrieved.Unwrap().ConfigureAwait(false);
+                if (Logger.IsDebugEnabled)
+                {
+                    Logger.DebugFormat("Unwrapped message ID: '{0}'", message.Id);
+                }
                 addressing.ApplyMappingToAliases(message.Headers);
 
                 await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);
