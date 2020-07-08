@@ -67,6 +67,10 @@
                 {
                     // ok, since the InnerPoll could observe the token
                 }
+                catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == 409)
+                {
+                    Logger.Info("Failed to fetch delayed messages from the storage", ex);
+                }
                 catch (Exception ex)
                 {
                     Logger.Warn("Failed to fetch delayed messages from the storage", ex);
