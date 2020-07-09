@@ -146,14 +146,16 @@
                 return;
             }
 
-            var stopwatch = Stopwatch.StartNew();
-
+            Stopwatch stopwatch = null;
             foreach (var delayedMessage in delayedMessages)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
+
+                // only allocate if needed
+                stopwatch = stopwatch ?? Stopwatch.StartNew();
 
                 // after half check if the lease is active
                 if (stopwatch.Elapsed > HalfOfLeaseLength)
