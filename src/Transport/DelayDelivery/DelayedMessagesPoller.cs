@@ -159,10 +159,7 @@
                 }
 
                 // only allocate if needed
-                if (stopwatch == null)
-                {
-                    stopwatch = Stopwatch.StartNew();
-                }
+                stopwatch = stopwatch ?? Stopwatch.StartNew();
 
                 // after half check if the lease is active
                 if (stopwatch.Elapsed > HalfOfLeaseLength)
