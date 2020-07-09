@@ -66,6 +66,10 @@
                 catch (StorageException)
                 {
                 }
+                finally
+                {
+                    lease = null;
+                }
             }
         }
 
