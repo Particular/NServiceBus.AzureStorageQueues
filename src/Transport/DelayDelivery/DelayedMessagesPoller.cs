@@ -89,9 +89,12 @@
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                Logger.Debug("Checking for delayed messages");
+                if (Logger.IsDebugEnabled)
+                {
+                    Logger.Debug("Checking for delayed messages");
+                }
 
-                if (await TryLease(cancellationToken)
+                if (await lockManager.TryLockOrRenew(cancellationToken)
                     .ConfigureAwait(false))
                 {
                     try
@@ -116,14 +119,13 @@
 
         Task BackoffOnError(CancellationToken cancellationToken)
         {
-            Logger.Debug("Backing off from polling for delayed messages");
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.Debug("Backing off from polling for delayed messages");
+            }
+
             // run as there was no messages at all
             return backoffStrategy.OnBatch(0, cancellationToken);
-        }
-
-        Task<bool> TryLease(CancellationToken cancellationToken)
-        {
-            return lockManager.TryLockOrRenew(cancellationToken);
         }
 
         async Task SpinOnce(CancellationToken cancellationToken)
@@ -134,7 +136,10 @@
                 return;
             }
 
-            Logger.DebugFormat("Polling for delayed messages at {0}.", now);
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.DebugFormat("Polling for delayed messages at {0}.", now);
+            }
 
             var query = new TableQuery<DelayedMessageEntity>
             {
@@ -145,7 +150,7 @@
             var delayedMessages = await delayedDeliveryTable.ExecuteQueryAsync(query, DelayedMessagesProcessedAtOnce, cancellationToken)
                 .ConfigureAwait(false);
 
-            if (await TryLease(cancellationToken).ConfigureAwait(false) == false)
+            if (await lockManager.TryLockOrRenew(cancellationToken).ConfigureAwait(false) == false)
             {
                 return;
             }
@@ -164,7 +169,7 @@
                 // after half check if the lease is active
                 if (stopwatch.Elapsed > HalfOfLeaseLength)
                 {
-                    if (await TryLease(cancellationToken).ConfigureAwait(false) == false)
+                    if (await lockManager.TryLockOrRenew(cancellationToken).ConfigureAwait(false) == false)
                     {
                         return;
                     }
@@ -202,7 +207,11 @@
 
         async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
         {
-            Logger.DebugFormat("Dispatching delayed message ID: '{0}'", delayedMessage.MessageId);
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.DebugFormat("Dispatching delayed message ID: '{0}'", delayedMessage.MessageId);
+            }
+
             var operation = delayedMessage.GetOperation();
             try
             {
