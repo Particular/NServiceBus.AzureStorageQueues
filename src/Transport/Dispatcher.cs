@@ -44,6 +44,10 @@
 
         public async Task Send(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
+            if (logger.IsDebugEnabled)
+            {
+                logger.DebugFormat("Sending message (ID: '{0}') to {1}", operation.Message.MessageId, operation.Destination);
+            }
             var dispatchDecision = await shouldSend(operation, cancellationToken).ConfigureAwait(false);
             if (dispatchDecision == false)
             {
@@ -62,10 +66,7 @@
 
             if (!await ExistsAsync(sendQueue).ConfigureAwait(false))
             {
-                throw new QueueNotFoundException
-                {
-                    Queue = queue.ToString()
-                };
+                throw new QueueNotFoundException(queue.ToString(), $"Destination queue '{queue}' does not exist. This queue may have to be created manually.", null);
             }
 
             var toBeReceived = operation.GetTimeToBeReceived();
