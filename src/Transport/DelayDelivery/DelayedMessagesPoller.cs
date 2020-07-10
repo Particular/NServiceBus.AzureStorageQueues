@@ -88,6 +88,10 @@
         {
             while (!cancellationToken.IsCancellationRequested)
             {
+                if (Logger.IsDebugEnabled)
+                {
+                    Logger.Debug("Checking for delayed messages");
+                }
                 if (await TryLease(cancellationToken)
                     .ConfigureAwait(false))
                 {
@@ -113,6 +117,11 @@
 
         Task BackoffOnError(CancellationToken cancellationToken)
         {
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.Debug("Backing off from polling for delayed messages");
+            }
+
             // run as there was no messages at all
             return backoffStrategy.OnBatch(0, cancellationToken);
         }
@@ -130,7 +139,10 @@
                 return;
             }
 
-            Logger.DebugFormat("Polling for delayed messages at {0}.", now);
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.DebugFormat("Polling for delayed messages at {0}.", now);
+            }
 
             var query = new TableQuery<DelayedMessageEntity>
             {
@@ -196,6 +208,11 @@
 
         async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
         {
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.DebugFormat("Dispatching delayed message ID: '{0}'", delayedMessage.MessageId);
+            }
+
             var operation = delayedMessage.GetOperation();
             try
             {
