@@ -6,7 +6,6 @@
     using System.Threading.Tasks;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
-    using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 
     // Provides a container lease based lock manager.
     class LockManager
@@ -36,6 +35,7 @@
                 catch (StorageException exception)
                     when (exception.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict)
                 {
+                    // someone else raced for the lease and got it
                     return false;
                 }
             }
@@ -45,8 +45,9 @@
                 return true;
             }
             catch (StorageException exception)
-                when (exception.RequestInformation.ErrorCode == BlobErrorCodeStrings.LeaseIdMismatchWithLeaseOperation)
+                when (exception.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict)
             {
+                // someone else raced for the lease and got it so we have to try to re-acquire it
                 lease = null;
                 return false;
             }
@@ -64,6 +65,10 @@
                 }
                 catch (StorageException)
                 {
+                }
+                finally
+                {
+                    lease = null;
                 }
             }
         }
