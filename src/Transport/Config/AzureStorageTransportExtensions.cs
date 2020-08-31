@@ -3,7 +3,7 @@ namespace NServiceBus
     using System;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Configuration.AdvancedExtensibility;
-    using Microsoft.WindowsAzure.Storage.Queue;
+    using global::Azure.Storage.Queues.Models;
     using Serialization;
     using Transport.AzureStorageQueues;
 
@@ -79,7 +79,7 @@ namespace NServiceBus
         /// <summary>
         /// Registers a custom unwrapper to convert native messages to <see cref="MessageWrapper" />. This is needed when receiving raw json/xml/etc messages from non NServiceBus endpoints.
         /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> UnwrapMessagesWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<CloudQueueMessage, MessageWrapper> unwrapper)
+        public static TransportExtensions<AzureStorageQueueTransport> UnwrapMessagesWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<QueueMessage, MessageWrapper> unwrapper)
         {
             Guard.AgainstNull(nameof(config), config);
             Guard.AgainstNull(nameof(unwrapper), unwrapper);

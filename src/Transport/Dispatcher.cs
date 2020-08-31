@@ -9,8 +9,9 @@
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
+    using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using Logging;
-    using Microsoft.WindowsAzure.Storage.Queue;
     using Transport;
     using Unicast.Queuing;
 
@@ -62,7 +63,7 @@
 
             var sendClient = createQueueClients.Create(connectionString);
             var q = addressGenerator.GetQueueName(queue.QueueName);
-            var sendQueue = sendClient.GetQueueReference(q);
+            var sendQueue = sendClient.GetQueueClient(q);
 
             if (!await ExistsAsync(sendQueue).ConfigureAwait(false))
             {
@@ -102,23 +103,23 @@
             await Send(wrapper, sendQueue, timeToBeReceived ?? CloudQueueMessageMaxTimeToLive).ConfigureAwait(false);
         }
 
-        Task Send(MessageWrapper wrapper, CloudQueue sendQueue, TimeSpan timeToBeReceived)
+        Task Send(MessageWrapper wrapper, QueueClient sendQueue, TimeSpan timeToBeReceived)
         {
-            CloudQueueMessage rawMessage;
+            QueueMessage rawMessage;
             using (var stream = new MemoryStream())
             {
                 serializer.Serialize(wrapper, stream);
 #if NET472
-                rawMessage = new CloudQueueMessage(stream.ToArray());
+                rawMessage = new QueueMessage(stream.ToArray());
 #else
                 rawMessage = CloudQueueMessage.CreateCloudQueueMessageFromByteArray(stream.ToArray());
 #endif
             }
-
-            return sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null);
+            // TODO: no longer can send byte array with the new SDK
+            return sendQueue.SendMessageAsync(rawMessage, timeToBeReceived, null, null, null);
         }
 
-        Task<bool> ExistsAsync(CloudQueue sendQueue)
+        Task<bool> ExistsAsync(QueueClient sendQueue)
         {
             var key = sendQueue.Uri.ToString();
             return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.ExistsAsync());
