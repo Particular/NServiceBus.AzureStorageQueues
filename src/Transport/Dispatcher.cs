@@ -119,10 +119,14 @@
             return sendQueue.SendMessageAsync(rawMessage, timeToBeReceived, null, null, null);
         }
 
-        Task<bool> ExistsAsync(QueueClient sendQueue)
+        async Task<bool> ExistsAsync(QueueClient sendQueue)
         {
             var key = sendQueue.Uri.ToString();
-            return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.ExistsAsync());
+            return await rememberExistence.GetOrAdd(key, async keyNotFound =>
+             {
+                 var exists = await sendQueue.ExistsAsync().ConfigureAwait(false);
+                 return exists.Value;
+             }).ConfigureAwait(false);
         }
 
         MessageWrapper BuildMessageWrapper(IOutgoingTransportOperation operation, QueueAddress destinationQueue)
