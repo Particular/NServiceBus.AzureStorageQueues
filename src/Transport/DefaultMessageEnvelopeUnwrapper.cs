@@ -1,5 +1,6 @@
 namespace NServiceBus.Transport.AzureStorageQueues
 {
+    using System;
     using System.IO;
     using System.Runtime.Serialization;
     using Azure.Transports.WindowsAzureStorageQueues;
@@ -17,8 +18,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             Logger.DebugFormat("Unwrapping native message (native ID: '{0}')", rawMessage.MessageId);
             MessageWrapper m;
+
             // TODO: bytes array is no longer available with the new SDK...
-            using (var stream = new MemoryStream(rawMessage.AsBytes))
+            var bytes = Array.Empty<byte>(); //rawMessage.AsBytes
+
+            using (var stream = new MemoryStream(bytes))
             {
                 m = messageWrapperSerializer.Deserialize(stream);
             }

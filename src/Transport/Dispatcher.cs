@@ -10,7 +10,6 @@
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
     using global::Azure.Storage.Queues;
-    using global::Azure.Storage.Queues.Models;
     using Logging;
     using Transport;
     using Unicast.Queuing;

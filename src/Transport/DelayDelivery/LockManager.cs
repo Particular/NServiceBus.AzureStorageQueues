@@ -4,20 +4,24 @@
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Blob;
+    using global::Azure;
+    using global::Azure.Storage.Blobs;
+    using global::Azure.Storage.Blobs.Models;
+    using global::Azure.Storage.Blobs.Specialized;
 
     // Provides a container lease based lock manager.
     class LockManager
     {
         TimeSpan span;
-        CloudBlobContainer container;
+        BlobContainerClient containerClient;
+        BlobLeaseClient blobLeaseClient;
         bool created;
-        string lease;
+        BlobLease lease;
 
-        public LockManager(CloudBlobContainer container, TimeSpan span)
+        public LockManager(BlobContainerClient containerClient, BlobLeaseClient blobLeaseClient, TimeSpan span)
         {
-            this.container = container;
+            this.containerClient = containerClient;
+            this.blobLeaseClient = blobLeaseClient;
             this.span = span;
         }
 
@@ -29,11 +33,10 @@
             {
                 try
                 {
-                    lease = await container.AcquireLeaseAsync(span, null, null, null, null, cancellationToken).ConfigureAwait(false);
+                    lease = (await blobLeaseClient.AcquireAsync(span, null, cancellationToken).ConfigureAwait(false)).Value;
                     return true;
                 }
-                catch (StorageException exception)
-                    when (exception.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict)
+                catch (RequestFailedException exception) when (exception.Status == (int) HttpStatusCode.Conflict)
                 {
                     // someone else raced for the lease and got it
                     return false;
@@ -41,11 +44,14 @@
             }
             try
             {
-                await container.RenewLeaseAsync(AccessCondition.GenerateLeaseCondition(lease), null, null, cancellationToken).ConfigureAwait(false);
+                var requestConditions = new RequestConditions
+                {
+                    IfMatch = new ETag(lease.LeaseId)
+                };
+                await blobLeaseClient.RenewAsync(requestConditions, cancellationToken).ConfigureAwait(false);
                 return true;
             }
-            catch (StorageException exception)
-                when (exception.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict)
+            catch (RequestFailedException exception) when (exception.Status == (int) HttpStatusCode.Conflict)
             {
                 // someone else raced for the lease and got it so we have to try to re-acquire it
                 lease = null;
@@ -61,9 +67,9 @@
             {
                 try
                 {
-                    await container.ReleaseLeaseAsync(AccessCondition.GenerateLeaseCondition(lease), null, null, cancellationToken).ConfigureAwait(false);
+                    await blobLeaseClient.ReleaseAsync(null, cancellationToken).ConfigureAwait(false);
                 }
-                catch (StorageException)
+                catch (RequestFailedException)
                 {
                 }
                 finally
@@ -77,7 +83,7 @@
         {
             if (created == false)
             {
-                await container.CreateIfNotExistsAsync(BlobContainerPublicAccessType.Container, null,null, cancellationToken).ConfigureAwait(false);
+                await containerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, null, null, cancellationToken).ConfigureAwait(false);
                 created = true;
             }
         }

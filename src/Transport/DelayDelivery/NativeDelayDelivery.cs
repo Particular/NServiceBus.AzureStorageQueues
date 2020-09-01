@@ -7,8 +7,7 @@
     using DelayedDelivery;
     using DeliveryConstraints;
     using Features;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Table;
+    using Microsoft.Azure.Cosmos.Table;
     using Performance.TimeToBeReceived;
     using Settings;
     using Transport;
