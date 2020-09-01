@@ -105,18 +105,18 @@
 
         Task Send(MessageWrapper wrapper, QueueClient sendQueue, TimeSpan timeToBeReceived)
         {
-            QueueMessage rawMessage;
+            string messageTextFromBytes;
+
             using (var stream = new MemoryStream())
             {
                 serializer.Serialize(wrapper, stream);
-#if NET472
-                rawMessage = new QueueMessage(stream.ToArray());
-#else
-                rawMessage = CloudQueueMessage.CreateCloudQueueMessageFromByteArray(stream.ToArray());
-#endif
+
+                var bytes = stream.ToArray();
+                messageTextFromBytes = "";// TODO: need to be serialized XML following what the legacy SDK and v11 SDK did.
             }
+
             // TODO: no longer can send byte array with the new SDK
-            return sendQueue.SendMessageAsync(rawMessage, timeToBeReceived, null, null, null);
+            return sendQueue.SendMessageAsync(messageTextFromBytes, timeToLive: timeToBeReceived);
         }
 
         async Task<bool> ExistsAsync(QueueClient sendQueue)
