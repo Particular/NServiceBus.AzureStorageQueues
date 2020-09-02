@@ -189,13 +189,13 @@
                 poller.Start(nativeDelayedMessagesCancellationSource.Token);
             }
 
-            return TaskEx.CompletedTask;
+            return Task.CompletedTask;
         }
 
         public override Task Stop()
         {
             nativeDelayedMessagesCancellationSource?.Cancel();
-            return poller != null ? poller.Stop() : TaskEx.CompletedTask;
+            return poller != null ? poller.Stop() : Task.CompletedTask;
         }
 
         TransportTransactionMode GetRequiredTransactionMode()
