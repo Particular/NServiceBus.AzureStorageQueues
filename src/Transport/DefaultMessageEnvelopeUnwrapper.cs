@@ -19,8 +19,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             Logger.DebugFormat("Unwrapping native message (native ID: '{0}')", rawMessage.MessageId);
             MessageWrapper m;
 
-            // TODO: bytes array is no longer available with the new SDK...
-            var bytes = Array.Empty<byte>(); //rawMessage.AsBytes
+            var bytes = Convert.FromBase64String(rawMessage.MessageText);
 
             using (var stream = new MemoryStream(bytes))
             {

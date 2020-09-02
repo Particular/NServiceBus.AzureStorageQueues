@@ -104,18 +104,17 @@
 
         Task Send(MessageWrapper wrapper, QueueClient sendQueue, TimeSpan timeToBeReceived)
         {
-            string messageTextFromBytes;
+            string base64String;
 
             using (var stream = new MemoryStream())
             {
                 serializer.Serialize(wrapper, stream);
 
                 var bytes = stream.ToArray();
-                messageTextFromBytes = "";// TODO: need to be serialized XML following what the legacy SDK and v11 SDK did.
+                base64String = Convert.ToBase64String(bytes);
             }
 
-            // TODO: no longer can send byte array with the new SDK
-            return sendQueue.SendMessageAsync(messageTextFromBytes, timeToLive: timeToBeReceived);
+            return sendQueue.SendMessageAsync(base64String, timeToLive: timeToBeReceived);
         }
 
         async Task<bool> ExistsAsync(QueueClient sendQueue)
