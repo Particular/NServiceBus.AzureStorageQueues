@@ -3,7 +3,7 @@
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using Microsoft.WindowsAzure.Storage;
+    using Microsoft.Azure.Cosmos.Table;
 
     public class CaptureSendingRequests : IDisposable
     {

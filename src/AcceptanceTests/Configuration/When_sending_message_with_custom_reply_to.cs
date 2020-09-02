@@ -6,10 +6,10 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using EndpointTemplates;
+    using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using global::Newtonsoft.Json;
     using global::Newtonsoft.Json.Linq;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Queue;
     using NUnit.Framework;
     using NUnit.Framework.Interfaces;
 
@@ -36,8 +36,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
 
         async Task Run<TSender>(string destination, string replyTo, string auditConnectionString) where TSender : Sender
         {
-            var account = CloudStorageAccount.Parse(auditConnectionString);
-            var auditQueue = account.CreateCloudQueueClient().GetQueueReference(AuditName);
+            var auditQueue = new QueueClient(auditConnectionString, AuditName);
             await auditQueue.CreateIfNotExistsAsync();
 
             await Scenario.Define<Context>()
@@ -45,15 +44,17 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
                 .Done(c => true)
                 .Run().ConfigureAwait(false);
 
-            var msg = await auditQueue.GetMessageAsync().ConfigureAwait(false);
-            await auditQueue.DeleteMessageAsync(msg).ConfigureAwait(false);
+            QueueMessage[] messages = await auditQueue.ReceiveMessagesAsync(1).ConfigureAwait(false);
+            var msg = messages[0];
+            await auditQueue.DeleteMessageAsync(msg.MessageId, msg.PopReceipt).ConfigureAwait(false);
 
             AssertReplyTo(msg, replyTo);
         }
 
-        static void AssertReplyTo(CloudQueueMessage m1, string expectedReplyTo)
+        static void AssertReplyTo(QueueMessage m1, string expectedReplyTo)
         {
-            using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(m1.AsBytes))))
+            var bytes = Convert.FromBase64String(m1.MessageText);
+            using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(bytes))))
             {
                 var token = JToken.ReadFrom(reader);
                 var headers = token["Headers"];

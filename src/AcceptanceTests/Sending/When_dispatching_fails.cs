@@ -6,7 +6,8 @@
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
     using EndpointTemplates;
-    using Microsoft.WindowsAzure.Storage;
+    using global::Azure;
+    using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
     using LogLevel = Logging.LogLevel;
 
@@ -15,7 +16,7 @@
         [Test]
         public void Should_log_send_related_error()
         {
-            Assert.ThrowsAsync<StorageException>(() => Scenario.Define<Context>()
+            Assert.ThrowsAsync<RequestFailedException>(() => Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((bus, c) => Send(bus)))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.Logs.Any(li => li.Message.Contains("Fail on proxy") && li.Level == LogLevel.Error))

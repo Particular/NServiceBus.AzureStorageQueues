@@ -3,11 +3,12 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Text;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using global::Newtonsoft.Json;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -38,14 +39,10 @@
                             TypeNameHandling = TypeNameHandling.All //we need this in order fo $type="x" to be embedded in the json
                         });
 
-                        var cloudQueueMessage = new CloudQueueMessage(jsonPayload);
-
                         var connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
-                        var storageAccount = CloudStorageAccount.Parse(connectionString);
-                        var queueClient = storageAccount.CreateCloudQueueClient();
-                        var queue = queueClient.GetQueueReference("receivingarawjsonmessage-receiver");
+                        var queueClient = new QueueClient(connectionString, "receivingarawjsonmessage-receiver");
 
-                        return queue.AddMessageAsync(cloudQueueMessage);
+                        return queueClient.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonPayload)));
                     });
                 })
                 .Done(c => c.GotMessage)
@@ -69,9 +66,10 @@
             }
         }
 
-        static MessageWrapper MyCustomUnwrapper(CloudQueueMessage rawMessage, Guid contextTestRunId)
+        static MessageWrapper MyCustomUnwrapper(QueueMessage rawMessage, Guid contextTestRunId)
         {
-            using (var stream = new MemoryStream(rawMessage.AsBytes))
+            var bytes = Convert.FromBase64String(rawMessage.MessageText);
+            using (var stream = new MemoryStream(bytes))
             using (var streamReader = new StreamReader(stream))
             using (var textReader = new JsonTextReader(streamReader))
             {
@@ -84,12 +82,12 @@
 
                 return new MessageWrapper
                 {
-                    Id = rawMessage.Id,
+                    Id = rawMessage.MessageId,
                     Headers = new Dictionary<string, string>
                     {
                         {TestIndependence.HeaderName, contextTestRunId.ToString()}
                     },
-                    Body = rawMessage.AsBytes
+                    Body = bytes
                 };
             }
         }

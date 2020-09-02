@@ -6,12 +6,11 @@
     using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using AcceptanceTesting.Customization;
     using AzureStorageQueues.AcceptanceTests;
+    using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
 
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
@@ -68,7 +67,7 @@
 
                 Func<RequestEventArgs, Uri> map;
 #if NETCOREAPP
-map = e => e.RequestUri;
+map = e => e.Request.RequestUri;
 #else
                 map = e => e.Request.RequestUri;
 #endif
