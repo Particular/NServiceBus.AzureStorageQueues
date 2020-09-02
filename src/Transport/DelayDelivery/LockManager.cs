@@ -44,11 +44,7 @@
             }
             try
             {
-                var requestConditions = new RequestConditions
-                {
-                    IfMatch = new ETag(lease.LeaseId)
-                };
-                await blobLeaseClient.RenewAsync(requestConditions, cancellationToken).ConfigureAwait(false);
+                await blobLeaseClient.RenewAsync(null, cancellationToken).ConfigureAwait(false);
                 return true;
             }
             catch (RequestFailedException exception) when (exception.Status == (int) HttpStatusCode.Conflict)
