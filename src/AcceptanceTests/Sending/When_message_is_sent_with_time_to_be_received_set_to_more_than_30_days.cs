@@ -36,8 +36,6 @@
             {
                 EndpointSetup<DefaultServer>();
             }
-
-            public Context Context { get; set; }
         }
 
         [TimeToBeReceived("31.00:00:01")]
