@@ -108,7 +108,7 @@
             using (var stream = new MemoryStream())
             {
                 serializer.Serialize(wrapper, stream);
-#if NET452
+#if NET472
                 rawMessage = new CloudQueueMessage(stream.ToArray());
 #else
                 rawMessage = CloudQueueMessage.CreateCloudQueueMessageFromByteArray(stream.ToArray());
