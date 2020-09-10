@@ -78,11 +78,16 @@
 
             public class MyMessageHandler : IHandleMessages<MyEvent>
             {
-                public Context Context { get; set; }
+                Context testContext;
+
+                public MyMessageHandler(Context testContext)
+                {
+                    this.testContext = testContext;
+                }
 
                 public Task Handle(MyEvent message, IMessageHandlerContext context)
                 {
-                    Context.WasCalled = true;
+                    testContext.WasCalled = true;
                     return Task.FromResult(0);
                 }
             }

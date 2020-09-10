@@ -149,16 +149,21 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                public Context TestContext { get; set; }
+                Context testContext;
+
+                public MyMessageHandler(Context testContext)
+                {
+                    this.testContext = testContext;
+                }
 
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
-                    if (TestContext.TestRunId != message.Id)
+                    if (testContext.TestRunId != message.Id)
                     {
                         return Task.FromResult(0);
                     }
 
-                    TestContext.WasCalled = true;
+                    testContext.WasCalled = true;
 
                     return Task.FromResult(0);
                 }
