@@ -13,6 +13,7 @@
 
   <!-- Force latest versions -->
   <ItemGroup>
+    <PackageReference Include="Particular.CodeRules" Version="0.7.0" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.*" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />
@@ -23,6 +24,7 @@
   <ItemGroup>
     <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
     <Compile Include="..\AcceptanceTests\BackwardsCompatibleQueueNameSanitizerForTests.cs" Link="BackwardsCompatibleQueueNameSanitizerForTests.cs" />
+    <Compile Include="..\TestSuppressions.cs" Link="TestSuppressions.cs" />
   </ItemGroup>
 
 </Project>

@@ -10,13 +10,13 @@
 
     public class LockManagerTests
     {
-        CloudBlobClient _blobs;
+        CloudBlobClient blobs;
 
         [OneTimeSetUp]
         public void SetUp()
         {
             var client = CloudStorageAccount.Parse(Testing.Utilities.GetEnvConfiguredConnectionString());
-            _blobs = client.CreateCloudBlobClient();
+            blobs = client.CreateCloudBlobClient();
         }
 
         [Test]
@@ -56,7 +56,7 @@
 
         LockManager GetLockManager(string containerName)
         {
-            var container = _blobs.GetContainerReference(containerName);
+            var container = blobs.GetContainerReference(containerName);
             var manager = new LockManager(container, TimeSpan.FromSeconds(20));
             return manager;
         }

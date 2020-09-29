@@ -8,7 +8,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
     {
         public CloudQueueClient Create(ConnectionString connectionString)
         {
-            // ReSharper disable once ConvertClosureToMethodGroup
             return destinationQueueClients.GetOrAdd(connectionString, cs => BuildClient(cs));
         }
 

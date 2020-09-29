@@ -51,7 +51,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             Logger.DebugFormat("Getting messages from queue with max batch size of {0}", batchSize);
             var rawMessages = await inputQueue.GetMessagesAsync(batchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
 
-            // ReSharper disable once LoopCanBeConvertedToQuery
             foreach (var rawMessage in rawMessages)
             {
                 receivedMessages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue, errorQueue));
