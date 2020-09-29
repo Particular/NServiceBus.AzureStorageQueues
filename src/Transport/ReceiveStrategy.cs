@@ -11,7 +11,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public static ReceiveStrategy BuildReceiveStrategy(Func<MessageContext, Task> pipe, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, TransportTransactionMode transactionMode, CriticalError criticalError)
         {
-            // ReSharper disable once SwitchStatementMissingSomeCases
             switch (transactionMode)
             {
                 case TransportTransactionMode.None:

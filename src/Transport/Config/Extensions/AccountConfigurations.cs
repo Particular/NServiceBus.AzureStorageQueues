@@ -20,7 +20,7 @@ namespace NServiceBus
 
         public AccountInfo Add(string alias, string connectionStringValue)
         {
-            if(!mappings.TryGetValue(alias, out var accountInfo))
+            if (!mappings.TryGetValue(alias, out var accountInfo))
             {
                 accountInfo = new AccountInfo(alias, connectionStringValue);
                 mappings.Add(alias, accountInfo);

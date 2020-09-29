@@ -108,7 +108,8 @@
                 {
                     break;
                 }
-            } while (true);
+            }
+            while (true);
 
 
             ctx.AllPropertiesFlattened = propertiesFlattened;

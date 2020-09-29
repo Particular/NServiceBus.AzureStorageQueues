@@ -20,7 +20,6 @@
 // VERSION:
 
 // NOTE: uncomment the following line to make SimpleJson class internal.
-
 #define SIMPLE_JSON_INTERNAL
 
 // NOTE: uncomment the following line to make JsonArray and JsonObject class internal.
@@ -45,22 +44,17 @@
 
 // If you are targetting WinStore, WP8 and NET4.5+ PCL make sure to #define SIMPLE_JSON_TYPEINFO;
 // original json parsing code from http://techblog.procurios.nl/k/618/news/view/14605/14863/How-do-I-write-my-own-parser-for-JSON.html
-
 #if NETFX_CORE
 #define SIMPLE_JSON_TYPEINFO
 #endif
 
 #if !SIMPLE_JSON_NO_LINQ_EXPRESSION
 using System.Linq.Expressions;
-// ReSharper disable All
 #endif
 #if SIMPLE_JSON_DYNAMIC
 using System.Dynamic;
 #endif
 
-// ReSharper disable LoopCanBeConvertedToQuery
-// ReSharper disable RedundantExplicitArrayCreation
-// ReSharper disable SuggestUseVarKeywordEvident
 namespace SimpleJson
 {
     using System;
@@ -2145,6 +2139,3 @@ namespace SimpleJson
         }
     }
 }
-// ReSharper restore LoopCanBeConvertedToQuery
-// ReSharper restore RedundantExplicitArrayCreation
-// ReSharper restore SuggestUseVarKeywordEvident
