@@ -38,7 +38,7 @@
             }
             catch (RequestFailedException ex)
             {
-                // https://msdn.microsoft.com/en-us/library/azure/dd179446.aspx
+                //// https://msdn.microsoft.com/en-us/library/azure/dd179446.aspx
 
                 if (ex.Status == 409)
                 {
