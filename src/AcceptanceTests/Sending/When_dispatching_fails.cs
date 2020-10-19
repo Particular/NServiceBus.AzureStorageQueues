@@ -13,6 +13,7 @@
 
     public class When_dispatching_fails : NServiceBusAcceptanceTest
     {
+        [Ignore("Fix when can configure the transport with the QueueClient that takes in HTTP pipeline. The legacy OperationContext.GlobalResponseReceived is no longer supported.")]
         [Test]
         public void Should_log_send_related_error()
         {
@@ -46,7 +47,7 @@
 
             // https://github.com/Azure/azure-storage-net/issues/534
             EventHandler<RequestEventArgs> failRequests = (sender, e) => { throw new Exception("Fail on proxy"); };
-            OperationContext.GlobalSendingRequest += failRequests;
+            OperationContext.GlobalResponseReceived += failRequests;
 
             try
             {
