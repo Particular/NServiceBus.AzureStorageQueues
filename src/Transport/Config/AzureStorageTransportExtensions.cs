@@ -1,3 +1,7 @@
+using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
+using Microsoft.Azure.Cosmos.Table;
+
 namespace NServiceBus
 {
     using System;
@@ -115,8 +119,10 @@ namespace NServiceBus
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> DegreeOfReceiveParallelism(this TransportExtensions<AzureStorageQueueTransport> config, int degreeOfReceiveParallelism)
         {
+            const int maxDegreeOfReceiveParallelism = 32;
+
             Guard.AgainstNull(nameof(config), config);
-            if (degreeOfReceiveParallelism < 1 || degreeOfReceiveParallelism > MaxDegreeOfReceiveParallelism)
+            if (degreeOfReceiveParallelism < 1 || degreeOfReceiveParallelism > maxDegreeOfReceiveParallelism)
             {
                 throw new ArgumentOutOfRangeException(nameof(degreeOfReceiveParallelism), degreeOfReceiveParallelism, "DegreeOfParallelism must be between 1 and 32.");
             }
@@ -133,7 +139,6 @@ namespace NServiceBus
             return new DelayedDeliverySettings(config.GetSettings());
         }
 
-        internal const int MaxDegreeOfReceiveParallelism = 32;
         /// <summary>
         /// Sets <see cref="QueueServiceClient"/> to be used for messaging operations.
         /// </summary>
