@@ -13,9 +13,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Queues" Version="[12.4.1, 13.0.0]" />
-    <!--12.5.0-preview.6 is required for Blob Index preview-->
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.5.0-preview.6" />
+    <PackageReference Include="Azure.Storage.Queues" Version="[12.4.2, 13.0.0]" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="[12.4.1, 13.0.0]" />
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="[1.0.8, 2.0.0]" />
     <PackageReference Include="NServiceBus" Version="[8.0.0-alpha.561, 9.0.0)" />
     <PackageReference Include="Fody" Version="6.2.6" PrivateAssets="All" />

@@ -14,7 +14,7 @@
   <!-- Force latest versions -->
   <ItemGroup>
     <PackageReference Include="Particular.CodeRules" Version="0.7.0" />
-    <PackageReference Include="Azure.Storage.Queues" Version="12.*" />
+    <PackageReference Include="Azure.Storage.Queues" Version="12.4.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
