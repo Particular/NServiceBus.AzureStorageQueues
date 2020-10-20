@@ -65,12 +65,7 @@
 
                     .ConfigureAwait(false);
 
-                Func<RequestEventArgs, Uri> map;
-#if NETCOREAPP
-map = e => e.Request.RequestUri;
-#else
-                map = e => e.Request.RequestUri;
-#endif
+                Func<RequestEventArgs, Uri> map = e => e.Request.RequestUri;
                 var requestCount = requests.Events
                     .Where(e =>
                     {
