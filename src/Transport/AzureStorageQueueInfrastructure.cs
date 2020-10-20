@@ -38,7 +38,13 @@
                 settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
             }
 
-            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings), settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery));
+            if (!settings.TryGet<CloudTableClient>(WellKnownConfigurationKeys.CloudTableClient, out var cloudTableClient))
+            {
+                var cloudStorageAccount = CloudStorageAccount.Parse(connectionString);
+                cloudTableClient = cloudStorageAccount.CreateCloudTableClient();
+            }
+
+            delayedDelivery = new NativeDelayDelivery(cloudTableClient, GetDelayedDeliveryTableName(settings), settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery));
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
 

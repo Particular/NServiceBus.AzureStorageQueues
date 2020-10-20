@@ -15,20 +15,19 @@
     class NativeDelayDelivery
     {
         readonly bool delayedDeliveryDisabled;
-        CloudTable delayedMessagesTable;
 
-        public NativeDelayDelivery(string connectionString, string delayedMessagesTableName, bool delayedDeliveryDisabled)
+        public NativeDelayDelivery(CloudTableClient cloudTableClient, string delayedMessagesTableName, bool delayedDeliveryDisabled)
         {
             this.delayedDeliveryDisabled = delayedDeliveryDisabled;
             if (!delayedDeliveryDisabled)
             {
-                delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
+                Table = cloudTableClient.GetTableReference(delayedMessagesTableName);
                 // In the constructor to ensure we do not force the calling code to remember to invoke any initialization method.
                 // Also, CreateIfNotExistsAsync() returns BEFORE the table is actually ready to be used, causing 404.
 
                 // TODO: Original code was calling delayedMessagesTable.CreateIfNotExists(); as it was not affected by the bug the async version had.
                 // In case async version still returns before table is created, add a small delay.
-                delayedMessagesTable.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+                Table.CreateIfNotExistsAsync().GetAwaiter().GetResult();
             }
         }
 
@@ -56,7 +55,7 @@
         }
 
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
-        public CloudTable Table => delayedMessagesTable;
+        public CloudTable Table { get; }
 
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
@@ -104,7 +103,7 @@
             };
 
             delayedMessageEntity.SetOperation(operation);
-            return delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), null, null, cancellationToken);
+            return Table.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), null, null, cancellationToken);
         }
 
         static TDeliveryConstraint FirstOrDefault<TDeliveryConstraint>(List<DeliveryConstraint> constraints)
