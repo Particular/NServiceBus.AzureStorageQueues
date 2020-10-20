@@ -1,26 +1,26 @@
 ﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
 {
+    using System;
     using System.IO;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Azure.Transports.WindowsAzureStorageQueues;
     using EndpointTemplates;
+    using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using global::Newtonsoft.Json;
     using global::Newtonsoft.Json.Linq;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Queue;
     using NUnit.Framework;
     using Testing;
 
     public class When_using_alias_instead_of_connection_string_for_default_account : NServiceBusAcceptanceTest
     {
-        CloudQueue destinationQueue;
+        QueueClient destinationQueue;
 
         public When_using_alias_instead_of_connection_string_for_default_account()
         {
             var connectionString = Utilities.GetEnvConfiguredConnectionString();
-            var account = CloudStorageAccount.Parse(connectionString);
-            destinationQueue = account.CreateCloudQueueClient().GetQueueReference("destination");
+            destinationQueue = new QueueClient(connectionString, "destination");
         }
 
         [OneTimeSetUp]
@@ -37,10 +37,12 @@
                 .Done(c => true)
                 .Run();
 
-            var message = await destinationQueue.GetMessageAsync().ConfigureAwait(false);
-            await destinationQueue.DeleteMessageAsync(message).ConfigureAwait(false);
+            QueueMessage[] messages = await destinationQueue.ReceiveMessagesAsync(1).ConfigureAwait(false);
+            var message = messages[0];
+            await destinationQueue.DeleteMessageAsync(message.MessageId, message.PopReceipt).ConfigureAwait(false);
 
-            using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(message.AsBytes))))
+            var bytes = Convert.FromBase64String(message.MessageText);
+            using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(bytes))))
             {
                 var token = JToken.ReadFrom(reader);
                 var headers = token["Headers"];

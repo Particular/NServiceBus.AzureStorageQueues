@@ -6,12 +6,14 @@
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
     using EndpointTemplates;
-    using Microsoft.WindowsAzure.Storage;
+    using global::Azure;
+    using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
     using LogLevel = Logging.LogLevel;
 
     public class When_dispatching_fails : NServiceBusAcceptanceTest
     {
+        [Ignore("Fix when can configure the transport with the QueueClient that takes in HTTP pipeline. The legacy OperationContext.GlobalResponseReceived is no longer supported.")]
         [Test]
         public void Should_log_send_related_error()
         {

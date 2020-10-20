@@ -5,8 +5,7 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Configuration.AdvancedExtensibility;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Table;
+    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -50,7 +49,7 @@
             Assert.Greater(context.Stopwatch.Elapsed, delay);
         }
 
-       
+
 
         public class Context : ScenarioContext
         {

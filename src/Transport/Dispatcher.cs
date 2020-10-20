@@ -9,8 +9,8 @@
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
+    using global::Azure.Storage.Queues;
     using Logging;
-    using Microsoft.WindowsAzure.Storage.Queue;
     using Transport;
     using Unicast.Queuing;
 
@@ -47,6 +47,7 @@
             {
                 logger.DebugFormat("Sending message (ID: '{0}') to {1}", operation.Message.MessageId, operation.Destination);
             }
+
             var dispatchDecision = await shouldSend(operation, cancellationToken).ConfigureAwait(false);
             if (dispatchDecision == false)
             {
@@ -61,7 +62,7 @@
 
             var sendClient = createQueueClients.Create(connectionString);
             var q = addressGenerator.GetQueueName(queue.QueueName);
-            var sendQueue = sendClient.GetQueueReference(q);
+            var sendQueue = sendClient.GetQueueClient(q);
 
             if (!await ExistsAsync(sendQueue).ConfigureAwait(false))
             {
@@ -101,26 +102,29 @@
             await Send(wrapper, sendQueue, timeToBeReceived ?? CloudQueueMessageMaxTimeToLive).ConfigureAwait(false);
         }
 
-        Task Send(MessageWrapper wrapper, CloudQueue sendQueue, TimeSpan timeToBeReceived)
+        Task Send(MessageWrapper wrapper, QueueClient sendQueue, TimeSpan timeToBeReceived)
         {
-            CloudQueueMessage rawMessage;
+            string base64String;
+
             using (var stream = new MemoryStream())
             {
                 serializer.Serialize(wrapper, stream);
-#if NET452
-                rawMessage = new CloudQueueMessage(stream.ToArray());
-#else
-                rawMessage = CloudQueueMessage.CreateCloudQueueMessageFromByteArray(stream.ToArray());
-#endif
+
+                var bytes = stream.ToArray();
+                base64String = Convert.ToBase64String(bytes);
             }
 
-            return sendQueue.AddMessageAsync(rawMessage, timeToBeReceived, null, null, null);
+            return sendQueue.SendMessageAsync(base64String, timeToLive: timeToBeReceived);
         }
 
-        Task<bool> ExistsAsync(CloudQueue sendQueue)
+        async Task<bool> ExistsAsync(QueueClient sendQueue)
         {
             var key = sendQueue.Uri.ToString();
-            return rememberExistence.GetOrAdd(key, keyNotFound => sendQueue.ExistsAsync());
+            return await rememberExistence.GetOrAdd(key, async keyNotFound =>
+             {
+                 var exists = await sendQueue.ExistsAsync().ConfigureAwait(false);
+                 return exists.Value;
+             }).ConfigureAwait(false);
         }
 
         MessageWrapper BuildMessageWrapper(IOutgoingTransportOperation operation, QueueAddress destinationQueue)

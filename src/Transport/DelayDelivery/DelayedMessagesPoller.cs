@@ -4,9 +4,10 @@
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::Azure.Storage.Blobs;
+    using global::Azure.Storage.Blobs.Specialized;
     using Logging;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Table;
+    using Microsoft.Azure.Cosmos.Table;
     using Transport;
 
     class DelayedMessagesPoller
@@ -40,9 +41,9 @@
         {
             Logger.Debug("Starting delayed message poller");
 
-            var storageAccount = CloudStorageAccount.Parse(connectionString);
-            var container = storageAccount.CreateCloudBlobClient().GetContainerReference(delayedDeliveryTable.Name);
-            lockManager = new LockManager(container, LeaseLength);
+            var containerClient = new BlobContainerClient(connectionString, delayedDeliveryTable.Name);
+            var leaseClient = new BlobLeaseClient(containerClient);
+            lockManager = new LockManager(containerClient, leaseClient, LeaseLength);
 
             // No need to pass token to run. to avoid when token is canceled the task changing into
             // the canceled state and when awaited while stopping rethrow the canceled exception
