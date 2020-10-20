@@ -17,7 +17,7 @@
         [Test]
         public void Should_log_send_related_error()
         {
-            Assert.ThrowsAsync<RequestFailedException>(() => Scenario.Define<Context>()
+            Assert.ThrowsAsync<StorageException>(() => Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When((bus, c) => Send(bus)))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.Logs.Any(li => li.Message.Contains("Fail on proxy") && li.Level == LogLevel.Error))
@@ -47,7 +47,7 @@
 
             // https://github.com/Azure/azure-storage-net/issues/534
             EventHandler<RequestEventArgs> failRequests = (sender, e) => { throw new Exception("Fail on proxy"); };
-            OperationContext.GlobalResponseReceived += failRequests;
+            OperationContext.GlobalSendingRequest += failRequests;
 
             try
             {
