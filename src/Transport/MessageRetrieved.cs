@@ -4,13 +4,14 @@
     using System.Runtime.Serialization;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Queue;
+    using global::Azure;
+    using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using Logging;
 
     class MessageRetrieved
     {
-        public MessageRetrieved(IMessageEnvelopeUnwrapper unwrapper, CloudQueueMessage rawMessage, CloudQueue inputQueue, CloudQueue errorQueue)
+        public MessageRetrieved(IMessageEnvelopeUnwrapper unwrapper, QueueMessage rawMessage, QueueClient inputQueue, QueueClient errorQueue)
         {
             this.unwrapper = unwrapper;
             this.errorQueue = errorQueue;
@@ -18,7 +19,7 @@
             this.inputQueue = inputQueue;
         }
 
-        public int DequeueCount => rawMessage.DequeueCount;
+        public long DequeueCount => rawMessage.DequeueCount;
 
         /// <summary>
         /// Unwraps the raw message body.
@@ -29,17 +30,18 @@
         {
             try
             {
-                Logger.DebugFormat("Unwrapping message with native ID: '{0}'", rawMessage.Id);
+                Logger.DebugFormat("Unwrapping message with native ID: '{0}'", rawMessage.MessageId);
                 return unwrapper.Unwrap(rawMessage);
             }
             catch (Exception ex)
             {
                 // When a CloudQueueMessage is retrieved and is en-queued directly, message's ID and PopReceipt are mutated.
                 // To be able to delete the original message, original message ID and PopReceipt have to be stored aside.
-                var messageId = rawMessage.Id;
+                var messageId = rawMessage.MessageId;
                 var messagePopReceipt = rawMessage.PopReceipt;
 
-                await errorQueue.AddMessageAsync(rawMessage).ConfigureAwait(false);
+                await errorQueue.SendMessageAsync(rawMessage.MessageText).ConfigureAwait(false);
+                // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
                 await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt).ConfigureAwait(false);
 
                 throw new SerializationException($"Failed to deserialize message envelope for message with id {messageId}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
@@ -53,14 +55,14 @@
         {
             AssertVisibilityTimeout();
 
-            return inputQueue.DeleteMessageAsync(rawMessage);
+            return inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt);
         }
 
         void AssertVisibilityTimeout()
         {
-            if (rawMessage.NextVisibleTime != null)
+            if (rawMessage.NextVisibleOn != null)
             {
-                var visibleIn = rawMessage.NextVisibleTime.Value - DateTimeOffset.Now;
+                var visibleIn = rawMessage.NextVisibleOn.Value - DateTimeOffset.Now;
                 if (visibleIn < TimeSpan.Zero)
                 {
                     var visibilityTimeoutExceededBy = -visibleIn;
@@ -80,20 +82,17 @@
             {
                 // the simplest solution to push the message back is to update its visibility timeout to 0 which is ok according to the API:
                 // https://msdn.microsoft.com/en-us/library/azure/hh452234.aspx
-                await inputQueue.UpdateMessageAsync(rawMessage, TimeSpan.Zero, MessageUpdateFields.Visibility).ConfigureAwait(false);
+                await inputQueue.UpdateMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, visibilityTimeout: TimeSpan.Zero).ConfigureAwait(false);
             }
-            catch (StorageException ex)
+            catch (RequestFailedException ex) when (ex.ErrorCode != QueueErrorCode.MessageNotFound)
             {
-                if (ex.RequestInformation.HttpStatusCode != 404)
-                {
-                    throw;
-                }
+                throw;
             }
         }
 
-        readonly CloudQueue inputQueue;
-        readonly CloudQueueMessage rawMessage;
-        readonly CloudQueue errorQueue;
+        readonly QueueClient inputQueue;
+        readonly QueueMessage rawMessage;
+        readonly QueueClient errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
 
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
@@ -101,7 +100,7 @@
 
     class LeaseTimeoutException : Exception
     {
-        public LeaseTimeoutException(CloudQueueMessage rawMessage, TimeSpan visibilityTimeoutExceededBy) : base($"The pop receipt of the cloud queue message '{rawMessage.Id}' is invalid as it exceeded the next visible time by '{visibilityTimeoutExceededBy}'.")
+        public LeaseTimeoutException(QueueMessage rawMessage, TimeSpan visibilityTimeoutExceededBy) : base($"The pop receipt of the cloud queue message '{rawMessage.MessageId}' is invalid as it exceeded the next visible time by '{visibilityTimeoutExceededBy}'.")
         {
         }
     }

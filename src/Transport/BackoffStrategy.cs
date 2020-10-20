@@ -51,7 +51,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             if (receivedBatchSize > 0)
             {
                 OnSomethingProcessed();
-                return TaskEx.CompletedTask;
+                return Task.CompletedTask;
             }
 
             return OnNothingProcessed(token);

@@ -3,8 +3,9 @@
     using System;
     using System.Linq;
     using System.Threading.Tasks;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Queue;
+    using global::Azure;
+    using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using Logging;
     using Transport;
 
@@ -14,7 +15,7 @@
     /// </summary>
     class AzureMessageQueueCreator : ICreateQueues
     {
-        public AzureMessageQueueCreator(CloudQueueClient client, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueCreator(QueueServiceClient client, QueueAddressGenerator addressGenerator)
         {
             this.client = client;
             this.addressGenerator = addressGenerator;
@@ -32,32 +33,32 @@
             var queueName = addressGenerator.GetQueueName(address);
             try
             {
-                var queue = client.GetQueueReference(queueName);
+                var queue = client.GetQueueClient(queueName);
                 await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
             }
-            catch (StorageException ex)
+            catch (RequestFailedException ex)
             {
-                // https://msdn.microsoft.com/en-us/library/azure/dd179446.aspx
-                var info = ex.RequestInformation;
+                //// https://msdn.microsoft.com/en-us/library/azure/dd179446.aspx
 
-                if (info.HttpStatusCode == 409)
+                if (ex.Status == 409)
                 {
-                    if (info.HttpStatusMessage == "QueueAlreadyExists")
+                    if (ex.ErrorCode == QueueErrorCode.QueueAlreadyExists)
                     {
                         return;
                     }
                 }
 
-                throw new StorageException($"Failed to create queue: {queueName}, because {info.HttpStatusCode}-{info.HttpStatusMessage}.", ex);
+                // TODO: should we throw with Message or Message+ErrorCode
+                throw new RequestFailedException($"Failed to create queue: {queueName}, because {ex.Status}-{ex.Message}.", ex);
             }
             catch (Exception ex)
             {
-                throw new StorageException($"Failed to create queue: {queueName}, because {ex.Message}.", ex);
+                throw new RequestFailedException($"Failed to create queue: {queueName}, because {ex.Message}.", ex);
             }
         }
 
         QueueAddressGenerator addressGenerator;
-        CloudQueueClient client;
+        QueueServiceClient client;
         static readonly ILog Logger = LogManager.GetLogger<AzureMessageQueueCreator>();
     }
 }

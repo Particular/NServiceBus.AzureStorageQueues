@@ -4,15 +4,16 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.WindowsAzure.Storage.Queue;
+    using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using Logging;
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, CloudQueueClient client, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, QueueServiceClient service, QueueAddressGenerator addressGenerator)
         {
             this.unwrapper = unwrapper;
-            this.client = client;
+            this.service = service;
             this.addressGenerator = addressGenerator;
         }
 
@@ -34,14 +35,14 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             if (PurgeOnStartup)
             {
-                await inputQueue.ClearAsync().ConfigureAwait(false);
+                await inputQueue.ClearMessagesAsync().ConfigureAwait(false);
             }
         }
 
-        async Task<CloudQueue> GetQueue(string address)
+        async Task<QueueClient> GetQueue(string address)
         {
             var name = addressGenerator.GetQueueName(address);
-            var queue = client.GetQueueReference(name);
+            var queue = service.GetQueueClient(name);
             await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
             return queue;
         }
@@ -49,7 +50,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         internal async Task Receive(int batchSize, List<MessageRetrieved> receivedMessages, BackoffStrategy backoffStrategy, CancellationToken token)
         {
             Logger.DebugFormat("Getting messages from queue with max batch size of {0}", batchSize);
-            var rawMessages = await inputQueue.GetMessagesAsync(batchSize, MessageInvisibleTime, null, null, token).ConfigureAwait(false);
+            QueueMessage[] rawMessages = await inputQueue.ReceiveMessagesAsync(batchSize, MessageInvisibleTime, token).ConfigureAwait(false);
 
             foreach (var rawMessage in rawMessages)
             {
@@ -63,9 +64,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         QueueAddressGenerator addressGenerator;
 
-        CloudQueue inputQueue;
-        CloudQueue errorQueue;
-        CloudQueueClient client;
+        QueueClient inputQueue;
+        QueueClient errorQueue;
+        QueueServiceClient service;
 
         public string QueueName => inputQueue.Name;
 

@@ -2,21 +2,21 @@ namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using Azure.Transports.WindowsAzureStorageQueues;
-    using Microsoft.WindowsAzure.Storage.Queue;
+    using global::Azure.Storage.Queues.Models;
 
     class UserProvidedEnvelopeUnwrapper : IMessageEnvelopeUnwrapper
     {
-        public UserProvidedEnvelopeUnwrapper(Func<CloudQueueMessage, MessageWrapper> unwrapper)
+        public UserProvidedEnvelopeUnwrapper(Func<QueueMessage, MessageWrapper> unwrapper)
         {
             this.unwrapper = unwrapper;
         }
 
-        public MessageWrapper Unwrap(CloudQueueMessage rawMessage)
+        public MessageWrapper Unwrap(QueueMessage rawMessage)
         {
 
             return unwrapper(rawMessage);
         }
 
-        Func<CloudQueueMessage, MessageWrapper> unwrapper;
+        Func<QueueMessage, MessageWrapper> unwrapper;
     }
 }

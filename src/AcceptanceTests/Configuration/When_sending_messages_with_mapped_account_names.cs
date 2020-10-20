@@ -1,14 +1,16 @@
 ﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
 {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using EndpointTemplates;
+    using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using global::Newtonsoft.Json;
     using global::Newtonsoft.Json.Linq;
-    using Microsoft.WindowsAzure.Storage;
     using NUnit.Framework;
 
     public class When_sending_messages_with_mapped_account_names : NServiceBusAcceptanceTest
@@ -85,18 +87,19 @@
             Dictionary<string, string> propertiesFlattened;
             do
             {
-                var account = CloudStorageAccount.Parse(destinationConnectionString);
-                var receiverAuditQueue = account.CreateCloudQueueClient().GetQueueReference(AuditName);
+                var receiverAuditQueue = new QueueClient(destinationConnectionString, AuditName);
 
-                var rawMessage = await receiverAuditQueue.GetMessageAsync().ConfigureAwait(false);
-                await receiverAuditQueue.DeleteMessageAsync(rawMessage).ConfigureAwait(false);
-                if (rawMessage == null)
+                QueueMessage[] rawMessages = await receiverAuditQueue.ReceiveMessagesAsync(1).ConfigureAwait(false);
+                if (rawMessages.Length == 0)
                 {
                     Assert.Fail("No message in the audit queue to pick up.");
                 }
+                var rawMessage = rawMessages[0];
+                await receiverAuditQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt).ConfigureAwait(false);
 
                 JToken message;
-                using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(rawMessage.AsBytes))))
+                var bytes = Convert.FromBase64String(rawMessage.MessageText);
+                using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(bytes))))
                 {
                     message = JToken.ReadFrom(reader);
                 }

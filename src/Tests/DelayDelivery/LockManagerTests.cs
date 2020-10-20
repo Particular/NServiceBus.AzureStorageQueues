@@ -3,20 +3,19 @@
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Blob;
+    using global::Azure.Storage.Blobs;
+    using global::Azure.Storage.Blobs.Specialized;
     using NUnit.Framework;
     using Transport.AzureStorageQueues;
 
     public class LockManagerTests
     {
-        CloudBlobClient blobs;
+        BlobServiceClient blobService;
 
         [OneTimeSetUp]
         public void SetUp()
         {
-            var client = CloudStorageAccount.Parse(Testing.Utilities.GetEnvConfiguredConnectionString());
-            blobs = client.CreateCloudBlobClient();
+            blobService = new BlobServiceClient(Testing.Utilities.GetEnvConfiguredConnectionString());
         }
 
         [Test]
@@ -56,8 +55,9 @@
 
         LockManager GetLockManager(string containerName)
         {
-            var container = blobs.GetContainerReference(containerName);
-            var manager = new LockManager(container, TimeSpan.FromSeconds(20));
+            var container = blobService.GetBlobContainerClient(containerName);
+            var blobLease = new BlobLeaseClient(container);
+            var manager = new LockManager(container, blobLease, TimeSpan.FromSeconds(20));
             return manager;
         }
     }
