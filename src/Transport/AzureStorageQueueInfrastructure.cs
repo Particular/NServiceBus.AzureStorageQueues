@@ -9,6 +9,7 @@
     using DelayedDelivery;
     using Features;
     using Logging;
+    using Microsoft.Azure.Cosmos.Table;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -21,6 +22,12 @@
         {
             this.settings = settings;
             this.connectionString = connectionString;
+
+            if (IsPremiumEndpoint(connectionString))
+            {
+                throw new Exception($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
+            }
+
             serializer = BuildSerializer(settings);
 
             settings.SetDefault(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, true);
@@ -33,6 +40,13 @@
 
             delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings), settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery));
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
+        }
+
+        // the SDK uses similar method of changing the underlying executor
+        static bool IsPremiumEndpoint(string connectionString)
+        {
+            var lowerInvariant = connectionString.ToLowerInvariant();
+            return lowerInvariant.Contains("https://localhost") || lowerInvariant.Contains(".table.cosmosdb.") || lowerInvariant.Contains(".table.cosmos.");
         }
 
         public override IEnumerable<Type> DeliveryConstraints => new List<Type> {typeof(DiscardIfNotReceivedBefore), typeof(NonDurableDelivery), typeof(DoNotDeliverBefore), typeof(DelayDeliveryWith)};
