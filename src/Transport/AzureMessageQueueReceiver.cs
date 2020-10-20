@@ -5,6 +5,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using Logging;
 
     class AzureMessageQueueReceiver
@@ -49,9 +50,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
         internal async Task Receive(int batchSize, List<MessageRetrieved> receivedMessages, BackoffStrategy backoffStrategy, CancellationToken token)
         {
             Logger.DebugFormat("Getting messages from queue with max batch size of {0}", batchSize);
-            var rawMessages = await inputQueue.ReceiveMessagesAsync(batchSize, MessageInvisibleTime, token).ConfigureAwait(false);
+            QueueMessage[] rawMessages = await inputQueue.ReceiveMessagesAsync(batchSize, MessageInvisibleTime, token).ConfigureAwait(false);
 
-            foreach (var rawMessage in rawMessages.Value)
+            foreach (var rawMessage in rawMessages)
             {
                 receivedMessages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue, errorQueue));
             }

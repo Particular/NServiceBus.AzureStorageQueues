@@ -33,7 +33,7 @@
             {
                 try
                 {
-                    lease = (await blobLeaseClient.AcquireAsync(span, null, cancellationToken).ConfigureAwait(false)).Value;
+                    lease = await blobLeaseClient.AcquireAsync(span, null, cancellationToken).ConfigureAwait(false);
                     return true;
                 }
                 catch (RequestFailedException exception) when (exception.Status == (int) HttpStatusCode.Conflict)
