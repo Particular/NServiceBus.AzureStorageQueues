@@ -44,7 +44,7 @@
                 cloudTableClient = cloudStorageAccount.CreateCloudTableClient();
             }
 
-            delayedDelivery = new NativeDelayDelivery(cloudTableClient, GetDelayedDeliveryTableName(settings), settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery));
+            delayedDelivery = new NativeDelayDelivery(cloudTableClient, GetDelayedDeliveryTableName(settings), NativeDelayedDeliveryIsEnabled());
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
 
@@ -87,7 +87,7 @@
             return "delays" + hashName.ToLower();
         }
 
-        bool PollerCanBeUsed() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
+        bool NativeDelayedDeliveryIsEnabled() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
@@ -195,11 +195,13 @@
             return addressGenerator.GetQueueName(queue.ToString());
         }
 
-        public override Task Start()
+        public override async Task Start()
         {
-            if (PollerCanBeUsed())
+            if (NativeDelayedDeliveryIsEnabled())
             {
                 Logger.Debug("Starting poller");
+
+                await delayedDelivery.Initialize().ConfigureAwait(false);
 
                 var isAtMostOnce = GetRequiredTransactionMode() == TransportTransactionMode.None;
                 var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
@@ -208,8 +210,6 @@
                 nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
                 poller.Start(nativeDelayedMessagesCancellationSource.Token);
             }
-
-            return Task.CompletedTask;
         }
 
         public override Task Stop()

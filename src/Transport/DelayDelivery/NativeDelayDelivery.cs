@@ -14,21 +14,20 @@
 
     class NativeDelayDelivery
     {
-        readonly bool delayedDeliveryDisabled;
+        readonly bool delayedDeliveryEnabled;
 
-        public NativeDelayDelivery(CloudTableClient cloudTableClient, string delayedMessagesTableName, bool delayedDeliveryDisabled)
+        public NativeDelayDelivery(CloudTableClient cloudTableClient, string delayedMessagesTableName, bool delayedDeliveryEnabled)
         {
-            this.delayedDeliveryDisabled = delayedDeliveryDisabled;
-            if (!delayedDeliveryDisabled)
+            this.delayedDeliveryEnabled = delayedDeliveryEnabled;
+            if (delayedDeliveryEnabled)
             {
                 Table = cloudTableClient.GetTableReference(delayedMessagesTableName);
-                // In the constructor to ensure we do not force the calling code to remember to invoke any initialization method.
-                // Also, CreateIfNotExistsAsync() returns BEFORE the table is actually ready to be used, causing 404.
-
-                // TODO: Original code was calling delayedMessagesTable.CreateIfNotExists(); as it was not affected by the bug the async version had.
-                // In case async version still returns before table is created, add a small delay.
-                Table.CreateIfNotExistsAsync().GetAwaiter().GetResult();
             }
+        }
+
+        public Task Initialize()
+        {
+            return Table.CreateIfNotExistsAsync();
         }
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -37,7 +36,7 @@
             var delay = GetVisibilityDelay(constraints);
             if (delay != null)
             {
-                if (delayedDeliveryDisabled)
+                if (delayedDeliveryEnabled == false)
                 {
                     throw new Exception("Cannot delay delivery of messages when delayed delivery has been disabled. Remove the 'endpointConfiguration.UseTransport<AzureStorageQueues>.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.");
                 }
