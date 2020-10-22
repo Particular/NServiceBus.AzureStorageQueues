@@ -1,4 +1,7 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+﻿using Azure.Storage.Blobs;
+using NServiceBus.Logging;
+
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
@@ -14,20 +17,57 @@
 
     class NativeDelayDelivery
     {
-        readonly bool delayedDeliveryEnabled;
-
-        public NativeDelayDelivery(CloudTableClient cloudTableClient, string delayedMessagesTableName, bool delayedDeliveryEnabled)
+        public NativeDelayDelivery(
+            CloudTableClient cloudTableClient,
+            BlobServiceClient blobServiceClient,
+            string delayedMessagesTableName,
+            bool delayedDeliveryEnabled,
+            string errorQueueAddress,
+            TransportTransactionMode transactionMode,
+            TimeSpan maximumWaitTime,
+            TimeSpan peekInterval,
+            Func<Dispatcher> dispatcherFactory)
         {
+            this.blobServiceClient = blobServiceClient;
             this.delayedDeliveryEnabled = delayedDeliveryEnabled;
+            this.errorQueueAddress = errorQueueAddress;
+            isAtMostOnce = transactionMode == TransportTransactionMode.None;
+            this.maximumWaitTime = maximumWaitTime;
+            this.peekInterval = peekInterval;
+            this.dispatcherFactory = dispatcherFactory;
+
             if (delayedDeliveryEnabled)
             {
                 Table = cloudTableClient.GetTableReference(delayedMessagesTableName);
             }
         }
 
-        public Task Initialize()
+        public async Task Start()
         {
-            return Table.CreateIfNotExistsAsync();
+            if (delayedDeliveryEnabled)
+            {
+                Logger.Debug("Starting delayed delivery poller");
+
+                await Table.CreateIfNotExistsAsync().ConfigureAwait(false);
+
+                nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
+                poller = new DelayedMessagesPoller(Table, blobServiceClient, errorQueueAddress, isAtMostOnce, dispatcherFactory(), new BackoffStrategy(peekInterval, maximumWaitTime));
+                poller.Start(nativeDelayedMessagesCancellationSource.Token);
+            }
+        }
+
+        public Task Stop()
+        {
+            if (delayedDeliveryEnabled)
+            {
+                Logger.Debug("Stopping delayed delivery poller");
+
+                nativeDelayedMessagesCancellationSource?.Cancel();
+
+                return poller.Stop();
+            }
+
+            return Task.CompletedTask;
         }
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -123,5 +163,19 @@
 
             return null;
         }
+
+
+
+        static readonly ILog Logger = LogManager.GetLogger<NativeDelayDelivery>();
+
+        DelayedMessagesPoller poller;
+        CancellationTokenSource nativeDelayedMessagesCancellationSource;
+        readonly BlobServiceClient blobServiceClient;
+        readonly bool delayedDeliveryEnabled;
+        readonly string errorQueueAddress;
+        readonly bool isAtMostOnce;
+        readonly TimeSpan maximumWaitTime;
+        readonly TimeSpan peekInterval;
+        readonly Func<Dispatcher> dispatcherFactory;
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+﻿using Azure.Storage.Blobs;
+
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
@@ -44,7 +46,22 @@
                 cloudTableClient = cloudStorageAccount.CreateCloudTableClient();
             }
 
-            delayedDelivery = new NativeDelayDelivery(cloudTableClient, GetDelayedDeliveryTableName(settings), NativeDelayedDeliveryIsEnabled());
+            if (!settings.TryGet<BlobServiceClient>(WellKnownConfigurationKeys.BlobServiceClient, out var blobServiceClient))
+            {
+                blobServiceClient = new BlobServiceClient(connectionString);
+            }
+
+            nativeDelayedDelivery = new NativeDelayDelivery(
+                cloudTableClient,
+                blobServiceClient,
+                GetDelayedDeliveryTableName(settings),
+                NativeDelayedDeliveryIsEnabled(),
+                settings.ErrorQueueAddress(),
+                GetRequiredTransactionMode(),
+                settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
+                settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval),
+                BuildDispatcher);
+
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
 
@@ -165,7 +182,7 @@
         Dispatcher BuildDispatcher()
         {
             var addressing = GetAddressing(settings, connectionString);
-            return new Dispatcher(addressGenerator, addressing, serializer, delayedDelivery.ShouldDispatch);
+            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ShouldDispatch);
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -197,25 +214,12 @@
 
         public override async Task Start()
         {
-            if (NativeDelayedDeliveryIsEnabled())
-            {
-                Logger.Debug("Starting poller");
-
-                await delayedDelivery.Initialize().ConfigureAwait(false);
-
-                var isAtMostOnce = GetRequiredTransactionMode() == TransportTransactionMode.None;
-                var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
-                var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-                poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(peekInterval, maximumWaitTime));
-                nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-                poller.Start(nativeDelayedMessagesCancellationSource.Token);
-            }
+            await nativeDelayedDelivery.Start().ConfigureAwait(false);
         }
 
         public override Task Stop()
         {
-            nativeDelayedMessagesCancellationSource?.Cancel();
-            return poller != null ? poller.Stop() : Task.CompletedTask;
+            return nativeDelayedDelivery.Stop();
         }
 
         TransportTransactionMode GetRequiredTransactionMode()
@@ -239,9 +243,7 @@
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
-        NativeDelayDelivery delayedDelivery;
-        DelayedMessagesPoller poller;
-        CancellationTokenSource nativeDelayedMessagesCancellationSource;
+        NativeDelayDelivery nativeDelayedDelivery;
         QueueAddressGenerator addressGenerator;
 
         static readonly ILog Logger = LogManager.GetLogger<AzureStorageQueueInfrastructure>();
