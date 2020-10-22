@@ -212,9 +212,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return addressGenerator.GetQueueName(queue.ToString());
         }
 
-        public override async Task Start()
+        public override Task Start()
         {
-            await nativeDelayedDelivery.Start().ConfigureAwait(false);
+            return nativeDelayedDelivery.Start();
         }
 
         public override Task Stop()
