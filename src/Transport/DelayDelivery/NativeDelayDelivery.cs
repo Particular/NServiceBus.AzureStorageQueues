@@ -64,7 +64,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 nativeDelayedMessagesCancellationSource?.Cancel();
 
-                return poller.Stop();
+                return poller != null ? poller.Stop() : Task.CompletedTask;
             }
 
             return Task.CompletedTask;
