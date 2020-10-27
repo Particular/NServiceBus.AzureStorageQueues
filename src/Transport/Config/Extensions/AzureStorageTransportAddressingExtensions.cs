@@ -4,18 +4,8 @@ namespace NServiceBus
     using Transport.AzureStorageQueues;
 
     /// <summary>Transport addressing extensions.</summary>
-    public static class AzureStorageTransportAddressingExtensions
+    public static partial class AzureStorageTransportAddressingExtensions
     {
-        /// <summary>
-        /// Configure the transport to use account aliases instead of raw connection strings.
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> UseAccountAliasesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config)
-        {
-            Guard.AgainstNull(nameof(config), config);
-            config.GetSettings().Set(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, true);
-            return config;
-        }
-
         /// <summary>
         /// Provides access to configure cross account routing.
         /// </summary>

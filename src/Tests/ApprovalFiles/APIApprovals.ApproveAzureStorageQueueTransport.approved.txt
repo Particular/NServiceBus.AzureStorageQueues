@@ -6,7 +6,6 @@ namespace NServiceBus
     {
         public AccountInfo(string alias, string connectionString) { }
         public string Alias { get; }
-        public string ConnectionString { get; }
         public System.Collections.Generic.HashSet<string> RegisteredEndpoints { get; }
     }
     public class AccountRoutingSettings
@@ -24,6 +23,8 @@ namespace NServiceBus
     {
         public static NServiceBus.AccountRoutingSettings AccountRouting(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transportExtensions) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DefaultAccountAlias(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transportExtensions, string alias) { }
+        [System.ObsoleteAttribute("Account aliases are used instead of connection strings by default. Will be remove" +
+            "d in version 10.0.0.", true)]
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseAccountAliasesInsteadOfConnectionStrings(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
     }
     public class static AzureStorageTransportExtensions

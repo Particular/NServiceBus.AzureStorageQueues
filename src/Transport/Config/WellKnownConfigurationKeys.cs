@@ -9,7 +9,6 @@
         public const string ReceiverBatchSize = "Transport.AzureStorageQueue.ReceiverBatchSize";
         public const string MessageWrapperSerializationDefinition = "Transport.AzureStorageQueue.MessageWrapperSerializationDefinition";
         public const string DegreeOfReceiveParallelism = "Transport.AzureStorageQueue.DegreeOfReceiveParallelism";
-        public const string UseAccountNamesInsteadOfConnectionStrings = "Transport.AzureStorageQueue.UseAccountAliasesInsteadOfConnectionStrings";
         public const string QueueSanitizer = "Transport.AzureStorageQueue.QueueSanitizer";
         public const string QueueServiceClient = "Transport.AzureStorageQueue.QueueServiceClient";
         public const string BlobServiceClient = "Transport.AzureStorageQueue.BlobServiceClient";

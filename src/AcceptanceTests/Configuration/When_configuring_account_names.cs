@@ -47,7 +47,6 @@
                         c.UseSerialization<NewtonsoftSerializer>();
                         var transport = c.UseTransport<AzureStorageQueueTransport>();
                         transport
-                            .UseAccountAliasesInsteadOfConnectionStrings()
                             .ConnectionString(connectionString)
                             .SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>>();
 

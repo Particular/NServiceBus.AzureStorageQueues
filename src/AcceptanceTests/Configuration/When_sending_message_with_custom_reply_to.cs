@@ -123,7 +123,6 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         {
             protected override void SetUp(TransportExtensions<AzureStorageQueueTransport> transport)
             {
-                transport.UseAccountAliasesInsteadOfConnectionStrings();
             }
         }
 

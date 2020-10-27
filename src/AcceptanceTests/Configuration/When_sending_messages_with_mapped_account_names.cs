@@ -151,7 +151,6 @@
                 {
                     cfg.UseSerialization<NewtonsoftSerializer>();
                     cfg.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountAliasesInsteadOfConnectionStrings()
                         .DefaultAccountAlias(DefaultConnectionStringName)
                         .AccountRouting()
                         .AddAccount(AnotherConnectionStringName, anotherConnectionString);
@@ -192,8 +191,7 @@
             {
                 cfg.ConnectionString(anotherConnectionString);
 
-                cfg.UseAccountAliasesInsteadOfConnectionStrings()
-                    .DefaultAccountAlias(AnotherConnectionStringName)
+                cfg.DefaultAccountAlias(AnotherConnectionStringName)
                     .AccountRouting()
                     .AddAccount(DefaultConnectionStringName, defaultConnectionString);
             }
@@ -204,8 +202,7 @@
             {
                 cfg.ConnectionString(defaultConnectionString);
 
-                cfg.UseAccountAliasesInsteadOfConnectionStrings()
-                    .DefaultAccountAlias(DefaultConnectionStringName)
+                cfg.DefaultAccountAlias(DefaultConnectionStringName)
                     .AccountRouting()
                     .AddAccount(AnotherConnectionStringName, anotherConnectionString);
             }

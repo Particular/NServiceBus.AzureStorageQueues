@@ -185,8 +185,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 accounts = new AccountConfigurations();
             }
 
-            var shouldUseAliases = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out object _);
-
             addressing.SetAddressGenerator(addressGenerator);
             addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings);
             addressing.Add(new AccountInfo("", queueServiceClient), false);
