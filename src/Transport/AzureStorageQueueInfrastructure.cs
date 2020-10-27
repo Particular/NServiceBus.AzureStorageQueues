@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 
 namespace NServiceBus.Transport.AzureStorageQueues
 {
@@ -25,7 +26,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.settings = settings;
             this.connectionString = connectionString;
 
-            if (IsPremiumEndpoint(connectionString))
+            if (IsPremiumEndpoint(this.connectionString))
             {
                 throw new Exception($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
             }
@@ -42,13 +43,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             if (!settings.TryGet<CloudTableClient>(WellKnownConfigurationKeys.CloudTableClient, out var cloudTableClient))
             {
-                var cloudStorageAccount = CloudStorageAccount.Parse(connectionString);
+                var cloudStorageAccount = CloudStorageAccount.Parse(this.connectionString);
                 cloudTableClient = cloudStorageAccount.CreateCloudTableClient();
             }
 
             if (!settings.TryGet<BlobServiceClient>(WellKnownConfigurationKeys.BlobServiceClient, out var blobServiceClient))
             {
-                blobServiceClient = new BlobServiceClient(connectionString);
+                blobServiceClient = new BlobServiceClient(this.connectionString);
             }
 
             nativeDelayedDelivery = new NativeDelayDelivery(
@@ -109,20 +110,23 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
             Logger.Debug("Configuring receive infrastructure");
-            var connectionObject = new ConnectionString(connectionString);
-            var client = CreateQueueClients.CreateReceiver(connectionObject);
+
+            if (!settings.TryGet<QueueServiceClient>(WellKnownConfigurationKeys.QueueServiceClient, out var queueServiceClient))
+            {
+                queueServiceClient = new QueueServiceClient(connectionString);
+            }
 
             return new TransportReceiveInfrastructure(
                 () =>
                 {
-                    var addressing = GetAddressing(settings, connectionString);
+                    var addressing = GetAddressing(settings, queueServiceClient);
 
                     var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ? settings.GetOrDefault<IMessageEnvelopeUnwrapper>() : new DefaultMessageEnvelopeUnwrapper(serializer);
 
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                     var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
 
-                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, addressGenerator)
+                    var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClient, addressGenerator)
                     {
                         MessageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
                     };
@@ -141,27 +145,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                     return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, batchSize, maximumWaitTime, peekInterval);
                 },
-                () => new AzureMessageQueueCreator(client, addressGenerator),
+                () => new AzureMessageQueueCreator(queueServiceClient, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
             );
-        }
-
-        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
-        {
-            var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-
-            if (settings.TryGet<AccountConfigurations>(out var accounts) == false)
-            {
-                accounts = new AccountConfigurations();
-            }
-
-            var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out object _);
-
-            addressing.SetAddressGenerator(addressGenerator);
-            addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings, shouldUseAccountNames);
-            addressing.Add(new AccountInfo(QueueAddress.DefaultStorageAccountAlias, connectionString), false);
-
-            return addressing;
         }
 
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
@@ -181,8 +167,31 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         Dispatcher BuildDispatcher()
         {
-            var addressing = GetAddressing(settings, connectionString);
+            if (!settings.TryGet<QueueServiceClient>(WellKnownConfigurationKeys.QueueServiceClient, out var queueServiceClient))
+            {
+                queueServiceClient = new QueueServiceClient(connectionString);
+            }
+
+            var addressing = GetAddressing(settings, queueServiceClient);
             return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ShouldDispatch);
+        }
+
+        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, QueueServiceClient queueServiceClient)
+        {
+            var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
+
+            if (settings.TryGet<AccountConfigurations>(out var accounts) == false)
+            {
+                accounts = new AccountConfigurations();
+            }
+
+            var shouldUseAliases = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out object _);
+
+            addressing.SetAddressGenerator(addressGenerator);
+            addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings);
+            addressing.Add(new AccountInfo("", queueServiceClient), false);
+
+            return addressing;
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()

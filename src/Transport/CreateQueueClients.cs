@@ -5,21 +5,21 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class CreateQueueClients
     {
-        public QueueServiceClient Create(ConnectionString connectionString)
+        public QueueServiceClient Create(string alias)
         {
-            return destinationQueueClients.GetOrAdd(connectionString, cs => BuildClient(cs));
+            return destinationQueueClients.GetOrAdd(alias, a => BuildClient(a));
         }
 
-        public static QueueServiceClient CreateReceiver(ConnectionString connectionString)
+        public static QueueServiceClient CreateReceiver(string alias)
         {
-            return BuildClient(connectionString);
+            return BuildClient(alias);
         }
 
-        static QueueServiceClient BuildClient(ConnectionString connectionString)
+        static QueueServiceClient BuildClient(string alias)
         {
-            return new QueueServiceClient(connectionString.Value);
+            return new QueueServiceClient(alias);
         }
 
-        ConcurrentDictionary<ConnectionString, QueueServiceClient> destinationQueueClients = new ConcurrentDictionary<ConnectionString, QueueServiceClient>();
+        readonly ConcurrentDictionary<string, QueueServiceClient> destinationQueueClients = new ConcurrentDictionary<string, QueueServiceClient>();
     }
 }

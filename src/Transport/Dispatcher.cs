@@ -57,16 +57,15 @@
             // The destination might be in a queue@destination format
             var destination = operation.Destination;
 
-            var queue = QueueAddress.Parse(destination);
-            var connectionString = addressing.Map(queue);
+            var queueAddress = QueueAddress.Parse(destination);
+            var queueServiceClient = addressing.Map(queueAddress);
 
-            var sendClient = createQueueClients.Create(connectionString);
-            var q = addressGenerator.GetQueueName(queue.QueueName);
-            var sendQueue = sendClient.GetQueueClient(q);
+            var queueName = addressGenerator.GetQueueName(queueAddress.QueueName);
+            var sendQueue = queueServiceClient.GetQueueClient(queueName);
 
             if (!await ExistsAsync(sendQueue).ConfigureAwait(false))
             {
-                throw new QueueNotFoundException(queue.ToString(), $"Destination queue '{queue}' does not exist. This queue may have to be created manually.", null);
+                throw new QueueNotFoundException(queueAddress.ToString(), $"Destination queue '{queueAddress}' does not exist. This queue may have to be created manually.", null);
             }
 
             var toBeReceived = operation.GetTimeToBeReceived();
@@ -98,7 +97,7 @@
                 timeToBeReceived = TimeSpan.FromSeconds(seconds);
             }
 
-            var wrapper = BuildMessageWrapper(operation, queue);
+            var wrapper = BuildMessageWrapper(operation, queueAddress);
             await Send(wrapper, sendQueue, timeToBeReceived ?? CloudQueueMessageMaxTimeToLive).ConfigureAwait(false);
         }
 
