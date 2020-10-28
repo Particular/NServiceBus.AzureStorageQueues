@@ -19,7 +19,9 @@ namespace NServiceBus
             Guard.AgainstNull(nameof(alias), alias);
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
+            Alias = alias;
             QueueServiceClient = new QueueServiceClient(connectionString);
+            RegisteredEndpoints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
