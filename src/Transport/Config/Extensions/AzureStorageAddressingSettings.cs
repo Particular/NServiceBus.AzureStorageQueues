@@ -19,7 +19,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             if (string.IsNullOrWhiteSpace(defaultConnectionStringAlias))
             {
-                throw new Exception("The mapping of account names instead of connection strings is enabled but the default connection string name isn\'t provided. Provide the default connection string name when adding more accounts");
+                throw new Exception("The mapping of storage accounts connection strings to aliases is enforced but the the alias for the default connection string isn\'t provided. Provide the default connection string alias when using more than a single storage account.");
             }
 
             foreach (var kvp in aliasToConnectionStringMap)
@@ -29,7 +29,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 if (name == string.Empty)
                 {
-                    throw new ArgumentException("Don't use default empty name for mapping connection strings", nameof(aliasToConnectionStringMap));
+                    throw new ArgumentException("Don't use empty string as the default connection string alias.", nameof(aliasToConnectionStringMap));
                 }
 
                 Add(accountInfo);
