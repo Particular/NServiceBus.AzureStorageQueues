@@ -19,28 +19,35 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         {
             connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
             anotherConnectionString = ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString;
-            RawReplyTo = "q@" + anotherConnectionString;
+            ReplyToWithConnectionString = "q@" + anotherConnectionString;
         }
 
         [TestCaseSource(nameof(GetTestCases))]
         public async Task Should_preserve_fully_qualified_name_when_using_mappings(string destination, string replyTo, string auditConnectionString)
         {
-            await Run<SenderUsingNamesInsteadOfConnectionStrings>(destination, replyTo, auditConnectionString).ConfigureAwait(false);
+            var auditQueue = new QueueClient(auditConnectionString, AuditName);
+            await auditQueue.CreateIfNotExistsAsync();
+
+            await Scenario.Define<Context>()
+                .WithEndpoint<Sender>(b => b.When(async s => { await Send(s, replyTo, destination).ConfigureAwait(false); }))
+                .Done(c => true)
+                .Run().ConfigureAwait(false);
+
+            QueueMessage[] messages = await auditQueue.ReceiveMessagesAsync(1).ConfigureAwait(false);
+            var msg = messages[0];
+            await auditQueue.DeleteMessageAsync(msg.MessageId, msg.PopReceipt).ConfigureAwait(false);
+
+            AssertReplyTo(msg, replyTo);
         }
 
         [TestCaseSource(nameof(GetTestCases))]
         public async Task Should_preserve_fully_qualified_name_when_using_raw_connection_strings(string destination, string replyTo, string auditConnectionString)
         {
-            await Run<SenderNotUsingNamesInsteadOfConnectionStrings>(destination, replyTo, auditConnectionString).ConfigureAwait(false);
-        }
-
-        async Task Run<TSender>(string destination, string replyTo, string auditConnectionString) where TSender : Sender
-        {
             var auditQueue = new QueueClient(auditConnectionString, AuditName);
             await auditQueue.CreateIfNotExistsAsync();
 
             await Scenario.Define<Context>()
-                .WithEndpoint<TSender>(b => b.When(async s => { await Send(s, replyTo, destination).ConfigureAwait(false); }))
+                .WithEndpoint<Sender>(b => b.When(async s => { await Send(s, replyTo, destination).ConfigureAwait(false); }))
                 .Done(c => true)
                 .Run().ConfigureAwait(false);
 
@@ -67,10 +74,10 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         static IEnumerable<ITestCaseData> GetTestCases()
         {
             // combinatorial
-            yield return new TestCaseData(AuditName, RawReplyTo, connectionString);
-            yield return new TestCaseData(AuditName, MappedReplyTo, connectionString);
-            yield return new TestCaseData(AuditNameAtAnotherAccount, RawReplyTo, anotherConnectionString);
-            yield return new TestCaseData(AuditNameAtAnotherAccount, MappedReplyTo, anotherConnectionString);
+            yield return new TestCaseData(AuditName, ReplyToWithConnectionString, connectionString);
+            yield return new TestCaseData(AuditName, ReplyToWithAlias, connectionString);
+            yield return new TestCaseData(AuditNameAtAnotherAccount, ReplyToWithConnectionString, anotherConnectionString);
+            yield return new TestCaseData(AuditNameAtAnotherAccount, ReplyToWithAlias, anotherConnectionString);
         }
 
         static async Task Send(IMessageSession s, string replyTo, string destination)
@@ -85,8 +92,8 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         const string AuditNameAtAnotherAccount = AuditName + "@" + AnotherConnectionStringName;
         const string DefaultConnectionStringName = "default_account";
         const string AnotherConnectionStringName = "another_account";
-        const string MappedReplyTo = "q@another_account";
-        static readonly string RawReplyTo;
+        const string ReplyToWithAlias = "q@another_account";
+        static readonly string ReplyToWithConnectionString;
 
         static readonly string connectionString;
         static readonly string anotherConnectionString;
@@ -95,9 +102,9 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
         {
         }
 
-        public abstract class Sender : EndpointConfigurationBuilder
+        public class Sender : EndpointConfigurationBuilder
         {
-            protected Sender()
+            public Sender()
             {
                 CustomEndpointName("custom-reply-to-sender");
                 EndpointSetup<DefaultServer>(cfg =>
@@ -107,29 +114,11 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
                     var transport = cfg.UseTransport<AzureStorageQueueTransport>()
                         .ConnectionString(() => connectionString);
 
-                    SetUp(transport);
-
                     transport
                         .DefaultAccountAlias(DefaultConnectionStringName)
                         .AccountRouting()
                         .AddAccount(AnotherConnectionStringName, anotherConnectionString);
                 });
-            }
-
-            protected abstract void SetUp(TransportExtensions<AzureStorageQueueTransport> transport);
-        }
-
-        public class SenderUsingNamesInsteadOfConnectionStrings : Sender
-        {
-            protected override void SetUp(TransportExtensions<AzureStorageQueueTransport> transport)
-            {
-            }
-        }
-
-        public class SenderNotUsingNamesInsteadOfConnectionStrings : Sender
-        {
-            protected override void SetUp(TransportExtensions<AzureStorageQueueTransport> transport)
-            {
             }
         }
 
