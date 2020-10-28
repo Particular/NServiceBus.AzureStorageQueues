@@ -5,6 +5,7 @@ namespace NServiceBus
     public class AccountInfo
     {
         public AccountInfo(string alias, string connectionString) { }
+        public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
         public string Alias { get; }
         public System.Collections.Generic.HashSet<string> RegisteredEndpoints { get; }
     }
