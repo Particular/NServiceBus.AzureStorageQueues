@@ -1,26 +1,27 @@
-﻿using NServiceBus.Transport.AzureStorageQueues;
+﻿using System;
+using NServiceBus.Transport.AzureStorageQueues;
 using NUnit.Framework;
 
 [TestFixture]
 [Category("Azure")]
-public class When_parsing_connectionstrings
+public class When_parsing_queueaddress
 {
     [Test]
-    public void Should_parse_queuename_from_azure_storage_connectionstring()
+    public void Should_parse_queue_name_and_alias()
     {
-        const string queue = "myqueue@DefaultEndpointsProtocol=https;AccountName=nservicebus;AccountKey=4CBm0byd405DrwMlNGQcHntKDgAQCjaxHNX4mmjMx0p3mNaxrg4Y9zdTVVy0MBzKjQtRKd1M6DF5CwQseBTw/g==";
-        var q = QueueAddress.Parse(queue);
+        const string queueAddressAsString = "myqueue@alias";
+        var q = QueueAddress.Parse(queueAddressAsString);
 
         Assert.AreEqual(q.QueueName, "myqueue");
+        Assert.AreEqual(q.Alias, "alias");
     }
 
     [Test]
-    public void Should_parse_namespace_from_azure_storage_connectionstring()
+    public void Should_throw_if_contains_connectionstring()
     {
         const string queue = "myqueue@DefaultEndpointsProtocol=https;AccountName=nservicebus;AccountKey=4CBm0byd405DrwMlNGQcHntKDgAQCjaxHNX4mmjMx0p3mNaxrg4Y9zdTVVy0MBzKjQtRKd1M6DF5CwQseBTw/g==";
-        var q = QueueAddress.Parse(queue);
 
-        Assert.AreEqual(q.Alias, "DefaultEndpointsProtocol=https;AccountName=nservicebus;AccountKey=4CBm0byd405DrwMlNGQcHntKDgAQCjaxHNX4mmjMx0p3mNaxrg4Y9zdTVVy0MBzKjQtRKd1M6DF5CwQseBTw/g==");
+        Assert.Throws<Exception>(() => QueueAddress.Parse(queue));
     }
 
     [TestCase("@accountName")]
