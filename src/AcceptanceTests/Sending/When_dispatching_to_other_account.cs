@@ -32,7 +32,6 @@
 
         const string Alias = "another";
         const string DefaultAccountName = "default";
-        static readonly string MainNamespaceConnectionString = ConfigureEndpointAzureStorageQueueTransport.ConnectionString;
 
         public class Context : ScenarioContext
         {
