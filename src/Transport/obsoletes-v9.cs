@@ -2,6 +2,8 @@
 
 namespace NServiceBus
 {
+    using System;
+
     public static partial class AzureStorageTransportAddressingExtensions
     {
         [ObsoleteEx(
@@ -13,6 +15,14 @@ namespace NServiceBus
             return config;
         }
     }
-}
 
+    partial class DelayedDeliverySettings
+    {
+        [ObsoleteEx(Message = "The timeout manager has been removed in favor of native delayed delivery support provided by transports. See the upgrade guide for more details.", TreatAsErrorFromVersion = "9", RemoveInVersion = "10")]
+        public void DisableTimeoutManager()
+        {
+            throw new InvalidOperationException();
+        }
+    }
+}
 #pragma warning restore 1591

@@ -46,7 +46,6 @@
                 EndpointSetup<DefaultServer>(config =>
                 {
                     var delayedDelivery = config.UseTransport<AzureStorageQueueTransport>().DelayedDelivery();
-                    delayedDelivery.DisableTimeoutManager();
                     delayedDelivery.DisableDelayedDelivery();
                 });
             }

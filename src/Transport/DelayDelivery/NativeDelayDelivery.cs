@@ -93,21 +93,6 @@
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
         public CloudTable Table { get; private set; }
 
-        public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
-        {
-            var timeoutManagerFeatureActive = settings.IsFeatureActive(typeof(TimeoutManager));
-            var timeoutManagerShouldBeEnabled = settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager);
-
-            if (timeoutManagerShouldBeEnabled && !timeoutManagerFeatureActive)
-            {
-                return StartupCheckResult.Failed(
-                    "The timeout manager is not active, but the transport has not been properly configured for this. "
-                    + "Use 'EndpointConfiguration.UseTransport<AzureStorageQueueTransport>().DelayedDelivery().DisableTimeoutManager()' to ensure delayed messages can be sent properly.");
-            }
-
-            return StartupCheckResult.Success;
-        }
-
         static TimeSpan? GetVisibilityDelay(List<DeliveryConstraint> constraints)
         {
             var doNotDeliverBefore = FirstOrDefault<DoNotDeliverBefore>(constraints);

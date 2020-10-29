@@ -19,7 +19,7 @@
     <PackageReference Include="Azure.Storage.Queues" Version="12.4.2" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.6.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
-    <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="8.0.0-alpha.591" />
+    <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="8.0.0-alpha.644" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.2.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />

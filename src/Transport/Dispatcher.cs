@@ -140,7 +140,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 Id = msg.MessageId,
                 Body = msg.Body,
                 CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
-                Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
+                // TODO: Will be addresses in another PR
+                // Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
                 ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
                 Headers = headers,
                 MessageIntent = operation.GetMessageIntent()

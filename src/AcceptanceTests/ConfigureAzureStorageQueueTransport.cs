@@ -22,8 +22,6 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
 
         transportConfig.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
 
-        transportConfig.DelayedDelivery().DisableTimeoutManager();
-
         var routingConfig = transportConfig.Routing();
 
         foreach (var publisher in publisherMetadata.Publishers)
