@@ -1,10 +1,8 @@
-using Azure.Storage.Queues;
-
 namespace NServiceBus
 {
     using System;
     using System.Collections.Generic;
-    using Transport.AzureStorageQueues;
+    using global::Azure.Storage.Queues;
 
     /// <summary>
     /// An account info instance unifies an alias with a connection string and potentially registered endpoint instances.
@@ -14,14 +12,9 @@ namespace NServiceBus
         /// <summary>
         /// Creates a new instance of an AccountInfo.
         /// </summary>
-        public AccountInfo(string alias, string connectionString)
+        /// <remarks>Prefer to use the overload that accepts a <see cref="QueueServiceClient"/>.</remarks>
+        public AccountInfo(string alias, string connectionString) : this(alias, new QueueServiceClient(connectionString))
         {
-            Guard.AgainstNull(nameof(alias), alias);
-            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
-
-            Alias = alias;
-            QueueServiceClient = new QueueServiceClient(connectionString);
-            RegisteredEndpoints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>

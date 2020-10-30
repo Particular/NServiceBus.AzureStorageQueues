@@ -2,6 +2,7 @@ namespace NServiceBus
 {
     using System;
     using System.Collections.Generic;
+    using global::Azure.Storage.Queues;
 
     /// <summary>
     /// Holds mappings for used accounts.
@@ -18,15 +19,17 @@ namespace NServiceBus
             defaultAlias = alias;
         }
 
-        public AccountInfo Add(string alias, string connectionStringValue)
+        public AccountInfo Add(string alias, QueueServiceClient client)
         {
             if (!mappings.TryGetValue(alias, out var accountInfo))
             {
-                accountInfo = new AccountInfo(alias, connectionStringValue);
+                accountInfo = new AccountInfo(alias, client);
                 mappings.Add(alias, accountInfo);
             }
             return accountInfo;
         }
+
+        public AccountInfo Add(string alias, string connectionStringValue) => Add(alias, new QueueServiceClient(connectionStringValue));
 
         internal Dictionary<string, AccountInfo> mappings = new Dictionary<string, AccountInfo>();
         internal string defaultAlias;
