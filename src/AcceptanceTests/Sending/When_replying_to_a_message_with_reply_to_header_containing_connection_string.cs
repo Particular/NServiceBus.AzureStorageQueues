@@ -1,6 +1,4 @@
-﻿using NServiceBus.Pipeline;
-
-namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Sending
+﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Sending
 {
     using System;
     using System.Threading.Tasks;
@@ -8,6 +6,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Sending
     using AcceptanceTesting.Customization;
     using EndpointTemplates;
     using NUnit.Framework;
+    using NServiceBus.Pipeline;
 
     public class When_replying_to_a_message_with_reply_to_header_containing_connection_string : NServiceBusAcceptanceTest
     {
@@ -29,7 +28,6 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Sending
                 .Run().ConfigureAwait(false);
 
             Assert.IsTrue(context.ReplyReceived);
-
         }
 
         const string SenderAlias = "sender";
