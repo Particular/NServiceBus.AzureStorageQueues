@@ -29,7 +29,7 @@ public class When_parsing_queueaddress
     [TestCase(default(string))]
     public void Should_not_parse_whitespace_queue_name(string name)
     {
-        Assert.IsFalse(QueueAddress.TryParse(name, out var queue));
+        Assert.IsFalse(QueueAddress.TryParse(name, false, out var queue));
         Assert.IsFalse(queue.HasValue);
     }
 }
