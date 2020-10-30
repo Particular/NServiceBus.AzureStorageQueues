@@ -1,6 +1,5 @@
 ﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Sending
 {
-    using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
@@ -109,7 +108,6 @@
             }
         }
 
-        [Serializable]
         public class MyMessage : ICommand
         {
         }
