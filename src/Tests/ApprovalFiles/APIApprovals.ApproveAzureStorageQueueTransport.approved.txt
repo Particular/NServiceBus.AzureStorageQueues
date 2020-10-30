@@ -5,6 +5,7 @@ namespace NServiceBus
     public class AccountInfo
     {
         public AccountInfo(string alias, string connectionString) { }
+        public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
         public string Alias { get; }
         public string ConnectionString { get; }
         public System.Collections.Generic.HashSet<string> RegisteredEndpoints { get; }
@@ -12,6 +13,7 @@ namespace NServiceBus
     public class AccountRoutingSettings
     {
         public NServiceBus.AccountInfo AddAccount(string alias, string connectionString) { }
+        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient connectionClient) { }
     }
     public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition, NServiceBus.Routing.IMessageDrivenSubscriptionTransport
     {
@@ -24,6 +26,8 @@ namespace NServiceBus
     {
         public static NServiceBus.AccountRoutingSettings AccountRouting(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transportExtensions) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DefaultAccountAlias(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transportExtensions, string alias) { }
+        [System.ObsoleteAttribute("Account aliases are used instead of connection strings by default. Will be remove" +
+            "d in version 10.0.0.", true)]
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseAccountAliasesInsteadOfConnectionStrings(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
     }
     public class static AzureStorageTransportExtensions
@@ -38,6 +42,9 @@ namespace NServiceBus
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config)
             where TSerializationDefinition : NServiceBus.Serialization.SerializationDefinition, new () { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UnwrapMessagesWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Func<Azure.Storage.Queues.Models.QueueMessage, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> unwrapper) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseBlobServiceClient(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, Azure.Storage.Blobs.BlobServiceClient blobServiceClient) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseCloudTableClient(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseQueueServiceClient(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
     }
     public class DelayedDeliverySettings : NServiceBus.Configuration.AdvancedExtensibility.ExposeSettings
     {

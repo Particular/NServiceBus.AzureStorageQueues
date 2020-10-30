@@ -11,25 +11,60 @@
     using Performance.TimeToBeReceived;
     using Settings;
     using Transport;
+    using global::Azure.Storage.Blobs;
+    using Logging;
 
     class NativeDelayDelivery
     {
-        readonly bool delayedDeliveryDisabled;
-        CloudTable delayedMessagesTable;
-
-        public NativeDelayDelivery(string connectionString, string delayedMessagesTableName, bool delayedDeliveryDisabled)
+        public NativeDelayDelivery(
+            CloudTableClient cloudTableClient,
+            BlobServiceClient blobServiceClient,
+            string delayedMessagesTableName,
+            bool delayedDeliveryEnabled,
+            string errorQueueAddress,
+            TransportTransactionMode transactionMode,
+            TimeSpan maximumWaitTime,
+            TimeSpan peekInterval,
+            Func<Dispatcher> dispatcherFactory)
         {
-            this.delayedDeliveryDisabled = delayedDeliveryDisabled;
-            if (!delayedDeliveryDisabled)
-            {
-                delayedMessagesTable = CloudStorageAccount.Parse(connectionString).CreateCloudTableClient().GetTableReference(delayedMessagesTableName);
-                // In the constructor to ensure we do not force the calling code to remember to invoke any initialization method.
-                // Also, CreateIfNotExistsAsync() returns BEFORE the table is actually ready to be used, causing 404.
+            this.delayedMessagesTableName = delayedMessagesTableName;
+            this.cloudTableClient = cloudTableClient;
+            this.blobServiceClient = blobServiceClient;
+            this.delayedDeliveryEnabled = delayedDeliveryEnabled;
+            this.errorQueueAddress = errorQueueAddress;
+            isAtMostOnce = transactionMode == TransportTransactionMode.None;
+            this.maximumWaitTime = maximumWaitTime;
+            this.peekInterval = peekInterval;
+            this.dispatcherFactory = dispatcherFactory;
+        }
 
-                // TODO: Original code was calling delayedMessagesTable.CreateIfNotExists(); as it was not affected by the bug the async version had.
-                // In case async version still returns before table is created, add a small delay.
-                delayedMessagesTable.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+        public async Task Start()
+        {
+            if (delayedDeliveryEnabled)
+            {
+                Logger.Debug("Starting delayed delivery poller");
+
+                Table = cloudTableClient.GetTableReference(delayedMessagesTableName);
+                await Table.CreateIfNotExistsAsync().ConfigureAwait(false);
+
+                nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
+                poller = new DelayedMessagesPoller(Table, blobServiceClient, errorQueueAddress, isAtMostOnce, dispatcherFactory(), new BackoffStrategy(peekInterval, maximumWaitTime));
+                poller.Start(nativeDelayedMessagesCancellationSource.Token);
             }
+        }
+
+        public Task Stop()
+        {
+            if (delayedDeliveryEnabled)
+            {
+                Logger.Debug("Stopping delayed delivery poller");
+
+                nativeDelayedMessagesCancellationSource?.Cancel();
+
+                return poller != null ? poller.Stop() : Task.CompletedTask;
+            }
+
+            return Task.CompletedTask;
         }
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -38,7 +73,7 @@
             var delay = GetVisibilityDelay(constraints);
             if (delay != null)
             {
-                if (delayedDeliveryDisabled)
+                if (delayedDeliveryEnabled == false)
                 {
                     throw new Exception("Cannot delay delivery of messages when delayed delivery has been disabled. Remove the 'endpointConfiguration.UseTransport<AzureStorageQueues>.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.");
                 }
@@ -56,7 +91,7 @@
         }
 
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
-        public CloudTable Table => delayedMessagesTable;
+        public CloudTable Table { get; private set; }
 
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
@@ -104,7 +139,7 @@
             };
 
             delayedMessageEntity.SetOperation(operation);
-            return delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), null, null, cancellationToken);
+            return Table.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), null, null, cancellationToken);
         }
 
         static TDeliveryConstraint FirstOrDefault<TDeliveryConstraint>(List<DeliveryConstraint> constraints)
@@ -125,5 +160,21 @@
 
             return null;
         }
+
+
+
+        static readonly ILog Logger = LogManager.GetLogger<NativeDelayDelivery>();
+
+        DelayedMessagesPoller poller;
+        CancellationTokenSource nativeDelayedMessagesCancellationSource;
+        readonly BlobServiceClient blobServiceClient;
+        readonly bool delayedDeliveryEnabled;
+        readonly string errorQueueAddress;
+        readonly bool isAtMostOnce;
+        readonly TimeSpan maximumWaitTime;
+        readonly TimeSpan peekInterval;
+        readonly Func<Dispatcher> dispatcherFactory;
+        private readonly CloudTableClient cloudTableClient;
+        private readonly string delayedMessagesTableName;
     }
 }

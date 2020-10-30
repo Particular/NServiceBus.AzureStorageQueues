@@ -24,7 +24,7 @@
         public void Should_not_accept_mappings_without_default()
         {
             var exception = Assert.CatchAsync(() => { return Configure(cfg => { cfg.AccountRouting().AddAccount(Another, anotherConnectionString); }); });
-            Assert.IsTrue(exception.Message.Contains("The mapping of account names instead of connection strings is enabled, but the default connection string name isn\'t provided. Provide the default connection string name when adding more accounts"), "Message is missing or incorrect");
+            Assert.IsTrue(exception.Message.Contains("The mapping of storage accounts connection strings to aliases is enforced but the the alias for the default connection string isn't provided"), "Exception message is missing or incorrect");
         }
 
         [Test]
@@ -47,7 +47,6 @@
                         c.UseSerialization<NewtonsoftSerializer>();
                         var transport = c.UseTransport<AzureStorageQueueTransport>();
                         transport
-                            .UseAccountAliasesInsteadOfConnectionStrings()
                             .ConnectionString(connectionString)
                             .SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>>();
 

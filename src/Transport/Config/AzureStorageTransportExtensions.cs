@@ -4,6 +4,9 @@ namespace NServiceBus
     using Azure.Transports.WindowsAzureStorageQueues;
     using Configuration.AdvancedExtensibility;
     using global::Azure.Storage.Queues.Models;
+    using global::Azure.Storage.Blobs;
+    using global::Azure.Storage.Queues;
+    using Microsoft.Azure.Cosmos.Table;
     using Serialization;
     using Transport.AzureStorageQueues;
 
@@ -115,8 +118,10 @@ namespace NServiceBus
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> DegreeOfReceiveParallelism(this TransportExtensions<AzureStorageQueueTransport> config, int degreeOfReceiveParallelism)
         {
+            const int maxDegreeOfReceiveParallelism = 32;
+
             Guard.AgainstNull(nameof(config), config);
-            if (degreeOfReceiveParallelism < 1 || degreeOfReceiveParallelism > MaxDegreeOfReceiveParallelism)
+            if (degreeOfReceiveParallelism < 1 || degreeOfReceiveParallelism > maxDegreeOfReceiveParallelism)
             {
                 throw new ArgumentOutOfRangeException(nameof(degreeOfReceiveParallelism), degreeOfReceiveParallelism, "DegreeOfParallelism must be between 1 and 32.");
             }
@@ -133,6 +138,40 @@ namespace NServiceBus
             return new DelayedDeliverySettings(config.GetSettings());
         }
 
-        internal const int MaxDegreeOfReceiveParallelism = 32;
+        /// <summary>
+        /// Sets <see cref="QueueServiceClient"/> to be used for messaging operations.
+        /// </summary>
+        public static TransportExtensions<AzureStorageQueueTransport> UseQueueServiceClient(this TransportExtensions<AzureStorageQueueTransport> config, QueueServiceClient queueServiceClient)
+        {
+            Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
+
+            config.GetSettings().Set(WellKnownConfigurationKeys.QueueServiceClient, queueServiceClient);
+
+            return config;
+        }
+
+        /// <summary>
+        /// Sets <see cref="QueueServiceClient"/> to be used for delayed delivery feature.
+        /// </summary>
+        public static TransportExtensions<AzureStorageQueueTransport> UseBlobServiceClient(this TransportExtensions<AzureStorageQueueTransport> config, BlobServiceClient blobServiceClient)
+        {
+            Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
+
+            config.GetSettings().Set(WellKnownConfigurationKeys.BlobServiceClient, blobServiceClient);
+
+            return config;
+        }
+
+        /// <summary>
+        /// Sets <see cref="CloudTableClient"/> to be used for delayed delivery feature.
+        /// </summary>
+        public static TransportExtensions<AzureStorageQueueTransport> UseCloudTableClient(this TransportExtensions<AzureStorageQueueTransport> config, CloudTableClient cloudTableClient)
+        {
+            Guard.AgainstNull(nameof(cloudTableClient), cloudTableClient);
+
+            config.GetSettings().Set(WellKnownConfigurationKeys.CloudTableClient, cloudTableClient);
+
+            return config;
+        }
     }
 }

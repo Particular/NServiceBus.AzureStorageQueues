@@ -22,18 +22,6 @@
         }
 
         [Test]
-        public async Task Is_disabled_Should_audit_with_raw_connection_strings()
-        {
-            var ctx = await SendMessage<ReceiverUsingRawConnectionStrings>(ReceiverName, defaultConnectionString).ConfigureAwait(false);
-
-            CollectionAssert.IsNotEmpty(ctx.ContainingRawConnectionString);
-            foreach (var name in ctx.ContainingRawConnectionString)
-            {
-                Assert.True(name.Contains("ReplyToAddress"), $"'{name}' should have been reply-to-address");
-            }
-        }
-
-        [Test]
         public async Task Is_enabled_and_single_account_is_used_Should_audit_just_queue_name_without_account()
         {
             var ctx = await SendMessage<ReceiverUsingOneMappedConnectionString>(ReceiverName, defaultConnectionString).ConfigureAwait(false);
@@ -151,7 +139,6 @@
                 {
                     cfg.UseSerialization<NewtonsoftSerializer>();
                     cfg.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountAliasesInsteadOfConnectionStrings()
                         .DefaultAccountAlias(DefaultConnectionStringName)
                         .AccountRouting()
                         .AddAccount(AnotherConnectionStringName, anotherConnectionString);
@@ -192,8 +179,7 @@
             {
                 cfg.ConnectionString(anotherConnectionString);
 
-                cfg.UseAccountAliasesInsteadOfConnectionStrings()
-                    .DefaultAccountAlias(AnotherConnectionStringName)
+                cfg.DefaultAccountAlias(AnotherConnectionStringName)
                     .AccountRouting()
                     .AddAccount(DefaultConnectionStringName, defaultConnectionString);
             }
@@ -204,8 +190,7 @@
             {
                 cfg.ConnectionString(defaultConnectionString);
 
-                cfg.UseAccountAliasesInsteadOfConnectionStrings()
-                    .DefaultAccountAlias(DefaultConnectionStringName)
+                cfg.DefaultAccountAlias(DefaultConnectionStringName)
                     .AccountRouting()
                     .AddAccount(AnotherConnectionStringName, anotherConnectionString);
             }

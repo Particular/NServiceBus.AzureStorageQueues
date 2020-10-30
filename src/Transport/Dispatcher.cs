@@ -1,4 +1,6 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+﻿using NServiceBus.AzureStorageQueues;
+
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -18,7 +20,6 @@
     {
         public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend)
         {
-            createQueueClients = new CreateQueueClients();
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
             this.serializer = serializer;
@@ -57,16 +58,16 @@
             // The destination might be in a queue@destination format
             var destination = operation.Destination;
 
-            var queue = QueueAddress.Parse(destination);
-            var connectionString = addressing.Map(queue);
+            var messageIntent = operation.GetMessageIntent();
+            var queueAddress = QueueAddress.Parse(destination, messageIntent == MessageIntentEnum.Reply);
+            var queueServiceClient = addressing.Map(queueAddress, messageIntent);
 
-            var sendClient = createQueueClients.Create(connectionString);
-            var q = addressGenerator.GetQueueName(queue.QueueName);
-            var sendQueue = sendClient.GetQueueClient(q);
+            var queueName = addressGenerator.GetQueueName(queueAddress.QueueName);
+            var sendQueue = queueServiceClient.GetQueueClient(queueName);
 
             if (!await ExistsAsync(sendQueue).ConfigureAwait(false))
             {
-                throw new QueueNotFoundException(queue.ToString(), $"Destination queue '{queue}' does not exist. This queue may have to be created manually.", null);
+                throw new QueueNotFoundException(queueAddress.ToString(), $"Destination queue '{queueAddress}' does not exist. This queue may have to be created manually.", null);
             }
 
             var toBeReceived = operation.GetTimeToBeReceived();
@@ -98,7 +99,7 @@
                 timeToBeReceived = TimeSpan.FromSeconds(seconds);
             }
 
-            var wrapper = BuildMessageWrapper(operation, queue);
+            var wrapper = BuildMessageWrapper(operation, queueAddress);
             await Send(wrapper, sendQueue, timeToBeReceived ?? CloudQueueMessageMaxTimeToLive).ConfigureAwait(false);
         }
 
@@ -131,13 +132,8 @@
         {
             var msg = operation.Message;
             var headers = new Dictionary<string, string>(msg.Headers);
-            addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
 
-            var messageIntent = default(MessageIntentEnum);
-            if (headers.TryGetValue(Headers.MessageIntent, out var messageIntentString))
-            {
-                Enum.TryParse(messageIntentString, true, out messageIntent);
-            }
+            addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
 
             return new MessageWrapper
             {
@@ -147,11 +143,10 @@
                 Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
                 ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
                 Headers = headers,
-                MessageIntent = messageIntent
+                MessageIntent = operation.GetMessageIntent()
             };
         }
 
-        readonly CreateQueueClients createQueueClients;
         readonly MessageWrapperSerializer serializer;
         readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
 

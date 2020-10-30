@@ -1,4 +1,7 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
+
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
@@ -9,6 +12,7 @@
     using DelayedDelivery;
     using Features;
     using Logging;
+    using Microsoft.Azure.Cosmos.Table;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -21,6 +25,12 @@
         {
             this.settings = settings;
             this.connectionString = connectionString;
+
+            if (IsPremiumEndpoint(this.connectionString))
+            {
+                throw new Exception($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
+            }
+
             serializer = BuildSerializer(settings);
 
             settings.SetDefault(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, true);
@@ -31,8 +41,36 @@
                 settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
             }
 
-            delayedDelivery = new NativeDelayDelivery(connectionString, GetDelayedDeliveryTableName(settings), settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery));
+            if (!settings.TryGet<CloudTableClient>(WellKnownConfigurationKeys.CloudTableClient, out var cloudTableClient))
+            {
+                var cloudStorageAccount = CloudStorageAccount.Parse(this.connectionString);
+                cloudTableClient = cloudStorageAccount.CreateCloudTableClient();
+            }
+
+            if (!settings.TryGet<BlobServiceClient>(WellKnownConfigurationKeys.BlobServiceClient, out var blobServiceClient))
+            {
+                blobServiceClient = new BlobServiceClient(this.connectionString);
+            }
+
+            nativeDelayedDelivery = new NativeDelayDelivery(
+                cloudTableClient,
+                blobServiceClient,
+                GetDelayedDeliveryTableName(settings),
+                NativeDelayedDeliveryIsEnabled(),
+                settings.ErrorQueueAddress(),
+                GetRequiredTransactionMode(),
+                settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
+                settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval),
+                BuildDispatcher);
+
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
+        }
+
+        // the SDK uses similar method of changing the underlying executor
+        static bool IsPremiumEndpoint(string connectionString)
+        {
+            var lowerInvariant = connectionString.ToLowerInvariant();
+            return lowerInvariant.Contains("https://localhost") || lowerInvariant.Contains(".table.cosmosdb.") || lowerInvariant.Contains(".table.cosmos.");
         }
 
         public override IEnumerable<Type> DeliveryConstraints => new List<Type> {typeof(DiscardIfNotReceivedBefore), typeof(NonDurableDelivery), typeof(DoNotDeliverBefore), typeof(DelayDeliveryWith)};
@@ -67,25 +105,28 @@
             return "delays" + hashName.ToLower();
         }
 
-        bool PollerCanBeUsed() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
+        bool NativeDelayedDeliveryIsEnabled() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
             Logger.Debug("Configuring receive infrastructure");
-            var connectionObject = new ConnectionString(connectionString);
-            var client = CreateQueueClients.CreateReceiver(connectionObject);
+
+            if (!settings.TryGet<QueueServiceClient>(WellKnownConfigurationKeys.QueueServiceClient, out var queueServiceClient))
+            {
+                queueServiceClient = new QueueServiceClient(connectionString);
+            }
 
             return new TransportReceiveInfrastructure(
                 () =>
                 {
-                    var addressing = GetAddressing(settings, connectionString);
+                    var addressing = GetAddressing(settings, queueServiceClient);
 
                     var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ? settings.GetOrDefault<IMessageEnvelopeUnwrapper>() : new DefaultMessageEnvelopeUnwrapper(serializer);
 
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                     var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
 
-                    var receiver = new AzureMessageQueueReceiver(unwrapper, client, addressGenerator)
+                    var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClient, addressGenerator)
                     {
                         MessageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
                     };
@@ -104,27 +145,9 @@
 
                     return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, batchSize, maximumWaitTime, peekInterval);
                 },
-                () => new AzureMessageQueueCreator(client, addressGenerator),
+                () => new AzureMessageQueueCreator(queueServiceClient, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
             );
-        }
-
-        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, string connectionString)
-        {
-            var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-
-            if (settings.TryGet<AccountConfigurations>(out var accounts) == false)
-            {
-                accounts = new AccountConfigurations();
-            }
-
-            var shouldUseAccountNames = settings.TryGet(WellKnownConfigurationKeys.UseAccountNamesInsteadOfConnectionStrings, out object _);
-
-            addressing.SetAddressGenerator(addressGenerator);
-            addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings, shouldUseAccountNames);
-            addressing.Add(new AccountInfo(QueueAddress.DefaultStorageAccountAlias, connectionString), false);
-
-            return addressing;
         }
 
         static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
@@ -144,8 +167,29 @@
 
         Dispatcher BuildDispatcher()
         {
-            var addressing = GetAddressing(settings, connectionString);
-            return new Dispatcher(addressGenerator, addressing, serializer, delayedDelivery.ShouldDispatch);
+            if (!settings.TryGet<QueueServiceClient>(WellKnownConfigurationKeys.QueueServiceClient, out var queueServiceClient))
+            {
+                queueServiceClient = new QueueServiceClient(connectionString);
+            }
+
+            var addressing = GetAddressing(settings, queueServiceClient);
+            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ShouldDispatch);
+        }
+
+        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, QueueServiceClient queueServiceClient)
+        {
+            var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
+
+            if (settings.TryGet<AccountConfigurations>(out var accounts) == false)
+            {
+                accounts = new AccountConfigurations();
+            }
+
+            addressing.SetAddressGenerator(addressGenerator);
+            addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings);
+            addressing.Add(new AccountInfo("", queueServiceClient), false);
+
+            return addressing;
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
@@ -177,25 +221,12 @@
 
         public override Task Start()
         {
-            if (PollerCanBeUsed())
-            {
-                Logger.Debug("Starting poller");
-
-                var isAtMostOnce = GetRequiredTransactionMode() == TransportTransactionMode.None;
-                var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
-                var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-                poller = new DelayedMessagesPoller(delayedDelivery.Table, connectionString, settings.ErrorQueueAddress(), isAtMostOnce, BuildDispatcher(), new BackoffStrategy(peekInterval, maximumWaitTime));
-                nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-                poller.Start(nativeDelayedMessagesCancellationSource.Token);
-            }
-
-            return Task.CompletedTask;
+            return nativeDelayedDelivery.Start();
         }
 
         public override Task Stop()
         {
-            nativeDelayedMessagesCancellationSource?.Cancel();
-            return poller != null ? poller.Stop() : Task.CompletedTask;
+            return nativeDelayedDelivery.Stop();
         }
 
         TransportTransactionMode GetRequiredTransactionMode()
@@ -219,9 +250,7 @@
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
-        NativeDelayDelivery delayedDelivery;
-        DelayedMessagesPoller poller;
-        CancellationTokenSource nativeDelayedMessagesCancellationSource;
+        NativeDelayDelivery nativeDelayedDelivery;
         QueueAddressGenerator addressGenerator;
 
         static readonly ILog Logger = LogManager.GetLogger<AzureStorageQueueInfrastructure>();
