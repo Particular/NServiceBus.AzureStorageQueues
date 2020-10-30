@@ -1,10 +1,9 @@
-﻿using Azure.Storage.Queues;
-using Microsoft.Azure.Cosmos.Table;
-
-namespace NServiceBus.Transport.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
+    using global::Azure.Storage.Queues;
+    using Microsoft.Azure.Cosmos.Table;
 
     class AzureStorageAddressingSettings
     {

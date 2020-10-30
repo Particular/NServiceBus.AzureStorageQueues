@@ -1,8 +1,7 @@
-﻿using Microsoft.Azure.Cosmos.Table;
-
-namespace NServiceBus.Transport.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using Microsoft.Azure.Cosmos.Table;
 
     struct QueueAddress : IEquatable<QueueAddress>
     {

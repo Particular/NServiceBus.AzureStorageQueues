@@ -1,13 +1,12 @@
-using Azure.Storage.Blobs;
-using Azure.Storage.Queues;
-using Microsoft.Azure.Cosmos.Table;
-
 namespace NServiceBus
 {
     using System;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Configuration.AdvancedExtensibility;
     using global::Azure.Storage.Queues.Models;
+    using global::Azure.Storage.Blobs;
+    using global::Azure.Storage.Queues;
+    using Microsoft.Azure.Cosmos.Table;
     using Serialization;
     using Transport.AzureStorageQueues;
 
