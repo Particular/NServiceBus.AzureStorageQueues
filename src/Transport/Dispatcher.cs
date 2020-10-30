@@ -1,4 +1,6 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+﻿using NServiceBus.AzureStorageQueues;
+
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -18,7 +20,6 @@
     {
         public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend)
         {
-            createQueueClients = new CreateQueueClients();
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
             this.serializer = serializer;
@@ -57,8 +58,8 @@
             // The destination might be in a queue@destination format
             var destination = operation.Destination;
 
-            var queueAddress = QueueAddress.Parse(destination);
-            var queueServiceClient = addressing.Map(queueAddress);
+            var queueAddress = QueueAddress.Parse(destination, true);
+            var queueServiceClient = addressing.Map(queueAddress, operation.GetMessageIntent());
 
             var queueName = addressGenerator.GetQueueName(queueAddress.QueueName);
             var sendQueue = queueServiceClient.GetQueueClient(queueName);
@@ -130,13 +131,8 @@
         {
             var msg = operation.Message;
             var headers = new Dictionary<string, string>(msg.Headers);
-            addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
 
-            var messageIntent = default(MessageIntentEnum);
-            if (headers.TryGetValue(Headers.MessageIntent, out var messageIntentString))
-            {
-                Enum.TryParse(messageIntentString, true, out messageIntent);
-            }
+            addressing.ApplyMappingOnOutgoingHeaders(headers, destinationQueue);
 
             return new MessageWrapper
             {
@@ -146,11 +142,10 @@
                 Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,
                 ReplyToAddress = headers.GetValueOrDefault(Headers.ReplyToAddress),
                 Headers = headers,
-                MessageIntent = messageIntent
+                MessageIntent = operation.GetMessageIntent()
             };
         }
 
-        readonly CreateQueueClients createQueueClients;
         readonly MessageWrapperSerializer serializer;
         readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
 
