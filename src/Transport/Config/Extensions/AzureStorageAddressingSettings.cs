@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Queues;
+using Microsoft.Azure.Cosmos.Table;
 
 namespace NServiceBus.Transport.AzureStorageQueues
 {
@@ -44,7 +45,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         /// <summary>
         /// Maps the account name to a QueueServiceClient, throwing when no mapping found.
         /// </summary>
-        internal QueueServiceClient Map(QueueAddress address)
+        internal QueueServiceClient Map(QueueAddress address, MessageIntentEnum messageIntent)
         {
             if (registeredEndpoints.TryGetValue(address.QueueName, out var accountInfo))
             {
@@ -54,43 +55,17 @@ namespace NServiceBus.Transport.AzureStorageQueues
             var storageAccountAlias = address.Alias;
             if (aliasToAccountInfoMap.TryGetValue(storageAccountAlias, out accountInfo) == false)
             {
+                // If this is a reply message with a connection string use the connection string to construct a queue service client.
+                // This was a reply message coming from an older endpoint w/o aliases.
+                if (messageIntent == MessageIntentEnum.Reply && CloudStorageAccount.TryParse(address.Alias, out var storageAccount))
+                {
+                    return new QueueServiceClient(address.Alias);
+                }
+
                 throw new Exception($"No account was mapped under following name '{address.Alias}'. Please map it using .AccountRouting().AddAccount() method.");
             }
 
             return accountInfo.QueueServiceClient;
-        }
-
-        /// <summary>
-        /// Transforms reply-to header to use logical names.
-        /// </summary>
-        internal void ApplyMappingToAliases(Dictionary<string, string> headers)
-        {
-            if (headers.TryGetValue(Headers.ReplyToAddress, out var headerValue))
-            {
-                var queueAddress = QueueAddress.Parse(headerValue);
-
-                // no mapping if address is default
-                if (queueAddress.HasNoAlias)
-                {
-                    return;
-                }
-
-                // try map as connection string
-                if (aliasToAccountInfoMap.ContainsKey(queueAddress.Alias))
-                {
-                    headers[Headers.ReplyToAddress] = new QueueAddress(queueAddress.QueueName, queueAddress.Alias).ToString();
-                }
-                else
-                {
-                    // it must be a raw connection string
-
-                    // TODO: this could be an older endpoint sending a raw connection string in the reply-to header
-                    // if (aliasToAccountInfoMap.ContainsKey(queueAddress.Alias) == false)
-                    // {
-                    //     throw new Exception($"No account was mapped under following name '{queueAddress.Alias}'. Please map it using .AccountRouting().AddAccount() method.");
-                    // }
-                }
-            }
         }
 
         /// <summary>
