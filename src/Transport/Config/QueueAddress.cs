@@ -74,7 +74,7 @@
             if (CloudStorageAccount.TryParse(connectionStringOrAlias, out _) && allowConnectionStringForBackwardCompatibility == false)
             {
                 const string message =
-                    "An attempt to use an address with a connection string using the 'destination@connecitonstring' format was detected."
+                    "An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected."
                     + " Only aliases are allowed. Provide an alias for the storage account.";
                 throw new Exception(message);
             }
