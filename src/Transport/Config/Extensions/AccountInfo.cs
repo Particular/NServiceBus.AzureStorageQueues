@@ -15,6 +15,7 @@ namespace NServiceBus
         /// <remarks>Prefer to use the overload that accepts a <see cref="QueueServiceClient"/>.</remarks>
         public AccountInfo(string alias, string connectionString) : this(alias, new QueueServiceClient(connectionString))
         {
+            ConnectionString = connectionString;
         }
 
         /// <summary>
@@ -34,6 +35,12 @@ namespace NServiceBus
         /// The alias provided for the connection string represented by this account info instance.
         /// </summary>
         public string Alias { get; }
+
+        /// <summary>
+        /// The connection string
+        /// </summary>
+        /// <remarks>This property is only set when account info is constructed using the connection string.</remarks>
+        public string ConnectionString { get; }
 
         /// <summary>
         /// The endpoints that belong to this account info instance.
