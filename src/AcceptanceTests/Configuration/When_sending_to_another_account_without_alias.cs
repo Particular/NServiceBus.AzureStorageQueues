@@ -10,7 +10,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
     public class When_sending_to_another_account_without_alias : NServiceBusAcceptanceTest
     {
         [Test]
-        public Task Should_throw()
+        public void Should_throw()
         {
             var queue = Conventions.EndpointNamingConvention(typeof(Receiver));
 
@@ -28,8 +28,6 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
             });
 
             Assert.AreEqual($"No account was mapped under following name '{another}'. Please map it using .AccountRouting().AddAccount() method.", exception.Message);
-
-            return Task.CompletedTask;
         }
 
         public class Context : ScenarioContext

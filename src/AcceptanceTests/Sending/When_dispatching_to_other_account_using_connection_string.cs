@@ -10,7 +10,7 @@
     public class When_dispatching_to_other_account_using_connection_string : NServiceBusAcceptanceTest
     {
         [Test]
-        public Task Should_fail()
+        public void Should_fail()
         {
             var exception = Assert.ThrowsAsync<Exception>(async () =>
             {
@@ -31,8 +31,6 @@
             });
 
             Assert.AreEqual($"No account was mapped under following name '{ConfigureEndpointAzureStorageQueueTransport.ConnectionString}'. Please map it using .AccountRouting().AddAccount() method.", exception.Message);
-
-            return Task.CompletedTask;
         }
 
         const string Alias = "another";
