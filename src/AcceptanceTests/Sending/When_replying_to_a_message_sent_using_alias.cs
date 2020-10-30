@@ -86,8 +86,6 @@
                     // Route MyMessage messages to the receiver endpoint configured to use sender alias (on a different storage account)
                     var senderEndpointName = Conventions.EndpointNamingConvention(typeof(Sender));
                     senderEndpointAccountInfo.RegisteredEndpoints.Add(senderEndpointName);
-                    // TODO: remove if not necessary
-                    //configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyReplyMessage), senderEndpointName);
                 });
             }
 

@@ -184,16 +184,14 @@
                     if (isAtMostOnce)
                     {
                         // delete first, then dispatch
-                        // TODO: raise an issue with the client library about missing overload accepting operation and cancellation token only
-                        await delayedDeliveryTable.ExecuteAsync(delete, null, null, cancellationToken).ConfigureAwait(false);
+                        await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
                         await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
                         // dispatch first, then delete
                         await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
-                        // TODO: raise an issue with the client library about missing overload accepting operation and cancellation token only
-                        await delayedDeliveryTable.ExecuteAsync(delete, null, null, cancellationToken).ConfigureAwait(false);
+                        await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
                     }
                 }
                 catch (Exception exception)
