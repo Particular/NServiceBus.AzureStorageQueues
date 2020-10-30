@@ -27,7 +27,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
                     .Run(TimeSpan.FromSeconds(15)).ConfigureAwait(false);
             });
 
-            Assert.AreEqual($"No account was mapped under following name '{another}'. Please map it using .AccountRouting().AddAccount() method.", exception.Message);
+            Assert.AreEqual("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected. Only aliases are allowed. Provide an alias for the storage account.", exception.Message);
         }
 
         public class Context : ScenarioContext
