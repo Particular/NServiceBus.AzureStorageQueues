@@ -2,7 +2,7 @@ namespace NServiceBus
 {
     using System;
     using System.Collections.Generic;
-    using Transport.AzureStorageQueues;
+    using global::Azure.Storage.Queues;
 
     /// <summary>
     /// An account info instance unifies an alias with a connection string and potentially registered endpoint instances.
@@ -12,13 +12,22 @@ namespace NServiceBus
         /// <summary>
         /// Creates a new instance of an AccountInfo.
         /// </summary>
-        public AccountInfo(string alias, string connectionString)
+        /// <remarks>Prefer to use the overload that accepts a <see cref="QueueServiceClient"/>.</remarks>
+        public AccountInfo(string alias, string connectionString) : this(alias, new QueueServiceClient(connectionString))
+        {
+            ConnectionString = connectionString;
+        }
+
+        /// <summary>
+        /// Creates a new instance of an AccountInfo.
+        /// </summary>
+        public AccountInfo(string alias, QueueServiceClient queueServiceClient)
         {
             Guard.AgainstNull(nameof(alias), alias);
-            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+            Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
 
             Alias = alias;
-            Connection = new ConnectionString(connectionString);
+            QueueServiceClient = queueServiceClient;
             RegisteredEndpoints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
@@ -28,15 +37,19 @@ namespace NServiceBus
         public string Alias { get; }
 
         /// <summary>
-        /// The connection string.
+        /// The connection string
         /// </summary>
-        public string ConnectionString => Connection.Value;
+        /// <remarks>This property is only set when account info is constructed using the connection string.</remarks>
+        public string ConnectionString { get; }
 
         /// <summary>
         /// The endpoints that belong to this account info instance.
         /// </summary>
         public HashSet<string> RegisteredEndpoints { get; }
 
-        internal ConnectionString Connection { get; }
+        /// <summary>
+        /// <see cref="QueueServiceClient"/> associated with the account.
+        /// </summary>
+        internal QueueServiceClient QueueServiceClient { get; }
     }
 }

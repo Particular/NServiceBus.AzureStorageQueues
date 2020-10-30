@@ -17,22 +17,22 @@
         static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
         static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
 
-        readonly string connectionString;
+        readonly BlobServiceClient blobServiceClient;
         readonly Dispatcher dispatcher;
         readonly BackoffStrategy backoffStrategy;
+        readonly bool isAtMostOnce;
+        readonly string errorQueue;
 
         CloudTable delayedDeliveryTable;
         LockManager lockManager;
         Task delayedMessagesPollerTask;
-        bool isAtMostOnce;
-        string errorQueue;
 
-        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, string connectionString, string errorQueue, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
+        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, string errorQueue, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
             this.errorQueue = errorQueue;
             this.isAtMostOnce = isAtMostOnce;
             this.delayedDeliveryTable = delayedDeliveryTable;
-            this.connectionString = connectionString;
+            this.blobServiceClient = blobServiceClient;
             this.dispatcher = dispatcher;
             this.backoffStrategy = backoffStrategy;
         }
@@ -41,7 +41,7 @@
         {
             Logger.Debug("Starting delayed message poller");
 
-            var containerClient = new BlobContainerClient(connectionString, delayedDeliveryTable.Name);
+            var containerClient = blobServiceClient.GetBlobContainerClient(delayedDeliveryTable.Name);
             var leaseClient = new BlobLeaseClient(containerClient);
             lockManager = new LockManager(containerClient, leaseClient, LeaseLength);
 

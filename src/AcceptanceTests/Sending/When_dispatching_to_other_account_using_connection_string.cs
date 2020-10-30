@@ -7,27 +7,30 @@
     using EndpointTemplates;
     using NUnit.Framework;
 
-    public class When_dispatching_to_another_account_using_alias : NServiceBusAcceptanceTest
+    public class When_dispatching_to_other_account_using_connection_string : NServiceBusAcceptanceTest
     {
         [Test]
-        public async Task Alias_mapped_should_be_respected()
+        public void Should_fail()
         {
-            var context = await Scenario.Define<Context>()
-                .WithEndpoint<Sender>(b =>
-                {
-                    b.When((bus, c) =>
+            var exception = Assert.ThrowsAsync<Exception>(async () =>
+            {
+                await Scenario.Define<Context>()
+                    .WithEndpoint<Sender>(b =>
                     {
-                        var options = new SendOptions();
-                        options.SetDestination($"{Conventions.EndpointNamingConvention(typeof(Receiver))}@{Alias}");
-                        return bus.Send(new MyMessage(), options);
-                    });
-                })
-                .WithEndpoint<Receiver>()
-                .Done(c => c.WasCalled)
-                .Run().ConfigureAwait(false);
+                        b.When((bus, c) =>
+                        {
+                            var options = new SendOptions();
+                            options.SetDestination(
+                                $"{Conventions.EndpointNamingConvention(typeof(Receiver))}@{ConfigureEndpointAzureStorageQueueTransport.ConnectionString}");
+                            return bus.Send(new MyMessage(), options);
+                        });
+                    })
+                    .WithEndpoint<Receiver>()
+                    .Done(c => c.WasCalled)
+                    .Run().ConfigureAwait(false);
+            });
 
-            Assert.IsTrue(context.WasCalled);
-
+            Assert.AreEqual("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected. Only aliases are allowed. Provide an alias for the storage account.", exception.Message);
         }
 
         const string Alias = "another";
@@ -35,7 +38,6 @@
 
         public class Context : ScenarioContext
         {
-            public string SendTo { get; set; }
             public bool WasCalled { get; set; }
         }
 
@@ -70,11 +72,16 @@
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                public Context Context { get; set; }
+                Context testContext;
+
+                public MyMessageHandler(Context testContext)
+                {
+                    this.testContext = testContext;
+                }
 
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
-                    Context.WasCalled = true;
+                    testContext.WasCalled = true;
                     return Task.FromResult(0);
                 }
             }

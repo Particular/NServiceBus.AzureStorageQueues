@@ -7,25 +7,27 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
     using EndpointTemplates;
     using NUnit.Framework;
 
-    public class When_sending_to_another_account_wo_aliases : NServiceBusAcceptanceTest
+    public class When_sending_to_another_account_without_alias : NServiceBusAcceptanceTest
     {
         [Test]
-        public async Task Should_properly_handle_it()
+        public void Should_throw()
         {
             var queue = Conventions.EndpointNamingConvention(typeof(Receiver));
 
             var another = ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString;
             var queueAddress = queue + "@" + another;
-            
-            var context = await Scenario.Define<Context>()
-                .WithEndpoint<Receiver>(c => c.When(s =>
-                {
-                    return s.Send<MyMessage>(queueAddress, m => { });
-                }))
-                .Done(c => c.HandlerCalled)
-                .Run(TimeSpan.FromSeconds(15)).ConfigureAwait(false);
 
-            Assert.True(context.HandlerCalled);
+            var exception = Assert.ThrowsAsync<Exception>(async () =>
+            {
+                await Scenario.Define<Context>()
+                    .WithEndpoint<Receiver>(c => c.When(s =>
+                    {
+                        return s.Send<MyMessage>(queueAddress, m => { });
+                    }))
+                    .Run(TimeSpan.FromSeconds(15)).ConfigureAwait(false);
+            });
+
+            Assert.AreEqual("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected. Only aliases are allowed. Provide an alias for the storage account.", exception.Message);
         }
 
         public class Context : ScenarioContext

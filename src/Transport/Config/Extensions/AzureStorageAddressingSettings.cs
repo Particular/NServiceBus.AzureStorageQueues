@@ -2,13 +2,14 @@
 {
     using System;
     using System.Collections.Generic;
+    using global::Azure.Storage.Queues;
+    using Microsoft.Azure.Cosmos.Table;
 
     class AzureStorageAddressingSettings
     {
-        internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, AccountInfo> aliasToConnectionStringMap, bool shouldUseAccountAliases)
+        internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, AccountInfo> aliasToConnectionStringMap)
         {
             this.defaultConnectionStringAlias = defaultConnectionStringAlias;
-            useLogicalQueueAddresses = shouldUseAccountAliases;
 
             var hasAnyMapping = aliasToConnectionStringMap != null && aliasToConnectionStringMap.Count > 0;
             if (hasAnyMapping == false)
@@ -18,7 +19,7 @@
 
             if (string.IsNullOrWhiteSpace(defaultConnectionStringAlias))
             {
-                throw new Exception("The mapping of account names instead of connection strings is enabled, but the default connection string name isn\'t provided. Provide the default connection string name when adding more accounts");
+                throw new Exception("The mapping of storage accounts connection strings to aliases is enforced but the the alias for the default connection string isn\'t provided. Provide the default connection string alias when using more than a single storage account.");
             }
 
             foreach (var kvp in aliasToConnectionStringMap)
@@ -26,9 +27,9 @@
                 var name = kvp.Key;
                 var accountInfo = kvp.Value;
 
-                if (name == QueueAddress.DefaultStorageAccountAlias)
+                if (name == string.Empty)
                 {
-                    throw new ArgumentException("Don't use default empty name for mapping connection strings", nameof(aliasToConnectionStringMap));
+                    throw new ArgumentException("Don't use empty string as the default connection string alias.", nameof(aliasToConnectionStringMap));
                 }
 
                 Add(accountInfo);
@@ -41,104 +42,51 @@
         }
 
         /// <summary>
-        /// Maps the account name to a connection string, throwing when no mapping found.
+        /// Maps the account name to a QueueServiceClient, throwing when no mapping found.
         /// </summary>
-        internal ConnectionString Map(QueueAddress address)
+        internal QueueServiceClient Map(QueueAddress address, MessageIntentEnum messageIntent)
         {
             if (registeredEndpoints.TryGetValue(address.QueueName, out var accountInfo))
             {
-                return accountInfo.Connection;
+                return accountInfo.QueueServiceClient;
             }
 
-            var account = address.StorageAccount;
-            if (aliasToAccountInfoMap.TryGetValue(account, out accountInfo) == false)
+            var storageAccountAlias = address.Alias;
+            if (aliasToAccountInfoMap.TryGetValue(storageAccountAlias, out accountInfo) == false)
             {
-                if (useLogicalQueueAddresses == false)
+                // If this is a reply message with a connection string use the connection string to construct a queue service client.
+                // This was a reply message coming from an older endpoint w/o aliases.
+                if (messageIntent == MessageIntentEnum.Reply && CloudStorageAccount.TryParse(address.Alias, out var storageAccount))
                 {
-                    return new ConnectionString(account);
+                    return new QueueServiceClient(address.Alias);
                 }
 
-                throw new Exception($"No account was mapped under following name '{address.StorageAccount}'. Please map it using .AccountRouting().AddAccount() method.");
+                throw new Exception($"No account was mapped under following name '{address.Alias}'. Please map it using .AccountRouting().AddAccount() method.");
             }
 
-            return accountInfo.Connection;
+            return accountInfo.QueueServiceClient;
         }
 
         /// <summary>
-        /// Transforms all the <see cref="QueueAddress" /> in <see cref="headersToApplyNameMapping" /> to use logical names.
-        /// </summary>
-        internal void ApplyMappingToAliases(Dictionary<string, string> headers)
-        {
-            foreach (var header in headersToApplyNameMapping)
-            {
-                if (headers.TryGetValue(header, out var headerValue))
-                {
-                    var address = QueueAddress.Parse(headerValue);
-
-                    // no mapping if address is default
-                    if (address.IsAccountDefault)
-                    {
-                        continue;
-                    }
-
-                    // try map as connection string
-                    if (TryMap(new ConnectionString(address.StorageAccount), out var alias))
-                    {
-                        headers[header] = new QueueAddress(address.QueueName, alias).ToString();
-                    }
-                    else
-                    {
-                        if (useLogicalQueueAddresses)
-                        {
-                            // it must be a logical name, try to find it, otherwise throw
-                            if (aliasToAccountInfoMap.ContainsKey(address.StorageAccount) == false)
-                            {
-                                throw new Exception($"No account was mapped under following name '{address.StorageAccount}'. Please map it using .AccountRouting().AddAccount() method.");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Transforms all the <see cref="QueueAddress" /> in <see cref="headersToApplyNameMapping" /> to connection string
-        /// values to maintain backward compatibility.
+        /// Transforms reply-to header to connection string values to maintain backward compatibility.
         /// </summary>
         internal void ApplyMappingOnOutgoingHeaders(Dictionary<string, string> headers, QueueAddress destinationQueue)
         {
-            foreach (var header in headersToApplyNameMapping)
+            if (headers.TryGetValue(Headers.ReplyToAddress, out var headerValue))
             {
-                if (headers.TryGetValue(header, out var headerValue))
+                var address = QueueAddress.Parse(headerValue);
+
+                if (address.HasNoAlias == false)
                 {
-                    var address = QueueAddress.Parse(headerValue);
+                    return;
+                }
 
-                    var isFullyQualifiedAddress = address.IsAccountDefault == false;
-                    if (isFullyQualifiedAddress)
-                    {
-                        continue;
-                    }
-
-                    if (useLogicalQueueAddresses)
-                    {
-                        var sendingToAnotherAccount = destinationQueue.IsAccountDefault == false;
-                        if (sendingToAnotherAccount && address.IsAccountDefault)
-                        {
-                            headers[header] = new QueueAddress(address.QueueName, defaultConnectionStringAlias).ToString();
-                        }
-                    }
-                    else
-                    {
-                        var connectionString = Map(address);
-                        headers[header] = new QueueAddress(address.QueueName, connectionString.Value).ToString();
-                    }
+                var destinationHasAlias = destinationQueue.HasNoAlias == false;
+                if (destinationHasAlias && address.HasNoAlias)
+                {
+                    headers[Headers.ReplyToAddress] = new QueueAddress(address.QueueName, defaultConnectionStringAlias).ToString();
                 }
             }
-        }
-
-        bool TryMap(ConnectionString connectionString, out string alias)
-        {
-            return connectionStringToAliasMap.TryGetValue(connectionString, out alias);
         }
 
         internal void Add(AccountInfo accountInfo, bool throwOnExistingEntry = true)
@@ -146,12 +94,10 @@
             if (throwOnExistingEntry)
             {
                 aliasToAccountInfoMap.Add(accountInfo.Alias, accountInfo);
-                connectionStringToAliasMap.Add(accountInfo.Connection, accountInfo.Alias);
             }
             else
             {
                 aliasToAccountInfoMap[accountInfo.Alias] = accountInfo;
-                connectionStringToAliasMap[accountInfo.Connection] = accountInfo.Alias;
             }
 
             foreach (var registeredEndpoint in accountInfo.RegisteredEndpoints)
@@ -163,16 +109,9 @@
 
         QueueAddressGenerator addressGenerator;
 
-        Dictionary<ConnectionString, string> connectionStringToAliasMap = new Dictionary<ConnectionString, string>();
         Dictionary<string, AccountInfo> aliasToAccountInfoMap = new Dictionary<string, AccountInfo>();
         Dictionary<string, AccountInfo> registeredEndpoints = new Dictionary<string, AccountInfo>();
 
         string defaultConnectionStringAlias;
-        bool useLogicalQueueAddresses;
-
-        static string[] headersToApplyNameMapping =
-        {
-            Headers.ReplyToAddress
-        };
     }
 }

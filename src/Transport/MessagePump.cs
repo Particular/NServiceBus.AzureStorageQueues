@@ -161,7 +161,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 {
                     Logger.DebugFormat("Unwrapped message ID: '{0}'", message.Id);
                 }
-                addressing.ApplyMappingToAliases(message.Headers);
 
                 await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);
             }

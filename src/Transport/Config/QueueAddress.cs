@@ -1,31 +1,28 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using Microsoft.Azure.Cosmos.Table;
 
-    struct QueueAddress : IEquatable<QueueAddress>
+    readonly struct QueueAddress : IEquatable<QueueAddress>
     {
-        public QueueAddress(string queueName, string storageAccount)
+        public QueueAddress(string queueName, string alias)
         {
             if (IsQueueNameValid(queueName) == false)
             {
                 throw new ArgumentException("Queue name cannot be null nor empty", nameof(queueName));
             }
 
-            if (storageAccount == null)
-            {
-                throw new ArgumentNullException(nameof(storageAccount));
-            }
-
             QueueName = queueName;
-            StorageAccount = storageAccount;
+
+            Alias = alias ?? throw new ArgumentNullException(nameof(alias));
         }
 
         public readonly string QueueName;
-        public readonly string StorageAccount;
+        public readonly string Alias;
 
         public bool Equals(QueueAddress other)
         {
-            return string.Equals(QueueName, other.QueueName, StringComparison.OrdinalIgnoreCase) && string.Equals(StorageAccount, other.StorageAccount, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(QueueName, other.QueueName, StringComparison.OrdinalIgnoreCase) && string.Equals(Alias, other.Alias, StringComparison.OrdinalIgnoreCase);
         }
 
         static bool IsQueueNameValid(string queueName)
@@ -33,9 +30,9 @@
             return string.IsNullOrWhiteSpace(queueName) == false;
         }
 
-        public static QueueAddress Parse(string value)
+        public static QueueAddress Parse(string value, bool allowConnectionStringForBackwardCompatibility = false)
         {
-            if (TryParse(value, out var q) == false)
+            if (TryParse(value, allowConnectionStringForBackwardCompatibility, out var q) == false)
             {
                 throw new ArgumentException("Value cannot be parsed", nameof(value));
             }
@@ -43,7 +40,7 @@
             return q.Value;
         }
 
-        public static bool TryParse(string inputQueue, out QueueAddress? queue)
+        public static bool TryParse(string inputQueue, bool allowConnectionStringForBackwardCompatibility, out QueueAddress? queue)
         {
             if (inputQueue == null)
             {
@@ -60,7 +57,7 @@
                     return false;
                 }
 
-                queue = new QueueAddress(inputQueue, DefaultStorageAccountAlias);
+                queue = new QueueAddress(inputQueue, string.Empty);
                 return true;
             }
 
@@ -72,8 +69,17 @@
                 return false;
             }
 
-            var storageAccount = inputQueue.Substring(index + 1);
-            queue = new QueueAddress(queueName, storageAccount);
+            var connectionStringOrAlias = inputQueue.Substring(index + 1);
+
+            if (CloudStorageAccount.TryParse(connectionStringOrAlias, out _) && allowConnectionStringForBackwardCompatibility == false)
+            {
+                const string message =
+                    "An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected."
+                    + " Only aliases are allowed. Provide an alias for the storage account.";
+                throw new Exception(message);
+            }
+
+            queue = new QueueAddress(queueName, connectionStringOrAlias);
             return true;
         }
 
@@ -90,18 +96,17 @@
         {
             unchecked
             {
-                return (QueueName.GetHashCode()*397) ^ StorageAccount.GetHashCode();
+                return (QueueName.GetHashCode()*397) ^ Alias.GetHashCode();
             }
         }
 
         public override string ToString()
         {
-            return IsAccountDefault ? QueueName : $"{QueueName}@{StorageAccount}";
+            return HasNoAlias ? QueueName : $"{QueueName}@{Alias}";
         }
 
-        public bool IsAccountDefault => StorageAccount == DefaultStorageAccountAlias;
+        public bool HasNoAlias => Alias == string.Empty;
 
-        public const string DefaultStorageAccountAlias = "";
         public const string Separator = "@";
     }
 }

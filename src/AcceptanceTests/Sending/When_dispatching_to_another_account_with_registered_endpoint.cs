@@ -40,7 +40,6 @@
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     var routing = configuration.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountAliasesInsteadOfConnectionStrings()
                         .DefaultAccountAlias(DefaultAccountName)
                         .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
                         .AccountRouting();
@@ -60,7 +59,6 @@
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
-                        .UseAccountAliasesInsteadOfConnectionStrings()
                         .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
                 });
             }
