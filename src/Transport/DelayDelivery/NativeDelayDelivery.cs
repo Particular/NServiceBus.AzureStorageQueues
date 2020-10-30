@@ -1,7 +1,4 @@
-﻿using Azure.Storage.Blobs;
-using NServiceBus.Logging;
-
-namespace NServiceBus.Transport.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
@@ -14,6 +11,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using Performance.TimeToBeReceived;
     using Settings;
     using Transport;
+    using global::Azure.Storage.Blobs;
+    using Logging;
 
     class NativeDelayDelivery
     {
@@ -28,6 +27,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
             TimeSpan peekInterval,
             Func<Dispatcher> dispatcherFactory)
         {
+            this.delayedMessagesTableName = delayedMessagesTableName;
+            this.cloudTableClient = cloudTableClient;
             this.blobServiceClient = blobServiceClient;
             this.delayedDeliveryEnabled = delayedDeliveryEnabled;
             this.errorQueueAddress = errorQueueAddress;
@@ -35,11 +36,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.maximumWaitTime = maximumWaitTime;
             this.peekInterval = peekInterval;
             this.dispatcherFactory = dispatcherFactory;
-
-            if (delayedDeliveryEnabled)
-            {
-                Table = cloudTableClient.GetTableReference(delayedMessagesTableName);
-            }
         }
 
         public async Task Start()
@@ -48,6 +44,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             {
                 Logger.Debug("Starting delayed delivery poller");
 
+                Table = cloudTableClient.GetTableReference(delayedMessagesTableName);
                 await Table.CreateIfNotExistsAsync().ConfigureAwait(false);
 
                 nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
@@ -94,7 +91,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         }
 
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
-        public CloudTable Table { get; }
+        public CloudTable Table { get; private set; }
 
         public static StartupCheckResult CheckForInvalidSettings(ReadOnlySettings settings)
         {
@@ -177,5 +174,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly TimeSpan maximumWaitTime;
         readonly TimeSpan peekInterval;
         readonly Func<Dispatcher> dispatcherFactory;
+        private readonly CloudTableClient cloudTableClient;
+        private readonly string delayedMessagesTableName;
     }
 }
