@@ -31,9 +31,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return string.IsNullOrWhiteSpace(queueName) == false;
         }
 
-        public static QueueAddress Parse(string value)
+        public static QueueAddress Parse(string value, bool allowConnectionStringForBackwardCompatibility = false)
         {
-            if (TryParse(value, out var q) == false)
+            if (TryParse(value, allowConnectionStringForBackwardCompatibility, out var q) == false)
             {
                 throw new ArgumentException("Value cannot be parsed", nameof(value));
             }
@@ -41,7 +41,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return q.Value;
         }
 
-        public static bool TryParse(string inputQueue, out QueueAddress? queue)
+        public static bool TryParse(string inputQueue, bool throwOnConnectionString, out QueueAddress? queue)
         {
             if (inputQueue == null)
             {
@@ -58,7 +58,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     return false;
                 }
 
-                queue = new QueueAddress(inputQueue, "");
+                queue = new QueueAddress(inputQueue, string.Empty);
                 return true;
             }
 
@@ -72,7 +72,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             var connectionStringOrAlias = inputQueue.Substring(index + 1);
 
-            if (CloudStorageAccount.TryParse(connectionStringOrAlias, out _))
+            if (CloudStorageAccount.TryParse(connectionStringOrAlias, out _) && throwOnConnectionString)
             {
                 const string message =
                     "An attempt to use an address with a connection string using the 'destination@connecitonstring' format was detected."
