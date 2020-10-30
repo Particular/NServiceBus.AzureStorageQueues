@@ -30,7 +30,7 @@
                     .Run().ConfigureAwait(false);
             });
 
-            Assert.IsTrue(exception.Message.Contains("An attempt to use an address with a connection string using the 'destination@connecitonstring' format was detected. Only aliases are allowed. Provide an alias for the storage account."));
+            Assert.AreEqual($"No account was mapped under following name '{ConfigureEndpointAzureStorageQueueTransport.ConnectionString}'. Please map it using .AccountRouting().AddAccount() method.", exception.Message);
 
             return Task.CompletedTask;
         }
