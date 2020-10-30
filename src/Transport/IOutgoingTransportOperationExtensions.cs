@@ -1,8 +1,8 @@
-﻿using System;
-using NServiceBus.Transport;
-
-namespace NServiceBus.AzureStorageQueues
+﻿namespace NServiceBus.AzureStorageQueues
 {
+    using System;
+    using Transport;
+
     internal static class IOutgoingTransportOperationExtensions
     {
         /// <summary>
@@ -12,7 +12,6 @@ namespace NServiceBus.AzureStorageQueues
         /// <returns>The operation intent.</returns>
         public static MessageIntentEnum GetMessageIntent(this IOutgoingTransportOperation operation)
         {
-            Guard.AgainstNull(nameof(operation), operation);
             var messageIntent = default(MessageIntentEnum);
 
             if (operation.Message.Headers.TryGetValue(Headers.MessageIntent, out var messageIntentString))
