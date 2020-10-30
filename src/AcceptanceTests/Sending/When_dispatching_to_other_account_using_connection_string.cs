@@ -38,7 +38,6 @@
 
         public class Context : ScenarioContext
         {
-            public string SendTo { get; set; }
             public bool WasCalled { get; set; }
         }
 
