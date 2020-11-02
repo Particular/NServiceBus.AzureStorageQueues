@@ -66,14 +66,13 @@
                     throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
                 }
 
-                await ScheduleAt(operation, UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
+                await ScheduleAt(operation, DateTimeOffset.UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
                 return false;
             }
 
             return true;
         }
 
-        public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
         public CloudTable Table { get; private set; }
 
         static TimeSpan? GetVisibilityDelay(List<DeliveryConstraint> constraints)
@@ -81,7 +80,7 @@
             var doNotDeliverBefore = FirstOrDefault<DoNotDeliverBefore>(constraints);
             if (doNotDeliverBefore != null)
             {
-                return ToNullIfNegative(doNotDeliverBefore.At - UtcNow);
+                return ToNullIfNegative(doNotDeliverBefore.At - DateTimeOffset.UtcNow);
             }
 
             var delay = FirstOrDefault<DelayDeliveryWith>(constraints);
