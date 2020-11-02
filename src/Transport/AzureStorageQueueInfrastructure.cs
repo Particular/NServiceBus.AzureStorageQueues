@@ -1,13 +1,11 @@
-﻿using Azure.Storage.Blobs;
-using Azure.Storage.Queues;
-
-namespace NServiceBus.Transport.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
+    using global::Azure.Storage.Blobs;
+    using global::Azure.Storage.Queues;
     using System;
     using System.Collections.Generic;
     using System.Security.Cryptography;
     using System.Text;
-    using System.Threading;
     using System.Threading.Tasks;
     using DelayedDelivery;
     using Features;
@@ -41,20 +39,19 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
             }
 
-            if (!settings.TryGet<CloudTableClient>(WellKnownConfigurationKeys.CloudTableClient, out var cloudTableClient))
+            if (!settings.TryGet<IProvideCloudTableClient>(out var cloudTableClientProvider))
             {
-                var cloudStorageAccount = CloudStorageAccount.Parse(this.connectionString);
-                cloudTableClient = cloudStorageAccount.CreateCloudTableClient();
+                cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
             }
 
-            if (!settings.TryGet<BlobServiceClient>(WellKnownConfigurationKeys.BlobServiceClient, out var blobServiceClient))
+            if (!settings.TryGet<IProvideBlobServiceClient>(out var blobServiceClientProvider))
             {
-                blobServiceClient = new BlobServiceClient(this.connectionString);
+                blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
             }
 
             nativeDelayedDelivery = new NativeDelayDelivery(
-                cloudTableClient,
-                blobServiceClient,
+                cloudTableClientProvider,
+                blobServiceClientProvider,
                 GetDelayedDeliveryTableName(settings),
                 NativeDelayedDeliveryIsEnabled(),
                 settings.ErrorQueueAddress(),
@@ -111,22 +108,22 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             Logger.Debug("Configuring receive infrastructure");
 
-            if (!settings.TryGet<QueueServiceClient>(WellKnownConfigurationKeys.QueueServiceClient, out var queueServiceClient))
+            if (!settings.TryGet<IProvideQueueServiceClient>(out var queueServiceClientProvider))
             {
-                queueServiceClient = new QueueServiceClient(connectionString);
+                queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
             }
 
             return new TransportReceiveInfrastructure(
                 () =>
                 {
-                    var addressing = GetAddressing(settings, queueServiceClient);
+                    var addressing = GetAddressing(settings, queueServiceClientProvider);
 
                     var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ? settings.GetOrDefault<IMessageEnvelopeUnwrapper>() : new DefaultMessageEnvelopeUnwrapper(serializer);
 
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
                     var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
 
-                    var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClient, addressGenerator)
+                    var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, addressGenerator)
                     {
                         MessageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
                     };
@@ -145,7 +142,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                     return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, batchSize, maximumWaitTime, peekInterval);
                 },
-                () => new AzureMessageQueueCreator(queueServiceClient, addressGenerator),
+                () => new AzureMessageQueueCreator(queueServiceClientProvider, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
             );
         }
@@ -167,16 +164,16 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         Dispatcher BuildDispatcher()
         {
-            if (!settings.TryGet<QueueServiceClient>(WellKnownConfigurationKeys.QueueServiceClient, out var queueServiceClient))
+            if (!settings.TryGet<IProvideQueueServiceClient>(out var queueServiceClientProvider))
             {
-                queueServiceClient = new QueueServiceClient(connectionString);
+                queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
             }
 
-            var addressing = GetAddressing(settings, queueServiceClient);
+            var addressing = GetAddressing(settings, queueServiceClientProvider);
             return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ShouldDispatch);
         }
 
-        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, QueueServiceClient queueServiceClient)
+        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, IProvideQueueServiceClient queueServiceClientProvider)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
 
@@ -187,7 +184,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             addressing.SetAddressGenerator(addressGenerator);
             addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings);
-            addressing.Add(new AccountInfo("", queueServiceClient), false);
+            addressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
 
             return addressing;
         }
