@@ -58,7 +58,7 @@
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
             var constraints = operation.DeliveryConstraints;
-            var delay = GetVisibilityDelay(constraints);
+            var delay = GetDeliveryDelay(constraints);
             if (delay != null)
             {
                 if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)
@@ -75,7 +75,7 @@
 
         public CloudTable Table { get; private set; }
 
-        static TimeSpan? GetVisibilityDelay(List<DeliveryConstraint> constraints)
+        static TimeSpan? GetDeliveryDelay(List<DeliveryConstraint> constraints)
         {
             var doNotDeliverBefore = FirstOrDefault<DoNotDeliverBefore>(constraints);
             if (doNotDeliverBefore != null)
