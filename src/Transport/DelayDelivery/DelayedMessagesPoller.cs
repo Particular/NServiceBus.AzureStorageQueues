@@ -158,7 +158,8 @@
             }
 
             Stopwatch stopwatch = null;
-            var dispatchOperations = new List<Task>(delayedMessages.Count);
+            var delayedMessagesCount = delayedMessages.Count;
+            var dispatchOperations = new List<Task>(delayedMessagesCount);
             foreach (var delayedMessage in delayedMessages)
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -183,9 +184,12 @@
                 dispatchOperations.Add(DeleteAndDispatch(cancellationToken, delayedMessage));
             }
 
-            await Task.WhenAll(dispatchOperations).ConfigureAwait(false);
+            if (delayedMessagesCount > 0)
+            {
+                await Task.WhenAll(dispatchOperations).ConfigureAwait(false);
+            }
 
-            await backoffStrategy.OnBatch(delayedMessages.Count, cancellationToken).ConfigureAwait(false);
+            await backoffStrategy.OnBatch(delayedMessagesCount, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task DeleteAndDispatch(CancellationToken cancellationToken, DelayedMessageEntity delayedMessage)
