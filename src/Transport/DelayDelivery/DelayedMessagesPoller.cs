@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
@@ -157,6 +158,8 @@
             }
 
             Stopwatch stopwatch = null;
+            var delayedMessagesCount = delayedMessages.Count;
+            var dispatchOperations = new List<Task>(delayedMessagesCount);
             foreach (var delayedMessage in delayedMessages)
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -177,31 +180,44 @@
                     stopwatch.Reset();
                 }
 
-                try
-                {
-                    var delete = TableOperation.Delete(delayedMessage);
-
-                    if (isAtMostOnce)
-                    {
-                        // delete first, then dispatch
-                        await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
-                        await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        // dispatch first, then delete
-                        await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
-                        await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-                catch (Exception exception)
-                {
-                    // just log and move on with the rest
-                    Logger.Warn($"Failed at dispatching the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'", exception);
-                }
+                // deliberately not using the dispatchers batching capability because every delayed message dispatch should be independent
+                dispatchOperations.Add(DeleteAndDispatch(cancellationToken, delayedMessage));
             }
 
-            await backoffStrategy.OnBatch(delayedMessages.Count, cancellationToken).ConfigureAwait(false);
+            if (delayedMessagesCount > 0)
+            {
+                await Task.WhenAll(dispatchOperations).ConfigureAwait(false);
+            }
+
+            await backoffStrategy.OnBatch(delayedMessagesCount, cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task DeleteAndDispatch(CancellationToken cancellationToken, DelayedMessageEntity delayedMessage)
+        {
+            try
+            {
+                var delete = TableOperation.Delete(delayedMessage);
+
+                if (isAtMostOnce)
+                {
+                    // delete first, then dispatch
+                    await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
+                    await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    // dispatch first, then delete
+                    await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
+                    await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (Exception exception)
+            {
+                // just log and move on with the rest
+                Logger.Warn(
+                    $"Failed at dispatching the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'",
+                    exception);
+            }
         }
 
         async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
