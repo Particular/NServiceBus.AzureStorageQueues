@@ -10,9 +10,6 @@
         public const string MessageWrapperSerializationDefinition = "Transport.AzureStorageQueue.MessageWrapperSerializationDefinition";
         public const string DegreeOfReceiveParallelism = "Transport.AzureStorageQueue.DegreeOfReceiveParallelism";
         public const string QueueSanitizer = "Transport.AzureStorageQueue.QueueSanitizer";
-        public const string QueueServiceClient = "Transport.AzureStorageQueue.QueueServiceClient";
-        public const string BlobServiceClient = "Transport.AzureStorageQueue.BlobServiceClient";
-        public const string CloudTableClient = "Transport.AzureStorageQueue.CloudTableClient";
 
         public static class DelayedDelivery
         {

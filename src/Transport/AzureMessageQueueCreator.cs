@@ -15,9 +15,9 @@
     /// </summary>
     class AzureMessageQueueCreator : ICreateQueues
     {
-        public AzureMessageQueueCreator(QueueServiceClient client, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueCreator(IProvideQueueServiceClient queueServiceClientProvider, QueueAddressGenerator addressGenerator)
         {
-            this.client = client;
+            queueServiceClient = queueServiceClientProvider.Client;
             this.addressGenerator = addressGenerator;
         }
 
@@ -33,7 +33,7 @@
             var queueName = addressGenerator.GetQueueName(address);
             try
             {
-                var queue = client.GetQueueClient(queueName);
+                var queue = queueServiceClient.GetQueueClient(queueName);
                 await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
             }
             catch (RequestFailedException ex)
@@ -58,7 +58,7 @@
         }
 
         QueueAddressGenerator addressGenerator;
-        QueueServiceClient client;
+        QueueServiceClient queueServiceClient;
         static readonly ILog Logger = LogManager.GetLogger<AzureMessageQueueCreator>();
     }
 }
