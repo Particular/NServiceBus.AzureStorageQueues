@@ -20,7 +20,6 @@
             IProvideCloudTableClient cloudTableClientProvider,
             IProvideBlobServiceClient blobServiceClientProvider,
             string delayedMessagesTableName,
-            bool delayedDeliveryEnabled,
             string errorQueueAddress,
             TransportTransactionMode transactionMode,
             TimeSpan maximumWaitTime,
@@ -30,7 +29,6 @@
             this.delayedMessagesTableName = delayedMessagesTableName;
             cloudTableClient = cloudTableClientProvider.Client;
             blobServiceClient = blobServiceClientProvider.Client;
-            this.delayedDeliveryEnabled = delayedDeliveryEnabled;
             this.errorQueueAddress = errorQueueAddress;
             isAtMostOnce = transactionMode == TransportTransactionMode.None;
             this.maximumWaitTime = maximumWaitTime;
@@ -40,31 +38,21 @@
 
         public async Task Start()
         {
-            if (delayedDeliveryEnabled)
-            {
-                Logger.Debug("Starting delayed delivery poller");
+            Logger.Debug("Starting delayed delivery poller");
 
-                Table = cloudTableClient.GetTableReference(delayedMessagesTableName);
-                await Table.CreateIfNotExistsAsync().ConfigureAwait(false);
+            Table = cloudTableClient.GetTableReference(delayedMessagesTableName);
+            await Table.CreateIfNotExistsAsync().ConfigureAwait(false);
 
-                nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-                poller = new DelayedMessagesPoller(Table, blobServiceClient, errorQueueAddress, isAtMostOnce, dispatcherFactory(), new BackoffStrategy(peekInterval, maximumWaitTime));
-                poller.Start(nativeDelayedMessagesCancellationSource.Token);
-            }
+            nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
+            poller = new DelayedMessagesPoller(Table, blobServiceClient, errorQueueAddress, isAtMostOnce, dispatcherFactory(), new BackoffStrategy(peekInterval, maximumWaitTime));
+            poller.Start(nativeDelayedMessagesCancellationSource.Token);
         }
 
         public Task Stop()
         {
-            if (delayedDeliveryEnabled)
-            {
-                Logger.Debug("Stopping delayed delivery poller");
-
-                nativeDelayedMessagesCancellationSource?.Cancel();
-
-                return poller != null ? poller.Stop() : Task.CompletedTask;
-            }
-
-            return Task.CompletedTask;
+            Logger.Debug("Stopping delayed delivery poller");
+            nativeDelayedMessagesCancellationSource?.Cancel();
+            return poller != null ? poller.Stop() : Task.CompletedTask;
         }
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -73,11 +61,6 @@
             var delay = GetVisibilityDelay(constraints);
             if (delay != null)
             {
-                if (delayedDeliveryEnabled == false)
-                {
-                    throw new Exception("Cannot delay delivery of messages when delayed delivery has been disabled. Remove the 'endpointConfiguration.UseTransport<AzureStorageQueues>.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.");
-                }
-
                 if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)
                 {
                     throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
@@ -153,13 +136,12 @@
         DelayedMessagesPoller poller;
         CancellationTokenSource nativeDelayedMessagesCancellationSource;
         readonly BlobServiceClient blobServiceClient;
-        readonly bool delayedDeliveryEnabled;
         readonly string errorQueueAddress;
         readonly bool isAtMostOnce;
         readonly TimeSpan maximumWaitTime;
         readonly TimeSpan peekInterval;
         readonly Func<Dispatcher> dispatcherFactory;
-        private readonly CloudTableClient cloudTableClient;
-        private readonly string delayedMessagesTableName;
+        readonly CloudTableClient cloudTableClient;
+        readonly string delayedMessagesTableName;
     }
 }

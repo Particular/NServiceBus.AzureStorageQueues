@@ -18,12 +18,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class Dispatcher : IDispatchMessages
     {
-        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDelivery nativeDelayDelivery)
         {
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
             this.serializer = serializer;
-            this.shouldSend = shouldSend;
+            this.nativeDelayDelivery = nativeDelayDelivery;
         }
 
         public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
@@ -49,11 +49,16 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 logger.DebugFormat("Sending message (ID: '{0}') to {1}", operation.Message.MessageId, operation.Destination);
             }
 
-            var dispatchDecision = await shouldSend(operation, cancellationToken).ConfigureAwait(false);
-            if (dispatchDecision == false)
+            if (nativeDelayDelivery != null)
             {
-                return;
+                var dispatchDecision = await nativeDelayDelivery.ShouldDispatch(operation, cancellationToken).ConfigureAwait(false);
+                
+                if (dispatchDecision == false)
+                {
+                    return;
+                }
             }
+            
 
             // The destination might be in a queue@destination format
             var destination = operation.Destination;
@@ -149,7 +154,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         }
 
         readonly MessageWrapperSerializer serializer;
-        readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
+        readonly NativeDelayDelivery nativeDelayDelivery;
 
         readonly QueueAddressGenerator addressGenerator;
         readonly AzureStorageAddressingSettings addressing;

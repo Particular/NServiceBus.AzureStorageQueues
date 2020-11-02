@@ -8,7 +8,6 @@
     using System.Text;
     using System.Threading.Tasks;
     using DelayedDelivery;
-    using Features;
     using Logging;
     using Microsoft.Azure.Cosmos.Table;
     using Performance.TimeToBeReceived;
@@ -31,34 +30,31 @@
 
             serializer = BuildSerializer(settings);
 
-            settings.SetDefault(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, true);
-
-            if (!settings.IsFeatureEnabled(typeof(TimeoutManager)) || settings.GetOrDefault<bool>("Endpoint.SendOnly"))
+            if (NativeDelayedDeliveryIsEnabled())
             {
-                // TimeoutManager is already not used. Indicate to Native Delayed Delivery that we're not in the hybrid mode.
-                settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
-            }
+                if (!settings.TryGet<IProvideCloudTableClient>(out var cloudTableClientProvider))
+                {
+                    cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
+                }
 
-            if (!settings.TryGet<IProvideCloudTableClient>(out var cloudTableClientProvider))
-            {
-                cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
+                if (!settings.TryGet<IProvideBlobServiceClient>(out var blobServiceClientProvider))
+                {
+                    blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
+                }
+                
+                nativeDelayedDelivery = new NativeDelayDelivery(
+                    cloudTableClientProvider,
+                    blobServiceClientProvider,
+                    GetDelayedDeliveryTableName(settings),
+                    settings.ErrorQueueAddress(),
+                    GetRequiredTransactionMode(),
+                    settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
+                    settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval),
+                    BuildDispatcher);                
+                
+                supportedDeliveryConstraints.Add(typeof(DelayDeliveryWith));
+                supportedDeliveryConstraints.Add(typeof(DoNotDeliverBefore));
             }
-
-            if (!settings.TryGet<IProvideBlobServiceClient>(out var blobServiceClientProvider))
-            {
-                blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
-            }
-
-            nativeDelayedDelivery = new NativeDelayDelivery(
-                cloudTableClientProvider,
-                blobServiceClientProvider,
-                GetDelayedDeliveryTableName(settings),
-                NativeDelayedDeliveryIsEnabled(),
-                settings.ErrorQueueAddress(),
-                GetRequiredTransactionMode(),
-                settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
-                settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval),
-                BuildDispatcher);
 
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
         }
@@ -70,8 +66,7 @@
             return lowerInvariant.Contains("https://localhost") || lowerInvariant.Contains(".table.cosmosdb.") || lowerInvariant.Contains(".table.cosmos.");
         }
 
-        public override IEnumerable<Type> DeliveryConstraints => new List<Type> {typeof(DiscardIfNotReceivedBefore), typeof(DoNotDeliverBefore), typeof(DelayDeliveryWith)};
-
+        public override IEnumerable<Type> DeliveryConstraints => supportedDeliveryConstraints;
         public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
         public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
 
@@ -159,7 +154,7 @@
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()
         {
-            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(NativeDelayDelivery.CheckForInvalidSettings(settings)));
+            return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(StartupCheckResult.Success));
         }
 
         Dispatcher BuildDispatcher()
@@ -170,7 +165,7 @@
             }
 
             var addressing = GetAddressing(settings, queueServiceClientProvider);
-            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ShouldDispatch);
+            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery);
         }
 
         AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, IProvideQueueServiceClient queueServiceClientProvider)
@@ -247,8 +242,10 @@
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
+        readonly List<Type> supportedDeliveryConstraints = new List<Type> {typeof(DiscardIfNotReceivedBefore)};
         NativeDelayDelivery nativeDelayedDelivery;
         QueueAddressGenerator addressGenerator;
+
 
         static readonly ILog Logger = LogManager.GetLogger<AzureStorageQueueInfrastructure>();
     }
