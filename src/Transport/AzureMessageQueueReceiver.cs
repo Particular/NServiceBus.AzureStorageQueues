@@ -10,10 +10,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, QueueServiceClient service, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IProvideQueueServiceClient queueServiceClientProvider, QueueAddressGenerator addressGenerator)
         {
             this.unwrapper = unwrapper;
-            this.service = service;
+            queueServiceClient = queueServiceClientProvider.Client;
             this.addressGenerator = addressGenerator;
         }
 
@@ -42,7 +42,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         async Task<QueueClient> GetQueue(string address)
         {
             var name = addressGenerator.GetQueueName(address);
-            var queue = service.GetQueueClient(name);
+            var queue = queueServiceClient.GetQueueClient(name);
             await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
             return queue;
         }
@@ -67,7 +67,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         QueueClient inputQueue;
         QueueClient errorQueue;
-        QueueServiceClient service;
+        QueueServiceClient queueServiceClient;
 
         public string QueueName => inputQueue.Name;
 

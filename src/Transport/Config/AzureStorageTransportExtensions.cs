@@ -145,7 +145,7 @@ namespace NServiceBus
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
 
-            config.GetSettings().Set(WellKnownConfigurationKeys.QueueServiceClient, queueServiceClient);
+            config.GetSettings().Set<IProvideQueueServiceClient>(new QueueServiceClientProvidedByConfiguration(queueServiceClient));
 
             return config;
         }
@@ -157,7 +157,7 @@ namespace NServiceBus
         {
             Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
 
-            config.GetSettings().Set(WellKnownConfigurationKeys.BlobServiceClient, blobServiceClient);
+            config.GetSettings().Set<IProvideBlobServiceClient>(new BlobServiceClientProvidedByConfiguration(blobServiceClient));
 
             return config;
         }
@@ -169,7 +169,7 @@ namespace NServiceBus
         {
             Guard.AgainstNull(nameof(cloudTableClient), cloudTableClient);
 
-            config.GetSettings().Set(WellKnownConfigurationKeys.CloudTableClient, cloudTableClient);
+            config.GetSettings().Set<IProvideCloudTableClient>(new CloudTableClientProvidedByConfiguration(cloudTableClient));
 
             return config;
         }
