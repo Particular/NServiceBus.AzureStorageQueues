@@ -179,6 +179,7 @@
                     stopwatch.Reset();
                 }
 
+                // deliberately not using the dispatchers batching capability because every delayed message dispatch should be independent
                 dispatchOperations.Add(DeleteAndDispatch(cancellationToken, delayedMessage));
             }
 
