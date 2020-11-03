@@ -8,21 +8,21 @@ namespace NServiceBus
     {
         [ObsoleteEx(
             Message = "Account aliases are used instead of connection strings by default",
-            RemoveInVersion = "10.0.0",
-            TreatAsErrorFromVersion = "9.0.0")]
+            TreatAsErrorFromVersion = "9",
+            RemoveInVersion = "10")]
         public static TransportExtensions<AzureStorageQueueTransport> UseAccountAliasesInsteadOfConnectionStrings(this TransportExtensions<AzureStorageQueueTransport> config)
         {
-            return config;
+            throw new NotImplementedException();
         }
     }
 
     partial class DelayedDeliverySettings
     {
-        [ObsoleteEx(Message = "The timeout manager has been removed in favor of native delayed delivery support provided by transports. See the upgrade guide for more details.", TreatAsErrorFromVersion = "9", RemoveInVersion = "10")]
-        public void DisableTimeoutManager()
-        {
-            throw new InvalidOperationException();
-        }
+        [ObsoleteEx(
+            Message = "The timeout manager has been removed in favor of native delayed delivery support provided by transports. See the upgrade guide for more details.",
+            TreatAsErrorFromVersion = "9",
+            RemoveInVersion = "10")]
+        public void DisableTimeoutManager() => throw new NotImplementedException();
     }
 }
 #pragma warning restore 1591
