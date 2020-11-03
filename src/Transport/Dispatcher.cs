@@ -52,13 +52,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
             if (nativeDelayDelivery != null)
             {
                 var dispatchDecision = await nativeDelayDelivery.ShouldDispatch(operation, cancellationToken).ConfigureAwait(false);
-                
+
                 if (dispatchDecision == false)
                 {
                     return;
                 }
             }
-            
+
 
             // The destination might be in a queue@destination format
             var destination = operation.Destination;

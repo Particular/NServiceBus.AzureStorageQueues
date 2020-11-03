@@ -1,7 +1,5 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
-    using global::Azure.Storage.Blobs;
-    using global::Azure.Storage.Queues;
     using System;
     using System.Collections.Generic;
     using System.Security.Cryptography;
@@ -9,7 +7,6 @@
     using System.Threading.Tasks;
     using DelayedDelivery;
     using Logging;
-    using Microsoft.Azure.Cosmos.Table;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -41,7 +38,7 @@
                 {
                     blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
                 }
-                
+
                 nativeDelayedDelivery = new NativeDelayDelivery(
                     cloudTableClientProvider,
                     blobServiceClientProvider,
@@ -50,8 +47,8 @@
                     GetRequiredTransactionMode(),
                     settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
                     settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval),
-                    BuildDispatcher);                
-                
+                    BuildDispatcher);
+
                 supportedDeliveryConstraints.Add(typeof(DelayDeliveryWith));
                 supportedDeliveryConstraints.Add(typeof(DoNotDeliverBefore));
             }
@@ -250,7 +247,7 @@
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
-        readonly List<Type> supportedDeliveryConstraints = new List<Type> {typeof(DiscardIfNotReceivedBefore)};
+        readonly List<Type> supportedDeliveryConstraints = new List<Type> { typeof(DiscardIfNotReceivedBefore) };
         readonly NativeDelayDelivery nativeDelayedDelivery;
         readonly QueueAddressGenerator addressGenerator;
 

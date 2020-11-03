@@ -6,13 +6,11 @@
     using System.Threading.Tasks;
     using DelayedDelivery;
     using DeliveryConstraints;
-    using Features;
-    using Microsoft.Azure.Cosmos.Table;
-    using Performance.TimeToBeReceived;
-    using Settings;
-    using Transport;
     using global::Azure.Storage.Blobs;
     using Logging;
+    using Microsoft.Azure.Cosmos.Table;
+    using Performance.TimeToBeReceived;
+    using Transport;
 
     class NativeDelayDelivery
     {
