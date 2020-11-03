@@ -7,7 +7,7 @@ namespace NServiceBus
     using Transport.AzureStorageQueues;
 
     /// <summary>Configures native delayed delivery.</summary>
-    public class DelayedDeliverySettings : ExposeSettings
+    public partial class DelayedDeliverySettings : ExposeSettings
     {
         internal DelayedDeliverySettings(SettingsHolder settings) : base(settings) { }
 
@@ -26,15 +26,6 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Disables the Timeout Manager for the endpoint. Before disabling ensure there all timeouts in the timeout store
-        /// have been processed or migrated.
-        /// </summary>
-        public void DisableTimeoutManager()
-        {
-            this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
-        }
-
-        /// <summary>
         /// Disable delayed delivery.
         /// <remarks>
         /// Disabling delayed delivery reduces costs associated with polling Azure Storage service for delayed messages that need
@@ -44,11 +35,7 @@ namespace NServiceBus
         /// </summary>
         public void DisableDelayedDelivery()
         {
-            // disable delayed delivery
             this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery, true);
-
-            // disable timeout manager
-            this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
         }
 
         static readonly Regex tableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);

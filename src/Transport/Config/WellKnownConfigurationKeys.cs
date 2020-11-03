@@ -15,7 +15,6 @@
         {
             public const string TableName = "Transport.AzureStorageQueue.TableName";
             public const string DisableDelayedDelivery = "Transport.AzureStorageQueue.DisableDelayedDelivery";
-            public const string EnableTimeoutManager = "NServiceBus.TimeoutManager.EnableMigrationMode";
         }
     }
 }

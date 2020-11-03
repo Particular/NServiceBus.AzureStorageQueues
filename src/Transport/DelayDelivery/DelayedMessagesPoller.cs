@@ -132,7 +132,7 @@
 
         async Task SpinOnce(CancellationToken cancellationToken)
         {
-            var now = NativeDelayDelivery.UtcNow;
+            var now = DateTimeOffset.UtcNow;
             if (cancellationToken.IsCancellationRequested)
             {
                 return;
