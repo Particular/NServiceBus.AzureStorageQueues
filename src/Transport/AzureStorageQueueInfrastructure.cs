@@ -211,14 +211,22 @@
             return addressGenerator.GetQueueName(queue.ToString());
         }
 
-        public override Task Start()
+        public override async Task Start()
         {
-            return nativeDelayedDelivery?.Start();
+            if (nativeDelayedDelivery != null)
+            {
+                await nativeDelayedDelivery.Start()
+                    .ConfigureAwait(false);
+            }
         }
 
-        public override Task Stop()
+        public override async Task Stop()
         {
-            return nativeDelayedDelivery?.Stop();
+            if (nativeDelayedDelivery != null)
+            {
+                await nativeDelayedDelivery.Stop()
+                    .ConfigureAwait(false);
+            }
         }
 
         TransportTransactionMode GetRequiredTransactionMode()
