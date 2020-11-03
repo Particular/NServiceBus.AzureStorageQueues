@@ -213,12 +213,12 @@
 
         public override Task Start()
         {
-            return nativeDelayedDelivery.Start();
+            return nativeDelayedDelivery?.Start();
         }
 
         public override Task Stop()
         {
-            return nativeDelayedDelivery.Stop();
+            return nativeDelayedDelivery?.Stop();
         }
 
         TransportTransactionMode GetRequiredTransactionMode()
