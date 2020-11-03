@@ -251,9 +251,8 @@
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
         readonly List<Type> supportedDeliveryConstraints = new List<Type> {typeof(DiscardIfNotReceivedBefore)};
-        NativeDelayDelivery nativeDelayedDelivery;
-        QueueAddressGenerator addressGenerator;
-
+        readonly NativeDelayDelivery nativeDelayedDelivery;
+        readonly QueueAddressGenerator addressGenerator;
 
         static readonly ILog Logger = LogManager.GetLogger<AzureStorageQueueInfrastructure>();
     }
