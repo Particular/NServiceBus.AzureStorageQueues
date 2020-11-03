@@ -20,7 +20,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(30));
 
-        transportConfig.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
+        transportConfig.SanitizeQueueNamesForTesting(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
 
         var routingConfig = transportConfig.Routing();
 
@@ -36,7 +36,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         {
             Assert.Ignore("Ignored until issue #173 is resolved.");
         }
- 
+
         if (endpointName.StartsWith("RegisteringAdditionalDeserializers.CustomSerializationSender"))
         {
             Assert.Ignore("Ignored since this scenario is not supported by ASQ.");
