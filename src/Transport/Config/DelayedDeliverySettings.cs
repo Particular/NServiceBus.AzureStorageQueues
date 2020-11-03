@@ -35,7 +35,6 @@ namespace NServiceBus
         /// </summary>
         public void DisableDelayedDelivery()
         {
-            // disable delayed delivery
             this.GetSettings().Set(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery, true);
         }
 
