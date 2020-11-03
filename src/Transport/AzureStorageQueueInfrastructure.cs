@@ -208,22 +208,24 @@
             return addressGenerator.GetQueueName(queue.ToString());
         }
 
-        public override async Task Start()
+        public override Task Start()
         {
             if (nativeDelayedDelivery != null)
             {
-                await nativeDelayedDelivery.Start()
-                    .ConfigureAwait(false);
+                return nativeDelayedDelivery.Start();
             }
+
+            return Task.CompletedTask;
         }
 
-        public override async Task Stop()
+        public override Task Stop()
         {
             if (nativeDelayedDelivery != null)
             {
-                await nativeDelayedDelivery.Stop()
-                    .ConfigureAwait(false);
+                return nativeDelayedDelivery.Stop();
             }
+
+            return Task.CompletedTask;
         }
 
         TransportTransactionMode GetRequiredTransactionMode()

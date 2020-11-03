@@ -59,7 +59,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 }
             }
 
-
             // The destination might be in a queue@destination format
             var destination = operation.Destination;
 
