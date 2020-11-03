@@ -13,7 +13,7 @@
         public void Should_throw()
         {
             Context context = null;
-            var exception = Assert.ThrowsAsync<Exception>(async () => await Scenario.Define<Context>(ctx => context = ctx)
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => await Scenario.Define<Context>(ctx => context = ctx)
                     .WithEndpoint<Endpoint>(b => b.When((session, ctx) =>
                     {
                         var delay = TimeSpan.FromSeconds(2);
@@ -28,7 +28,7 @@
                     .Done(ctx => true)
                     .Run());
 
-            Assert.AreEqual("Cannot delay delivery of messages when delayed delivery has been disabled. Remove the 'endpointConfiguration.UseTransport<AzureStorageQueues>.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.", exception.Message, "Exception message does not match");
+            Assert.AreEqual("Cannot delay delivery of messages when there is no infrastructure support for delayed messages.", exception.Message, "Exception message does not match");
 
             Assert.IsFalse(context.WasCalled, "Endpoint's handler should never be invoked.");
         }
