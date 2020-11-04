@@ -91,10 +91,11 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Registers a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
+        /// Internal use only.
+        /// Registers a queue name sanitizer to apply to queue names not compliant with Azure Storage Queue naming rules.
         /// <remarks>By default no sanitization is performed.</remarks>
         /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> SanitizeQueueNamesWith(this TransportExtensions<AzureStorageQueueTransport>config, Func<string, string> queueNameSanitizer)
+        internal static TransportExtensions<AzureStorageQueueTransport> SanitizeQueueNamesForTesting(this TransportExtensions<AzureStorageQueueTransport> config, Func<string, string> queueNameSanitizer)
         {
             Guard.AgainstNull(nameof(config), config);
             Guard.AgainstNull(nameof(queueNameSanitizer), queueNameSanitizer);
