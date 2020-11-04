@@ -24,10 +24,6 @@ namespace NServiceBus
 
     public static partial class AzureStorageTransportExtensions
     {
-        /// <summary>
-        /// Registers a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
-        /// <remarks>By default no sanitization is performed.</remarks>
-        /// </summary>
         [ObsoleteEx(
             Message = "Queue name sanitization should be considered when providing the endpoint logical name using `new EndpointConfiguration(<name>)` API.",
             RemoveInVersion = "10.0.0",
