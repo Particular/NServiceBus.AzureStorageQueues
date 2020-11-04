@@ -29,7 +29,7 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
         settings.Set(AzureStorageQueueTransport.SerializerSettingsKey, Tuple.Create<SerializationDefinition, SettingsHolder>(new XmlSerializer(), settings));
 
         var transportExtension = new TransportExtensions<AzureStorageQueueTransport>(settings);
-        transportExtension.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
+        transportExtension.SanitizeQueueNamesForTesting(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
 
         return new TransportConfigurationResult
         {
