@@ -27,9 +27,6 @@ namespace NServiceBus
     {
         public static NServiceBus.AccountRoutingSettings AccountRouting(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transportExtensions) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DefaultAccountAlias(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transportExtensions, string alias) { }
-        [System.ObsoleteAttribute("Account aliases are used instead of connection strings by default. The member cur" +
-            "rently throws a NotImplementedException. Will be removed in version 10.0.0.", true)]
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseAccountAliasesInsteadOfConnectionStrings(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config) { }
     }
     public class static AzureStorageTransportExtensions
     {
@@ -39,10 +36,6 @@ namespace NServiceBus
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MessageInvisibleTime(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> PeekInterval(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.TimeSpan value) { }
-        [System.ObsoleteAttribute("Queue name sanitization should be considered when providing the endpoint logical " +
-            "name using `new EndpointConfiguration(<name>)` API. The member currently throws " +
-            "a NotImplementedException. Will be removed in version 10.0.0.", true)]
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SanitizeQueueNamesWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Func<string, string> queueNameSanitizer) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config)
             where TSerializationDefinition : NServiceBus.Serialization.SerializationDefinition, new () { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UnwrapMessagesWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Func<Azure.Storage.Queues.Models.QueueMessage, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> unwrapper) { }
@@ -55,7 +48,7 @@ namespace NServiceBus
         public void DisableDelayedDelivery() { }
         [System.ObsoleteAttribute("The timeout manager has been removed in favor of native delayed delivery support " +
             "provided by transports. See the upgrade guide for more details. The member curre" +
-            "ntly throws a NotImplementedException. Will be removed in version 10.0.0.", true)]
+            "ntly throws a NotImplementedException. Will be removed in version 11.0.0.", true)]
         public void DisableTimeoutManager() { }
         public void UseTableName(string delayedMessagesTableName) { }
     }
