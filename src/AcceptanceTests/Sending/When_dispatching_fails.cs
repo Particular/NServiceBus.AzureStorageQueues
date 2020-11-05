@@ -6,7 +6,6 @@
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
     using EndpointTemplates;
-    using global::Azure;
     using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
     using LogLevel = Logging.LogLevel;
