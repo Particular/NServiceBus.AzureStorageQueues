@@ -53,9 +53,6 @@ namespace NServiceBus
     public class DelayedDeliverySettings : NServiceBus.Configuration.AdvancedExtensibility.ExposeSettings
     {
         public void DisableDelayedDelivery() { }
-        [System.ObsoleteAttribute("The timeout manager has been removed in favor of native delayed delivery support " +
-            "provided by transports. See the upgrade guide for more details. The member curre" +
-            "ntly throws a NotImplementedException. Will be removed in version 10.0.0.", true)]
         public void DisableTimeoutManager() { }
         public void UseTableName(string delayedMessagesTableName) { }
     }

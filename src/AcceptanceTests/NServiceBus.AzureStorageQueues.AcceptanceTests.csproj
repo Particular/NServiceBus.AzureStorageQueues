@@ -14,7 +14,7 @@
   <!-- Force latest versions -->
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Queues" Version="12.4.2" />
-    <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="7.2.3" />
+    <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="7.4.4" />
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.2.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
