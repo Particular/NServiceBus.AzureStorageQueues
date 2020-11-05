@@ -56,7 +56,7 @@
             {
                 // If this is a reply message with a connection string use the connection string to construct a queue service client.
                 // This was a reply message coming from an older endpoint w/o aliases.
-                if (messageIntent == MessageIntentEnum.Reply && CloudStorageAccount.TryParse(address.Alias, out var storageAccount))
+                if (messageIntent == MessageIntentEnum.Reply && CloudStorageAccount.TryParse(address.Alias, out _))
                 {
                     return new QueueServiceClient(address.Alias);
                 }
