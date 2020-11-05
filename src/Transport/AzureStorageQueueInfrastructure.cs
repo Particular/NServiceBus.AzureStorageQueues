@@ -116,8 +116,6 @@
             return new TransportReceiveInfrastructure(
                 () =>
                 {
-                    var addressing = GetAddressing(settings, queueServiceClientProvider);
-
                     var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ? settings.GetOrDefault<IMessageEnvelopeUnwrapper>() : new DefaultMessageEnvelopeUnwrapper(serializer);
 
                     var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
@@ -140,7 +138,7 @@
                         batchSize = size;
                     }
 
-                    return new MessagePump(receiver, addressing, degreeOfReceiveParallelism, batchSize, maximumWaitTime, peekInterval);
+                    return new MessagePump(receiver, degreeOfReceiveParallelism, batchSize, maximumWaitTime, peekInterval);
                 },
                 () => new AzureMessageQueueCreator(queueServiceClientProvider, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)

@@ -10,14 +10,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class MessagePump : IPushMessages, IDisposable
     {
-        public MessagePump(AzureMessageQueueReceiver messageReceiver, AzureStorageAddressingSettings addressing, int? degreeOfReceiveParallelism, int? receiveBatchSize, TimeSpan maximumWaitTime, TimeSpan peekInterval)
+        public MessagePump(AzureMessageQueueReceiver messageReceiver, int? degreeOfReceiveParallelism, int? receiveBatchSize, TimeSpan maximumWaitTime, TimeSpan peekInterval)
         {
             this.receiveBatchSize = receiveBatchSize;
             this.degreeOfReceiveParallelism = degreeOfReceiveParallelism;
             this.maximumWaitTime = maximumWaitTime;
             this.peekInterval = peekInterval;
             this.messageReceiver = messageReceiver;
-            this.addressing = addressing;
         }
 
         public void Dispose()
@@ -186,8 +185,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly TimeSpan peekInterval;
 
         ReceiveStrategy receiveStrategy;
-
-        AzureStorageAddressingSettings addressing;
 
         AzureMessageQueueReceiver messageReceiver;
 
