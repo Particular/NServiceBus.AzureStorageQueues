@@ -174,9 +174,11 @@
                 accounts = new AccountConfigurations();
             }
 
+            const string defaultAccountAlias = "";
+
             addressing.SetAddressGenerator(addressGenerator);
-            addressing.RegisterMapping(accounts.defaultAlias, accounts.mappings);
-            addressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
+            addressing.RegisterMapping(accounts.defaultAlias ?? defaultAccountAlias, accounts.mappings);
+            addressing.Add(new AccountInfo(defaultAccountAlias, queueServiceClientProvider.Client), false);
 
             return addressing;
         }
