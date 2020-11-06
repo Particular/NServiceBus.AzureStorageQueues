@@ -1,7 +1,5 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
-    using global::Azure.Storage.Blobs;
-    using global::Azure.Storage.Queues;
     using System;
     using System.Collections.Generic;
     using System.Security.Cryptography;
@@ -10,7 +8,6 @@
     using DelayedDelivery;
     using Features;
     using Logging;
-    using Microsoft.Azure.Cosmos.Table;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
