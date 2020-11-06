@@ -3,7 +3,7 @@
     using System;
     using Microsoft.Azure.Cosmos.Table;
 
-    struct QueueAddress : IEquatable<QueueAddress>
+    readonly struct QueueAddress : IEquatable<QueueAddress>
     {
         public QueueAddress(string queueName, string alias)
         {
