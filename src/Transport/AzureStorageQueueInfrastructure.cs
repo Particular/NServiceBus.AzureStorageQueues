@@ -27,6 +27,8 @@
 
             serializer = BuildSerializer(settings);
 
+            var delayedDeliveryTableName = "default";
+
             if (NativeDelayedDeliveryIsEnabled())
             {
                 if (!settings.TryGet<IProvideCloudTableClient>(out var cloudTableClientProvider))
@@ -38,6 +40,9 @@
                 {
                     blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
                 }
+
+                // This call mutates settings holder and should not be invoked more than once. This value is used for Diagnostics Section upon startup as well.
+                delayedDeliveryTableName = GetDelayedDeliveryTableName(settings);
 
                 nativeDelayedDelivery = new NativeDelayDelivery(
                     cloudTableClientProvider,
@@ -54,6 +59,32 @@
             }
 
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
+
+            WriteStartupDiagnostics(delayedDeliveryTableName);
+        }
+
+        void WriteStartupDiagnostics(string delayedDeliveryTableName)
+        {
+            settings.AddStartupDiagnosticsSection("Azure Storage Queues transport", new
+            {
+                ConnectionMechanism = new
+                {
+                    Queue = settings.TryGet<IProvideQueueServiceClient>(out _) ? "QueueServiceClient" : "ConnectionString",
+                    Table = settings.TryGet<IProvideCloudTableClient>(out _) ? "CloudTableClient" : "ConnectionString",
+                    Blob = settings.TryGet<IProvideBlobServiceClient>(out _) ? "BlobServiceClient" : "ConnectionString",
+                },
+                DelayedDelivery = new
+                {
+                    NativeDelayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled(),
+                    NativeDelayedDeliveryTableName = delayedDeliveryTableName
+                },
+                TransactionMode = Enum.GetName(typeof(TransportTransactionMode), GetRequiredTransactionMode()),
+                ReceiverBatchSize = settings.TryGet(WellKnownConfigurationKeys.ReceiverBatchSize, out int receiverBatchSize) ? receiverBatchSize.ToString() : "default",
+                DegreeOfReceiveParallelism = settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out int degreeOfReceiveParallelism) ? degreeOfReceiveParallelism.ToString() : "default",
+                MaximumWaitTimeWhenIdle = settings.TryGet(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, out int maximumWaitTimeWhenIdle) ? maximumWaitTimeWhenIdle.ToString() : "default",
+                PeekInterval = settings.TryGet(WellKnownConfigurationKeys.ReceiverPeekInterval, out int peekInterval) ? peekInterval.ToString() : "default",
+                MessageInvisibleTime = settings.TryGet(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, out int messageInvisibleTime) ? messageInvisibleTime.ToString() : "default"
+            });
         }
 
         // the SDK uses similar method of changing the underlying executor
