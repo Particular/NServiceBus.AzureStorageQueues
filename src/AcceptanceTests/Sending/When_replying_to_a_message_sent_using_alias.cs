@@ -1,9 +1,10 @@
-﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Sending
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
-    using EndpointTemplates;
+    using NServiceBus.AcceptanceTests;
+    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
 
     public class When_replying_to_a_message_sent_using_alias : NServiceBusAcceptanceTest

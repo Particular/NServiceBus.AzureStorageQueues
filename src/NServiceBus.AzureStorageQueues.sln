@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues", "Transport\NServiceBus.AzureStorageQueues.csproj", "{B6D6406F-F5A4-46D7-A882-4A831128065E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.Transport.AzureStorageQueues", "Transport\NServiceBus.Transport.AzureStorageQueues.csproj", "{B6D6406F-F5A4-46D7-A882-4A831128065E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues.AcceptanceTests", "AcceptanceTests\NServiceBus.AzureStorageQueues.AcceptanceTests.csproj", "{09996CDC-90AC-442F-A6CE-601F37CD1352}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.Transport.AzureStorageQueues.AcceptanceTests", "AcceptanceTests\NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.csproj", "{09996CDC-90AC-442F-A6CE-601F37CD1352}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues.Tests", "Tests\NServiceBus.AzureStorageQueues.Tests.csproj", "{02FEF736-87DA-42FA-AC51-E384A9CA2926}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.Transport.AzureStorageQueues.Tests", "Tests\NServiceBus.Transport.AzureStorageQueues.Tests.csproj", "{02FEF736-87DA-42FA-AC51-E384A9CA2926}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.AzureStorageQueues.TransportTests", "TransportTests\NServiceBus.AzureStorageQueues.TransportTests.csproj", "{BC08A40C-A7F9-4D93-906E-BCD135DA2A72}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NServiceBus.Transport.AzureStorageQueues.TransportTests", "TransportTests\NServiceBus.Transport.AzureStorageQueues.TransportTests.csproj", "{BC08A40C-A7F9-4D93-906E-BCD135DA2A72}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{64975404-0552-4288-9443-57F2369DCFCA}"
 	ProjectSection(SolutionItems) = preProject

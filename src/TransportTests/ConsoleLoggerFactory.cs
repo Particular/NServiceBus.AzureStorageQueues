@@ -1,4 +1,4 @@
-namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.TransportTests
+namespace NServiceBus.Transport.AzureStorageQueues.TransportTests
 {
     using System;
     using Logging;
