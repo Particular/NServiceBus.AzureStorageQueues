@@ -1,6 +1,7 @@
 namespace NServiceBus
 {
     using Configuration.AdvancedExtensibility;
+    using Transport.AzureStorageQueues;
 
     /// <summary>Transport addressing extensions.</summary>
     public static partial class AzureStorageTransportAddressingExtensions
@@ -11,8 +12,7 @@ namespace NServiceBus
         public static AccountRoutingSettings AccountRouting(this TransportExtensions<AzureStorageQueueTransport> transportExtensions)
         {
             Guard.AgainstNull(nameof(transportExtensions), transportExtensions);
-            var accountConfigurations = transportExtensions.GetSettings().GetOrCreate<AccountConfigurations>();
-            return new AccountRoutingSettings(accountConfigurations);
+            return new AccountRoutingSettings(transportExtensions.EnsureAccounts());
         }
 
         /// <summary>
@@ -21,9 +21,21 @@ namespace NServiceBus
         public static TransportExtensions<AzureStorageQueueTransport> DefaultAccountAlias(this TransportExtensions<AzureStorageQueueTransport> transportExtensions, string alias)
         {
             Guard.AgainstNull(nameof(transportExtensions), transportExtensions);
-            var accountConfigurations = transportExtensions.GetSettings().GetOrCreate<AccountConfigurations>();
-            accountConfigurations.MapLocalAccount(alias);
+            transportExtensions.EnsureAccounts().MapLocalAccount(alias);
             return transportExtensions;
+        }
+
+        static AccountConfigurations EnsureAccounts(this ExposeSettings transportExtensions)
+        {
+            var settings = transportExtensions.GetSettings();
+            if (settings.TryGet<AccountConfigurations>(out var accounts))
+            {
+                return accounts;
+            }
+
+            accounts = new AccountConfigurations();
+            settings.Set(accounts);
+            return accounts;
         }
     }
 }

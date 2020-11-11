@@ -1,10 +1,11 @@
-﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Sending
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
-    using EndpointTemplates;
+    using NServiceBus.AcceptanceTests;
+    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
 
     public class When_dispatching_to_another_account_using_alias : NServiceBusAcceptanceTest

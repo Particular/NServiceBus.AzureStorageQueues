@@ -5,11 +5,8 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)Test.snk</AssemblyOriginatorKeyFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <RootNamespace>NServiceBus.AzureStorageQueues.TransportTests</RootNamespace>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
-  </ItemGroup>
 
   <!-- Force latest versions -->
   <ItemGroup>
@@ -25,6 +22,10 @@
     <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
     <Compile Include="..\AcceptanceTests\BackwardsCompatibleQueueNameSanitizerForTests.cs" Link="BackwardsCompatibleQueueNameSanitizerForTests.cs" />
     <Compile Include="..\TestSuppressions.cs" Link="TestSuppressions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Transport\NServiceBus.Transport.AzureStorageQueues.csproj" />
   </ItemGroup>
 
 </Project>

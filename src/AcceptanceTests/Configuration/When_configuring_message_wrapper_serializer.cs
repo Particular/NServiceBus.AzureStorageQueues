@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Collections.Generic;
@@ -7,7 +7,8 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Azure.Transports.WindowsAzureStorageQueues;
-    using EndpointTemplates;
+    using NServiceBus.AcceptanceTests;
+    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using MessageInterfaces;
     using NServiceBus.Configuration.AdvancedExtensibility;
     using NServiceBus.Serialization;
