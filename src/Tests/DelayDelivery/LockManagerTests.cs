@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.DelayDelivery
+﻿namespace NServiceBus.Transport.AzureStorageQueues.Tests
 {
     using System;
     using System.Threading;

@@ -8,10 +8,6 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
-  </ItemGroup>
-
   <!-- Force latest versions -->
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Queues" Version="12.5.0" />
@@ -27,6 +23,10 @@
 
   <ItemGroup>
     <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Transport\NServiceBus.Transport.AzureStorageQueues.csproj" />
   </ItemGroup>
 
 </Project>

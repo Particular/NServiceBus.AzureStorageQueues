@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Sending
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Collections.Generic;
@@ -9,7 +9,6 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using AcceptanceTesting.Customization;
-    using AzureStorageQueues.AcceptanceTests;
     using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
 

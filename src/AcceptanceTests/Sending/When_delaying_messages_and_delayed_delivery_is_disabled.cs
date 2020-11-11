@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AzureStorageQueues.AcceptanceTests.Sending
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Threading.Tasks;

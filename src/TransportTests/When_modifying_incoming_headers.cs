@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AzureStorageQueues.TransportTests
+﻿namespace NServiceBus.Transport.AzureStorageQueues.TransportTests
 {
     using System;
     using System.Collections.Generic;

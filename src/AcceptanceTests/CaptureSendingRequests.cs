@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AzureStorageQueues.AcceptanceTests
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Collections.Concurrent;
