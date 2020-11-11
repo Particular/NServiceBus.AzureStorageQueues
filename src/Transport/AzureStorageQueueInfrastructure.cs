@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using System.Globalization;
     using System.Collections.Generic;
     using System.Security.Cryptography;
     using System.Text;
@@ -25,11 +26,15 @@
                 throw new Exception($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
             }
 
-            serializer = BuildSerializer(settings);
+            serializer = BuildSerializer(settings, out var userProvidedSerializer);
 
-            var delayedDeliveryTableName = "default";
+            maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
+            peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
+            messageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime);
 
-            if (NativeDelayedDeliveryIsEnabled())
+            string delayedDeliveryTableName = null;
+            var nativeDelayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled();
+            if (nativeDelayedDeliveryIsEnabled)
             {
                 if (!settings.TryGet<IProvideCloudTableClient>(out var cloudTableClientProvider))
                 {
@@ -47,11 +52,11 @@
                 nativeDelayedDelivery = new NativeDelayDelivery(
                     cloudTableClientProvider,
                     blobServiceClientProvider,
-                    GetDelayedDeliveryTableName(settings),
+                    delayedDeliveryTableName,
                     settings.ErrorQueueAddress(),
                     GetRequiredTransactionMode(),
-                    settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle),
-                    settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval),
+                    maximumWaitTime,
+                    peekInterval,
                     BuildDispatcher);
 
                 supportedDeliveryConstraints.Add(typeof(DelayDeliveryWith));
@@ -60,12 +65,24 @@
 
             addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
 
-            WriteStartupDiagnostics(delayedDeliveryTableName);
-        }
+            object delayedDelivery;
+            if (nativeDelayedDeliveryIsEnabled)
+            {
+                delayedDelivery = new
+                {
+                    NativeDelayedDeliveryIsEnabled = true,
+                    NativeDelayedDeliveryTableName = delayedDeliveryTableName
+                };
+            }
+            else
+            {
+                delayedDelivery = new
+                {
+                    NativeDelayedDeliveryIsEnabled = false,
+                };
+            }
 
-        void WriteStartupDiagnostics(string delayedDeliveryTableName)
-        {
-            settings.AddStartupDiagnosticsSection("Azure Storage Queues transport", new
+            settings.AddStartupDiagnosticsSection("NServiceBus.Transport.AzureStorageQueues", new
             {
                 ConnectionMechanism = new
                 {
@@ -73,17 +90,15 @@
                     Table = settings.TryGet<IProvideCloudTableClient>(out _) ? "CloudTableClient" : "ConnectionString",
                     Blob = settings.TryGet<IProvideBlobServiceClient>(out _) ? "BlobServiceClient" : "ConnectionString",
                 },
-                DelayedDelivery = new
-                {
-                    NativeDelayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled(),
-                    NativeDelayedDeliveryTableName = delayedDeliveryTableName
-                },
+                MessageWrapperSerializer = userProvidedSerializer ? "Custom" : "Default",
+                MessageEnvelopeUnwrapper = settings.HasExplicitValue<IMessageEnvelopeUnwrapper>() ? "Custom" : "Default",
+                DelayedDelivery = delayedDelivery,
                 TransactionMode = Enum.GetName(typeof(TransportTransactionMode), GetRequiredTransactionMode()),
-                ReceiverBatchSize = settings.TryGet(WellKnownConfigurationKeys.ReceiverBatchSize, out int receiverBatchSize) ? receiverBatchSize.ToString() : "default",
-                DegreeOfReceiveParallelism = settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out int degreeOfReceiveParallelism) ? degreeOfReceiveParallelism.ToString() : "default",
-                MaximumWaitTimeWhenIdle = settings.TryGet(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, out int maximumWaitTimeWhenIdle) ? maximumWaitTimeWhenIdle.ToString() : "default",
-                PeekInterval = settings.TryGet(WellKnownConfigurationKeys.ReceiverPeekInterval, out int peekInterval) ? peekInterval.ToString() : "default",
-                MessageInvisibleTime = settings.TryGet(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, out int messageInvisibleTime) ? messageInvisibleTime.ToString() : "default"
+                ReceiverBatchSize = settings.TryGet(WellKnownConfigurationKeys.ReceiverBatchSize, out int receiverBatchSize) ? receiverBatchSize.ToString(CultureInfo.InvariantCulture) : "Default",
+                DegreeOfReceiveParallelism = settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out int degreeOfReceiveParallelism) ? degreeOfReceiveParallelism.ToString(CultureInfo.InvariantCulture) : "Default",
+                MaximumWaitTimeWhenIdle = maximumWaitTime,
+                PeekInterval = peekInterval,
+                MessageInvisibleTime = messageInvisibleTime
             });
         }
 
@@ -141,12 +156,9 @@
                 {
                     var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ? settings.GetOrDefault<IMessageEnvelopeUnwrapper>() : new DefaultMessageEnvelopeUnwrapper(serializer);
 
-                    var maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
-                    var peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-
                     var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, addressGenerator)
                     {
-                        MessageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime),
+                        MessageInvisibleTime = messageInvisibleTime,
                     };
 
                     int? degreeOfReceiveParallelism = null;
@@ -168,13 +180,15 @@
             );
         }
 
-        static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings)
+        static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings, out bool userProvided)
         {
             if (settings.TryGet<SerializationDefinition>(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, out var wrapperSerializer))
             {
+                userProvided = true;
                 return new MessageWrapperSerializer(wrapperSerializer.Configure(settings)(MessageWrapperSerializer.GetMapper()));
             }
 
+            userProvided = false;
             return new MessageWrapperSerializer(AzureStorageQueueTransport.GetMainSerializer(MessageWrapperSerializer.GetMapper(), settings));
         }
 
@@ -283,6 +297,9 @@
         readonly List<Type> supportedDeliveryConstraints = new List<Type> { typeof(DiscardIfNotReceivedBefore) };
         readonly NativeDelayDelivery nativeDelayedDelivery;
         readonly QueueAddressGenerator addressGenerator;
+        readonly TimeSpan maximumWaitTime;
+        readonly TimeSpan peekInterval;
+        readonly TimeSpan messageInvisibleTime;
 
         static readonly ILog Logger = LogManager.GetLogger<AzureStorageQueueInfrastructure>();
     }
