@@ -2,14 +2,15 @@
 
   <PropertyGroup>
     <TargetFrameworks>net472;netstandard2.0</TargetFrameworks>
-    <AssemblyName>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</AssemblyName>
+    <AssemblyName>NServiceBus.Transport.AzureStorageQueues</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
+    <RootNamespace>NServiceBus.AzureStorageQueues</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</PackageId>
-    <Description>NServiceBus Transport for the Windows Azure Storage Queues</Description>
+    <PackageId>NServiceBus.Transport.AzureStorageQueues</PackageId>
+    <Description>NServiceBus Transport for Azure Storage Queues</Description>
   </PropertyGroup>
 
   <ItemGroup>

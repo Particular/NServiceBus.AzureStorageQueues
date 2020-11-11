@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Receiving
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Collections.Generic;
@@ -11,6 +11,7 @@
     using global::Newtonsoft.Json;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NUnit.Framework;
 
     public class When_receiving_a_raw_json_message : NServiceBusAcceptanceTest

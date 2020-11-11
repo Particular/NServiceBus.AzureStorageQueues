@@ -7,10 +7,6 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Transport\NServiceBus.AzureStorageQueues.csproj" />
-  </ItemGroup>
-
   <!-- Force latest versions -->
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Queues" Version="12.5.0" />
@@ -20,6 +16,10 @@
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Transport\NServiceBus.Transport.AzureStorageQueues.csproj" />
   </ItemGroup>
 
 </Project>

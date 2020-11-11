@@ -1,4 +1,4 @@
-namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues.AcceptanceTests.Sending
+namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Collections.Generic;

@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
 using NServiceBus;
-using NServiceBus.Azure.Transports.WindowsAzureStorageQueues.TransportTests;
+using NServiceBus.Transport.AzureStorageQueues.TransportTests;
 using NServiceBus.Logging;
 using NServiceBus.Serialization;
 using NServiceBus.Settings;

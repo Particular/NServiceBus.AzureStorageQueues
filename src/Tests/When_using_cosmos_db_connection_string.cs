@@ -3,7 +3,7 @@ using NServiceBus.Settings;
 using NServiceBus.Transport.AzureStorageQueues;
 using NUnit.Framework;
 
-namespace NServiceBus.AzureStorageQueues.Tests
+namespace NServiceBus.Transport.AzureStorageQueues.Tests
 {
     [TestFixture]
     public class When_using_cosmos_db_connection_string
