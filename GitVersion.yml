@@ -8,4 +8,4 @@ branches:
     tracks-release-branches: true
   release:
     increment: Patch
-    tag: beta
+    tag: ''
