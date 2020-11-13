@@ -6,6 +6,8 @@
     {
         public BlobServiceClientProvidedByConnectionString(string connectionString)
         {
+            ConnectionStringValidator.ThrowIfPremiumEndpointConnectionString(connectionString);
+
             Client = new BlobServiceClient(connectionString);
         }
 
