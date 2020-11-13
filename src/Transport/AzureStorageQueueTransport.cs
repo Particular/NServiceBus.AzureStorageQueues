@@ -17,7 +17,7 @@ namespace NServiceBus
         internal const string SerializerSettingsKey = "MainSerializer";
 
         /// <inheritdoc cref="RequiresConnectionString"/>
-        public override bool RequiresConnectionString { get; } = true;
+        public override bool RequiresConnectionString { get; } = false;
 
         /// <inheritdoc cref="ExampleConnectionStringForErrorMessage"/>
         public override string ExampleConnectionStringForErrorMessage { get; } =
