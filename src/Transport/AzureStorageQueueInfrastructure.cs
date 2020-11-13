@@ -21,11 +21,6 @@
             this.settings = settings;
             this.connectionString = connectionString;
 
-            if (IsPremiumEndpoint(this.connectionString))
-            {
-                throw new Exception($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
-            }
-
             serializer = BuildSerializer(settings, out var userProvidedSerializer);
 
             maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
@@ -43,6 +38,8 @@
 
                 if (!settings.TryGet<IProvideBlobServiceClient>(out var blobServiceClientProvider))
                 {
+                    ThrowIfPremiumEndpointConnectionString();
+
                     blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
                 }
 
@@ -102,7 +99,16 @@
             });
         }
 
-        // the SDK uses similar method of changing the underlying executor
+        private void ThrowIfPremiumEndpointConnectionString()
+        {
+            if (IsPremiumEndpoint(this.connectionString))
+            {
+                throw new Exception(
+                    $"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
+            }
+        }
+
+        // Adopted from Cosmos DB Table API SDK that uses similar approach to change the underlying execution
         static bool IsPremiumEndpoint(string connectionString)
         {
             var lowerInvariant = connectionString.ToLowerInvariant();
@@ -148,6 +154,8 @@
 
             if (!settings.TryGet<IProvideQueueServiceClient>(out var queueServiceClientProvider))
             {
+                ThrowIfPremiumEndpointConnectionString();
+
                 queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
             }
 
@@ -201,6 +209,8 @@
         {
             if (!settings.TryGet<IProvideQueueServiceClient>(out var queueServiceClientProvider))
             {
+                ThrowIfPremiumEndpointConnectionString();
+
                 queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
             }
 
