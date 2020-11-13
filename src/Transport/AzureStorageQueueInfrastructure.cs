@@ -21,11 +21,6 @@
             this.settings = settings;
             this.connectionString = connectionString;
 
-            if (IsPremiumEndpoint(this.connectionString))
-            {
-                throw new Exception($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
-            }
-
             serializer = BuildSerializer(settings, out var userProvidedSerializer);
 
             maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
@@ -100,13 +95,6 @@
                 PeekInterval = peekInterval,
                 MessageInvisibleTime = messageInvisibleTime
             });
-        }
-
-        // the SDK uses similar method of changing the underlying executor
-        static bool IsPremiumEndpoint(string connectionString)
-        {
-            var lowerInvariant = connectionString.ToLowerInvariant();
-            return lowerInvariant.Contains("https://localhost") || lowerInvariant.Contains(".table.cosmosdb.") || lowerInvariant.Contains(".table.cosmos.");
         }
 
         public override IEnumerable<Type> DeliveryConstraints => supportedDeliveryConstraints;

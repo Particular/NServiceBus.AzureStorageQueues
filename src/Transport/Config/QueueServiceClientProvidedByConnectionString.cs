@@ -6,6 +6,8 @@
     {
         public QueueServiceClientProvidedByConnectionString(string connectionString)
         {
+            ConnectionStringValidator.ThrowIfPremiumEndpointConnectionString(connectionString);
+
             Client = new QueueServiceClient(connectionString);
         }
 
