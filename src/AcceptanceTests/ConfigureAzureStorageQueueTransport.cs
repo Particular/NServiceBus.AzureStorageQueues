@@ -20,7 +20,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(30));
 
-        transportConfig.SanitizeQueueNamesForTesting(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
+        transportConfig.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
 
         var routingConfig = transportConfig.Routing();
 
