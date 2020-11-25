@@ -20,7 +20,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(30));
 
-        transportConfig.SanitizeQueueNamesForTesting(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
+        transportConfig.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
 
         transportConfig.DelayedDelivery().DisableTimeoutManager();
 
@@ -52,7 +52,6 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
 
         return Task.FromResult(0);
     }
-
     public Task Cleanup()
     {
         return Task.FromResult(0);

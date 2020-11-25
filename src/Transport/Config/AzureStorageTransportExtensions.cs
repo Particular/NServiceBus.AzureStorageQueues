@@ -11,7 +11,7 @@ namespace NServiceBus
     using Transport.AzureStorageQueues;
 
     /// <summary>Extension methods for <see cref="AzureStorageQueueTransport"/>.</summary>
-    public static partial class AzureStorageTransportExtensions
+    public static class AzureStorageTransportExtensions
     {
         /// <summary>
         /// Sets the amount of time to add to the time to wait before checking for a new message
@@ -91,11 +91,10 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Internal use only.
-        /// Registers a queue name sanitizer to apply to queue names not compliant with Azure Storage Queue naming rules.
+        /// Registers a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
         /// <remarks>By default no sanitization is performed.</remarks>
         /// </summary>
-        internal static TransportExtensions<AzureStorageQueueTransport> SanitizeQueueNamesForTesting(this TransportExtensions<AzureStorageQueueTransport> config, Func<string, string> queueNameSanitizer)
+        public static TransportExtensions<AzureStorageQueueTransport> SanitizeQueueNamesWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<string, string> queueNameSanitizer)
         {
             Guard.AgainstNull(nameof(config), config);
             Guard.AgainstNull(nameof(queueNameSanitizer), queueNameSanitizer);
