@@ -9,7 +9,7 @@ public class APIApprovals
     [Test]
     public void ApproveAzureStorageQueueTransport()
     {
-        var publicApi = ApiGenerator.GeneratePublicApi(typeof(AzureStorageQueueTransport).Assembly, excludeAttributes: new[] { "System.Runtime.Versioning.TargetFrameworkAttribute" });
+        var publicApi = ApiGenerator.GeneratePublicApi(typeof(AzureStorageQueueTransport).Assembly, excludeAttributes: new[] { "System.Runtime.Versioning.TargetFrameworkAttribute", "System.Reflection.AssemblyMetadataAttribute" });
         Approver.Verify(publicApi);
     }
 }
