@@ -60,8 +60,8 @@ namespace NServiceBus
             Guard.AgainstNull(nameof(receivers), receivers);
             Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
 
-            //TODO: understand how to retrieve the endpoint serializer, investigate if it's needed at this stage
-            Guard.AgainstUnsetSerializerSetting(settings);
+            //TODO: investigate if this is really needed
+            //Guard.AgainstUnsetSerializerSetting(settings);
 
             //TODO: move these to (public?) properties
             DefaultConfigurationValues.Apply(settings);
