@@ -100,9 +100,6 @@ namespace NServiceBus
             //TODO: investigate if this is really needed
             //Guard.AgainstUnsetSerializerSetting(settings);
 
-            //TODO: move these to (public?) properties
-            DefaultConfigurationValues.Apply(settings);
-
             var infrastructure = new AzureStorageQueueInfrastructure(
                 MessageInvisibleTime,
                 PeekInterval,
