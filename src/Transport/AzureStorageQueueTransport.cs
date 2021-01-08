@@ -90,6 +90,23 @@ namespace NServiceBus
         /// <inheritdoc cref="SupportsTTBR"/>
         public override bool SupportsTTBR { get; } = false;
 
+        /// <summary>
+        /// Controls how long messages should be invisible to other callers when receiving messages from the queue
+        /// </summary>
+        public TimeSpan MessageInvisibleTime
+        {
+            get => messageInvisibleTime;
+            set
+            {
+                if (value < TimeSpan.FromSeconds(1) || value > TimeSpan.FromDays(7))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(MessageInvisibleTime), value, "Value must be between 1 second and 7 days.");
+                }
+                messageInvisibleTime = value;
+            }
+        }
+
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
+        private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
     }
 }

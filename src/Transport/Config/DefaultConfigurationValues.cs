@@ -14,7 +14,7 @@
             settings.SetDefault(WellKnownConfigurationKeys.QueueSanitizer, (Func<string, string>)(queueName => queueName));
         }
 
-        static TimeSpan DefaultMessageInvisibleTime = TimeSpan.FromSeconds(30);
+        internal static TimeSpan DefaultMessageInvisibleTime = TimeSpan.FromSeconds(30);
         static TimeSpan DefaultPeekInterval = TimeSpan.FromMilliseconds(125);
         static TimeSpan DefaultMaximumWaitTimeWhenIdle = TimeSpan.FromSeconds(30);
         internal const int DefaultBatchSize = 32;

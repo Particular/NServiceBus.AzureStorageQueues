@@ -16,16 +16,14 @@
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        internal AzureStorageQueueInfrastructure(SettingsHolder settings, string connectionString)
+        internal AzureStorageQueueInfrastructure(TimeSpan messageInvisibleTime)
         {
-            this.settings = settings;
-            this.connectionString = connectionString;
+            this.messageInvisibleTime = messageInvisibleTime;
 
             serializer = BuildSerializer(settings, out var userProvidedSerializer);
 
             maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
             peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
-            messageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime);
 
             string delayedDeliveryTableName = null;
             var nativeDelayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled();
@@ -279,14 +277,13 @@
             return requestedTransportTransactionMode;
         }
 
-        readonly ReadOnlySettings settings;
-        readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
         readonly List<Type> supportedDeliveryConstraints = new List<Type> { typeof(DiscardIfNotReceivedBefore) };
         readonly NativeDelayDelivery nativeDelayedDelivery;
         readonly QueueAddressGenerator addressGenerator;
         readonly TimeSpan maximumWaitTime;
         readonly TimeSpan peekInterval;
+
         readonly TimeSpan messageInvisibleTime;
 
         static readonly ILog Logger = LogManager.GetLogger<AzureStorageQueueInfrastructure>();

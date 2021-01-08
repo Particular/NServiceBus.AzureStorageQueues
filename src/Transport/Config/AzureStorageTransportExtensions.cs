@@ -11,7 +11,7 @@ namespace NServiceBus
     using Transport.AzureStorageQueues;
 
     /// <summary>Extension methods for <see cref="AzureStorageQueueTransport"/>.</summary>
-    public static class AzureStorageTransportExtensions
+    public static partial class AzureStorageTransportExtensions
     {
         /// <summary>
         /// Sets the amount of time to add to the time to wait before checking for a new message
@@ -36,20 +36,6 @@ namespace NServiceBus
             }
 
             config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, value);
-            return config;
-        }
-
-        /// <summary>
-        /// Controls how long messages should be invisible to other callers when receiving messages from the queue
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
-        {
-            Guard.AgainstNull(nameof(config), config);
-            if (value < TimeSpan.FromSeconds(1) || value > TimeSpan.FromDays(7))
-            {
-                throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be between 1 second and 7 days.");
-            }
-            config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, value);
             return config;
         }
 
