@@ -2,7 +2,8 @@
 {
     static class WellKnownConfigurationKeys
     {
-        public const string ReceiverConnectionString = "Transport.ConnectionString";
+        //TODO: this seems to be used nowhere
+        //public const string ReceiverConnectionString = "Transport.ConnectionString";
         public const string ReceiverMaximumWaitTimeWhenIdle = "Transport.AzureStorageQueue.ReceiverMaximumWaitTimeWhenIdle";
         public const string ReceiverPeekInterval = "Transport.AzureStorageQueue.ReceiverPeekInterval";
         //TODO: moved to TransportDef.MessageInvisibleTime

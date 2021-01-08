@@ -7,8 +7,8 @@
     {
         public static void Apply(SettingsHolder settings)
         {
-            settings.SetDefault(WellKnownConfigurationKeys.ReceiverConnectionString, DefaultConnectionString);
-            settings.SetDefault(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, DefaultMessageInvisibleTime);
+            //TODO: this seems to be used nowhere
+            //settings.SetDefault(WellKnownConfigurationKeys.ReceiverConnectionString, DefaultConnectionString);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverPeekInterval, DefaultPeekInterval);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, DefaultMaximumWaitTimeWhenIdle);
             settings.SetDefault(WellKnownConfigurationKeys.QueueSanitizer, (Func<string, string>)(queueName => queueName));
