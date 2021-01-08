@@ -1,16 +1,15 @@
-using System.Text;
-using Azure.Storage.Blobs;
-using Microsoft.Azure.Cosmos.Table;
-
 namespace NServiceBus
 {
     using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Blobs;
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using MessageInterfaces;
+    using Microsoft.Azure.Cosmos.Table;
     using Serialization;
     using Settings;
     using Transport;
