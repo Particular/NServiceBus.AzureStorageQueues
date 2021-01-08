@@ -102,18 +102,6 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Sets <see cref="QueueServiceClient"/> to be used for messaging operations.
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> UseQueueServiceClient(this TransportExtensions<AzureStorageQueueTransport> config, QueueServiceClient queueServiceClient)
-        {
-            Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
-
-            config.GetSettings().Set<IProvideQueueServiceClient>(new QueueServiceClientProvidedByConfiguration(queueServiceClient));
-
-            return config;
-        }
-
-        /// <summary>
         /// Sets <see cref="QueueServiceClient"/> to be used for delayed delivery feature.
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> UseBlobServiceClient(this TransportExtensions<AzureStorageQueueTransport> config, BlobServiceClient blobServiceClient)

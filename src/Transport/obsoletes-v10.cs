@@ -3,6 +3,7 @@
 namespace NServiceBus
 {
     using System;
+    using global::Azure.Storage.Queues;
 
     static partial class AzureStorageTransportExtensions
     {
@@ -27,6 +28,18 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "10.0",
             RemoveInVersion = "11.0")]
         public static TransportExtensions<AzureStorageQueueTransport> SanitizeQueueNamesWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<string, string> queueNameSanitizer)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Sets <see cref="QueueServiceClient"/> to be used for messaging operations.
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance constructor",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> UseQueueServiceClient(this TransportExtensions<AzureStorageQueueTransport> config, QueueServiceClient queueServiceClient)
         {
             throw new NotImplementedException();
         }

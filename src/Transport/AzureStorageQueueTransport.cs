@@ -1,4 +1,6 @@
 using System.Text;
+using Azure.Storage.Blobs;
+using Microsoft.Azure.Cosmos.Table;
 
 namespace NServiceBus
 {
@@ -44,15 +46,31 @@ namespace NServiceBus
         /// </summary>
         public AzureStorageQueueTransport(string connectionString) : base(TransportTransactionMode.ReceiveOnly)
         {
-            //TODO: store the connection string
+            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+
+            queueServiceClientProvider = new ConnectionStringQueueServiceClientProvider(connectionString);
         }
 
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue
         /// </summary>
-        public AzureStorageQueueTransport(QueueClient queueClient) : base(TransportTransactionMode.ReceiveOnly)
+        public AzureStorageQueueTransport(QueueServiceClient queueServiceClient) : base(TransportTransactionMode.ReceiveOnly)
         {
-            //TODO: store the queue client
+            Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
+
+            queueServiceClientProvider = new UserQueueServiceClientProvider(queueServiceClient);
+        }
+
+        /// <summary>
+        /// Initialize a new transport definition for AzureStorageQueue
+        /// </summary>
+        public AzureStorageQueueTransport(string connectionString, BlobServiceClient blobServiceClient) : base(TransportTransactionMode.ReceiveOnly)
+        {
+            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+            Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
+
+            cloudTableClientProvider = new ConnectionStringCloudTableClientProvider(connectionString);
+            blobServiceClientProvider = new UserBlobServiceClientProvider(blobServiceClient);
         }
 
         /// <inheritdoc cref="Initialize"/>
@@ -154,5 +172,6 @@ namespace NServiceBus
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
         private Func<string, string> queueNameSanitizer = DefaultConfigurationValues.DefaultQueueNameSanitizer;
         private QueueAddressGenerator queueAddressGenerator;
+        private IQueueServiceClientProvider queueServiceClientProvider;
     }
 }
