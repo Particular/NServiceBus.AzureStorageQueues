@@ -30,14 +30,14 @@
             var nativeDelayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled();
             if (nativeDelayedDeliveryIsEnabled)
             {
-                if (!settings.TryGet<IProvideCloudTableClient>(out var cloudTableClientProvider))
+                if (!settings.TryGet<ICloudTableClientProvider>(out var cloudTableClientProvider))
                 {
-                    cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
+                    cloudTableClientProvider = new ConnectionStringCloudTableClientProvider(this.connectionString);
                 }
 
-                if (!settings.TryGet<IProvideBlobServiceClient>(out var blobServiceClientProvider))
+                if (!settings.TryGet<IBlobServiceClientProvider>(out var blobServiceClientProvider))
                 {
-                    blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
+                    blobServiceClientProvider = new ConnectionStringBlobServiceClientProvider(this.connectionString);
                 }
 
                 // This call mutates settings holder and should not be invoked more than once. This value is used for Diagnostics Section upon startup as well.
@@ -78,9 +78,9 @@
             {
                 ConnectionMechanism = new
                 {
-                    Queue = settings.TryGet<IProvideQueueServiceClient>(out _) ? "QueueServiceClient" : "ConnectionString",
-                    Table = settings.TryGet<IProvideCloudTableClient>(out _) ? "CloudTableClient" : "ConnectionString",
-                    Blob = settings.TryGet<IProvideBlobServiceClient>(out _) ? "BlobServiceClient" : "ConnectionString",
+                    Queue = settings.TryGet<IQueueServiceClientProvider>(out _) ? "QueueServiceClient" : "ConnectionString",
+                    Table = settings.TryGet<ICloudTableClientProvider>(out _) ? "CloudTableClient" : "ConnectionString",
+                    Blob = settings.TryGet<IBlobServiceClientProvider>(out _) ? "BlobServiceClient" : "ConnectionString",
                 },
                 MessageWrapperSerializer = userProvidedSerializer ? "Custom" : "Default",
                 MessageEnvelopeUnwrapper = settings.HasExplicitValue<IMessageEnvelopeUnwrapper>() ? "Custom" : "Default",
@@ -131,9 +131,9 @@
         {
             Logger.Debug("Configuring receive infrastructure");
 
-            if (!settings.TryGet<IProvideQueueServiceClient>(out var queueServiceClientProvider))
+            if (!settings.TryGet<IQueueServiceClientProvider>(out var queueServiceClientProvider))
             {
-                queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
+                queueServiceClientProvider = new ConnectionStringQueueServiceClientProvider(connectionString);
             }
 
             return new TransportReceiveInfrastructure(
@@ -184,16 +184,16 @@
 
         Dispatcher BuildDispatcher()
         {
-            if (!settings.TryGet<IProvideQueueServiceClient>(out var queueServiceClientProvider))
+            if (!settings.TryGet<IQueueServiceClientProvider>(out var queueServiceClientProvider))
             {
-                queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
+                queueServiceClientProvider = new ConnectionStringQueueServiceClientProvider(connectionString);
             }
 
             var addressing = GetAddressing(settings, queueServiceClientProvider);
             return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery);
         }
 
-        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, IProvideQueueServiceClient queueServiceClientProvider)
+        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, IQueueServiceClientProvider queueServiceClientProviderProvider)
         {
             var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
 
@@ -206,7 +206,7 @@
 
             addressing.SetAddressGenerator(addressGenerator);
             addressing.RegisterMapping(accounts.defaultAlias ?? defaultAccountAlias, accounts.mappings);
-            addressing.Add(new AccountInfo(defaultAccountAlias, queueServiceClientProvider.Client), false);
+            addressing.Add(new AccountInfo(defaultAccountAlias, queueServiceClientProviderProvider.Client), false);
 
             return addressing;
         }

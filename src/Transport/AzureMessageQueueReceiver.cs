@@ -10,10 +10,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IProvideQueueServiceClient queueServiceClientProvider, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IQueueServiceClientProvider queueServiceClientProviderProvider, QueueAddressGenerator addressGenerator)
         {
             this.unwrapper = unwrapper;
-            queueServiceClient = queueServiceClientProvider.Client;
+            queueServiceClient = queueServiceClientProviderProvider.Client;
             this.addressGenerator = addressGenerator;
         }
 

@@ -15,9 +15,9 @@
     /// </summary>
     class AzureMessageQueueCreator : ICreateQueues
     {
-        public AzureMessageQueueCreator(IProvideQueueServiceClient queueServiceClientProvider, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueCreator(IQueueServiceClientProvider queueServiceClientProviderProvider, QueueAddressGenerator addressGenerator)
         {
-            queueServiceClient = queueServiceClientProvider.Client;
+            queueServiceClient = queueServiceClientProviderProvider.Client;
             this.addressGenerator = addressGenerator;
         }
 

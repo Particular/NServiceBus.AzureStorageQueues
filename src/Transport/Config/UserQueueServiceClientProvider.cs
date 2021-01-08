@@ -2,9 +2,9 @@
 {
     using global::Azure.Storage.Queues;
 
-    class QueueServiceClientProvidedByConfiguration : IProvideQueueServiceClient
+    class UserQueueServiceClientProvider : IQueueServiceClientProvider
     {
-        public QueueServiceClientProvidedByConfiguration(QueueServiceClient queueServiceClient)
+        public UserQueueServiceClientProvider(QueueServiceClient queueServiceClient)
         {
             Client = queueServiceClient;
         }

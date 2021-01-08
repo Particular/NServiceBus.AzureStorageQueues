@@ -15,8 +15,8 @@
     class NativeDelayDelivery
     {
         public NativeDelayDelivery(
-            IProvideCloudTableClient cloudTableClientProvider,
-            IProvideBlobServiceClient blobServiceClientProvider,
+            ICloudTableClientProvider cloudTableClientProviderProvider,
+            IBlobServiceClientProvider blobServiceClientProviderProvider,
             string delayedMessagesTableName,
             string errorQueueAddress,
             TransportTransactionMode transactionMode,
@@ -25,8 +25,8 @@
             Func<Dispatcher> dispatcherFactory)
         {
             this.delayedMessagesTableName = delayedMessagesTableName;
-            cloudTableClient = cloudTableClientProvider.Client;
-            blobServiceClient = blobServiceClientProvider.Client;
+            cloudTableClient = cloudTableClientProviderProvider.Client;
+            blobServiceClient = blobServiceClientProviderProvider.Client;
             this.errorQueueAddress = errorQueueAddress;
             isAtMostOnce = transactionMode == TransportTransactionMode.None;
             this.maximumWaitTime = maximumWaitTime;

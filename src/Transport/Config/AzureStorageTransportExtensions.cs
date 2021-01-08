@@ -120,7 +120,7 @@ namespace NServiceBus
         {
             Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
 
-            config.GetSettings().Set<IProvideBlobServiceClient>(new BlobServiceClientProvidedByConfiguration(blobServiceClient));
+            config.GetSettings().Set<IBlobServiceClientProvider>(new UserBlobServiceClientProvider(blobServiceClient));
 
             return config;
         }
@@ -132,7 +132,7 @@ namespace NServiceBus
         {
             Guard.AgainstNull(nameof(cloudTableClient), cloudTableClient);
 
-            config.GetSettings().Set<IProvideCloudTableClient>(new CloudTableClientProvidedByConfiguration(cloudTableClient));
+            config.GetSettings().Set<ICloudTableClientProvider>(new UserCloudTableClientProvider(cloudTableClient));
 
             return config;
         }
