@@ -53,6 +53,7 @@ namespace NServiceBus
             //TODO: store the queue client
         }
 
+        /// <inheritdoc cref="Initialize"/>
         public override Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses,
             CancellationToken cancellationToken = new CancellationToken())
         {
