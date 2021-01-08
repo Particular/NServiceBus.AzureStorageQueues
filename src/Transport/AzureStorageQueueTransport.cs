@@ -77,7 +77,14 @@ namespace NServiceBus
             //TODO: move these to (public?) properties
             DefaultConfigurationValues.Apply(settings);
 
-            return Task.FromResult<TransportInfrastructure>(new AzureStorageQueueInfrastructure(MessageInvisibleTime, queueAddressGenerator, queueServiceClientProvider));
+            var infrastructure = new AzureStorageQueueInfrastructure(
+                MessageInvisibleTime,
+                PeekInterval,
+                MaximumWaitTimeWhenIdle,
+                queueAddressGenerator,
+                queueServiceClientProvider);
+
+            return Task.FromResult<TransportInfrastructure>(infrastructure);
         }
 
         /// <inheritdoc cref="ToTransportAddress"/>
@@ -143,6 +150,23 @@ namespace NServiceBus
         }
 
         /// <summary>
+        /// The maximum amount of time, in milliseconds, that the transport will wait before checking for a new message
+        /// </summary>
+        public TimeSpan MaximumWaitTimeWhenIdle
+        {
+            get => maximumWaitTimeWhenIdle;
+            set
+            {
+                if (value < TimeSpan.FromMilliseconds(100) || value > TimeSpan.FromSeconds(60))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(MaximumWaitTimeWhenIdle), value, "Value must be between 100ms and 60 seconds.");
+                }
+
+                maximumWaitTimeWhenIdle = value;
+            }
+        }
+
+        /// <summary>
         /// Defines a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
         /// <remarks>By default no sanitization is performed.</remarks>
         /// </summary>
@@ -172,6 +196,7 @@ namespace NServiceBus
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
         private TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
+        private TimeSpan maximumWaitTimeWhenIdle = DefaultConfigurationValues.DefaultMaximumWaitTimeWhenIdle;
         private Func<string, string> queueNameSanitizer = DefaultConfigurationValues.DefaultQueueNameSanitizer;
         private QueueAddressGenerator queueAddressGenerator;
         private IQueueServiceClientProvider queueServiceClientProvider;

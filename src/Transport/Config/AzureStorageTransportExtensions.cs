@@ -14,21 +14,6 @@ namespace NServiceBus
     public static partial class AzureStorageTransportExtensions
     {
         /// <summary>
-        /// Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
-        {
-            Guard.AgainstNull(nameof(config), config);
-            if (value < TimeSpan.FromMilliseconds(100) || value > TimeSpan.FromSeconds(60))
-            {
-                throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be between 100ms and 60 seconds.");
-            }
-
-            config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, value);
-            return config;
-        }
-
-        /// <summary>
         /// Controls how many messages should be read from the queue at once
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> BatchSize(this TransportExtensions<AzureStorageQueueTransport> config, int value)

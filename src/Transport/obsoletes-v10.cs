@@ -32,6 +32,18 @@ namespace NServiceBus
         }
 
         /// <summary>
+        /// Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance's properties",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Registers a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
         /// <remarks>By default no sanitization is performed.</remarks>
         /// </summary>
