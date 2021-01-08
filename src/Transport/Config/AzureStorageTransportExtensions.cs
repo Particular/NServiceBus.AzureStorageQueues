@@ -14,17 +14,6 @@ namespace NServiceBus
     public static partial class AzureStorageTransportExtensions
     {
         /// <summary>
-        /// Sets the amount of time to add to the time to wait before checking for a new message
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> PeekInterval(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
-        {
-            Guard.AgainstNull(nameof(config), config);
-            Guard.AgainstNegativeAndZero(nameof(value), value);
-            config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverPeekInterval, value);
-            return config;
-        }
-
-        /// <summary>
         /// Sets the maximum amount of time, in milliseconds, that the queue will wait before checking for a new message
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)

@@ -130,6 +130,19 @@ namespace NServiceBus
         }
 
         /// <summary>
+        /// The amount of time to add to the time to wait before checking for a new message
+        /// </summary>
+        public TimeSpan PeekInterval
+        {
+            get => peekInterval;
+            set
+            {
+                Guard.AgainstNegativeAndZero(nameof(PeekInterval), value);
+                peekInterval = value;
+            }
+        }
+
+        /// <summary>
         /// Defines a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
         /// <remarks>By default no sanitization is performed.</remarks>
         /// </summary>
@@ -158,6 +171,7 @@ namespace NServiceBus
 
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
+        private TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
         private Func<string, string> queueNameSanitizer = DefaultConfigurationValues.DefaultQueueNameSanitizer;
         private QueueAddressGenerator queueAddressGenerator;
         private IQueueServiceClientProvider queueServiceClientProvider;

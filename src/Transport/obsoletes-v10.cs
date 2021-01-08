@@ -20,6 +20,18 @@ namespace NServiceBus
         }
 
         /// <summary>
+        /// Sets the amount of time to add to the time to wait before checking for a new message
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance's properties",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> PeekInterval(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Registers a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
         /// <remarks>By default no sanitization is performed.</remarks>
         /// </summary>

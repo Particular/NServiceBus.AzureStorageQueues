@@ -16,16 +16,16 @@
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        internal AzureStorageQueueInfrastructure(TimeSpan messageInvisibleTime, QueueAddressGenerator addressGenerator, IQueueServiceClientProvider queueServiceClientProvider)
+        internal AzureStorageQueueInfrastructure(TimeSpan messageInvisibleTime, TimeSpan peekInterval, QueueAddressGenerator addressGenerator, IQueueServiceClientProvider queueServiceClientProvider)
         {
             this.messageInvisibleTime = messageInvisibleTime;
+            this.peekInterval = peekInterval;
             this.addressGenerator = addressGenerator;
             this.queueServiceClientProvider = queueServiceClientProvider;
 
             serializer = BuildSerializer(settings, out var userProvidedSerializer);
 
             maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
-            peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
 
             string delayedDeliveryTableName = null;
             var nativeDelayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled();
