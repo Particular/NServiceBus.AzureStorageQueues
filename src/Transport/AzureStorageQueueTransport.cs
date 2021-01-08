@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Text;
 using Azure.Storage.Blobs;
 using Microsoft.Azure.Cosmos.Table;
