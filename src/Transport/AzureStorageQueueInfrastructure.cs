@@ -16,30 +16,26 @@
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        internal AzureStorageQueueInfrastructure(TimeSpan messageInvisibleTime, TimeSpan peekInterval, TimeSpan maximumWaitTimeWhenIdle, QueueAddressGenerator addressGenerator, IQueueServiceClientProvider queueServiceClientProvider)
+        internal AzureStorageQueueInfrastructure(TimeSpan messageInvisibleTime,
+            TimeSpan peekInterval,
+            TimeSpan maximumWaitTimeWhenIdle,
+            bool enableNativeDelayedDelivery,
+            QueueAddressGenerator addressGenerator,
+            IQueueServiceClientProvider queueServiceClientProvider,
+            IBlobServiceClientProvider blobServiceClientProvider,
+            ICloudTableClientProvider cloudTableClientProvider)
         {
             this.messageInvisibleTime = messageInvisibleTime;
             this.peekInterval = peekInterval;
-            this.maximumWaitTime = maximumWaitTimeWhenIdle;
+            this.maximumWaitTimeWhenIdle = maximumWaitTimeWhenIdle;
             this.addressGenerator = addressGenerator;
             this.queueServiceClientProvider = queueServiceClientProvider;
 
             serializer = BuildSerializer(settings, out var userProvidedSerializer);
 
             string delayedDeliveryTableName = null;
-            var nativeDelayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled();
-            if (nativeDelayedDeliveryIsEnabled)
+            if (enableNativeDelayedDelivery)
             {
-                if (!settings.TryGet<ICloudTableClientProvider>(out var cloudTableClientProvider))
-                {
-                    cloudTableClientProvider = new ConnectionStringCloudTableClientProvider(this.connectionString);
-                }
-
-                if (!settings.TryGet<IBlobServiceClientProvider>(out var blobServiceClientProvider))
-                {
-                    blobServiceClientProvider = new ConnectionStringBlobServiceClientProvider(this.connectionString);
-                }
-
                 // This call mutates settings holder and should not be invoked more than once. This value is used for Diagnostics Section upon startup as well.
                 delayedDeliveryTableName = GetDelayedDeliveryTableName(settings);
 
@@ -49,7 +45,7 @@
                     delayedDeliveryTableName,
                     settings.ErrorQueueAddress(),
                     GetRequiredTransactionMode(),
-                    maximumWaitTime,
+                    this.maximumWaitTimeWhenIdle,
                     peekInterval,
                     BuildDispatcher);
 
@@ -88,7 +84,7 @@
                 TransactionMode = Enum.GetName(typeof(TransportTransactionMode), GetRequiredTransactionMode()),
                 ReceiverBatchSize = settings.TryGet(WellKnownConfigurationKeys.ReceiverBatchSize, out int receiverBatchSize) ? receiverBatchSize.ToString(CultureInfo.InvariantCulture) : "Default",
                 DegreeOfReceiveParallelism = settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out int degreeOfReceiveParallelism) ? degreeOfReceiveParallelism.ToString(CultureInfo.InvariantCulture) : "Default",
-                MaximumWaitTimeWhenIdle = maximumWaitTime,
+                MaximumWaitTimeWhenIdle = this.maximumWaitTimeWhenIdle,
                 PeekInterval = peekInterval,
                 MessageInvisibleTime = messageInvisibleTime
             });
@@ -125,8 +121,6 @@
             return "delays" + hashName.ToLower();
         }
 
-        bool NativeDelayedDeliveryIsEnabled() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
-
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
             Logger.Debug("Configuring receive infrastructure");
@@ -158,7 +152,7 @@
                         batchSize = size;
                     }
 
-                    return new MessagePump(receiver, degreeOfReceiveParallelism, batchSize, maximumWaitTime, peekInterval);
+                    return new MessagePump(receiver, degreeOfReceiveParallelism, batchSize, maximumWaitTimeWhenIdle, peekInterval);
                 },
                 () => new AzureMessageQueueCreator(queueServiceClientProvider, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
@@ -259,7 +253,7 @@
         readonly NativeDelayDelivery nativeDelayedDelivery;
         readonly QueueAddressGenerator addressGenerator;
         private readonly IQueueServiceClientProvider queueServiceClientProvider;
-        readonly TimeSpan maximumWaitTime;
+        readonly TimeSpan maximumWaitTimeWhenIdle;
         readonly TimeSpan peekInterval;
 
         readonly TimeSpan messageInvisibleTime;

@@ -11,7 +11,6 @@
         public static class DelayedDelivery
         {
             public const string TableName = "Transport.AzureStorageQueue.TableName";
-            public const string DisableDelayedDelivery = "Transport.AzureStorageQueue.DisableDelayedDelivery";
         }
     }
 }

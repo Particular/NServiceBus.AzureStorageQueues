@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using Azure.Storage.Blobs;
 using Microsoft.Azure.Cosmos.Table;
@@ -44,21 +45,46 @@ namespace NServiceBus
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue
         /// </summary>
-        public AzureStorageQueueTransport(string connectionString) : base(TransportTransactionMode.ReceiveOnly)
+        public AzureStorageQueueTransport(string connectionString, bool disableNativeDelayedDeliveries = false) : base(TransportTransactionMode.ReceiveOnly)
         {
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
             queueServiceClientProvider = new ConnectionStringQueueServiceClientProvider(connectionString);
+            supportsDelayedDelivery = !disableNativeDelayedDeliveries;
+            if (supportsDelayedDelivery)
+            {
+                blobServiceClientProvider = new ConnectionStringBlobServiceClientProvider(connectionString);
+                cloudTableClientProvider = new ConnectionStringCloudTableClientProvider(connectionString);
+            }
         }
 
         /// <summary>
-        /// Initialize a new transport definition for AzureStorageQueue
+        /// Initialize a new transport definition for AzureStorageQueue and disable native delayed deliveries
         /// </summary>
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient) : base(TransportTransactionMode.ReceiveOnly)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
 
             queueServiceClientProvider = new UserQueueServiceClientProvider(queueServiceClient);
+
+            supportsDelayedDelivery = false;
+        }
+
+        /// <summary>
+        /// Initialize a new transport definition for AzureStorageQueue with native delayed deliveries support
+        /// </summary>
+        public AzureStorageQueueTransport(QueueServiceClient queueServiceClient, BlobServiceClient blobServiceClient, CloudTableClient cloudTableClient)
+            : base(TransportTransactionMode.ReceiveOnly)
+        {
+            Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
+            Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
+            Guard.AgainstNull(nameof(cloudTableClient), cloudTableClient);
+
+            queueServiceClientProvider = new UserQueueServiceClientProvider(queueServiceClient);
+            blobServiceClientProvider = new UserBlobServiceClientProvider(blobServiceClient);
+            cloudTableClientProvider = new UserCloudTableClientProvider(cloudTableClient);
+
+            supportsDelayedDelivery = true;
         }
 
         /// <inheritdoc cref="Initialize"/>
@@ -81,8 +107,11 @@ namespace NServiceBus
                 MessageInvisibleTime,
                 PeekInterval,
                 MaximumWaitTimeWhenIdle,
+                SupportsDelayedDelivery,
                 queueAddressGenerator,
-                queueServiceClientProvider);
+                queueServiceClientProvider,
+                blobServiceClientProvider,
+                cloudTableClientProvider);
 
             return Task.FromResult<TransportInfrastructure>(infrastructure);
         }
@@ -112,7 +141,7 @@ namespace NServiceBus
         }
 
         /// <inheritdoc cref="SupportsDelayedDelivery"/>
-        public override bool SupportsDelayedDelivery { get; } = true;
+        public override bool SupportsDelayedDelivery => supportsDelayedDelivery;
 
         /// <inheritdoc cref="SupportsPublishSubscribe"/>
         public override bool SupportsPublishSubscribe { get; } = false;
@@ -200,5 +229,8 @@ namespace NServiceBus
         private Func<string, string> queueNameSanitizer = DefaultConfigurationValues.DefaultQueueNameSanitizer;
         private QueueAddressGenerator queueAddressGenerator;
         private IQueueServiceClientProvider queueServiceClientProvider;
+        private readonly bool supportsDelayedDelivery = true;
+        private IBlobServiceClientProvider blobServiceClientProvider;
+        private ICloudTableClientProvider cloudTableClientProvider;
     }
 }

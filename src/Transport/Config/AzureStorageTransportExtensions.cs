@@ -74,29 +74,5 @@ namespace NServiceBus
         {
             return new DelayedDeliverySettings(config.GetSettings());
         }
-
-        /// <summary>
-        /// Sets <see cref="QueueServiceClient"/> to be used for delayed delivery feature.
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> UseBlobServiceClient(this TransportExtensions<AzureStorageQueueTransport> config, BlobServiceClient blobServiceClient)
-        {
-            Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
-
-            config.GetSettings().Set<IBlobServiceClientProvider>(new UserBlobServiceClientProvider(blobServiceClient));
-
-            return config;
-        }
-
-        /// <summary>
-        /// Sets <see cref="CloudTableClient"/> to be used for delayed delivery feature.
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> UseCloudTableClient(this TransportExtensions<AzureStorageQueueTransport> config, CloudTableClient cloudTableClient)
-        {
-            Guard.AgainstNull(nameof(cloudTableClient), cloudTableClient);
-
-            config.GetSettings().Set<ICloudTableClientProvider>(new UserCloudTableClientProvider(cloudTableClient));
-
-            return config;
-        }
     }
 }

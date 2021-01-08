@@ -67,6 +67,30 @@ namespace NServiceBus
         {
             throw new NotImplementedException();
         }
+
+        /// <summary>
+        /// Sets <see cref="QueueServiceClient"/> to be used for delayed delivery feature.
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance constructor",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> UseBlobServiceClient(this TransportExtensions<AzureStorageQueueTransport> config, BlobServiceClient blobServiceClient)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Sets <see cref="CloudTableClient"/> to be used for delayed delivery feature.
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance constructor",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> UseCloudTableClient(this TransportExtensions<AzureStorageQueueTransport> config, CloudTableClient cloudTableClient)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 
