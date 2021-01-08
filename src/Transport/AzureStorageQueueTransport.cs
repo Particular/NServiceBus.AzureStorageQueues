@@ -61,18 +61,6 @@ namespace NServiceBus
             queueServiceClientProvider = new UserQueueServiceClientProvider(queueServiceClient);
         }
 
-        /// <summary>
-        /// Initialize a new transport definition for AzureStorageQueue
-        /// </summary>
-        public AzureStorageQueueTransport(string connectionString, BlobServiceClient blobServiceClient) : base(TransportTransactionMode.ReceiveOnly)
-        {
-            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
-            Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
-
-            cloudTableClientProvider = new ConnectionStringCloudTableClientProvider(connectionString);
-            blobServiceClientProvider = new UserBlobServiceClientProvider(blobServiceClient);
-        }
-
         /// <inheritdoc cref="Initialize"/>
         public override Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses,
             CancellationToken cancellationToken = new CancellationToken())
@@ -89,7 +77,7 @@ namespace NServiceBus
             //TODO: move these to (public?) properties
             DefaultConfigurationValues.Apply(settings);
 
-            return Task.FromResult<TransportInfrastructure>(new AzureStorageQueueInfrastructure(MessageInvisibleTime, queueAddressGenerator));
+            return Task.FromResult<TransportInfrastructure>(new AzureStorageQueueInfrastructure(MessageInvisibleTime, queueAddressGenerator, queueServiceClientProvider));
         }
 
         /// <inheritdoc cref="ToTransportAddress"/>
