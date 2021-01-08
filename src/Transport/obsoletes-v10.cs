@@ -17,6 +17,19 @@ namespace NServiceBus
         {
             throw new NotImplementedException();
         }
+
+        /// <summary>
+        /// Registers a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
+        /// <remarks>By default no sanitization is performed.</remarks>
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance's properties",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> SanitizeQueueNamesWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<string, string> queueNameSanitizer)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

@@ -11,7 +11,6 @@
         public const string ReceiverBatchSize = "Transport.AzureStorageQueue.ReceiverBatchSize";
         public const string MessageWrapperSerializationDefinition = "Transport.AzureStorageQueue.MessageWrapperSerializationDefinition";
         public const string DegreeOfReceiveParallelism = "Transport.AzureStorageQueue.DegreeOfReceiveParallelism";
-        public const string QueueSanitizer = "Transport.AzureStorageQueue.QueueSanitizer";
 
         public static class DelayedDelivery
         {

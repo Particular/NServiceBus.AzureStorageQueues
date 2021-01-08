@@ -107,7 +107,35 @@ namespace NServiceBus
             }
         }
 
+        /// <summary>
+        /// Defines a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
+        /// <remarks>By default no sanitization is performed.</remarks>
+        /// </summary>
+        public Func<string, string> QueueNameSanitizer
+        {
+            get => queueNameSanitizer;
+            set
+            {
+                Guard.AgainstNull(nameof(QueueNameSanitizer), value);
+
+                Func<string, string> queueNameSanitizerWrapper = entityName =>
+                {
+                    try
+                    {
+                        return value(entityName);
+                    }
+                    catch (Exception exception)
+                    {
+                        throw new Exception("Registered queue name sanitizer threw an exception.", exception);
+                    }
+                };
+
+                queueNameSanitizer = queueNameSanitizerWrapper;
+            }
+        }
+
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
+        private Func<string, string> queueNameSanitizer = DefaultConfigurationValues.DefaultQueueNameSanitizer;
     }
 }

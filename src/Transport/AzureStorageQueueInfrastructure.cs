@@ -16,7 +16,7 @@
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        internal AzureStorageQueueInfrastructure(TimeSpan messageInvisibleTime)
+        internal AzureStorageQueueInfrastructure(TimeSpan messageInvisibleTime, Func<string, string> queueSanitizer)
         {
             this.messageInvisibleTime = messageInvisibleTime;
 
@@ -56,7 +56,7 @@
                 supportedDeliveryConstraints.Add(typeof(DoNotDeliverBefore));
             }
 
-            addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
+            addressGenerator = new QueueAddressGenerator(queueSanitizer);
 
             object delayedDelivery;
             if (nativeDelayedDeliveryIsEnabled)

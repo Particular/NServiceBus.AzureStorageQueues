@@ -77,29 +77,6 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Registers a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
-        /// <remarks>By default no sanitization is performed.</remarks>
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> SanitizeQueueNamesWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<string, string> queueNameSanitizer)
-        {
-            Guard.AgainstNull(nameof(config), config);
-            Guard.AgainstNull(nameof(queueNameSanitizer), queueNameSanitizer);
-            Func<string, string> safeShortener = entityName =>
-            {
-                try
-                {
-                    return queueNameSanitizer(entityName);
-                }
-                catch (Exception exception)
-                {
-                    throw new Exception("Registered queue name sanitizer threw an exception.", exception);
-                }
-            };
-            config.GetSettings().Set(WellKnownConfigurationKeys.QueueSanitizer, safeShortener);
-            return config;
-        }
-
-        /// <summary>
         /// Sets the degree of parallelism that should be used to receive messages.
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> DegreeOfReceiveParallelism(this TransportExtensions<AzureStorageQueueTransport> config, int degreeOfReceiveParallelism)
