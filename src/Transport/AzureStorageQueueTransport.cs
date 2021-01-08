@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace NServiceBus
 {
     using global::Azure.Storage.Queues;
@@ -61,19 +63,33 @@ namespace NServiceBus
             Guard.AgainstNull(nameof(receivers), receivers);
             Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
 
+            queueAddressGenerator = new QueueAddressGenerator(QueueNameSanitizer);
+
             //TODO: investigate if this is really needed
             //Guard.AgainstUnsetSerializerSetting(settings);
 
             //TODO: move these to (public?) properties
             DefaultConfigurationValues.Apply(settings);
 
-            return new AzureStorageQueueInfrastructure(settings, connectionString);
+            return Task.FromResult<TransportInfrastructure>(new AzureStorageQueueInfrastructure(MessageInvisibleTime, queueAddressGenerator));
         }
 
+        /// <inheritdoc cref="ToTransportAddress"/>
         public override string ToTransportAddress(Transport.QueueAddress address)
         {
-            //TODO: move here the QueueAddressGenerator and code from AzureStorageQueueInfrastructure.ToTransportAddress
-            throw new NotImplementedException();
+            var queue = new StringBuilder(address.BaseAddress);
+
+            if (address.Discriminator != null)
+            {
+                queue.Append("-" + address.Discriminator);
+            }
+
+            if (address.Qualifier != null)
+            {
+                queue.Append("-" + address.Qualifier);
+            }
+
+            return queueAddressGenerator.GetQueueName(queue.ToString());
         }
 
         /// <inheritdoc cref="GetSupportedTransactionModes"/>
@@ -137,5 +153,6 @@ namespace NServiceBus
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
         private Func<string, string> queueNameSanitizer = DefaultConfigurationValues.DefaultQueueNameSanitizer;
+        private QueueAddressGenerator queueAddressGenerator;
     }
 }

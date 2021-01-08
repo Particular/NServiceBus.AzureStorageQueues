@@ -16,9 +16,10 @@
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        internal AzureStorageQueueInfrastructure(TimeSpan messageInvisibleTime, Func<string, string> queueSanitizer)
+        internal AzureStorageQueueInfrastructure(TimeSpan messageInvisibleTime, QueueAddressGenerator addressGenerator)
         {
             this.messageInvisibleTime = messageInvisibleTime;
+            this.addressGenerator = addressGenerator;
 
             serializer = BuildSerializer(settings, out var userProvidedSerializer);
 
@@ -55,8 +56,6 @@
                 supportedDeliveryConstraints.Add(typeof(DelayDeliveryWith));
                 supportedDeliveryConstraints.Add(typeof(DoNotDeliverBefore));
             }
-
-            addressGenerator = new QueueAddressGenerator(queueSanitizer);
 
             object delayedDelivery;
             if (nativeDelayedDeliveryIsEnabled)
@@ -220,23 +219,6 @@
         public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance)
         {
             return instance;
-        }
-
-        public override string ToTransportAddress(LogicalAddress logicalAddress)
-        {
-            var queue = new StringBuilder(logicalAddress.EndpointInstance.Endpoint);
-
-            if (logicalAddress.EndpointInstance.Discriminator != null)
-            {
-                queue.Append("-" + logicalAddress.EndpointInstance.Discriminator);
-            }
-
-            if (logicalAddress.Qualifier != null)
-            {
-                queue.Append("-" + logicalAddress.Qualifier);
-            }
-
-            return addressGenerator.GetQueueName(queue.ToString());
         }
 
         public override Task Start()
