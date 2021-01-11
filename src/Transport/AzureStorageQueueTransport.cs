@@ -43,13 +43,13 @@ namespace NServiceBus
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue
         /// </summary>
-        public AzureStorageQueueTransport(string connectionString, bool disableNativeDelayedDeliveries = false) : base(TransportTransactionMode.ReceiveOnly)
+        public AzureStorageQueueTransport(string connectionString, bool disableNativeDelayedDeliveries = false)
+            : base(TransportTransactionMode.ReceiveOnly, !disableNativeDelayedDeliveries, false, true)
         {
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
             queueServiceClientProvider = new ConnectionStringQueueServiceClientProvider(connectionString);
-            supportsDelayedDelivery = !disableNativeDelayedDeliveries;
-            if (supportsDelayedDelivery)
+            if (SupportsDelayedDelivery)
             {
                 blobServiceClientProvider = new ConnectionStringBlobServiceClientProvider(connectionString);
                 cloudTableClientProvider = new ConnectionStringCloudTableClientProvider(connectionString);
@@ -59,20 +59,19 @@ namespace NServiceBus
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue and disable native delayed deliveries
         /// </summary>
-        public AzureStorageQueueTransport(QueueServiceClient queueServiceClient) : base(TransportTransactionMode.ReceiveOnly)
+        public AzureStorageQueueTransport(QueueServiceClient queueServiceClient)
+            : base(TransportTransactionMode.ReceiveOnly, false, false, true)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
 
             queueServiceClientProvider = new UserQueueServiceClientProvider(queueServiceClient);
-
-            supportsDelayedDelivery = false;
         }
 
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue with native delayed deliveries support
         /// </summary>
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient, BlobServiceClient blobServiceClient, CloudTableClient cloudTableClient)
-            : base(TransportTransactionMode.ReceiveOnly)
+            : base(TransportTransactionMode.ReceiveOnly, true, false, true)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
             Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
@@ -81,8 +80,6 @@ namespace NServiceBus
             queueServiceClientProvider = new UserQueueServiceClientProvider(queueServiceClient);
             blobServiceClientProvider = new UserBlobServiceClientProvider(blobServiceClient);
             cloudTableClientProvider = new UserCloudTableClientProvider(cloudTableClient);
-
-            supportsDelayedDelivery = true;
         }
 
         /// <inheritdoc cref="Initialize"/>
@@ -136,15 +133,6 @@ namespace NServiceBus
         {
             return supportedTransactionModes;
         }
-
-        /// <inheritdoc cref="SupportsDelayedDelivery"/>
-        public override bool SupportsDelayedDelivery => supportsDelayedDelivery;
-
-        /// <inheritdoc cref="SupportsPublishSubscribe"/>
-        public override bool SupportsPublishSubscribe { get; } = false;
-
-        /// <inheritdoc cref="SupportsTTBR"/>
-        public override bool SupportsTTBR { get; } = false;
 
         /// <summary>
         /// Controls how long messages should be invisible to other callers when receiving messages from the queue
@@ -261,7 +249,6 @@ namespace NServiceBus
         private Func<string, string> queueNameSanitizer = DefaultConfigurationValues.DefaultQueueNameSanitizer;
         private QueueAddressGenerator queueAddressGenerator;
         private IQueueServiceClientProvider queueServiceClientProvider;
-        private readonly bool supportsDelayedDelivery = true;
         private IBlobServiceClientProvider blobServiceClientProvider;
         private ICloudTableClientProvider cloudTableClientProvider;
         private int? receiverBatchSize = DefaultConfigurationValues.DefaultBatchSize;

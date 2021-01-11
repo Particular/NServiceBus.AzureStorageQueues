@@ -58,7 +58,7 @@
             }
 
             object delayedDelivery;
-            if (nativeDelayedDeliveryIsEnabled)
+            if (enableNativeDelayedDelivery)
             {
                 delayedDelivery = new
                 {
