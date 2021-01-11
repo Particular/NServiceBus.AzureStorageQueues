@@ -20,6 +20,7 @@
             TimeSpan peekInterval,
             TimeSpan maximumWaitTimeWhenIdle,
             bool enableNativeDelayedDelivery,
+            int? receiverBatchSize,
             QueueAddressGenerator addressGenerator,
             IQueueServiceClientProvider queueServiceClientProvider,
             IBlobServiceClientProvider blobServiceClientProvider,
@@ -28,6 +29,7 @@
             this.messageInvisibleTime = messageInvisibleTime;
             this.peekInterval = peekInterval;
             this.maximumWaitTimeWhenIdle = maximumWaitTimeWhenIdle;
+            this.receiverBatchSize = receiverBatchSize;
             this.addressGenerator = addressGenerator;
             this.queueServiceClientProvider = queueServiceClientProvider;
 
@@ -82,7 +84,7 @@
                 MessageEnvelopeUnwrapper = settings.HasExplicitValue<IMessageEnvelopeUnwrapper>() ? "Custom" : "Default",
                 DelayedDelivery = delayedDelivery,
                 TransactionMode = Enum.GetName(typeof(TransportTransactionMode), GetRequiredTransactionMode()),
-                ReceiverBatchSize = settings.TryGet(WellKnownConfigurationKeys.ReceiverBatchSize, out int receiverBatchSize) ? receiverBatchSize.ToString(CultureInfo.InvariantCulture) : "Default",
+                ReceiverBatchSize = receiverBatchSize.HasValue ? receiverBatchSize.Value.ToString(CultureInfo.InvariantCulture) : "Default",
                 DegreeOfReceiveParallelism = settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out int degreeOfReceiveParallelism) ? degreeOfReceiveParallelism.ToString(CultureInfo.InvariantCulture) : "Default",
                 MaximumWaitTimeWhenIdle = this.maximumWaitTimeWhenIdle,
                 PeekInterval = peekInterval,
@@ -146,13 +148,7 @@
                         degreeOfReceiveParallelism = parallelism;
                     }
 
-                    int? batchSize = null;
-                    if (settings.TryGet<int>(WellKnownConfigurationKeys.ReceiverBatchSize, out var size))
-                    {
-                        batchSize = size;
-                    }
-
-                    return new MessagePump(receiver, degreeOfReceiveParallelism, batchSize, maximumWaitTimeWhenIdle, peekInterval);
+                    return new MessagePump(receiver, degreeOfReceiveParallelism, receiverBatchSize, maximumWaitTimeWhenIdle, peekInterval);
                 },
                 () => new AzureMessageQueueCreator(queueServiceClientProvider, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
@@ -254,6 +250,7 @@
         readonly QueueAddressGenerator addressGenerator;
         private readonly IQueueServiceClientProvider queueServiceClientProvider;
         readonly TimeSpan maximumWaitTimeWhenIdle;
+        private readonly int? receiverBatchSize;
         readonly TimeSpan peekInterval;
 
         readonly TimeSpan messageInvisibleTime;

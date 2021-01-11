@@ -14,21 +14,6 @@ namespace NServiceBus
     public static partial class AzureStorageTransportExtensions
     {
         /// <summary>
-        /// Controls how many messages should be read from the queue at once
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> BatchSize(this TransportExtensions<AzureStorageQueueTransport> config, int value)
-        {
-            Guard.AgainstNull(nameof(config), config);
-            if (value < 1 || value > 32)
-            {
-                throw new ArgumentOutOfRangeException(nameof(value), value, "Batchsize must be between 1 and 32 messages.");
-            }
-
-            config.GetSettings().Set(WellKnownConfigurationKeys.ReceiverBatchSize, value);
-            return config;
-        }
-
-        /// <summary>
         /// Sets a custom serialization for <see cref="MessageWrapper" />.
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this TransportExtensions<AzureStorageQueueTransport> config)

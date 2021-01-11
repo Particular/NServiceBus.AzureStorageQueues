@@ -103,6 +103,7 @@ namespace NServiceBus
                 PeekInterval,
                 MaximumWaitTimeWhenIdle,
                 SupportsDelayedDelivery,
+                ReceiverBatchSize,
                 queueAddressGenerator,
                 queueServiceClientProvider,
                 blobServiceClientProvider,
@@ -217,6 +218,22 @@ namespace NServiceBus
             }
         }
 
+        /// <summary>
+        /// Controls how many messages should be read from the queue at once
+        /// </summary>
+        public int? ReceiverBatchSize
+        {
+            get => receiverBatchSize;
+            set
+            {
+                if (value < 1 || value > 32)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(ReceiverBatchSize), value, "Batchsize must be between 1 and 32 messages.");
+                }
+                receiverBatchSize = value;
+            }
+        }
+
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
         private TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
@@ -227,5 +244,6 @@ namespace NServiceBus
         private readonly bool supportsDelayedDelivery = true;
         private IBlobServiceClientProvider blobServiceClientProvider;
         private ICloudTableClientProvider cloudTableClientProvider;
+        private int? receiverBatchSize = DefaultConfigurationValues.DefaultBatchSize;
     }
 }

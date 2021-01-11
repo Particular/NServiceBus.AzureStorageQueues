@@ -57,6 +57,18 @@ namespace NServiceBus
         }
 
         /// <summary>
+        /// Controls how many messages should be read from the queue at once
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance's properties",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> BatchSize(this TransportExtensions<AzureStorageQueueTransport> config, int value)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Sets <see cref="QueueServiceClient"/> to be used for messaging operations.
         /// </summary>
         [ObsoleteEx(
