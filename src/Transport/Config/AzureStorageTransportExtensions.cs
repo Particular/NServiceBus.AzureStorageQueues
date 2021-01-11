@@ -36,23 +36,6 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Sets the degree of parallelism that should be used to receive messages.
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> DegreeOfReceiveParallelism(this TransportExtensions<AzureStorageQueueTransport> config, int degreeOfReceiveParallelism)
-        {
-            const int maxDegreeOfReceiveParallelism = 32;
-
-            Guard.AgainstNull(nameof(config), config);
-            if (degreeOfReceiveParallelism < 1 || degreeOfReceiveParallelism > maxDegreeOfReceiveParallelism)
-            {
-                throw new ArgumentOutOfRangeException(nameof(degreeOfReceiveParallelism), degreeOfReceiveParallelism, "DegreeOfParallelism must be between 1 and 32.");
-            }
-
-            config.GetSettings().Set(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, degreeOfReceiveParallelism);
-            return config;
-        }
-
-        /// <summary>
         /// Configures delayed delivery features of this transport.
         /// </summary>
         public static DelayedDeliverySettings DelayedDelivery(this TransportExtensions<AzureStorageQueueTransport> config)

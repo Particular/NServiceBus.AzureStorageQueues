@@ -21,6 +21,7 @@
             TimeSpan maximumWaitTimeWhenIdle,
             bool enableNativeDelayedDelivery,
             int? receiverBatchSize,
+            int? degreeOfReceiveParallelism,
             QueueAddressGenerator addressGenerator,
             IQueueServiceClientProvider queueServiceClientProvider,
             IBlobServiceClientProvider blobServiceClientProvider,
@@ -30,6 +31,7 @@
             this.peekInterval = peekInterval;
             this.maximumWaitTimeWhenIdle = maximumWaitTimeWhenIdle;
             this.receiverBatchSize = receiverBatchSize;
+            this.degreeOfReceiveParallelism = degreeOfReceiveParallelism;
             this.addressGenerator = addressGenerator;
             this.queueServiceClientProvider = queueServiceClientProvider;
 
@@ -85,7 +87,7 @@
                 DelayedDelivery = delayedDelivery,
                 TransactionMode = Enum.GetName(typeof(TransportTransactionMode), GetRequiredTransactionMode()),
                 ReceiverBatchSize = receiverBatchSize.HasValue ? receiverBatchSize.Value.ToString(CultureInfo.InvariantCulture) : "Default",
-                DegreeOfReceiveParallelism = settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out int degreeOfReceiveParallelism) ? degreeOfReceiveParallelism.ToString(CultureInfo.InvariantCulture) : "Default",
+                DegreeOfReceiveParallelism = degreeOfReceiveParallelism.HasValue ? degreeOfReceiveParallelism.Value.ToString(CultureInfo.InvariantCulture) : "Default",
                 MaximumWaitTimeWhenIdle = this.maximumWaitTimeWhenIdle,
                 PeekInterval = peekInterval,
                 MessageInvisibleTime = messageInvisibleTime
@@ -141,12 +143,6 @@
                     {
                         MessageInvisibleTime = messageInvisibleTime,
                     };
-
-                    int? degreeOfReceiveParallelism = null;
-                    if (settings.TryGet<int>(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out var parallelism))
-                    {
-                        degreeOfReceiveParallelism = parallelism;
-                    }
 
                     return new MessagePump(receiver, degreeOfReceiveParallelism, receiverBatchSize, maximumWaitTimeWhenIdle, peekInterval);
                 },
@@ -251,6 +247,7 @@
         private readonly IQueueServiceClientProvider queueServiceClientProvider;
         readonly TimeSpan maximumWaitTimeWhenIdle;
         private readonly int? receiverBatchSize;
+        private readonly int? degreeOfReceiveParallelism;
         readonly TimeSpan peekInterval;
 
         readonly TimeSpan messageInvisibleTime;

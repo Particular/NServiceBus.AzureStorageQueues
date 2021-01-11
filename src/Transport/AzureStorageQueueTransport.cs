@@ -104,6 +104,7 @@ namespace NServiceBus
                 MaximumWaitTimeWhenIdle,
                 SupportsDelayedDelivery,
                 ReceiverBatchSize,
+                DegreeOfReceiveParallelism,
                 queueAddressGenerator,
                 queueServiceClientProvider,
                 blobServiceClientProvider,
@@ -234,6 +235,25 @@ namespace NServiceBus
             }
         }
 
+        /// <summary>
+        /// Sets the degree of parallelism that should be used to receive messages.
+        /// </summary>
+        public int? DegreeOfReceiveParallelism
+        {
+            get => degreeOfReceiveParallelism;
+            set
+            {
+                const int maxDegreeOfReceiveParallelism = 32;
+
+                if (degreeOfReceiveParallelism < 1 || degreeOfReceiveParallelism > maxDegreeOfReceiveParallelism)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(DegreeOfReceiveParallelism), value, $"DegreeOfParallelism must be between 1 and {maxDegreeOfReceiveParallelism}.");
+                }
+
+                degreeOfReceiveParallelism = value;
+            }
+        }
+
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
         private TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
@@ -245,5 +265,6 @@ namespace NServiceBus
         private IBlobServiceClientProvider blobServiceClientProvider;
         private ICloudTableClientProvider cloudTableClientProvider;
         private int? receiverBatchSize = DefaultConfigurationValues.DefaultBatchSize;
+        private int? degreeOfReceiveParallelism;
     }
 }

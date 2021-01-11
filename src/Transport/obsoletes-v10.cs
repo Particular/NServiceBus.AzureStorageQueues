@@ -69,6 +69,18 @@ namespace NServiceBus
         }
 
         /// <summary>
+        /// Sets the degree of parallelism that should be used to receive messages.
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance's properties",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> DegreeOfReceiveParallelism(this TransportExtensions<AzureStorageQueueTransport> config, int degreeOfReceiveParallelism)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Sets <see cref="QueueServiceClient"/> to be used for messaging operations.
         /// </summary>
         [ObsoleteEx(
