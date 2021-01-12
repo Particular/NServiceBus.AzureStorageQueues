@@ -29,6 +29,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             int? receiverBatchSize,
             int? degreeOfReceiveParallelism,
             QueueAddressGenerator addressGenerator,
+            string delayedDeliveryTableName,
             IQueueServiceClientProvider queueServiceClientProvider,
             IBlobServiceClientProvider blobServiceClientProvider,
             ICloudTableClientProvider cloudTableClientProvider,
@@ -43,11 +44,14 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.queueServiceClientProvider = queueServiceClientProvider;
             this.messageWrapperSerializationDefinition = messageWrapperSerializationDefinition;
 
-            string delayedDeliveryTableName = null;
+            var userDefinedNativeDelayedDeliveryTableName = true;
             if (enableNativeDelayedDelivery)
             {
-                // This call mutates settings holder and should not be invoked more than once. This value is used for Diagnostics Section upon startup as well.
-                delayedDeliveryTableName = GetDelayedDeliveryTableName(settings);
+                if (string.IsNullOrEmpty(delayedDeliveryTableName))
+                {
+                    delayedDeliveryTableName = GenerateDelayedDeliveryTableName(hostSettings.Name);
+                    userDefinedNativeDelayedDeliveryTableName = false;
+                }
 
                 nativeDelayedDelivery = new NativeDelayDelivery(
                     cloudTableClientProvider,
@@ -69,7 +73,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 delayedDeliveryDiagnosticSection = new
                 {
                     NativeDelayedDeliveryIsEnabled = true,
-                    NativeDelayedDeliveryTableName = delayedDeliveryTableName
+                    NativeDelayedDeliveryTableName = delayedDeliveryTableName,
+                    UserDefinedNativeDelayedDeliveryTableName = userDefinedNativeDelayedDeliveryTableName
                 };
             }
             else
@@ -140,20 +145,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
         }
 
         public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
-
-        static string GetDelayedDeliveryTableName(SettingsHolder settings)
-        {
-            var delayedDeliveryTableName = settings.GetOrDefault<string>(WellKnownConfigurationKeys.DelayedDelivery.TableName);
-            var delayedDeliveryTableNameWasNotOverridden = string.IsNullOrEmpty(delayedDeliveryTableName);
-
-            if (delayedDeliveryTableNameWasNotOverridden)
-            {
-                delayedDeliveryTableName = GenerateDelayedDeliveryTableName(settings.EndpointName());
-                settings.Set(WellKnownConfigurationKeys.DelayedDelivery.TableName, delayedDeliveryTableName);
-            }
-
-            return delayedDeliveryTableName;
-        }
 
         static string GenerateDelayedDeliveryTableName(string endpointName)
         {

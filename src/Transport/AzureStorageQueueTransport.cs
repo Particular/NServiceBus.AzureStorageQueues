@@ -82,6 +82,7 @@ namespace NServiceBus
                 ReceiverBatchSize,
                 DegreeOfReceiveParallelism,
                 queueAddressGenerator,
+                DelayedDeliveryTableName,
                 queueServiceClientProvider,
                 blobServiceClientProvider,
                 cloudTableClientProvider,
