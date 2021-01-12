@@ -63,10 +63,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 supportedDeliveryConstraints.Add(typeof(DoNotDeliverBefore));
             }
 
-            object delayedDelivery;
+            object delayedDeliveryDiagnosticSection;
             if (enableNativeDelayedDelivery)
             {
-                delayedDelivery = new
+                delayedDeliveryDiagnosticSection = new
                 {
                     NativeDelayedDeliveryIsEnabled = true,
                     NativeDelayedDeliveryTableName = delayedDeliveryTableName
@@ -74,7 +74,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             else
             {
-                delayedDelivery = new
+                delayedDeliveryDiagnosticSection = new
                 {
                     NativeDelayedDeliveryIsEnabled = false,
                 };
@@ -90,7 +90,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 },
                 MessageWrapperSerializer = this.messageWrapperSerializationDefinition == null ? "Default" : "Custom",
                 MessageEnvelopeUnwrapper = settings.HasExplicitValue<IMessageEnvelopeUnwrapper>() ? "Custom" : "Default",
-                DelayedDelivery = delayedDelivery,
+                DelayedDelivery = delayedDeliveryDiagnosticSection,
                 TransactionMode = Enum.GetName(typeof(TransportTransactionMode), transportTransactionMode),
                 ReceiverBatchSize = receiverBatchSize.HasValue ? receiverBatchSize.Value.ToString(CultureInfo.InvariantCulture) : "Default",
                 DegreeOfReceiveParallelism = degreeOfReceiveParallelism.HasValue ? degreeOfReceiveParallelism.Value.ToString(CultureInfo.InvariantCulture) : "Default",
