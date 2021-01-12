@@ -21,6 +21,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     {
         internal AzureStorageQueueInfrastructure(
             HostSettings hostSettings,
+            TransportTransactionMode transportTransactionMode,
             TimeSpan messageInvisibleTime,
             TimeSpan peekInterval,
             TimeSpan maximumWaitTimeWhenIdle,
@@ -53,7 +54,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     blobServiceClientProvider,
                     delayedDeliveryTableName,
                     settings.ErrorQueueAddress(),
-                    GetRequiredTransactionMode(),
+                    transportTransactionMode,
                     this.maximumWaitTimeWhenIdle,
                     peekInterval,
                     BuildDispatcher);
@@ -90,7 +91,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 MessageWrapperSerializer = this.messageWrapperSerializationDefinition == null ? "Default" : "Custom",
                 MessageEnvelopeUnwrapper = settings.HasExplicitValue<IMessageEnvelopeUnwrapper>() ? "Custom" : "Default",
                 DelayedDelivery = delayedDelivery,
-                TransactionMode = Enum.GetName(typeof(TransportTransactionMode), GetRequiredTransactionMode()),
+                TransactionMode = Enum.GetName(typeof(TransportTransactionMode), transportTransactionMode),
                 ReceiverBatchSize = receiverBatchSize.HasValue ? receiverBatchSize.Value.ToString(CultureInfo.InvariantCulture) : "Default",
                 DegreeOfReceiveParallelism = degreeOfReceiveParallelism.HasValue ? degreeOfReceiveParallelism.Value.ToString(CultureInfo.InvariantCulture) : "Default",
                 MaximumWaitTimeWhenIdle = this.maximumWaitTimeWhenIdle,

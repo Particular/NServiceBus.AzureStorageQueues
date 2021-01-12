@@ -74,6 +74,7 @@ namespace NServiceBus
 
             var infrastructure = new AzureStorageQueueInfrastructure(
                 hostSettings,
+                TransportTransactionMode,
                 MessageInvisibleTime,
                 PeekInterval,
                 MaximumWaitTimeWhenIdle,
