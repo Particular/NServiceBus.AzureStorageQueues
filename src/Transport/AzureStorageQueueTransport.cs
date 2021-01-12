@@ -70,9 +70,6 @@ namespace NServiceBus
 
             queueAddressGenerator = new QueueAddressGenerator(QueueNameSanitizer);
 
-            //TODO: investigate if this is really needed
-            //Guard.AgainstUnsetSerializerSetting(settings);
-
             var infrastructure = new AzureStorageQueueInfrastructure(
                 MessageInvisibleTime,
                 PeekInterval,

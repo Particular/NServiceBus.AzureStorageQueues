@@ -112,7 +112,17 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         internal static IMessageSerializer GetMainSerializerHack(IMessageMapper mapper, ReadOnlySettings settings)
         {
-            var (definition, serializerSettings) = settings.Get<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey);
+            if (!settings.TryGet<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey, out var serializerSettingsTuple))
+            {
+                throw new Exception("No serializer defined. If the transport is used in combination with NServiceBus, " +
+                                    "use 'endpointConfiguration.UseSerialization<T>();' to select a serializer. " +
+                                    "If you are upgrading, install the `NServiceBus.Newtonsoft.Json` NuGet package " +
+                                    "and consult the upgrade guide for further information. If the transport is used in isolation, " +
+                                    "set a serializer definition in an empty SettingsHolder instance and invoke ValidateNServiceBusSettings() " +
+                                    "before starting the transport.");
+            }
+
+            var (definition, serializerSettings) = serializerSettingsTuple;
 
             // serializerSettings.Merge(settings);
             var merge = typeof(SettingsHolder).GetMethod("Merge", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
