@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace NServiceBus
 {
     using global::Azure.Storage.Queues;
@@ -228,6 +230,25 @@ namespace NServiceBus
             set => messageWrapperSerializationDefinition = value;
         }
 
+        /// <summary>
+        /// Override the default table name used for storing delayed messages.
+        /// </summary>
+        public string DelayedDeliveryTableName
+        {
+            get => delayedDeliveryTableName;
+            set
+            {
+                Guard.AgainstNullAndEmpty(nameof(DelayedDeliveryTableName), value);
+
+                if (delayedDeliveryTableNameRegex.IsMatch(DelayedDeliveryTableName) == false)
+                {
+                    throw new ArgumentException($"{nameof(DelayedDeliveryTableName)} must match the following regular expression '{delayedDeliveryTableNameRegex}'");
+                }
+
+                delayedDeliveryTableName = value;
+            }
+        }
+
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
         private TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
@@ -240,5 +261,7 @@ namespace NServiceBus
         private int? receiverBatchSize = DefaultConfigurationValues.DefaultBatchSize;
         private int? degreeOfReceiveParallelism;
         private SerializationDefinition messageWrapperSerializationDefinition;
+        private string delayedDeliveryTableName;
+        static readonly Regex delayedDeliveryTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
     }
 }

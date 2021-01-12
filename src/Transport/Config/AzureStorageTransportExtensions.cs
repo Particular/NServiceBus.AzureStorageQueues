@@ -23,13 +23,5 @@ namespace NServiceBus
             config.GetSettings().Set<IMessageEnvelopeUnwrapper>(new UserProvidedEnvelopeUnwrapper(unwrapper));
             return config;
         }
-
-        /// <summary>
-        /// Configures delayed delivery features of this transport.
-        /// </summary>
-        public static DelayedDeliverySettings DelayedDelivery(this TransportExtensions<AzureStorageQueueTransport> config)
-        {
-            return new DelayedDeliverySettings(config.GetSettings());
-        }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Azure.Storage.Blobs;
 using Microsoft.Azure.Cosmos.Table;
 using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+using NServiceBus.Configuration.AdvancedExtensibility;
 using NServiceBus.Serialization;
+using NServiceBus.Settings;
 
 #pragma warning disable 1591
 
@@ -130,6 +132,52 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "10.0",
             RemoveInVersion = "11.0")]
         public static TransportExtensions<AzureStorageQueueTransport> UseCloudTableClient(this TransportExtensions<AzureStorageQueueTransport> config, CloudTableClient cloudTableClient)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Configures delayed delivery features of this transport.
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance constructor",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static DelayedDeliverySettings DelayedDelivery(this TransportExtensions<AzureStorageQueueTransport> config)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>Configures native delayed delivery.</summary>
+    public partial class DelayedDeliverySettings : ExposeSettings
+    {
+        internal DelayedDeliverySettings(SettingsHolder settings) : base(settings) { }
+
+        /// <summary>Override the default table name used for storing delayed messages.</summary>
+        /// <param name="delayedMessagesTableName">New table name.</param>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance's properties",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public void UseTableName(string delayedMessagesTableName)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Disable delayed delivery.
+        /// <remarks>
+        /// Disabling delayed delivery reduces costs associated with polling Azure Storage service for delayed messages that need
+        /// to be dispatched.
+        /// Do not use this setting if your endpoint requires delayed messages, timeouts, or delayed retries.
+        /// </remarks>
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition constructor.",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public void DisableDelayedDelivery()
         {
             throw new NotImplementedException();
         }
