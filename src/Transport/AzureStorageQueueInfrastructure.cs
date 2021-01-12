@@ -136,8 +136,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return serializer;
         }
 
-        public override IEnumerable<Type> DeliveryConstraints => supportedDeliveryConstraints;
-        public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
         public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
 
         static string GetDelayedDeliveryTableName(SettingsHolder settings)
@@ -250,24 +248,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
 
             return Task.CompletedTask;
-        }
-
-        TransportTransactionMode GetRequiredTransactionMode()
-        {
-            var transportTransactionSupport = TransactionMode;
-
-            //if user haven't asked for a explicit level use what the transport supports
-            if (!settings.TryGet(out TransportTransactionMode requestedTransportTransactionMode))
-            {
-                return transportTransactionSupport;
-            }
-
-            if (requestedTransportTransactionMode > transportTransactionSupport)
-            {
-                throw new Exception($"Requested transaction mode `{requestedTransportTransactionMode}` can't be satisfied since the transport only supports `{transportTransactionSupport}`");
-            }
-
-            return requestedTransportTransactionMode;
         }
 
         internal const string SerializerSettingsKey = "MainSerializer";
