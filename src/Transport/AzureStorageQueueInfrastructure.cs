@@ -1,4 +1,7 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+﻿using System.Reflection;
+using NServiceBus.MessageInterfaces;
+
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Globalization;
@@ -25,7 +28,8 @@
             QueueAddressGenerator addressGenerator,
             IQueueServiceClientProvider queueServiceClientProvider,
             IBlobServiceClientProvider blobServiceClientProvider,
-            ICloudTableClientProvider cloudTableClientProvider)
+            ICloudTableClientProvider cloudTableClientProvider,
+            SerializationDefinition messageWrapperSerializationDefinition)
         {
             this.messageInvisibleTime = messageInvisibleTime;
             this.peekInterval = peekInterval;
@@ -34,8 +38,7 @@
             this.degreeOfReceiveParallelism = degreeOfReceiveParallelism;
             this.addressGenerator = addressGenerator;
             this.queueServiceClientProvider = queueServiceClientProvider;
-
-            serializer = BuildSerializer(settings, out var userProvidedSerializer);
+            this.messageWrapperSerializationDefinition = messageWrapperSerializationDefinition;
 
             string delayedDeliveryTableName = null;
             if (enableNativeDelayedDelivery)
@@ -82,7 +85,7 @@
                     Table = settings.TryGet<ICloudTableClientProvider>(out _) ? "CloudTableClient" : "ConnectionString",
                     Blob = settings.TryGet<IBlobServiceClientProvider>(out _) ? "BlobServiceClient" : "ConnectionString",
                 },
-                MessageWrapperSerializer = userProvidedSerializer ? "Custom" : "Default",
+                MessageWrapperSerializer = this.messageWrapperSerializationDefinition == null ? "Default" : "Custom",
                 MessageEnvelopeUnwrapper = settings.HasExplicitValue<IMessageEnvelopeUnwrapper>() ? "Custom" : "Default",
                 DelayedDelivery = delayedDelivery,
                 TransactionMode = Enum.GetName(typeof(TransportTransactionMode), GetRequiredTransactionMode()),
@@ -92,6 +95,35 @@
                 PeekInterval = peekInterval,
                 MessageInvisibleTime = messageInvisibleTime
             });
+        }
+
+        public override Task ValidateNServiceBusSettings(ReadOnlySettings settings)
+        {
+            serializer = BuildSerializer(messageWrapperSerializationDefinition, settings);
+            return base.ValidateNServiceBusSettings(settings);
+        }
+
+        static MessageWrapperSerializer BuildSerializer(SerializationDefinition userWrapperSerializationDefinition, ReadOnlySettings settings)
+        {
+            return userWrapperSerializationDefinition != null
+                ? new MessageWrapperSerializer(userWrapperSerializationDefinition.Configure(settings).Invoke(MessageWrapperSerializer.GetMapper()))
+                : new MessageWrapperSerializer(GetMainSerializerHack(MessageWrapperSerializer.GetMapper(), settings));
+        }
+
+        internal static IMessageSerializer GetMainSerializerHack(IMessageMapper mapper, ReadOnlySettings settings)
+        {
+            var (definition, serializerSettings) = settings.Get<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey);
+
+            // serializerSettings.Merge(settings);
+            var merge = typeof(SettingsHolder).GetMethod("Merge", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            merge.Invoke(serializerSettings, new object[]
+            {
+                settings
+            });
+
+            var serializerFactory = definition.Configure(serializerSettings);
+            var serializer = serializerFactory(mapper);
+            return serializer;
         }
 
         public override IEnumerable<Type> DeliveryConstraints => supportedDeliveryConstraints;
@@ -149,18 +181,6 @@
                 () => new AzureMessageQueueCreator(queueServiceClientProvider, addressGenerator),
                 () => Task.FromResult(StartupCheckResult.Success)
             );
-        }
-
-        static MessageWrapperSerializer BuildSerializer(ReadOnlySettings settings, out bool userProvided)
-        {
-            if (settings.TryGet<SerializationDefinition>(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, out var wrapperSerializer))
-            {
-                userProvided = true;
-                return new MessageWrapperSerializer(wrapperSerializer.Configure(settings)(MessageWrapperSerializer.GetMapper()));
-            }
-
-            userProvided = false;
-            return new MessageWrapperSerializer(AzureStorageQueueTransport.GetMainSerializer(MessageWrapperSerializer.GetMapper(), settings));
         }
 
         public override TransportSendInfrastructure ConfigureSendInfrastructure()
@@ -240,11 +260,13 @@
             return requestedTransportTransactionMode;
         }
 
-        readonly MessageWrapperSerializer serializer;
+        internal const string SerializerSettingsKey = "MainSerializer";
+        MessageWrapperSerializer serializer;
         readonly List<Type> supportedDeliveryConstraints = new List<Type> { typeof(DiscardIfNotReceivedBefore) };
         readonly NativeDelayDelivery nativeDelayedDelivery;
         readonly QueueAddressGenerator addressGenerator;
         private readonly IQueueServiceClientProvider queueServiceClientProvider;
+        private readonly SerializationDefinition messageWrapperSerializationDefinition;
         readonly TimeSpan maximumWaitTimeWhenIdle;
         private readonly int? receiverBatchSize;
         private readonly int? degreeOfReceiveParallelism;

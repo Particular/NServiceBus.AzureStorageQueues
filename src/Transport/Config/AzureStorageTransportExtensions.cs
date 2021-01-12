@@ -14,17 +14,6 @@ namespace NServiceBus
     public static partial class AzureStorageTransportExtensions
     {
         /// <summary>
-        /// Sets a custom serialization for <see cref="MessageWrapper" />.
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this TransportExtensions<AzureStorageQueueTransport> config)
-            where TSerializationDefinition : SerializationDefinition, new()
-        {
-            Guard.AgainstNull(nameof(config), config);
-            config.GetSettings().Set(WellKnownConfigurationKeys.MessageWrapperSerializationDefinition, new TSerializationDefinition());
-            return config;
-        }
-
-        /// <summary>
         /// Registers a custom unwrapper to convert native messages to <see cref="MessageWrapper" />. This is needed when receiving raw json/xml/etc messages from non NServiceBus endpoints.
         /// </summary>
         public static TransportExtensions<AzureStorageQueueTransport> UnwrapMessagesWith(this TransportExtensions<AzureStorageQueueTransport> config, Func<QueueMessage, MessageWrapper> unwrapper)

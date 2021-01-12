@@ -4,42 +4,20 @@ namespace NServiceBus
     using global::Azure.Storage.Blobs;
     using System;
     using System.Collections.Generic;
-    using System.Reflection;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using MessageInterfaces;
     using Microsoft.Azure.Cosmos.Table;
     using Serialization;
-    using Settings;
     using Transport;
     using Transport.AzureStorageQueues;
+    using Azure.Transports.WindowsAzureStorageQueues;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition
     {
-        internal const string SerializerSettingsKey = "MainSerializer";
-
-        internal static IMessageSerializer GetMainSerializer(IMessageMapper mapper, ReadOnlySettings settings)
-        {
-            var definitionAndSettings = settings.Get<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey);
-            var definition = definitionAndSettings.Item1;
-            var serializerSettings = definitionAndSettings.Item2;
-
-            // serializerSettings.Merge(settings);
-            var merge = typeof(SettingsHolder).GetMethod("Merge", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            merge.Invoke(serializerSettings, new object[]
-            {
-                settings
-            });
-
-            var serializerFactory = definition.Configure(serializerSettings);
-            var serializer = serializerFactory(mapper);
-            return serializer;
-        }
-
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue
         /// </summary>
@@ -105,7 +83,8 @@ namespace NServiceBus
                 queueAddressGenerator,
                 queueServiceClientProvider,
                 blobServiceClientProvider,
-                cloudTableClientProvider);
+                cloudTableClientProvider,
+                MessageWrapperSerializationDefinition);
 
             return Task.FromResult<TransportInfrastructure>(infrastructure);
         }
@@ -242,6 +221,15 @@ namespace NServiceBus
             }
         }
 
+        /// <summary>
+        /// Sets a custom serialization for <see cref="MessageWrapper" />.
+        /// </summary>
+        public SerializationDefinition MessageWrapperSerializationDefinition
+        {
+            get => messageWrapperSerializationDefinition;
+            set => messageWrapperSerializationDefinition = value;
+        }
+
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
         private TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
@@ -253,5 +241,6 @@ namespace NServiceBus
         private ICloudTableClientProvider cloudTableClientProvider;
         private int? receiverBatchSize = DefaultConfigurationValues.DefaultBatchSize;
         private int? degreeOfReceiveParallelism;
+        private SerializationDefinition messageWrapperSerializationDefinition;
     }
 }

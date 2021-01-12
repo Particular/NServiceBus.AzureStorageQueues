@@ -1,4 +1,9 @@
-﻿#pragma warning disable 1591
+﻿using Azure.Storage.Blobs;
+using Microsoft.Azure.Cosmos.Table;
+using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+using NServiceBus.Serialization;
+
+#pragma warning disable 1591
 
 namespace NServiceBus
 {
@@ -76,6 +81,19 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "10.0",
             RemoveInVersion = "11.0")]
         public static TransportExtensions<AzureStorageQueueTransport> DegreeOfReceiveParallelism(this TransportExtensions<AzureStorageQueueTransport> config, int degreeOfReceiveParallelism)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Sets a custom serialization for <see cref="MessageWrapper" />.
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance's properties",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this TransportExtensions<AzureStorageQueueTransport> config)
+            where TSerializationDefinition : SerializationDefinition, new()
         {
             throw new NotImplementedException();
         }
