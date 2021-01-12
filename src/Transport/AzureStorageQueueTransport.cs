@@ -71,6 +71,7 @@ namespace NServiceBus
             queueAddressGenerator = new QueueAddressGenerator(QueueNameSanitizer);
 
             var infrastructure = new AzureStorageQueueInfrastructure(
+                hostSettings,
                 MessageInvisibleTime,
                 PeekInterval,
                 MaximumWaitTimeWhenIdle,

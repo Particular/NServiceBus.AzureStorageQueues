@@ -19,7 +19,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        internal AzureStorageQueueInfrastructure(TimeSpan messageInvisibleTime,
+        internal AzureStorageQueueInfrastructure(
+            HostSettings hostSettings,
+            TimeSpan messageInvisibleTime,
             TimeSpan peekInterval,
             TimeSpan maximumWaitTimeWhenIdle,
             bool enableNativeDelayedDelivery,
@@ -77,13 +79,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 };
             }
 
-            settings.AddStartupDiagnosticsSection("NServiceBus.Transport.AzureStorageQueues", new
+            hostSettings.StartupDiagnostic.Add("NServiceBus.Transport.AzureStorageQueues", new
             {
                 ConnectionMechanism = new
                 {
-                    Queue = settings.TryGet<IQueueServiceClientProvider>(out _) ? "QueueServiceClient" : "ConnectionString",
-                    Table = settings.TryGet<ICloudTableClientProvider>(out _) ? "CloudTableClient" : "ConnectionString",
-                    Blob = settings.TryGet<IBlobServiceClientProvider>(out _) ? "BlobServiceClient" : "ConnectionString",
+                    Queue = queueServiceClientProvider is ConnectionStringQueueServiceClientProvider ? "ConnectionString" : "QueueServiceClient",
+                    Table = cloudTableClientProvider is ConnectionStringCloudTableClientProvider ? "ConnectionString" : "CloudTableClient",
+                    Blob = blobServiceClientProvider is ConnectionStringBlobServiceClientProvider ? "ConnectionString" : "BlobServiceClient",
                 },
                 MessageWrapperSerializer = this.messageWrapperSerializationDefinition == null ? "Default" : "Custom",
                 MessageEnvelopeUnwrapper = settings.HasExplicitValue<IMessageEnvelopeUnwrapper>() ? "Custom" : "Default",
