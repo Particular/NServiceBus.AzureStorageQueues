@@ -1,9 +1,8 @@
-﻿using System;
-
-namespace NServiceBus
+﻿namespace NServiceBus
 {
-    using Serialization;
-    using Settings;
+    using System;
+    using NServiceBus.Serialization;
+    using NServiceBus.Settings;
 
     static class Guard
     {

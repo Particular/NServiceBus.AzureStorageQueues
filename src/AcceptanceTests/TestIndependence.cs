@@ -9,7 +9,7 @@ using NServiceBus.Pipeline;
 using NServiceBus.Serialization;
 using NServiceBus.Settings;
 
-public class TestIndependence 
+public class TestIndependence
 {
     public const string HeaderName = "$AcceptanceTesting.TestRunId";
 
@@ -44,7 +44,7 @@ public class TestIndependence
 
             public void Serialize(object message, Stream stream)
             {
-                var headers = ((MessageWrapper) message).Headers;
+                var headers = ((MessageWrapper)message).Headers;
                 if (!headers.ContainsKey(HeaderName))
                 {
                     headers[HeaderName] = testId;

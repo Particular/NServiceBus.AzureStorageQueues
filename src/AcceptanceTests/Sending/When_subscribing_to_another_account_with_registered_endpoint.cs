@@ -14,14 +14,14 @@
         [Test]
         public async Task Account_mapped_should_be_respected()
         {
-           var context = await Scenario.Define<Context>()
-                .WithEndpoint<Publisher>(b =>
-               {
-                   b.When(c => c.Subscribed, session => session.Publish<MyEvent>());
-               })
-                .WithEndpoint<Subscriber>(b => b.When(async (session, c) => { await session.Subscribe<MyEvent>(); }))
-                .Done(c => c.WasCalled)
-                .Run().ConfigureAwait(false);
+            var context = await Scenario.Define<Context>()
+                 .WithEndpoint<Publisher>(b =>
+                {
+                    b.When(c => c.Subscribed, session => session.Publish<MyEvent>());
+                })
+                 .WithEndpoint<Subscriber>(b => b.When(async (session, c) => { await session.Subscribe<MyEvent>(); }))
+                 .Done(c => c.WasCalled)
+                 .Run().ConfigureAwait(false);
 
             Assert.IsTrue(context.WasCalled);
         }

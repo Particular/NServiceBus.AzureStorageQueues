@@ -39,7 +39,7 @@
 
         const int VisibilityTimeoutInSeconds = 5;
         static readonly TimeSpan VisibilityTimeout = TimeSpan.FromSeconds(VisibilityTimeoutInSeconds);
-        static readonly TimeSpan HandlingTimeout = TimeSpan.FromSeconds(VisibilityTimeoutInSeconds*4);
+        static readonly TimeSpan HandlingTimeout = TimeSpan.FromSeconds(VisibilityTimeoutInSeconds * 4);
 
         class Context : ScenarioContext
         {

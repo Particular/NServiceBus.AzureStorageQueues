@@ -3,7 +3,7 @@
     using System;
     using Transport;
 
-    internal static class IOutgoingTransportOperationExtensions
+    static class IOutgoingTransportOperationExtensions
     {
         /// <summary>
         /// Gets the operation intent from the headers.

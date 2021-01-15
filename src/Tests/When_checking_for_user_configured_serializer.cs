@@ -21,7 +21,7 @@
         {
             var settings = new SettingsHolder();
 
-            settings.Set(AzureStorageQueueTransport.SerializerSettingsKey, Tuple.Create<SerializationDefinition,SettingsHolder>(new XmlSerializer(), settings));
+            settings.Set(AzureStorageQueueTransport.SerializerSettingsKey, Tuple.Create<SerializationDefinition, SettingsHolder>(new XmlSerializer(), settings));
 
             Assert.DoesNotThrow(() => Guard.AgainstUnsetSerializerSetting(settings));
         }

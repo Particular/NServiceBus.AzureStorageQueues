@@ -17,6 +17,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     return new AtMostOnceReceiveStrategy(pipe, errorPipe);
                 case TransportTransactionMode.ReceiveOnly:
                     return new AtLeastOnceReceiveStrategy(pipe, errorPipe, criticalError);
+                case TransportTransactionMode.SendsAtomicWithReceive:
+                case TransportTransactionMode.TransactionScope:
                 default:
                     throw new NotSupportedException($"The TransportTransactionMode {transactionMode} is not supported");
             }
