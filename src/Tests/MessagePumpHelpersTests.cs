@@ -168,7 +168,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
         }
 
         [Test]
-        [TestCaseSource("ConcurrencyBased")]
+        [TestCaseSource(nameof(ConcurrencyBased))]
         public void Should_calculate_degree_of_parallelism_and_batch_sized_based_on_concurrency(int? receiveBatchSize, int? degreeOfReceiverParallelism, int maximumConcurrency, IEnumerable<ReceiverConfiguration> expected)
         {
             var result = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiverParallelism, maximumConcurrency);
@@ -180,7 +180,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
         }
 
         [Test]
-        [TestCaseSource("FixedBatchSize")]
+        [TestCaseSource(nameof(FixedBatchSize))]
         public void Should_calculate_degree_of_parallelism_based_on_fixed_batch_size(int? receiveBatchSize, int? degreeOfReceiverParallelism, int maximumConcurrency, IEnumerable<ReceiverConfiguration> expected)
         {
             var result = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiverParallelism, maximumConcurrency);
@@ -192,7 +192,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
         }
 
         [Test]
-        [TestCaseSource("FixedDegreeOfParallelism")]
+        [TestCaseSource(nameof(FixedDegreeOfParallelism))]
         public void Should_calculate_batch_size_based_on_fixed_degree_of_parallelism(int? receiveBatchSize, int? degreeOfReceiverParallelism, int maximumConcurrency, IEnumerable<ReceiverConfiguration> expected)
         {
             var result = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiverParallelism, maximumConcurrency);
@@ -204,7 +204,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
         }
 
         [Test]
-        [TestCaseSource("FixedDegreeOfParallelismAndBatchSize")]
+        [TestCaseSource(nameof(FixedDegreeOfParallelismAndBatchSize))]
         public void Should_use_fixed_batch_size_and_degree_if_provided(int? receiveBatchSize, int? degreeOfReceiverParallelism, int maximumConcurrency, IEnumerable<ReceiverConfiguration> expected)
         {
             var result = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiverParallelism, maximumConcurrency);

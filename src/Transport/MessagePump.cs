@@ -131,7 +131,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                             return;
                         }
 
-                        InnerReceive(message).Ignore();
+                        _ = InnerReceive(message);
                     }
                 }
                 catch (OperationCanceledException)

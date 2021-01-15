@@ -36,7 +36,7 @@
                     lease = await blobLeaseClient.AcquireAsync(span, null, cancellationToken).ConfigureAwait(false);
                     return true;
                 }
-                catch (RequestFailedException exception) when (exception.Status == (int) HttpStatusCode.Conflict)
+                catch (RequestFailedException exception) when (exception.Status == (int)HttpStatusCode.Conflict)
                 {
                     // someone else raced for the lease and got it
                     return false;
@@ -47,7 +47,7 @@
                 await blobLeaseClient.RenewAsync(null, cancellationToken).ConfigureAwait(false);
                 return true;
             }
-            catch (RequestFailedException exception) when (exception.Status == (int) HttpStatusCode.Conflict)
+            catch (RequestFailedException exception) when (exception.Status == (int)HttpStatusCode.Conflict)
             {
                 // someone else raced for the lease and got it so we have to try to re-acquire it
                 lease = null;

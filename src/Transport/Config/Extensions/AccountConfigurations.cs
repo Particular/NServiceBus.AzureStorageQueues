@@ -21,7 +21,7 @@ namespace NServiceBus
 
         public AccountInfo Add(string alias, QueueServiceClient client)
         {
-            if(!mappings.TryGetValue(alias, out var accountInfo))
+            if (!mappings.TryGetValue(alias, out var accountInfo))
             {
                 accountInfo = new AccountInfo(alias, client);
                 mappings.Add(alias, accountInfo);

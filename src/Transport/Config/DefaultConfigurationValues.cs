@@ -11,7 +11,7 @@
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime, DefaultMessageInvisibleTime);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverPeekInterval, DefaultPeekInterval);
             settings.SetDefault(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle, DefaultMaximumWaitTimeWhenIdle);
-            settings.SetDefault(WellKnownConfigurationKeys.QueueSanitizer, (Func<string, string>) (queueName => queueName));
+            settings.SetDefault(WellKnownConfigurationKeys.QueueSanitizer, (Func<string, string>)(queueName => queueName));
         }
 
         static TimeSpan DefaultMessageInvisibleTime = TimeSpan.FromSeconds(30);

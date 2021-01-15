@@ -50,6 +50,8 @@
 #define SIMPLE_JSON_TYPEINFO
 #endif
 
+#pragma warning disable IDE0065 // Misplaced using directive
+
 #if !SIMPLE_JSON_NO_LINQ_EXPRESSION
 using System.Linq.Expressions;
 // ReSharper disable All
@@ -57,6 +59,8 @@ using System.Linq.Expressions;
 #if SIMPLE_JSON_DYNAMIC
 using System.Dynamic;
 #endif
+
+#pragma warning restore IDE0065 // Misplaced using directive
 
 // ReSharper disable LoopCanBeConvertedToQuery
 // ReSharper disable RedundantExplicitArrayCreation
@@ -68,14 +72,12 @@ namespace SimpleJson
     using System.Collections;
     using System.Collections.Generic;
     using System.ComponentModel;
-    using System.Diagnostics.CodeAnalysis;
 
     /// <summary>
     /// Represents the json array.
     /// </summary>
     [GeneratedCode("simple-json", "1.0.0")]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
 #if SIMPLE_JSON_OBJARRAYINTERNAL
 #else
     public
@@ -112,7 +114,6 @@ namespace SimpleJson
     /// </summary>
     [GeneratedCode("simple-json", "1.0.0")]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
 #if SIMPLE_JSON_OBJARRAYINTERNAL
 #else
     public
@@ -478,7 +479,6 @@ namespace SimpleJson
     using System.Collections;
     using System.Collections.Generic;
     using System.ComponentModel;
-    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Runtime.Serialization;
     using System.Text;
@@ -564,7 +564,6 @@ namespace SimpleJson
         /// <returns>
         /// Returns true if successfull otherwise false.
         /// </returns>
-        [SuppressMessage("Microsoft.Design", "CA1007:UseGenericsWhereAppropriate", Justification = "Need to support .NET 2")]
         public static bool TryDeserializeObject(string json, out object obj)
         {
             var success = true;
@@ -968,7 +967,6 @@ namespace SimpleJson
             return NextToken(json, ref saveIndex);
         }
 
-        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
         static int NextToken(char[] json, ref int index)
         {
             EatWhitespace(json, ref index);
@@ -1257,7 +1255,6 @@ namespace SimpleJson
 #endif
     interface IJsonSerializerStrategy
     {
-        [SuppressMessage("Microsoft.Design", "CA1007:UseGenericsWhereAppropriate", Justification = "Need to support .NET 2")]
         bool TrySerializeNonPrimitiveObject(object input, out object output);
 
         object DeserializeObject(object value, Type type);
@@ -1350,7 +1347,6 @@ namespace SimpleJson
             return TrySerializeKnownTypes(input, out output) || TrySerializeUnknownTypes(input, out output);
         }
 
-        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
         public virtual object DeserializeObject(object value, Type type)
         {
             if (type == null) throw new ArgumentNullException("type");
@@ -1496,7 +1492,6 @@ namespace SimpleJson
             return Convert.ToDouble(p, CultureInfo.InvariantCulture);
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1007:UseGenericsWhereAppropriate", Justification = "Need to support .NET 2")]
         protected virtual bool TrySerializeKnownTypes(object input, out object output)
         {
             var returnValue = true;
@@ -1532,7 +1527,6 @@ namespace SimpleJson
             return returnValue;
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1007:UseGenericsWhereAppropriate", Justification = "Need to support .NET 2")]
         protected virtual bool TrySerializeUnknownTypes(object input, out object output)
         {
             if (input == null) throw new ArgumentNullException("input");
