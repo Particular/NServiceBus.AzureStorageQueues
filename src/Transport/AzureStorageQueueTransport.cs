@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Azure.Storage.Queues.Models;
 
 namespace NServiceBus
 {
@@ -86,7 +87,8 @@ namespace NServiceBus
                 queueServiceClientProvider,
                 blobServiceClientProvider,
                 cloudTableClientProvider,
-                MessageWrapperSerializationDefinition);
+                MessageWrapperSerializationDefinition,
+                MessageUnwrapper);
 
             return Task.FromResult<TransportInfrastructure>(infrastructure);
         }
@@ -233,6 +235,19 @@ namespace NServiceBus
         }
 
         /// <summary>
+        /// Registers a custom unwrapper to convert native messages to <see cref="MessageWrapper" />. This is needed when receiving raw json/xml/etc messages from non NServiceBus endpoints.
+        /// </summary>
+        public Func<QueueMessage, MessageWrapper> MessageUnwrapper
+        {
+            get => messageUnwrapper;
+            set
+            {
+                Guard.AgainstNull(nameof(MessageUnwrapper), value);
+                messageUnwrapper = value;
+            }
+        }
+
+        /// <summary>
         /// Override the default table name used for storing delayed messages.
         /// </summary>
         public string DelayedDeliveryTableName
@@ -264,6 +279,7 @@ namespace NServiceBus
         private int? degreeOfReceiveParallelism;
         private SerializationDefinition messageWrapperSerializationDefinition;
         private string delayedDeliveryTableName;
+        private Func<QueueMessage, MessageWrapper> messageUnwrapper;
         static readonly Regex delayedDeliveryTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
     }
 }

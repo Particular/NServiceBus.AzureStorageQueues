@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using Azure.Storage.Queues.Models;
+using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
 using NServiceBus.MessageInterfaces;
 
 namespace NServiceBus.Transport.AzureStorageQueues
@@ -33,7 +35,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
             IQueueServiceClientProvider queueServiceClientProvider,
             IBlobServiceClientProvider blobServiceClientProvider,
             ICloudTableClientProvider cloudTableClientProvider,
-            SerializationDefinition messageWrapperSerializationDefinition)
+            SerializationDefinition messageWrapperSerializationDefinition,
+            Func<QueueMessage, MessageWrapper> messageUnwrapper)
         {
             this.messageInvisibleTime = messageInvisibleTime;
             this.peekInterval = peekInterval;
@@ -43,6 +46,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.addressGenerator = addressGenerator;
             this.queueServiceClientProvider = queueServiceClientProvider;
             this.messageWrapperSerializationDefinition = messageWrapperSerializationDefinition;
+            this.messageUnwrapper = messageUnwrapper;
 
             var userDefinedNativeDelayedDeliveryTableName = true;
             if (enableNativeDelayedDelivery)
@@ -94,7 +98,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     Blob = blobServiceClientProvider is ConnectionStringBlobServiceClientProvider ? "ConnectionString" : "BlobServiceClient",
                 },
                 MessageWrapperSerializer = this.messageWrapperSerializationDefinition == null ? "Default" : "Custom",
-                MessageEnvelopeUnwrapper = settings.HasExplicitValue<IMessageEnvelopeUnwrapper>() ? "Custom" : "Default",
+                MessageEnvelopeUnwrapper = this.messageUnwrapper == null ? "Default" : "Custom",
                 DelayedDelivery = delayedDeliveryDiagnosticSection,
                 TransactionMode = Enum.GetName(typeof(TransportTransactionMode), transportTransactionMode),
                 ReceiverBatchSize = receiverBatchSize.HasValue ? receiverBatchSize.Value.ToString(CultureInfo.InvariantCulture) : "Default",
@@ -171,7 +175,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return new TransportReceiveInfrastructure(
                 () =>
                 {
-                    var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ? settings.GetOrDefault<IMessageEnvelopeUnwrapper>() : new DefaultMessageEnvelopeUnwrapper(serializer);
+                    var unwrapper = messageUnwrapper != null
+                        ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(messageUnwrapper)
+                        : new DefaultMessageEnvelopeUnwrapper(serializer);
 
                     var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, addressGenerator)
                     {
@@ -251,6 +257,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly QueueAddressGenerator addressGenerator;
         private readonly IQueueServiceClientProvider queueServiceClientProvider;
         private readonly SerializationDefinition messageWrapperSerializationDefinition;
+        private readonly Func<QueueMessage, MessageWrapper> messageUnwrapper;
         readonly TimeSpan maximumWaitTimeWhenIdle;
         private readonly int? receiverBatchSize;
         private readonly int? degreeOfReceiveParallelism;
