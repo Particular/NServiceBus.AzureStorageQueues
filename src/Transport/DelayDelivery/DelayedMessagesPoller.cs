@@ -192,7 +192,7 @@
             await backoffStrategy.OnBatch(delayedMessagesCount, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task DeleteAndDispatch(CancellationToken cancellationToken, DelayedMessageEntity delayedMessage)
+        async Task DeleteAndDispatch(CancellationToken cancellationToken, DelayedMessageEntity delayedMessage)
         {
             try
             {

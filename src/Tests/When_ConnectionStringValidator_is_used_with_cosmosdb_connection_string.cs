@@ -1,8 +1,8 @@
-﻿using System;
-using NUnit.Framework;
-
-namespace NServiceBus.Transport.AzureStorageQueues.Tests
+﻿namespace NServiceBus.Transport.AzureStorageQueues.Tests
 {
+    using System;
+    using NUnit.Framework;
+
     [TestFixture]
     public class When_ConnectionStringValidator_is_used_with_cosmosdb_connection_string
     {

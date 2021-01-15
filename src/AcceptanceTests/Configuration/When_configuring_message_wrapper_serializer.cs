@@ -82,7 +82,7 @@
         {
             public MyCustomSerializer(ScenarioContext scenarioContext)
             {
-                this.scenarioContext = (Context) scenarioContext;
+                this.scenarioContext = (Context)scenarioContext;
             }
 
             public void Serialize(object message, Stream stream)

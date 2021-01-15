@@ -13,14 +13,14 @@
         [Test]
         public async Task Account_mapped_should_be_respected()
         {
-           var context = await Scenario.Define<Context>()
-                .WithEndpoint<Endpoint>(b =>
-                {
-                    b.When((bus, c) => bus.Send(new MyMessage()));
-                })
-                .WithEndpoint<Receiver>()
-                .Done(c => c.WasCalled)
-                .Run().ConfigureAwait(false);
+            var context = await Scenario.Define<Context>()
+                 .WithEndpoint<Endpoint>(b =>
+                 {
+                     b.When((bus, c) => bus.Send(new MyMessage()));
+                 })
+                 .WithEndpoint<Receiver>()
+                 .Done(c => c.WasCalled)
+                 .Run().ConfigureAwait(false);
 
             Assert.IsTrue(context.WasCalled);
         }

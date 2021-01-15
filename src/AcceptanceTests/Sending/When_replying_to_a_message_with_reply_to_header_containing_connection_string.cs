@@ -62,7 +62,7 @@
 
             class VerifyReplyMessage : Behavior<IIncomingPhysicalMessageContext>
             {
-                private readonly Context testContext;
+                readonly Context testContext;
 
                 public VerifyReplyMessage(Context testContext)
                 {
