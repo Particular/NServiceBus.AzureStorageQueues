@@ -174,7 +174,7 @@
         readonly TimeSpan maximumWaitTime;
         readonly TimeSpan peekInterval;
         readonly Func<Dispatcher> dispatcherFactory;
-        private readonly CloudTableClient cloudTableClient;
-        private readonly string delayedMessagesTableName;
+        readonly CloudTableClient cloudTableClient;
+        readonly string delayedMessagesTableName;
     }
 }
