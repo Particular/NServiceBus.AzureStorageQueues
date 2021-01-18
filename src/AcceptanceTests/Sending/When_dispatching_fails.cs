@@ -46,7 +46,10 @@
             await messageSession.Send(new MyMessage()).ConfigureAwait(false);
 
             // https://github.com/Azure/azure-storage-net/issues/534
-            EventHandler<RequestEventArgs> failRequests = delegate { throw new Exception("Fail on proxy"); };
+            EventHandler<RequestEventArgs> failRequests = delegate
+            {
+                throw new Exception("Fail on proxy");
+            };
             OperationContext.GlobalSendingRequest += failRequests;
 
             try
