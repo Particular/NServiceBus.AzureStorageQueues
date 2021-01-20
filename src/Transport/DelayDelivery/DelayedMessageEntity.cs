@@ -35,7 +35,8 @@
 
         public UnicastTransportOperation GetOperation()
         {
-            return new UnicastTransportOperation(new OutgoingMessage(MessageId, Deserialize<Dictionary<string, string>>(Headers), Body), Destination);
+            //TODO what about DispatchConsistency?
+            return new UnicastTransportOperation(new OutgoingMessage(MessageId, Deserialize<Dictionary<string, string>>(Headers), Body), Destination, new OperationProperties());
         }
 
         const string PartitionKeyScope = "yyyyMMddHH";
