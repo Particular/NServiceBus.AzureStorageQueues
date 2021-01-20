@@ -1,17 +1,12 @@
-﻿using System.Collections.Immutable;
-
-namespace NServiceBus.Transport.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
-    using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Threading;
     using System.Threading.Tasks;
-    using DelayedDelivery;
-    using DeliveryConstraints;
     using global::Azure.Storage.Blobs;
     using Logging;
     using Microsoft.Azure.Cosmos.Table;
-    using Performance.TimeToBeReceived;
     using Transport;
 
     class NativeDelayDelivery
@@ -57,11 +52,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
-            var constraints = operation.DeliveryConstraints;
-            var delay = GetDeliveryDelay(constraints);
+            var delay = GetDeliveryDelay(operation.Properties);
             if (delay != null)
             {
-                if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)
+                if (operation.Properties.DiscardIfNotReceivedBefore != null)
                 {
                     throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
                 }
@@ -75,15 +69,15 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public CloudTable Table { get; private set; }
 
-        static TimeSpan? GetDeliveryDelay(List<DeliveryConstraint> constraints)
+        static TimeSpan? GetDeliveryDelay(OperationProperties properties)
         {
-            var doNotDeliverBefore = FirstOrDefault<DoNotDeliverBefore>(constraints);
+            var doNotDeliverBefore = properties.DoNotDeliverBefore;
             if (doNotDeliverBefore != null)
             {
                 return ToNullIfNegative(doNotDeliverBefore.At - DateTimeOffset.UtcNow);
             }
 
-            var delay = FirstOrDefault<DelayDeliveryWith>(constraints);
+            var delay = properties.DelayDeliveryWith;
             if (delay != null)
             {
                 return ToNullIfNegative(delay.Delay);
@@ -108,27 +102,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             delayedMessageEntity.SetOperation(operation);
             return Table.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), null, null, cancellationToken);
         }
-
-        static TDeliveryConstraint FirstOrDefault<TDeliveryConstraint>(List<DeliveryConstraint> constraints)
-            where TDeliveryConstraint : DeliveryConstraint
-        {
-            if (constraints == null || constraints.Count == 0)
-            {
-                return null;
-            }
-
-            for (var i = 0; i < constraints.Count; i++)
-            {
-                if (constraints[i] is TDeliveryConstraint c)
-                {
-                    return c;
-                }
-            }
-
-            return null;
-        }
-
-
 
         static readonly ILog Logger = LogManager.GetLogger<NativeDelayDelivery>();
 
