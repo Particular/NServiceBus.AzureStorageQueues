@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text.RegularExpressions;
 using Azure.Storage.Queues.Models;
 
@@ -64,13 +65,17 @@ namespace NServiceBus
         }
 
         /// <inheritdoc cref="Initialize"/>
-        public override Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses)
+        public override async Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses)
         {
             Guard.AgainstNull(nameof(hostSettings), hostSettings);
             Guard.AgainstNull(nameof(receivers), receivers);
             Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
 
             queueAddressGenerator = new QueueAddressGenerator(QueueNameSanitizer);
+
+            var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, queueAddressGenerator);
+            await queueCreator.CreateQueueIfNecessary(sendingAddresses, receivers.Select(settings => settings.ReceiveAddress).ToArray())
+                .ConfigureAwait(false);
 
             var infrastructure = new AzureStorageQueueInfrastructure(
                 hostSettings,
@@ -90,7 +95,7 @@ namespace NServiceBus
                 MessageUnwrapper,
                 receivers);
 
-            return Task.FromResult<TransportInfrastructure>(infrastructure);
+            return infrastructure;
         }
 
         /// <inheritdoc cref="ToTransportAddress"/>

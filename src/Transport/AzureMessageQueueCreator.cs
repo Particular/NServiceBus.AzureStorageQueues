@@ -9,11 +9,7 @@
     using Logging;
     using Transport;
 
-    /// <summary>
-    /// Creates the queues. Note that this class will only be invoked when running the windows host and not when running in
-    /// the fabric
-    /// </summary>
-    class AzureMessageQueueCreator : ICreateQueues
+    class AzureMessageQueueCreator
     {
         public AzureMessageQueueCreator(IQueueServiceClientProvider queueServiceClientProviderProvider, QueueAddressGenerator addressGenerator)
         {
@@ -21,9 +17,9 @@
             this.addressGenerator = addressGenerator;
         }
 
-        public Task CreateQueueIfNecessary(QueueBindings queueBindings, string identity)
+        public Task CreateQueueIfNecessary(string[] sendingAddresses, string[] receivingAddresses)
         {
-            var addresses = queueBindings.ReceivingAddresses.Union(queueBindings.SendingAddresses);
+            var addresses = receivingAddresses.Union(sendingAddresses);
             return Task.WhenAll(addresses.Select(CreateQueue));
         }
 
