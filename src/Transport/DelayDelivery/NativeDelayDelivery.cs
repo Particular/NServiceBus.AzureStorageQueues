@@ -1,4 +1,6 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+﻿using System.Collections.Immutable;
+
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
@@ -18,7 +20,7 @@
             ICloudTableClientProvider cloudTableClientProviderProvider,
             IBlobServiceClientProvider blobServiceClientProviderProvider,
             string delayedMessagesTableName,
-            string errorQueueAddress,
+            ImmutableDictionary<string, string> errorQueueAddresses,
             TransportTransactionMode transactionMode,
             TimeSpan maximumWaitTime,
             TimeSpan peekInterval,
@@ -27,7 +29,7 @@
             this.delayedMessagesTableName = delayedMessagesTableName;
             cloudTableClient = cloudTableClientProviderProvider.Client;
             blobServiceClient = blobServiceClientProviderProvider.Client;
-            this.errorQueueAddress = errorQueueAddress;
+            this.errorQueueAddresses = errorQueueAddresses;
             isAtMostOnce = transactionMode == TransportTransactionMode.None;
             this.maximumWaitTime = maximumWaitTime;
             this.peekInterval = peekInterval;
@@ -42,7 +44,7 @@
             await Table.CreateIfNotExistsAsync().ConfigureAwait(false);
 
             nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-            poller = new DelayedMessagesPoller(Table, blobServiceClient, errorQueueAddress, isAtMostOnce, dispatcherFactory(), new BackoffStrategy(peekInterval, maximumWaitTime));
+            poller = new DelayedMessagesPoller(Table, blobServiceClient, errorQueueAddresses, isAtMostOnce, dispatcherFactory(), new BackoffStrategy(peekInterval, maximumWaitTime));
             poller.Start(nativeDelayedMessagesCancellationSource.Token);
         }
 
@@ -133,7 +135,7 @@
         DelayedMessagesPoller poller;
         CancellationTokenSource nativeDelayedMessagesCancellationSource;
         readonly BlobServiceClient blobServiceClient;
-        readonly string errorQueueAddress;
+        readonly ImmutableDictionary<string, string> errorQueueAddresses;
         readonly bool isAtMostOnce;
         readonly TimeSpan maximumWaitTime;
         readonly TimeSpan peekInterval;

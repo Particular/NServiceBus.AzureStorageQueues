@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Immutable;
+using System.Reflection;
 using Azure.Storage.Queues.Models;
 using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
 using NServiceBus.MessageInterfaces;
@@ -21,8 +22,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        internal AzureStorageQueueInfrastructure(
-            HostSettings hostSettings,
+        internal AzureStorageQueueInfrastructure(HostSettings hostSettings,
             TransportTransactionMode transportTransactionMode,
             TimeSpan messageInvisibleTime,
             TimeSpan peekInterval,
@@ -36,7 +36,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
             IBlobServiceClientProvider blobServiceClientProvider,
             ICloudTableClientProvider cloudTableClientProvider,
             SerializationDefinition messageWrapperSerializationDefinition,
-            Func<QueueMessage, MessageWrapper> messageUnwrapper)
+            Func<QueueMessage, MessageWrapper> messageUnwrapper,
+            ReceiveSettings[] receiveSettings)
         {
             this.messageInvisibleTime = messageInvisibleTime;
             this.peekInterval = peekInterval;
@@ -47,6 +48,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.queueServiceClientProvider = queueServiceClientProvider;
             this.messageWrapperSerializationDefinition = messageWrapperSerializationDefinition;
             this.messageUnwrapper = messageUnwrapper;
+            this.receiveSettings = receiveSettings;
 
             var userDefinedNativeDelayedDeliveryTableName = true;
             if (enableNativeDelayedDelivery)
@@ -61,7 +63,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     cloudTableClientProvider,
                     blobServiceClientProvider,
                     delayedDeliveryTableName,
-                    settings.ErrorQueueAddress(),
+                    receiveSettings.ToImmutableDictionary(settings => settings.ReceiveAddress, settings => settings.ErrorQueue),
                     transportTransactionMode,
                     this.maximumWaitTimeWhenIdle,
                     peekInterval,
@@ -258,6 +260,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         private readonly IQueueServiceClientProvider queueServiceClientProvider;
         private readonly SerializationDefinition messageWrapperSerializationDefinition;
         private readonly Func<QueueMessage, MessageWrapper> messageUnwrapper;
+        private readonly ReceiveSettings[] receiveSettings;
         readonly TimeSpan maximumWaitTimeWhenIdle;
         private readonly int? receiverBatchSize;
         private readonly int? degreeOfReceiveParallelism;

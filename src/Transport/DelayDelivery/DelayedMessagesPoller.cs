@@ -1,4 +1,6 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+﻿using System.Collections.Immutable;
+
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
@@ -22,15 +24,15 @@
         readonly Dispatcher dispatcher;
         readonly BackoffStrategy backoffStrategy;
         readonly bool isAtMostOnce;
-        readonly string errorQueue;
+        readonly ImmutableDictionary<string, string> errorQueueAddresses;
 
         CloudTable delayedDeliveryTable;
         LockManager lockManager;
         Task delayedMessagesPollerTask;
 
-        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, string errorQueue, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
+        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, ImmutableDictionary<string, string> errorQueueAddresses, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
-            this.errorQueue = errorQueue;
+            this.errorQueueAddresses = errorQueueAddresses;
             this.isAtMostOnce = isAtMostOnce;
             this.delayedDeliveryTable = delayedDeliveryTable;
             this.blobServiceClient = blobServiceClient;
@@ -242,6 +244,7 @@
 
         UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
+            var errorQueue = errorQueueAddresses[operation.Destination];
             //TODO does this need to set the FailedQ header too?
             return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
         }

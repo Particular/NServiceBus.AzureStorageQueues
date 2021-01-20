@@ -87,7 +87,8 @@ namespace NServiceBus
                 blobServiceClientProvider,
                 cloudTableClientProvider,
                 MessageWrapperSerializationDefinition,
-                MessageUnwrapper);
+                MessageUnwrapper,
+                receivers);
 
             return Task.FromResult<TransportInfrastructure>(infrastructure);
         }
