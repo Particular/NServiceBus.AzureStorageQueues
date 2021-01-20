@@ -1,9 +1,8 @@
-﻿using System.Collections.Immutable;
-
-namespace NServiceBus.Transport.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
@@ -15,21 +14,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class DelayedMessagesPoller
     {
-        const int DelayedMessagesProcessedAtOnce = 50;
-        static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
-        static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
-        static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
-
-        readonly BlobServiceClient blobServiceClient;
-        readonly Dispatcher dispatcher;
-        readonly BackoffStrategy backoffStrategy;
-        readonly bool isAtMostOnce;
-        readonly ImmutableDictionary<string, string> errorQueueAddresses;
-
-        CloudTable delayedDeliveryTable;
-        LockManager lockManager;
-        Task delayedMessagesPollerTask;
-
         public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, ImmutableDictionary<string, string> errorQueueAddresses, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
             this.errorQueueAddresses = errorQueueAddresses;
@@ -248,5 +232,20 @@ namespace NServiceBus.Transport.AzureStorageQueues
             //TODO does this need to set the FailedQ header too?
             return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
         }
+
+        const int DelayedMessagesProcessedAtOnce = 50;
+        static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
+        static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
+        static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
+
+        readonly BlobServiceClient blobServiceClient;
+        readonly Dispatcher dispatcher;
+        readonly BackoffStrategy backoffStrategy;
+        readonly bool isAtMostOnce;
+        readonly ImmutableDictionary<string, string> errorQueueAddresses;
+
+        CloudTable delayedDeliveryTable;
+        LockManager lockManager;
+        Task delayedMessagesPollerTask;
     }
 }
