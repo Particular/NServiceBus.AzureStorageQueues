@@ -242,6 +242,7 @@
 
         UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
+            //TODO does this need to set the FailedQ header too?
             return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
         }
     }
