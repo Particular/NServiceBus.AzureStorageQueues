@@ -1,6 +1,7 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+﻿using NServiceBus.AzureStorageQueues;
+
+namespace NServiceBus.Transport.AzureStorageQueues
 {
-    using NServiceBus.AzureStorageQueues;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
@@ -8,14 +9,13 @@
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-    using NServiceBus.Extensibility;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Queues;
-    using NServiceBus.Logging;
-    using NServiceBus.Transport;
-    using NServiceBus.Unicast.Queuing;
+    using Logging;
+    using Transport;
+    using Unicast.Queuing;
 
-    class Dispatcher : IDispatchMessages
+    class Dispatcher : IMessageDispatcher
     {
         public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDelivery nativeDelayDelivery)
         {
@@ -25,7 +25,7 @@
             this.nativeDelayDelivery = nativeDelayDelivery;
         }
 
-        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
+        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction)
         {
             if (outgoingMessages.MulticastTransportOperations.Any())
             {
@@ -73,27 +73,26 @@
                 throw new QueueNotFoundException(queueAddress.ToString(), $"Destination queue '{queueAddress}' does not exist. This queue may have to be created manually.", null);
             }
 
-            var toBeReceived = operation.GetTimeToBeReceived();
-            var timeToBeReceived = toBeReceived.HasValue && toBeReceived.Value < TimeSpan.MaxValue ? toBeReceived : null;
-
-            if (timeToBeReceived != null && timeToBeReceived.Value == TimeSpan.Zero)
-            {
-                var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
-                logger.WarnFormat("TimeToBeReceived is set to zero for message of type '{0}'. Cannot send operation.", messageType);
-                return;
-            }
-
-            // user explicitly specified TimeToBeReceived that is not TimeSpan.MaxValue - fail
-            if (timeToBeReceived != null && timeToBeReceived.Value > CloudQueueMessageMaxTimeToLive && timeToBeReceived != TimeSpan.MaxValue)
-            {
-                var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
-                throw new InvalidOperationException($"TimeToBeReceived is set to more than 30 days for message type '{messageType}'.");
-            }
+            var toBeReceived = operation.Properties.DiscardIfNotReceivedBefore;
+            var timeToBeReceived = toBeReceived != null && toBeReceived.MaxTime < TimeSpan.MaxValue ? toBeReceived.MaxTime : (TimeSpan?)null;
 
             if (timeToBeReceived.HasValue)
             {
-                var seconds = Convert.ToInt64(Math.Ceiling(timeToBeReceived.Value.TotalSeconds));
+                if (timeToBeReceived.Value == TimeSpan.Zero)
+                {
+                    var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
+                    logger.WarnFormat("TimeToBeReceived is set to zero for message of type '{0}'. Cannot send operation.", messageType);
+                    return;
+                }
 
+                // user explicitly specified TimeToBeReceived that is not TimeSpan.MaxValue - fail
+                if (timeToBeReceived != null && timeToBeReceived.Value > CloudQueueMessageMaxTimeToLive && timeToBeReceived.Value != TimeSpan.MaxValue)
+                {
+                    var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
+                    throw new InvalidOperationException($"TimeToBeReceived is set to more than 30 days for message type '{messageType}'.");
+                }
+
+                var seconds = Convert.ToInt64(Math.Ceiling(timeToBeReceived.Value.TotalSeconds));
                 if (seconds <= 0)
                 {
                     throw new Exception($"Message cannot be sent with a provided delay of {timeToBeReceived.Value.TotalMilliseconds} ms.");
