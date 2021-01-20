@@ -234,6 +234,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public override Task Start()
         {
+            //TODO: Should this be started for SendOnly endpoints?
             if (nativeDelayedDelivery != null)
             {
                 return nativeDelayedDelivery.Start();
@@ -244,6 +245,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public override Task Stop()
         {
+            //TODO: Should this be stopped for SendOnly endpoints?
             if (nativeDelayedDelivery != null)
             {
                 return nativeDelayedDelivery.Stop();
