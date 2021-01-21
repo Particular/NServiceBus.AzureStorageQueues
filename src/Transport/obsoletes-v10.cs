@@ -159,6 +159,30 @@ namespace NServiceBus
         {
             throw new NotImplementedException();
         }
+
+        /// <summary>
+        /// Provides access to configure cross account routing.
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance's properties",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static AccountRoutingSettings AccountRouting(this TransportExtensions<AzureStorageQueueTransport> transportExtensions)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Set default account alias.
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the TransportDefinition instance's properties",
+            TreatAsErrorFromVersion = "10.0",
+            RemoveInVersion = "11.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> DefaultAccountAlias(this TransportExtensions<AzureStorageQueueTransport> transportExtensions, string alias)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     /// <summary>Configures native delayed delivery.</summary>

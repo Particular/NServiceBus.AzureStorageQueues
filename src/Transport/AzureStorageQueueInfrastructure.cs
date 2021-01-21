@@ -37,7 +37,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
             ICloudTableClientProvider cloudTableClientProvider,
             SerializationDefinition messageWrapperSerializationDefinition,
             Func<QueueMessage, MessageWrapper> messageUnwrapper,
-            ReceiveSettings[] receiveSettings)
+            ReceiveSettings[] receiveSettings,
+            AzureStorageAddressingSettings azureStorageAddressing)
         {
             this.messageInvisibleTime = messageInvisibleTime;
             this.peekInterval = peekInterval;
@@ -202,24 +203,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             var addressing = GetAddressing(settings, queueServiceClientProvider);
             return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery);
-        }
-
-        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, IQueueServiceClientProvider queueServiceClientProviderProvider)
-        {
-            var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
-
-            if (settings.TryGet<AccountConfigurations>(out var accounts) == false)
-            {
-                accounts = new AccountConfigurations();
-            }
-
-            const string defaultAccountAlias = "";
-
-            addressing.SetAddressGenerator(addressGenerator);
-            addressing.RegisterMapping(accounts.defaultAlias ?? defaultAccountAlias, accounts.mappings);
-            addressing.Add(new AccountInfo(defaultAccountAlias, queueServiceClientProviderProvider.Client), false);
-
-            return addressing;
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()

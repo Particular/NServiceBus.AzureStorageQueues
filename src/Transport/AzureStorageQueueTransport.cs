@@ -77,6 +77,10 @@ namespace NServiceBus
             await queueCreator.CreateQueueIfNecessary(sendingAddresses, receivers.Select(settings => settings.ReceiveAddress).ToArray())
                 .ConfigureAwait(false);
 
+            var azureStorageAddressing = new AzureStorageAddressingSettings(queueAddressGenerator);
+            azureStorageAddressing.RegisterMapping(RoutingSettings.DefaultAccountAlias ?? "", RoutingSettings.mappings);
+            azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
+
             var infrastructure = new AzureStorageQueueInfrastructure(
                 hostSettings,
                 TransportTransactionMode,
@@ -93,7 +97,8 @@ namespace NServiceBus
                 cloudTableClientProvider,
                 MessageWrapperSerializationDefinition,
                 MessageUnwrapper,
-                receivers);
+                receivers,
+                azureStorageAddressing);
 
             return infrastructure;
         }
@@ -270,6 +275,12 @@ namespace NServiceBus
                 delayedDeliveryTableName = value;
             }
         }
+
+        /// <summary>
+        /// Define routing between Azure Storage accounts and map them to a logical alias instead of using bare
+        /// connection strings.
+        /// </summary>
+        public AccountRoutingSettings RoutingSettings { get; } = new AccountRoutingSettings();
 
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;

@@ -7,6 +7,11 @@
 
     class AzureStorageAddressingSettings
     {
+        public AzureStorageAddressingSettings(QueueAddressGenerator addressGenerator)
+        {
+            this.addressGenerator = addressGenerator;
+        }
+
         internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, AccountInfo> aliasToConnectionStringMap)
         {
             this.defaultConnectionStringAlias = defaultConnectionStringAlias;
@@ -34,11 +39,6 @@
 
                 Add(accountInfo);
             }
-        }
-
-        internal void SetAddressGenerator(QueueAddressGenerator addressGenerator)
-        {
-            this.addressGenerator = addressGenerator;
         }
 
         /// <summary>
