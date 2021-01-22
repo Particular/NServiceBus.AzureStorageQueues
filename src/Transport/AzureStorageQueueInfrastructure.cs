@@ -68,7 +68,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     transportTransactionMode,
                     this.maximumWaitTimeWhenIdle,
                     peekInterval,
-                    BuildDispatcher);
+                    receiveSettings.Length==0);
 
                 supportedDeliveryConstraints.Add(typeof(DelayDeliveryWith));
                 supportedDeliveryConstraints.Add(typeof(DoNotDeliverBefore));

@@ -11,15 +11,14 @@
 
     class NativeDelayDelivery
     {
-        public NativeDelayDelivery(
-            ICloudTableClientProvider cloudTableClientProviderProvider,
+        public NativeDelayDelivery(ICloudTableClientProvider cloudTableClientProviderProvider,
             IBlobServiceClientProvider blobServiceClientProviderProvider,
             string delayedMessagesTableName,
             ImmutableDictionary<string, string> errorQueueAddresses,
             TransportTransactionMode transactionMode,
             TimeSpan maximumWaitTime,
             TimeSpan peekInterval,
-            Func<Dispatcher> dispatcherFactory)
+            bool isSendOnly)
         {
             this.delayedMessagesTableName = delayedMessagesTableName;
             cloudTableClient = cloudTableClientProviderProvider.Client;
@@ -28,19 +27,23 @@
             isAtMostOnce = transactionMode == TransportTransactionMode.None;
             this.maximumWaitTime = maximumWaitTime;
             this.peekInterval = peekInterval;
-            this.dispatcherFactory = dispatcherFactory;
+            this.isSendOnly = isSendOnly;
         }
 
-        public async Task Start()
+        public async Task Start(Dispatcher dispatcher)
         {
             Logger.Debug("Starting delayed delivery poller");
 
             Table = cloudTableClient.GetTableReference(delayedMessagesTableName);
             await Table.CreateIfNotExistsAsync().ConfigureAwait(false);
 
-            nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
-            poller = new DelayedMessagesPoller(Table, blobServiceClient, errorQueueAddresses, isAtMostOnce, dispatcherFactory(), new BackoffStrategy(peekInterval, maximumWaitTime));
-            poller.Start(nativeDelayedMessagesCancellationSource.Token);
+            if (!isSendOnly)
+            {
+                nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
+                poller = new DelayedMessagesPoller(Table, blobServiceClient, errorQueueAddresses, isAtMostOnce, dispatcher,
+                    new BackoffStrategy(peekInterval, maximumWaitTime));
+                poller.Start(nativeDelayedMessagesCancellationSource.Token);
+            }
         }
 
         public Task Stop()
@@ -112,8 +115,8 @@
         readonly bool isAtMostOnce;
         readonly TimeSpan maximumWaitTime;
         readonly TimeSpan peekInterval;
-        readonly Func<Dispatcher> dispatcherFactory;
         readonly CloudTableClient cloudTableClient;
         readonly string delayedMessagesTableName;
+        private bool isSendOnly;
     }
 }
