@@ -17,12 +17,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class Dispatcher : IMessageDispatcher
     {
-        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDelivery nativeDelayDelivery)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence)
         {
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
             this.serializer = serializer;
-            this.nativeDelayDelivery = nativeDelayDelivery;
+            this.nativeDelayDeliveryPersistence = nativeDelayDeliveryPersistence;
         }
 
         public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction)
@@ -48,14 +48,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 logger.DebugFormat("Sending message (ID: '{0}') to {1}", operation.Message.MessageId, operation.Destination);
             }
 
-            if (nativeDelayDelivery != null)
+            if (nativeDelayDeliveryPersistence.IsDelayedMessage(operation, out var dueDate))
             {
-                var dispatchDecision = await nativeDelayDelivery.ShouldDispatch(operation, cancellationToken).ConfigureAwait(false);
-
-                if (dispatchDecision == false)
-                {
-                    return;
-                }
+                await nativeDelayDeliveryPersistence.ScheduleAt(operation, dueDate, cancellationToken);
+                return;
             }
 
             // The destination might be in a queue@destination format
@@ -151,7 +147,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         }
 
         readonly MessageWrapperSerializer serializer;
-        readonly NativeDelayDelivery nativeDelayDelivery;
+        readonly NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence;
 
         readonly QueueAddressGenerator addressGenerator;
         readonly AzureStorageAddressingSettings addressing;
