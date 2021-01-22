@@ -1,6 +1,11 @@
+using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Azure.Storage.Queues.Models;
+using NServiceBus.MessageInterfaces;
+using NServiceBus.Settings;
 
 namespace NServiceBus
 {
@@ -64,6 +69,19 @@ namespace NServiceBus
             cloudTableClientProvider = new UserCloudTableClientProvider(cloudTableClient);
         }
 
+        static string GenerateDelayedDeliveryTableName(string endpointName)
+        {
+            byte[] hashedName;
+            using (var sha1 = new SHA1Managed())
+            {
+                sha1.Initialize();
+                hashedName = sha1.ComputeHash(Encoding.UTF8.GetBytes(endpointName));
+            }
+
+            var hashName = BitConverter.ToString(hashedName).Replace("-", string.Empty);
+            return "delays" + hashName.ToLower();
+        }
+
         /// <inheritdoc cref="Initialize"/>
         public override async Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses)
         {
@@ -81,13 +99,44 @@ namespace NServiceBus
             azureStorageAddressing.RegisterMapping(RoutingSettings.DefaultAccountAlias ?? "", RoutingSettings.mappings);
             azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
 
+            CloudTable delayedMessagesStorageTable = null;
+            var nativeDelayedDeliveryPersistence = NativeDelayDeliveryPersistence.Disabled();
+            if (SupportsDelayedDelivery)
+            {
+                delayedMessagesStorageTable = await EnsureNativeDelayedDeliveryTable(
+                    hostSettings.Name,
+                    DelayedDeliverySettings.DelayedDeliveryTableName,
+                    cloudTableClientProvider.Client);
+
+                nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTable);
+            }
+
+            var serializer = BuildSerializer(MessageWrapperSerializationDefinition, hostSettings.CoreSettings);
+            var dispatcher = new Dispatcher(queueAddressGenerator, azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence);
+
+            var isSendOnly = receivers.Length == 0;
+            var nativeDelayedDeliveryProcessor = NativeDelayedDeliveryProcessor.Disabled();
+            if (SupportsDelayedDelivery && !isSendOnly)
+            {
+                nativeDelayedDeliveryProcessor = new NativeDelayedDeliveryProcessor(
+                        dispatcher,
+                        delayedMessagesStorageTable,
+                        blobServiceClientProvider.Client,
+                        receivers.ToImmutableDictionary(settings => settings.ReceiveAddress, settings => settings.ErrorQueue),
+                        TransportTransactionMode,
+                        new BackoffStrategy(PeekInterval, MaximumWaitTimeWhenIdle),
+                        DelayedDeliverySettings.DelayedDeliveryPoisonQueue);
+                nativeDelayedDeliveryProcessor.Start();
+            }
+
             var infrastructure = new AzureStorageQueueInfrastructure(
                 hostSettings,
                 TransportTransactionMode,
                 MessageInvisibleTime,
                 PeekInterval,
                 MaximumWaitTimeWhenIdle,
-                SupportsDelayedDelivery,
+                nativeDelayedDeliveryPersistence,
+                nativeDelayedDeliveryProcessor,
                 ReceiverBatchSize,
                 DegreeOfReceiveParallelism,
                 queueAddressGenerator,
@@ -98,9 +147,56 @@ namespace NServiceBus
                 MessageWrapperSerializationDefinition,
                 MessageUnwrapper,
                 receivers,
+                dispatcher,
                 azureStorageAddressing);
 
             return infrastructure;
+        }
+
+        static async Task<CloudTable> EnsureNativeDelayedDeliveryTable(string endpointName, string delayedDeliveryTableName, CloudTableClient cloudTableClient)
+        {
+            if (string.IsNullOrEmpty(delayedDeliveryTableName))
+            {
+                delayedDeliveryTableName = GenerateDelayedDeliveryTableName(endpointName);
+            }
+
+            var delayedMessagesStorageTable = cloudTableClient.GetTableReference(delayedDeliveryTableName);
+            await delayedMessagesStorageTable.CreateIfNotExistsAsync().ConfigureAwait(false);
+
+            return delayedMessagesStorageTable;
+        }
+
+        static MessageWrapperSerializer BuildSerializer(SerializationDefinition userWrapperSerializationDefinition, ReadOnlySettings settings)
+        {
+            return userWrapperSerializationDefinition != null
+                ? new MessageWrapperSerializer(userWrapperSerializationDefinition.Configure(settings).Invoke(MessageWrapperSerializer.GetMapper()))
+                : new MessageWrapperSerializer(GetMainSerializerHack(MessageWrapperSerializer.GetMapper(), settings));
+        }
+
+        static IMessageSerializer GetMainSerializerHack(IMessageMapper mapper, ReadOnlySettings settings)
+        {
+            if (!settings.TryGet<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey, out var serializerSettingsTuple))
+            {
+                throw new Exception("No serializer defined. If the transport is used in combination with NServiceBus, " +
+                                    "use 'endpointConfiguration.UseSerialization<T>();' to select a serializer. " +
+                                    "If you are upgrading, install the `NServiceBus.Newtonsoft.Json` NuGet package " +
+                                    "and consult the upgrade guide for further information. If the transport is used in isolation, " +
+                                    "set a serializer definition in an empty SettingsHolder instance and invoke ValidateNServiceBusSettings() " +
+                                    "before starting the transport.");
+            }
+
+            var (definition, serializerSettings) = serializerSettingsTuple;
+
+            // serializerSettings.Merge(settings);
+            var merge = typeof(SettingsHolder).GetMethod("Merge", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            merge.Invoke(serializerSettings, new object[]
+            {
+                settings
+            });
+
+            var serializerFactory = definition.Configure(serializerSettings);
+            var serializer = serializerFactory(mapper);
+            return serializer;
         }
 
         /// <inheritdoc cref="ToTransportAddress"/>
@@ -268,6 +364,7 @@ namespace NServiceBus
         /// </summary>
         public AccountRoutingSettings RoutingSettings { get; } = new AccountRoutingSettings();
 
+        const string SerializerSettingsKey = "MainSerializer";
         private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
         private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
         private TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
