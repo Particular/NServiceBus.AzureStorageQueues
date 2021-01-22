@@ -91,7 +91,7 @@ namespace NServiceBus
                 ReceiverBatchSize,
                 DegreeOfReceiveParallelism,
                 queueAddressGenerator,
-                DelayedDeliveryTableName,
+                DelayedDeliverySettings,
                 queueServiceClientProvider,
                 blobServiceClientProvider,
                 cloudTableClientProvider,
@@ -258,23 +258,9 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Override the default table name used for storing delayed messages.
+        /// Provides options to define settings for the transport DelayedDelivery feature.
         /// </summary>
-        public string DelayedDeliveryTableName
-        {
-            get => delayedDeliveryTableName;
-            set
-            {
-                Guard.AgainstNullAndEmpty(nameof(DelayedDeliveryTableName), value);
-
-                if (delayedDeliveryTableNameRegex.IsMatch(DelayedDeliveryTableName) == false)
-                {
-                    throw new ArgumentException($"{nameof(DelayedDeliveryTableName)} must match the following regular expression '{delayedDeliveryTableNameRegex}'");
-                }
-
-                delayedDeliveryTableName = value;
-            }
-        }
+        public NativeDelayedDeliverySettings DelayedDeliverySettings { get; } = new NativeDelayedDeliverySettings();
 
         /// <summary>
         /// Define routing between Azure Storage accounts and map them to a logical alias instead of using bare
@@ -294,8 +280,6 @@ namespace NServiceBus
         private int? receiverBatchSize = DefaultConfigurationValues.DefaultBatchSize;
         private int? degreeOfReceiveParallelism;
         private SerializationDefinition messageWrapperSerializationDefinition;
-        private string delayedDeliveryTableName;
         private Func<QueueMessage, MessageWrapper> messageUnwrapper;
-        static readonly Regex delayedDeliveryTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
     }
 }

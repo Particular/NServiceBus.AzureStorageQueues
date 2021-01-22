@@ -31,7 +31,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             int? receiverBatchSize,
             int? degreeOfReceiveParallelism,
             QueueAddressGenerator addressGenerator,
-            string delayedDeliveryTableName,
+            NativeDelayedDeliverySettings delayedDeliverySettings,
             IQueueServiceClientProvider queueServiceClientProvider,
             IBlobServiceClientProvider blobServiceClientProvider,
             ICloudTableClientProvider cloudTableClientProvider,
@@ -43,6 +43,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.messageInvisibleTime = messageInvisibleTime;
             this.peekInterval = peekInterval;
             this.maximumWaitTimeWhenIdle = maximumWaitTimeWhenIdle;
+            this.enableNativeDelayedDelivery = enableNativeDelayedDelivery;
             this.receiverBatchSize = receiverBatchSize;
             this.degreeOfReceiveParallelism = degreeOfReceiveParallelism;
             this.addressGenerator = addressGenerator;
@@ -50,7 +51,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.messageWrapperSerializationDefinition = messageWrapperSerializationDefinition;
             this.messageUnwrapper = messageUnwrapper;
             this.receiveSettings = receiveSettings;
+            this.azureStorageAddressing = azureStorageAddressing;
 
+            var delayedDeliveryTableName = delayedDeliverySettings.DelayedDeliveryTableName;
             var userDefinedNativeDelayedDeliveryTableName = true;
             if (enableNativeDelayedDelivery)
             {
@@ -112,10 +115,19 @@ namespace NServiceBus.Transport.AzureStorageQueues
             });
         }
 
-        public override Task ValidateNServiceBusSettings(ReadOnlySettings settings)
+        public override async Task ValidateNServiceBusSettings(ReadOnlySettings settings)
         {
             serializer = BuildSerializer(messageWrapperSerializationDefinition, settings);
-            return base.ValidateNServiceBusSettings(settings);
+
+            var dispatcher = new Dispatcher(addressGenerator, azureStorageAddressing, serializer, nativeDelayedDelivery);
+            Dispatcher = dispatcher;
+
+            if (enableNativeDelayedDelivery)
+            {
+                await nativeDelayedDelivery.Start(dispatcher).ConfigureAwait(false);
+            }
+
+            await base.ValidateNServiceBusSettings(settings).ConfigureAwait(false);
         }
 
         static MessageWrapperSerializer BuildSerializer(SerializationDefinition userWrapperSerializationDefinition, ReadOnlySettings settings)
@@ -150,8 +162,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             var serializer = serializerFactory(mapper);
             return serializer;
         }
-
-        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
 
         static string GenerateDelayedDeliveryTableName(string endpointName)
         {
@@ -199,12 +209,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return new TransportSendInfrastructure(BuildDispatcher, () => Task.FromResult(StartupCheckResult.Success));
         }
 
-        Dispatcher BuildDispatcher()
-        {
-            var addressing = GetAddressing(settings, queueServiceClientProvider);
-            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery);
-        }
-
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
         {
             throw new NotSupportedException("Azure Storage Queue transport doesn't support native pub sub");
@@ -215,20 +219,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return instance;
         }
 
-        public override Task Start()
+        public override Task DisposeAsync()
         {
-            //TODO: Should this be started for SendOnly endpoints?
-            if (nativeDelayedDelivery != null)
-            {
-                return nativeDelayedDelivery.Start();
-            }
-
-            return Task.CompletedTask;
-        }
-
-        public override Task Stop()
-        {
-            //TODO: Should this be stopped for SendOnly endpoints?
             if (nativeDelayedDelivery != null)
             {
                 return nativeDelayedDelivery.Stop();
@@ -247,11 +239,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
         private readonly Func<QueueMessage, MessageWrapper> messageUnwrapper;
         private readonly ReceiveSettings[] receiveSettings;
         readonly TimeSpan maximumWaitTimeWhenIdle;
+        private bool enableNativeDelayedDelivery;
         private readonly int? receiverBatchSize;
         private readonly int? degreeOfReceiveParallelism;
         readonly TimeSpan peekInterval;
-
         readonly TimeSpan messageInvisibleTime;
+        private AzureStorageAddressingSettings azureStorageAddressing;
 
         static readonly ILog Logger = LogManager.GetLogger<AzureStorageQueueInfrastructure>();
     }
