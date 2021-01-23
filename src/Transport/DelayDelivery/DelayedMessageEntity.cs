@@ -1,26 +1,25 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
-{
-    using System;
-    using System.Collections.Generic;
-    using Microsoft.Azure.Cosmos.Table;
-    using Transport;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.Azure.Cosmos.Table;
 
+namespace NServiceBus.Transport.AzureStorageQueues
+{
     /// <summary>
     /// Represents a record in the native delays storage table which can be deferred message, saga timeouts, and delayed retries.
     /// </summary>
-    class DelayedMessageEntity : TableEntity
+    internal class DelayedMessageEntity : TableEntity
     {
         public string Destination { get; set; }
         public byte[] Body { get; set; }
         public string MessageId { get; set; }
         public string Headers { get; set; }
 
-        static string Serialize<T>(T value)
+        private static string Serialize<T>(T value)
         {
             return SimpleJson.SimpleJson.SerializeObject(value);
         }
 
-        static T Deserialize<T>(string value)
+        private static T Deserialize<T>(string value)
         {
             return SimpleJson.SimpleJson.DeserializeObject<T>(value);
         }
@@ -39,8 +38,8 @@
             return new UnicastTransportOperation(new OutgoingMessage(MessageId, Deserialize<Dictionary<string, string>>(Headers), Body), Destination, new OperationProperties());
         }
 
-        const string PartitionKeyScope = "yyyyMMddHH";
-        const string RowKeyScope = "yyyyMMddHHmmss";
+        private const string PartitionKeyScope = "yyyyMMddHH";
+        private const string RowKeyScope = "yyyyMMddHHmmss";
 
         public static string GetPartitionKey(DateTimeOffset dto)
         {

@@ -1,18 +1,17 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.Immutable;
-    using System.Diagnostics;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using global::Azure.Storage.Blobs;
-    using global::Azure.Storage.Blobs.Specialized;
-    using Logging;
-    using Microsoft.Azure.Cosmos.Table;
-    using Transport;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Specialized;
+using NServiceBus.Logging;
+using Microsoft.Azure.Cosmos.Table;
 
-    class DelayedMessagesPoller
+namespace NServiceBus.Transport.AzureStorageQueues
+{
+    internal class DelayedMessagesPoller
     {
         public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, ImmutableDictionary<string, string> errorQueueAddresses, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
@@ -43,7 +42,7 @@
             return delayedMessagesPollerTask;
         }
 
-        async Task Poll(CancellationToken cancellationToken)
+        private async Task Poll(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -73,7 +72,7 @@
             }
         }
 
-        async Task InnerPoll(CancellationToken cancellationToken)
+        private async Task InnerPoll(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -105,7 +104,7 @@
             }
         }
 
-        Task BackoffOnError(CancellationToken cancellationToken)
+        private Task BackoffOnError(CancellationToken cancellationToken)
         {
             if (Logger.IsDebugEnabled)
             {
@@ -116,7 +115,7 @@
             return backoffStrategy.OnBatch(0, cancellationToken);
         }
 
-        async Task SpinOnce(CancellationToken cancellationToken)
+        private async Task SpinOnce(CancellationToken cancellationToken)
         {
             var now = DateTimeOffset.UtcNow;
             if (cancellationToken.IsCancellationRequested)
@@ -178,7 +177,7 @@
             await backoffStrategy.OnBatch(delayedMessagesCount, cancellationToken).ConfigureAwait(false);
         }
 
-        async Task DeleteAndDispatch(CancellationToken cancellationToken, DelayedMessageEntity delayedMessage)
+        private async Task DeleteAndDispatch(CancellationToken cancellationToken, DelayedMessageEntity delayedMessage)
         {
             try
             {
@@ -206,7 +205,7 @@
             }
         }
 
-        async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
+        private async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
         {
             if (Logger.IsDebugEnabled)
             {
@@ -226,26 +225,26 @@
             }
         }
 
-        UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
+        private UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
             var errorQueue = errorQueueAddresses[operation.Destination];
             //TODO does this need to set the FailedQ header too?
             return new UnicastTransportOperation(operation.Message, errorQueue, new OperationProperties(), operation.RequiredDispatchConsistency);
         }
 
-        const int DelayedMessagesProcessedAtOnce = 50;
-        static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
-        static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
-        static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
+        private const int DelayedMessagesProcessedAtOnce = 50;
+        private static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
+        private static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
+        private static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
 
-        readonly BlobServiceClient blobServiceClient;
-        readonly Dispatcher dispatcher;
-        readonly BackoffStrategy backoffStrategy;
-        readonly bool isAtMostOnce;
-        readonly ImmutableDictionary<string, string> errorQueueAddresses;
+        private readonly BlobServiceClient blobServiceClient;
+        private readonly Dispatcher dispatcher;
+        private readonly BackoffStrategy backoffStrategy;
+        private readonly bool isAtMostOnce;
+        private readonly ImmutableDictionary<string, string> errorQueueAddresses;
 
-        CloudTable delayedDeliveryTable;
-        LockManager lockManager;
-        Task delayedMessagesPollerTask;
+        private CloudTable delayedDeliveryTable;
+        private LockManager lockManager;
+        private Task delayedMessagesPollerTask;
     }
 }

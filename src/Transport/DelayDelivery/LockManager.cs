@@ -1,22 +1,22 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
-{
-    using System;
-    using System.Net;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using global::Azure;
-    using global::Azure.Storage.Blobs;
-    using global::Azure.Storage.Blobs.Models;
-    using global::Azure.Storage.Blobs.Specialized;
+﻿using System;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
 
+namespace NServiceBus.Transport.AzureStorageQueues
+{
     // Provides a container lease based lock manager.
-    class LockManager
+    internal class LockManager
     {
-        TimeSpan span;
-        BlobContainerClient containerClient;
-        BlobLeaseClient blobLeaseClient;
-        bool created;
-        BlobLease lease;
+        private TimeSpan span;
+        private BlobContainerClient containerClient;
+        private BlobLeaseClient blobLeaseClient;
+        private bool created;
+        private BlobLease lease;
 
         public LockManager(BlobContainerClient containerClient, BlobLeaseClient blobLeaseClient, TimeSpan span)
         {
@@ -75,7 +75,7 @@
             }
         }
 
-        async Task EnsureContainerExists(CancellationToken cancellationToken)
+        private async Task EnsureContainerExists(CancellationToken cancellationToken)
         {
             if (created == false)
             {
