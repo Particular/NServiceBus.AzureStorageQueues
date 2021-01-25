@@ -1,8 +1,8 @@
-using System;
-using System.Text.RegularExpressions;
-
 namespace NServiceBus
 {
+    using System;
+    using System.Text.RegularExpressions;
+
     /// <summary>
     /// Provides options to define settings for the transport DelayedDelivery feature.
     /// </summary>
@@ -39,7 +39,7 @@ namespace NServiceBus
             }
         }
 
-        private string delayedDeliveryTableName;
+        string delayedDeliveryTableName;
         static readonly Regex delayedDeliveryTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
     }
 }

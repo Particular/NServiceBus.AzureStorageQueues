@@ -2,7 +2,6 @@
 {
     using System.Collections.ObjectModel;
     using System.Threading.Tasks;
-    using Logging;
     using Transport;
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
@@ -57,8 +56,6 @@
             return nativeDelayedDeliveryProcessor.Stop();
         }
 
-        private readonly NativeDelayedDeliveryProcessor nativeDelayedDeliveryProcessor;
-
-        static readonly ILog Logger = LogManager.GetLogger<AzureStorageQueueInfrastructure>();
+        readonly NativeDelayedDeliveryProcessor nativeDelayedDeliveryProcessor;
     }
 }

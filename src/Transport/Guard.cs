@@ -1,8 +1,6 @@
 ﻿namespace NServiceBus
 {
     using System;
-    using NServiceBus.Serialization;
-    using NServiceBus.Settings;
 
     static class Guard
     {

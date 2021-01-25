@@ -7,7 +7,6 @@
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using Logging;
-    using Transport;
 
     class AzureMessageQueueCreator
     {

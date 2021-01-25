@@ -1,13 +1,13 @@
-﻿using System.Collections.Immutable;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure.Storage.Blobs;
-using Microsoft.Azure.Cosmos.Table;
-using NServiceBus.Logging;
-using NServiceBus.Transport.AzureStorageQueues;
-
-namespace NServiceBus
+﻿namespace NServiceBus
 {
+    using System.Collections.Immutable;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using global::Azure.Storage.Blobs;
+    using Microsoft.Azure.Cosmos.Table;
+    using NServiceBus.Logging;
+    using NServiceBus.Transport.AzureStorageQueues;
+
     class NativeDelayedDeliveryProcessor
     {
         public static NativeDelayedDeliveryProcessor Disabled()
@@ -15,7 +15,7 @@ namespace NServiceBus
             return new NativeDelayedDeliveryProcessor();
         }
 
-        private NativeDelayedDeliveryProcessor()
+        NativeDelayedDeliveryProcessor()
         {
             enabled = false;
         }
@@ -69,17 +69,17 @@ namespace NServiceBus
             return poller != null ? poller.Stop() : Task.CompletedTask;
         }
 
-        private readonly Dispatcher dispatcher;
-        private CloudTable delayedMessageStorageTable;
-        private readonly BlobServiceClient blobServiceClient;
-        private readonly ImmutableDictionary<string, string> errorQueueAddresses;
-        private readonly TransportTransactionMode transportTransactionMode;
-        private readonly BackoffStrategy backoffStrategy;
-        private readonly string userDefinedDelayedDeliveryPoisonQueue;
-        private bool enabled;
-        private CancellationTokenSource nativeDelayedMessagesCancellationSource;
+        readonly Dispatcher dispatcher;
+        CloudTable delayedMessageStorageTable;
+        readonly BlobServiceClient blobServiceClient;
+        readonly ImmutableDictionary<string, string> errorQueueAddresses;
+        readonly TransportTransactionMode transportTransactionMode;
+        readonly BackoffStrategy backoffStrategy;
+        readonly string userDefinedDelayedDeliveryPoisonQueue;
+        bool enabled;
+        CancellationTokenSource nativeDelayedMessagesCancellationSource;
 
         static readonly ILog Logger = LogManager.GetLogger<NativeDelayedDeliveryProcessor>();
-        private DelayedMessagesPoller poller;
+        DelayedMessagesPoller poller;
     }
 }

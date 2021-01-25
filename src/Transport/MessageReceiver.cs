@@ -213,11 +213,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
         Task[] messagePumpTasks;
         int maximumConcurrency;
         int? degreeOfReceiveParallelism;
-        private readonly TransportTransactionMode requiredTransactionMode;
+        readonly TransportTransactionMode requiredTransactionMode;
         int? receiveBatchSize;
         static ILog Logger = LogManager.GetLogger<MessageReceiver>();
         static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
-        private PushRuntimeSettings limitations;
+        PushRuntimeSettings limitations;
     }
 }

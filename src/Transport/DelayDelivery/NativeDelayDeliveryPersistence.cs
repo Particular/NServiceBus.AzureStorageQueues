@@ -1,10 +1,10 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos.Table;
-
-namespace NServiceBus.Transport.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Microsoft.Azure.Cosmos.Table;
+
     class NativeDelayDeliveryPersistence
     {
         public static NativeDelayDeliveryPersistence Disabled()
@@ -12,7 +12,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return new NativeDelayDeliveryPersistence();
         }
 
-        private NativeDelayDeliveryPersistence()
+        NativeDelayDeliveryPersistence()
         {
             enabled = false;
         }
@@ -81,7 +81,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return delayedMessageStorageTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), null, null, cancellationToken);
         }
 
-        private CloudTable delayedMessageStorageTable;
-        private bool enabled;
+        CloudTable delayedMessageStorageTable;
+        bool enabled;
     }
 }
