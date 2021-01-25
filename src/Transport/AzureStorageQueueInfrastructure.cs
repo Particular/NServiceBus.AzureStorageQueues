@@ -52,34 +52,6 @@
             // });
         }
 
-        public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
-        {
-            Logger.Debug("Configuring receive infrastructure");
-
-            if (!settings.TryGet<IQueueServiceClientProvider>(out var queueServiceClientProvider))
-            {
-                queueServiceClientProvider = new ConnectionStringQueueServiceClientProvider(connectionString);
-            }
-
-            return new TransportReceiveInfrastructure(
-                () =>
-                {
-                    var unwrapper = messageUnwrapper != null
-                        ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(messageUnwrapper)
-                        : new DefaultMessageEnvelopeUnwrapper(serializer);
-
-                    var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, addressGenerator)
-                    {
-                        MessageInvisibleTime = messageInvisibleTime,
-                    };
-
-                    return new MessagePump(receiver, degreeOfReceiveParallelism, receiverBatchSize, maximumWaitTimeWhenIdle, peekInterval);
-                },
-                () => new AzureMessageQueueCreator(queueServiceClientProvider, addressGenerator),
-                () => Task.FromResult(StartupCheckResult.Success)
-            );
-        }
-
         public override Task DisposeAsync()
         {
             return nativeDelayedDeliveryProcessor.Stop();

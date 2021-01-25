@@ -11,11 +11,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AtLeastOnceReceiveStrategy : ReceiveStrategy
     {
-        public AtLeastOnceReceiveStrategy(Func<MessageContext, Task> pipeline, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, CriticalError criticalError)
+        public AtLeastOnceReceiveStrategy(Func<MessageContext, Task> pipeline, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, Action<string, Exception> criticalErrorAction)
         {
             this.pipeline = pipeline;
             this.errorPipe = errorPipe;
-            this.criticalError = criticalError;
+            this.criticalErrorAction = criticalErrorAction;
         }
 
         public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message)
@@ -58,7 +58,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 }
                 catch (Exception e)
                 {
-                    criticalError.Raise($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e);
+                    criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e);
 
                     await retrieved.Nack().ConfigureAwait(false);
 
@@ -82,7 +82,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         readonly Func<MessageContext, Task> pipeline;
         readonly Func<ErrorContext, Task<ErrorHandleResult>> errorPipe;
-        readonly CriticalError criticalError;
+        readonly Action<string, Exception> criticalErrorAction;
 
         static readonly ILog Logger = LogManager.GetLogger<ReceiveStrategy>();
     }

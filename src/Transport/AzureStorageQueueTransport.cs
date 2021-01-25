@@ -3,6 +3,7 @@ namespace NServiceBus
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Collections.ObjectModel;
     using System.Linq;
     using System.Reflection;
     using System.Security.Cryptography;
@@ -126,7 +127,12 @@ namespace NServiceBus
                 nativeDelayedDeliveryProcessor.Start();
             }
 
-            var infrastructure = new AzureStorageQueueInfrastructure(dispatcher, null, nativeDelayedDeliveryProcessor);
+            var messageReceivers = receivers.Select(settings => BuildReceiver(settings, serializer, hostSettings.CriticalErrorAction)).ToList();
+
+            var infrastructure = new AzureStorageQueueInfrastructure(
+                dispatcher,
+                new ReadOnlyCollection<IMessageReceiver>(messageReceivers),
+                nativeDelayedDeliveryProcessor);
 
             return infrastructure;
         }
@@ -175,6 +181,28 @@ namespace NServiceBus
             var serializerFactory = definition.Configure(serializerSettings);
             var serializer = serializerFactory(mapper);
             return serializer;
+        }
+
+        IMessageReceiver BuildReceiver(ReceiveSettings settings, MessageWrapperSerializer serializer, Action<string, Exception> criticalErrorAction)
+        {
+            var unwrapper = MessageUnwrapper != null
+                ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
+                : new DefaultMessageEnvelopeUnwrapper(serializer);
+
+            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, queueAddressGenerator, settings.PurgeOnStartup, MessageInvisibleTime);
+
+            return new MessageReceiver(
+                settings.Id,
+                TransportTransactionMode,
+                receiver,
+                settings.PurgeOnStartup,
+                settings.ReceiveAddress,
+                settings.ErrorQueue,
+                criticalErrorAction,
+                DegreeOfReceiveParallelism,
+                ReceiverBatchSize,
+                MaximumWaitTimeWhenIdle,
+                PeekInterval);
         }
 
         /// <inheritdoc cref="ToTransportAddress"/>

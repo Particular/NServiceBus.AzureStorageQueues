@@ -8,41 +8,55 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading.Tasks;
     using Logging;
 
-    class MessagePump : IPushMessages, IDisposable
+    class MessageReceiver : IMessageReceiver
     {
-        public MessagePump(AzureMessageQueueReceiver messageReceiver, int? degreeOfReceiveParallelism, int? receiveBatchSize, TimeSpan maximumWaitTime, TimeSpan peekInterval)
+        public MessageReceiver(string id,
+            TransportTransactionMode requiredTransactionMode,
+            AzureMessageQueueReceiver azureMessageQueueReceiver,
+            bool purgeOnStartup,
+            string receiveAddress,
+            string errorQueue,
+            Action<string, Exception> criticalErrorAction,
+            int? degreeOfReceiveParallelism,
+            int? receiveBatchSize,
+            TimeSpan maximumWaitTime,
+            TimeSpan peekInterval)
         {
+            Id = id;
+            this.requiredTransactionMode = requiredTransactionMode;
             this.receiveBatchSize = receiveBatchSize;
             this.degreeOfReceiveParallelism = degreeOfReceiveParallelism;
             this.maximumWaitTime = maximumWaitTime;
             this.peekInterval = peekInterval;
-            this.messageReceiver = messageReceiver;
+            this.azureMessageQueueReceiver = azureMessageQueueReceiver;
+            this.purgeOnStartup = purgeOnStartup;
+            this.receiveAddress = receiveAddress;
+            this.errorQueue = errorQueue;
+            this.criticalErrorAction = criticalErrorAction;
         }
 
-        public void Dispose()
+        public ISubscriptionManager Subscriptions { get; } = null;
+        public string Id { get; }
+
+        public Task Initialize(PushRuntimeSettings limitations, Func<MessageContext, Task> onMessage, Func<ErrorContext, Task<ErrorHandleResult>> onError)
         {
-            // Injected
+            this.limitations = limitations;
+
+            Logger.Debug($"Initializing MessageReceiver {Id}");
+
+            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalErrorAction("Failed to receive message from Azure Storage Queue.", ex));
+            receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, requiredTransactionMode, criticalErrorAction);
+
+            return azureMessageQueueReceiver.Init(receiveAddress, errorQueue);
         }
 
-        public Task Init(Func<MessageContext, Task> onMessage, Func<ErrorContext, Task<ErrorHandleResult>> onError, CriticalError criticalError, PushSettings settings)
-        {
-            Logger.Debug("Initializing the message pump");
-
-            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalError.Raise("Failed to receive message from Azure Storage Queue.", ex));
-            messageReceiver.PurgeOnStartup = settings.PurgeOnStartup;
-
-            receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, settings.RequiredTransactionMode, criticalError);
-
-            return messageReceiver.Init(settings.InputQueue, settings.ErrorQueue);
-        }
-
-        public void Start(PushRuntimeSettings limitations)
+        public Task StartReceive()
         {
             maximumConcurrency = limitations.MaxConcurrency;
             concurrencyLimiter = new SemaphoreSlim(maximumConcurrency, maximumConcurrency);
             cancellationTokenSource = new CancellationTokenSource();
 
-            Logger.DebugFormat("Starting the message pump with max concurrency: {0}", maximumConcurrency);
+            Logger.DebugFormat($"Starting MessageReceiver {Id} with max concurrency: {0}", maximumConcurrency);
 
             var receiverConfigurations = MessagePumpHelpers.DetermineReceiverConfiguration(receiveBatchSize, degreeOfReceiveParallelism, maximumConcurrency);
 
@@ -56,22 +70,24 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 var batchSizeForReceive = receiverConfigurations[i].BatchSize;
                 messagePumpTasks[i] = Task.Run(() => ProcessMessages(batchSizeForReceive, backoffStrategy), CancellationToken.None);
             }
+
+            return Task.CompletedTask;
         }
 
-        public async Task Stop()
+        public async Task StopReceive()
         {
-            Logger.Debug("Stopping the message pump");
+            Logger.Debug($"Stopping MessageReceiver {Id}");
             cancellationTokenSource.Cancel();
 
             try
             {
                 var tcs = new TaskCompletionSource<bool>();
-                using (var timeoutTokensource = new CancellationTokenSource(StoppingAllTasksTimeout))
-                using (timeoutTokensource.Token.Register(() => tcs.TrySetCanceled())) // ok to have closure alloc here
+                using (var timeoutTokenSource = new CancellationTokenSource(StoppingAllTasksTimeout))
+                using (timeoutTokenSource.Token.Register(() => tcs.TrySetCanceled())) // ok to have closure alloc here
                 {
                     while (concurrencyLimiter.CurrentCount != maximumConcurrency)
                     {
-                        await Task.Delay(50, timeoutTokensource.Token).ConfigureAwait(false);
+                        await Task.Delay(50, timeoutTokenSource.Token).ConfigureAwait(false);
                     }
 
                     await Task.WhenAny(Task.WhenAll(messagePumpTasks), tcs.Task).ConfigureAwait(false);
@@ -119,7 +135,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 try
                 {
 
-                    await messageReceiver.Receive(batchSizeForReceive, receivedMessages, backoffStrategy, cancellationTokenSource.Token).ConfigureAwait(false);
+                    await azureMessageQueueReceiver.Receive(batchSizeForReceive, receivedMessages, backoffStrategy, cancellationTokenSource.Token).ConfigureAwait(false);
                     circuitBreaker.Success();
 
                     foreach (var message in receivedMessages)
@@ -186,7 +202,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         ReceiveStrategy receiveStrategy;
 
-        AzureMessageQueueReceiver messageReceiver;
+        AzureMessageQueueReceiver azureMessageQueueReceiver;
+        readonly bool purgeOnStartup;
+        readonly string receiveAddress;
+        readonly string errorQueue;
+        readonly Action<string, Exception> criticalErrorAction;
 
         CancellationToken cancellationToken;
         CancellationTokenSource cancellationTokenSource;
@@ -196,9 +216,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
         Task[] messagePumpTasks;
         int maximumConcurrency;
         int? degreeOfReceiveParallelism;
+        private readonly TransportTransactionMode requiredTransactionMode;
         int? receiveBatchSize;
-        static ILog Logger = LogManager.GetLogger<MessagePump>();
+        static ILog Logger = LogManager.GetLogger<MessageReceiver>();
         static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
+        private PushRuntimeSettings limitations;
     }
 }

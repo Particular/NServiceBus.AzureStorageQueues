@@ -9,14 +9,14 @@ namespace NServiceBus.Transport.AzureStorageQueues
     {
         public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message);
 
-        public static ReceiveStrategy BuildReceiveStrategy(Func<MessageContext, Task> pipe, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, TransportTransactionMode transactionMode, CriticalError criticalError)
+        public static ReceiveStrategy BuildReceiveStrategy(Func<MessageContext, Task> pipe, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, TransportTransactionMode transactionMode, Action<string, Exception> criticalErrorAction)
         {
             switch (transactionMode)
             {
                 case TransportTransactionMode.None:
                     return new AtMostOnceReceiveStrategy(pipe, errorPipe);
                 case TransportTransactionMode.ReceiveOnly:
-                    return new AtLeastOnceReceiveStrategy(pipe, errorPipe, criticalError);
+                    return new AtLeastOnceReceiveStrategy(pipe, errorPipe, criticalErrorAction);
                 case TransportTransactionMode.SendsAtomicWithReceive:
                 case TransportTransactionMode.TransactionScope:
                 default:

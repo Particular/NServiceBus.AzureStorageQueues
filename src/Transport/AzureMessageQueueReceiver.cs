@@ -10,23 +10,25 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IQueueServiceClientProvider queueServiceClientProviderProvider, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IQueueServiceClientProvider queueServiceClientProviderProvider, QueueAddressGenerator addressGenerator, bool purgeOnStartup, TimeSpan messageInvisibleTime)
         {
             this.unwrapper = unwrapper;
             queueServiceClient = queueServiceClientProviderProvider.Client;
             this.addressGenerator = addressGenerator;
+            PurgeOnStartup = purgeOnStartup;
+            MessageInvisibleTime = messageInvisibleTime;
         }
 
         /// <summary>
         /// Sets whether or not the transport should purge the input
         /// queue when it is started.
         /// </summary>
-        public bool PurgeOnStartup { get; set; }
+        public bool PurgeOnStartup { get; }
 
         /// <summary>
         /// Controls how long messages should be invisible to other callers when receiving messages from the queue
         /// </summary>
-        public TimeSpan MessageInvisibleTime { get; set; }
+        public TimeSpan MessageInvisibleTime { get; }
 
         public async Task Init(string inputQueueAddress, string errorQueueAddress)
         {
