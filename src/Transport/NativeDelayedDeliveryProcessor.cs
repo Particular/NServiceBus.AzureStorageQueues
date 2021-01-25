@@ -55,6 +55,7 @@ namespace NServiceBus
                 delayedMessageStorageTable,
                 blobServiceClient,
                 errorQueueAddresses,
+                userDefinedDelayedDeliveryPoisonQueue,
                 isAtMostOnce,
                 dispatcher,
                 backoffStrategy);

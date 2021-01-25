@@ -14,9 +14,10 @@
 
     class DelayedMessagesPoller
     {
-        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, ImmutableDictionary<string, string> errorQueueAddresses, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
+        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, ImmutableDictionary<string, string> errorQueueAddresses, string userDefinedDelayedDeliveryPoisonQueue, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
             this.errorQueueAddresses = errorQueueAddresses;
+            this.userDefinedDelayedDeliveryPoisonQueue = userDefinedDelayedDeliveryPoisonQueue;
             this.isAtMostOnce = isAtMostOnce;
             this.delayedDeliveryTable = delayedDeliveryTable;
             this.blobServiceClient = blobServiceClient;
@@ -228,7 +229,19 @@
 
         UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
-            var errorQueue = errorQueueAddresses[operation.Destination];
+            if (!errorQueueAddresses.TryGetValue(operation.Destination, out var errorQueue))
+            {
+                errorQueue = userDefinedDelayedDeliveryPoisonQueue;
+            }
+
+            if (string.IsNullOrWhiteSpace(errorQueue))
+            {
+                throw new Exception($"Cannot find a valid error queue for destination '{operation.Destination}'." +
+                    $" Configure a user defined poison queue for delayed deliveries by using the" +
+                    $" {nameof(AzureStorageQueueTransport)}.{nameof(AzureStorageQueueTransport.DelayedDeliverySettings)}" +
+                    $".{nameof(AzureStorageQueueTransport.DelayedDeliverySettings.DelayedDeliveryPoisonQueue)} property.");
+            }
+
             //TODO does this need to set the FailedQ header too?
             return new UnicastTransportOperation(operation.Message, errorQueue, new DispatchProperties(), operation.RequiredDispatchConsistency);
         }
@@ -243,7 +256,7 @@
         readonly BackoffStrategy backoffStrategy;
         readonly bool isAtMostOnce;
         readonly ImmutableDictionary<string, string> errorQueueAddresses;
-
+        readonly string userDefinedDelayedDeliveryPoisonQueue;
         CloudTable delayedDeliveryTable;
         LockManager lockManager;
         Task delayedMessagesPollerTask;
