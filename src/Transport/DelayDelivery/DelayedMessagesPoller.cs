@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Specialized;
-using NServiceBus.Logging;
-using Microsoft.Azure.Cosmos.Table;
-
-namespace NServiceBus.Transport.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
-    internal class DelayedMessagesPoller
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.Immutable;
+    using System.Diagnostics;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using global::Azure.Storage.Blobs;
+    using global::Azure.Storage.Blobs.Specialized;
+    using Logging;
+    using Microsoft.Azure.Cosmos.Table;
+    using Transport;
+
+    class DelayedMessagesPoller
     {
         public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, ImmutableDictionary<string, string> errorQueueAddresses, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
@@ -42,7 +43,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return delayedMessagesPollerTask;
         }
 
-        private async Task Poll(CancellationToken cancellationToken)
+        async Task Poll(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -72,7 +73,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        private async Task InnerPoll(CancellationToken cancellationToken)
+        async Task InnerPoll(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -104,7 +105,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        private Task BackoffOnError(CancellationToken cancellationToken)
+        Task BackoffOnError(CancellationToken cancellationToken)
         {
             if (Logger.IsDebugEnabled)
             {
@@ -115,7 +116,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return backoffStrategy.OnBatch(0, cancellationToken);
         }
 
-        private async Task SpinOnce(CancellationToken cancellationToken)
+        async Task SpinOnce(CancellationToken cancellationToken)
         {
             var now = DateTimeOffset.UtcNow;
             if (cancellationToken.IsCancellationRequested)
@@ -177,7 +178,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             await backoffStrategy.OnBatch(delayedMessagesCount, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task DeleteAndDispatch(CancellationToken cancellationToken, DelayedMessageEntity delayedMessage)
+        async Task DeleteAndDispatch(CancellationToken cancellationToken, DelayedMessageEntity delayedMessage)
         {
             try
             {
@@ -205,7 +206,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        private async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
+        async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
         {
             if (Logger.IsDebugEnabled)
             {
@@ -225,26 +226,26 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        private UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
+        UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
             var errorQueue = errorQueueAddresses[operation.Destination];
             //TODO does this need to set the FailedQ header too?
             return new UnicastTransportOperation(operation.Message, errorQueue, new OperationProperties(), operation.RequiredDispatchConsistency);
         }
 
-        private const int DelayedMessagesProcessedAtOnce = 50;
-        private static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
-        private static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
-        private static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
+        const int DelayedMessagesProcessedAtOnce = 50;
+        static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
+        static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
+        static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
 
-        private readonly BlobServiceClient blobServiceClient;
-        private readonly Dispatcher dispatcher;
-        private readonly BackoffStrategy backoffStrategy;
-        private readonly bool isAtMostOnce;
-        private readonly ImmutableDictionary<string, string> errorQueueAddresses;
+        readonly BlobServiceClient blobServiceClient;
+        readonly Dispatcher dispatcher;
+        readonly BackoffStrategy backoffStrategy;
+        readonly bool isAtMostOnce;
+        readonly ImmutableDictionary<string, string> errorQueueAddresses;
 
-        private CloudTable delayedDeliveryTable;
-        private LockManager lockManager;
-        private Task delayedMessagesPollerTask;
+        CloudTable delayedDeliveryTable;
+        LockManager lockManager;
+        Task delayedMessagesPollerTask;
     }
 }

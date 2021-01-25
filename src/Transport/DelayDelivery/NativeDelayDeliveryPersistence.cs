@@ -5,7 +5,7 @@ using Microsoft.Azure.Cosmos.Table;
 
 namespace NServiceBus.Transport.AzureStorageQueues
 {
-    internal class NativeDelayDeliveryPersistence
+    class NativeDelayDeliveryPersistence
     {
         public static NativeDelayDeliveryPersistence Disabled()
         {
@@ -42,7 +42,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return false;
         }
 
-        private static TimeSpan? GetDeliveryDelay(OperationProperties properties)
+        static TimeSpan? GetDeliveryDelay(OperationProperties properties)
         {
             var doNotDeliverBefore = properties.DoNotDeliverBefore;
             if (doNotDeliverBefore != null)
@@ -59,7 +59,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return null;
         }
 
-        private static TimeSpan? ToNullIfNegative(TimeSpan value)
+        static TimeSpan? ToNullIfNegative(TimeSpan value)
         {
             return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
         }
