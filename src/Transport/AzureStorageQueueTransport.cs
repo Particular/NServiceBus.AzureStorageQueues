@@ -129,26 +129,7 @@ namespace NServiceBus
                 nativeDelayedDeliveryProcessor.Start();
             }
 
-            var infrastructure = new AzureStorageQueueInfrastructure(
-                hostSettings,
-                TransportTransactionMode,
-                MessageInvisibleTime,
-                PeekInterval,
-                MaximumWaitTimeWhenIdle,
-                nativeDelayedDeliveryPersistence,
-                nativeDelayedDeliveryProcessor,
-                ReceiverBatchSize,
-                DegreeOfReceiveParallelism,
-                queueAddressGenerator,
-                DelayedDeliverySettings,
-                queueServiceClientProvider,
-                blobServiceClientProvider,
-                cloudTableClientProvider,
-                MessageWrapperSerializationDefinition,
-                MessageUnwrapper,
-                receivers,
-                dispatcher,
-                azureStorageAddressing);
+            var infrastructure = new AzureStorageQueueInfrastructure(dispatcher, null, nativeDelayedDeliveryProcessor);
 
             return infrastructure;
         }
