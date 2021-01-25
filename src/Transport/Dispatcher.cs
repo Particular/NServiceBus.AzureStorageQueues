@@ -1,6 +1,4 @@
-﻿using NServiceBus.AzureStorageQueues;
-
-namespace NServiceBus.Transport.AzureStorageQueues
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -12,6 +10,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Queues;
     using Logging;
+    using NServiceBus.AzureStorageQueues;
     using Transport;
     using Unicast.Queuing;
 
@@ -50,7 +49,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             if (nativeDelayDeliveryPersistence.IsDelayedMessage(operation, out var dueDate))
             {
-                await nativeDelayDeliveryPersistence.ScheduleAt(operation, dueDate, cancellationToken);
+                await nativeDelayDeliveryPersistence.ScheduleAt(operation, dueDate, cancellationToken).ConfigureAwait(false);
                 return;
             }
 
