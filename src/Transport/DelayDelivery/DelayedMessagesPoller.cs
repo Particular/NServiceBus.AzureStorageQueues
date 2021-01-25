@@ -230,7 +230,7 @@
         {
             var errorQueue = errorQueueAddresses[operation.Destination];
             //TODO does this need to set the FailedQ header too?
-            return new UnicastTransportOperation(operation.Message, errorQueue, new OperationProperties(), operation.RequiredDispatchConsistency);
+            return new UnicastTransportOperation(operation.Message, errorQueue, new DispatchProperties(), operation.RequiredDispatchConsistency);
         }
 
         const int DelayedMessagesProcessedAtOnce = 50;

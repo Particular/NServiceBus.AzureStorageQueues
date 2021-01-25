@@ -42,7 +42,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return false;
         }
 
-        static TimeSpan? GetDeliveryDelay(OperationProperties properties)
+        static TimeSpan? GetDeliveryDelay(DispatchProperties properties)
         {
             var doNotDeliverBefore = properties.DoNotDeliverBefore;
             if (doNotDeliverBefore != null)
