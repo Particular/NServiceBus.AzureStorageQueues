@@ -13,7 +13,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public MessageReceiver(string id,
             TransportTransactionMode requiredTransactionMode,
             AzureMessageQueueReceiver azureMessageQueueReceiver,
-            bool purgeOnStartup,
             string receiveAddress,
             string errorQueue,
             Action<string, Exception> criticalErrorAction,
@@ -29,7 +28,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.maximumWaitTime = maximumWaitTime;
             this.peekInterval = peekInterval;
             this.azureMessageQueueReceiver = azureMessageQueueReceiver;
-            this.purgeOnStartup = purgeOnStartup;
             this.receiveAddress = receiveAddress;
             this.errorQueue = errorQueue;
             this.criticalErrorAction = criticalErrorAction;
@@ -203,7 +201,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
         ReceiveStrategy receiveStrategy;
 
         AzureMessageQueueReceiver azureMessageQueueReceiver;
-        readonly bool purgeOnStartup;
         readonly string receiveAddress;
         readonly string errorQueue;
         readonly Action<string, Exception> criticalErrorAction;

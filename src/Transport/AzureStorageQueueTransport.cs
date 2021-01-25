@@ -195,7 +195,6 @@ namespace NServiceBus
                 settings.Id,
                 TransportTransactionMode,
                 receiver,
-                settings.PurgeOnStartup,
                 settings.ReceiveAddress,
                 settings.ErrorQueue,
                 criticalErrorAction,
