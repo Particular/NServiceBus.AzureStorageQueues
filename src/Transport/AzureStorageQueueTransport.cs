@@ -1,26 +1,23 @@
-using System.Collections.Immutable;
-using System.Linq;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Text.RegularExpressions;
-using Azure.Storage.Queues.Models;
-using NServiceBus.MessageInterfaces;
-using NServiceBus.Settings;
-
 namespace NServiceBus
 {
-    using global::Azure.Storage.Queues;
-    using global::Azure.Storage.Blobs;
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
+    using System.Linq;
+    using System.Reflection;
+    using System.Security.Cryptography;
     using System.Text;
-    using System.Threading;
     using System.Threading.Tasks;
+    using Azure.Transports.WindowsAzureStorageQueues;
+    using global::Azure.Storage.Blobs;
+    using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using Microsoft.Azure.Cosmos.Table;
+    using MessageInterfaces;
+    using Settings;
     using Serialization;
     using Transport;
     using Transport.AzureStorageQueues;
-    using Azure.Transports.WindowsAzureStorageQueues;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
@@ -106,7 +103,7 @@ namespace NServiceBus
                 delayedMessagesStorageTable = await EnsureNativeDelayedDeliveryTable(
                     hostSettings.Name,
                     DelayedDeliverySettings.DelayedDeliveryTableName,
-                    cloudTableClientProvider.Client);
+                    cloudTableClientProvider.Client).ConfigureAwait(false);
 
                 nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTable);
             }
@@ -287,7 +284,7 @@ namespace NServiceBus
             {
                 if (value < 1 || value > 32)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(ReceiverBatchSize), value, "Batchsize must be between 1 and 32 messages.");
+                    throw new ArgumentOutOfRangeException(nameof(ReceiverBatchSize), value, "Batch size must be between 1 and 32 messages.");
                 }
                 receiverBatchSize = value;
             }
@@ -315,11 +312,7 @@ namespace NServiceBus
         /// <summary>
         /// Sets a custom serialization for <see cref="MessageWrapper" />.
         /// </summary>
-        public SerializationDefinition MessageWrapperSerializationDefinition
-        {
-            get => messageWrapperSerializationDefinition;
-            set => messageWrapperSerializationDefinition = value;
-        }
+        public SerializationDefinition MessageWrapperSerializationDefinition { get; set; }
 
         /// <summary>
         /// Registers a custom unwrapper to convert native messages to <see cref="MessageWrapper" />. This is needed when receiving raw json/xml/etc messages from non NServiceBus endpoints.
@@ -346,18 +339,17 @@ namespace NServiceBus
         public AccountRoutingSettings RoutingSettings { get; } = new AccountRoutingSettings();
 
         const string SerializerSettingsKey = "MainSerializer";
-        private readonly TransportTransactionMode[] supportedTransactionModes = new[] {TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly};
-        private TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
-        private TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
-        private TimeSpan maximumWaitTimeWhenIdle = DefaultConfigurationValues.DefaultMaximumWaitTimeWhenIdle;
-        private Func<string, string> queueNameSanitizer = DefaultConfigurationValues.DefaultQueueNameSanitizer;
-        private QueueAddressGenerator queueAddressGenerator;
-        private IQueueServiceClientProvider queueServiceClientProvider;
-        private IBlobServiceClientProvider blobServiceClientProvider;
-        private ICloudTableClientProvider cloudTableClientProvider;
-        private int? receiverBatchSize = DefaultConfigurationValues.DefaultBatchSize;
-        private int? degreeOfReceiveParallelism;
-        private SerializationDefinition messageWrapperSerializationDefinition;
-        private Func<QueueMessage, MessageWrapper> messageUnwrapper;
+        readonly TransportTransactionMode[] supportedTransactionModes = new[] { TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly };
+        TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
+        TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
+        TimeSpan maximumWaitTimeWhenIdle = DefaultConfigurationValues.DefaultMaximumWaitTimeWhenIdle;
+        Func<string, string> queueNameSanitizer = DefaultConfigurationValues.DefaultQueueNameSanitizer;
+        QueueAddressGenerator queueAddressGenerator;
+        IQueueServiceClientProvider queueServiceClientProvider;
+        IBlobServiceClientProvider blobServiceClientProvider;
+        ICloudTableClientProvider cloudTableClientProvider;
+        int? receiverBatchSize = DefaultConfigurationValues.DefaultBatchSize;
+        int? degreeOfReceiveParallelism;
+        Func<QueueMessage, MessageWrapper> messageUnwrapper;
     }
 }
