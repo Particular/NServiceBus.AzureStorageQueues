@@ -274,17 +274,16 @@ namespace NServiceBus
             RemoveInVersion = "12.0")]
         public void AddAccount(string alias, QueueServiceClient connectionClient)
         {
-            if (mappings.TryGetValue(alias, out var accountInfo))
+            if (mappings.ContainsKey(alias))
             {
                 return;
             }
 
-            accountInfo = new AccountInfo(alias, connectionClient);
-            mappings.Add(alias, accountInfo);
+            mappings.Add(alias, new AccountInfo(alias, connectionClient));
         }
 
         internal Dictionary<string, AccountInfo> mappings = new Dictionary<string, AccountInfo>();
-        private string _defaultAccountAlias;
+        string _defaultAccountAlias;
     }
 }
 
