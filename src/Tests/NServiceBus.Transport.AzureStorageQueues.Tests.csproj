@@ -23,7 +23,6 @@
 
   <ItemGroup>
     <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
-    <Compile Include="..\TestSuppressions.cs" Link="TestSuppressions.cs" />
   </ItemGroup>
 
   <ItemGroup>
