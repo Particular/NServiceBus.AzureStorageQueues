@@ -1,16 +1,16 @@
-﻿using Azure.Storage.Blobs;
-using Microsoft.Azure.Cosmos.Table;
-using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-using NServiceBus.Configuration.AdvancedExtensibility;
-using NServiceBus.Serialization;
-using NServiceBus.Settings;
-
-#pragma warning disable 1591
+﻿#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace NServiceBus
 {
     using System;
+    using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
+    using Microsoft.Azure.Cosmos.Table;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using NServiceBus.Configuration.AdvancedExtensibility;
+    using NServiceBus.Serialization;
+    using NServiceBus.Settings;
 
     static partial class AzureStorageTransportExtensions
     {
@@ -220,4 +220,4 @@ namespace NServiceBus
     }
 }
 
-#pragma warning restore 1591
+#pragma warning restore CS0618 // Type or member is obsolete
