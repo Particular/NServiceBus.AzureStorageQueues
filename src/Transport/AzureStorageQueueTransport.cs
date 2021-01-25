@@ -157,7 +157,7 @@ namespace NServiceBus
                 : new MessageWrapperSerializer(GetMainSerializerHack(MessageWrapperSerializer.GetMapper(), settings));
         }
 
-        static IMessageSerializer GetMainSerializerHack(IMessageMapper mapper, ReadOnlySettings settings)
+        internal static IMessageSerializer GetMainSerializerHack(IMessageMapper mapper, ReadOnlySettings settings)
         {
             if (!settings.TryGet<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey, out var serializerSettingsTuple))
             {
@@ -365,7 +365,7 @@ namespace NServiceBus
         /// </summary>
         public AccountRoutingSettings RoutingSettings { get; } = new AccountRoutingSettings();
 
-        const string SerializerSettingsKey = "MainSerializer";
+        internal const string SerializerSettingsKey = "MainSerializer";
         readonly TransportTransactionMode[] supportedTransactionModes = new[] { TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly };
         TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
         TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
