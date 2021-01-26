@@ -23,7 +23,7 @@ namespace NServiceBus
     /// <summary>
     /// Transport definition for AzureStorageQueue
     /// </summary>
-    public class AzureStorageQueueTransport : TransportDefinition
+    public class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
     {
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue
