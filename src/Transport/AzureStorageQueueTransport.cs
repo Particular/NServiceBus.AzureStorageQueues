@@ -15,6 +15,7 @@ namespace NServiceBus
     using global::Azure.Storage.Queues.Models;
     using Microsoft.Azure.Cosmos.Table;
     using MessageInterfaces;
+    using Routing;
     using Settings;
     using Serialization;
     using Transport;
