@@ -8,21 +8,17 @@ using Conventions = NServiceBus.AcceptanceTesting.Customization.Conventions;
 
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
-    internal static string ConnectionString => Testing.Utilities.GetEnvConfiguredConnectionString();
-    internal static string AnotherConnectionString => Testing.Utilities.GetEnvConfiguredConnectionString2();
-
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
-        var connectionString = ConnectionString;
+        var connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
+        var transport = new AzureStorageQueueTransport(connectionString)
+        {
+            MessageInvisibleTime = TimeSpan.FromSeconds(30),
+            MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>(),
+            QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+        };
 
-        var transportConfig = configuration
-            .UseTransport<AzureStorageQueueTransport>()
-            .ConnectionString(connectionString)
-            .MessageInvisibleTime(TimeSpan.FromSeconds(30));
-
-        transportConfig.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
-
-        var routingConfig = transportConfig.Routing();
+        var routingConfig = configuration.UseTransport(transport);
 
         foreach (var publisher in publisherMetadata.Publishers)
         {
@@ -46,13 +42,12 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
 
         configuration.Pipeline.Register("test-independence-skip", typeof(TestIndependence.SkipBehavior), "Skips messages from other runs");
         configuration.Pipeline.Register("test-independence-stamp", typeof(TestIndependence.StampOutgoingBehavior), "Stamps outgoing messages from this run");
-        transportConfig.SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>>();
 
-        return Task.FromResult(0);
+        return Task.CompletedTask;
     }
 
     public Task Cleanup()
     {
-        return Task.FromResult(0);
+        return Task.CompletedTask;
     }
 }
