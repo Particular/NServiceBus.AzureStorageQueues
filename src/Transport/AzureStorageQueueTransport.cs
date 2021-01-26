@@ -104,7 +104,7 @@ namespace NServiceBus
             {
                 delayedMessagesStorageTable = await EnsureNativeDelayedDeliveryTable(
                     hostSettings.Name,
-                    DelayedDeliverySettings.DelayedDeliveryTableName,
+                    DelayedDelivery.DelayedDeliveryTableName,
                     cloudTableClientProvider.Client).ConfigureAwait(false);
 
                 nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTable);
@@ -124,7 +124,7 @@ namespace NServiceBus
                         receivers.ToImmutableDictionary(settings => settings.ReceiveAddress, settings => settings.ErrorQueue),
                         TransportTransactionMode,
                         new BackoffStrategy(PeekInterval, MaximumWaitTimeWhenIdle),
-                        DelayedDeliverySettings.DelayedDeliveryPoisonQueue);
+                        DelayedDelivery.DelayedDeliveryPoisonQueue);
                 nativeDelayedDeliveryProcessor.Start();
             }
 
@@ -358,7 +358,7 @@ namespace NServiceBus
         /// <summary>
         /// Provides options to define settings for the transport DelayedDelivery feature.
         /// </summary>
-        public NativeDelayedDeliverySettings DelayedDeliverySettings { get; } = new NativeDelayedDeliverySettings();
+        public NativeDelayedDeliverySettings DelayedDelivery { get; } = new NativeDelayedDeliverySettings();
 
         /// <summary>
         /// Define routing between Azure Storage accounts and map them to a logical alias instead of using bare

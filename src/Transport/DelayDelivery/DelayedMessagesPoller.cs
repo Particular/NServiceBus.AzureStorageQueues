@@ -238,8 +238,8 @@
             {
                 throw new Exception($"Cannot find a valid error queue for destination '{operation.Destination}'." +
                     $" Configure a user defined poison queue for delayed deliveries by using the" +
-                    $" {nameof(AzureStorageQueueTransport)}.{nameof(AzureStorageQueueTransport.DelayedDeliverySettings)}" +
-                    $".{nameof(AzureStorageQueueTransport.DelayedDeliverySettings.DelayedDeliveryPoisonQueue)} property.");
+                    $" {nameof(AzureStorageQueueTransport)}.{nameof(AzureStorageQueueTransport.DelayedDelivery)}" +
+                    $".{nameof(AzureStorageQueueTransport.DelayedDelivery.DelayedDeliveryPoisonQueue)} property.");
             }
 
             //TODO does this need to set the FailedQ header too?
