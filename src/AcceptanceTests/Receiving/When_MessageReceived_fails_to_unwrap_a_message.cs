@@ -7,6 +7,7 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_MessageReceived_fails_to_unwrap_a_message : NServiceBusAcceptanceTest
     {
@@ -49,9 +50,10 @@
                     config.SendFailedMessagesTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(ErrorSpy)));
                     config.UseSerialization<NewtonsoftSerializer>();
                     config.LimitMessageProcessingConcurrencyTo(1);
-                    var transport = config.ConfigureAsqTransport();
-                    transport.UnwrapMessagesWith(message => throw new Exception("Custom unwrapper failed"));
-                    transport.DelayedDelivery().DisableDelayedDelivery();
+                    config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
+                    {
+                        MessageUnwrapper = message => throw new Exception("Custom unwrapper failed")
+                    });
                 });
             }
         }
@@ -62,9 +64,8 @@
             {
                 EndpointSetup<DefaultServer>(config =>
                 {
-                    var transport = config.ConfigureAsqTransport();
+                    config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true));
                     config.UseSerialization<NewtonsoftSerializer>();
-                    transport.DelayedDelivery().DisableDelayedDelivery();
                 });
             }
 

@@ -92,9 +92,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 {
                     cfg.SendOnly();
 
-                    var transport = cfg.UseTransport<AzureStorageQueueTransport>();
-                    transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
-                    var routing = cfg.ConfigureTransport().Routing();
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+
+                    var routing = cfg.UseTransport(transport);
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
             }
@@ -108,8 +109,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 {
                     cfg.SendOnly();
 
-                    var transport = cfg.UseTransport<AzureStorageQueueTransport>();
-                    transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+
+                    cfg.UseTransport(transport);
                     cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
                 });
             }
@@ -119,7 +122,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(cfg => { cfg.UseTransport<AzureStorageQueueTransport>(); });
+                EndpointSetup<DefaultServer>(cfg =>
+                {
+                    cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString()));
+                });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>

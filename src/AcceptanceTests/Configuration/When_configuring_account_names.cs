@@ -11,8 +11,8 @@
     {
         public When_configuring_account_names()
         {
-            connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
-            anotherConnectionString = Testing.Utilities.GetEnvConfiguredConnectionString2();
+            _connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
+            _anotherConnectionString = Testing.Utilities.GetEnvConfiguredConnectionString2();
         }
 
         [Test]
@@ -24,21 +24,27 @@
         [Test]
         public void Should_not_accept_mappings_without_default()
         {
-            var exception = Assert.CatchAsync(() => { return Configure(cfg => { cfg.AccountRouting().AddAccount(Another, anotherConnectionString); }); });
+            var exception = Assert.CatchAsync(() =>
+            {
+                return Configure(transport =>
+                {
+                    transport.AccountRouting.AddAccount(Another, _anotherConnectionString);
+                });
+            });
             Assert.IsTrue(exception.Message.Contains("The mapping of storage accounts connection strings to aliases is enforced but the the alias for the default connection string isn't provided"), "Exception message is missing or incorrect");
         }
 
         [Test]
         public Task Should_accept_mappings_with_default()
         {
-            return Configure(cfg =>
+            return Configure(transport =>
             {
-                cfg.DefaultAccountAlias(Default);
-                cfg.AccountRouting().AddAccount(Another, anotherConnectionString);
+                transport.AccountRouting.DefaultAccountAlias = Default;
+                transport.AccountRouting.AddAccount(Another, _anotherConnectionString);
             });
         }
 
-        Task Configure(Action<TransportExtensions<AzureStorageQueueTransport>> action)
+        Task Configure(Action<AzureStorageQueueTransport> configureTransport)
         {
             return Scenario.Define<Context>()
                 .WithEndpoint<Endpoint>(cfg =>
@@ -46,12 +52,12 @@
                     cfg.CustomConfig(c =>
                     {
                         c.UseSerialization<NewtonsoftSerializer>();
-                        var transport = c.UseTransport<AzureStorageQueueTransport>();
-                        transport
-                            .ConnectionString(connectionString)
-                            .SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>>();
+                        var transport = new AzureStorageQueueTransport(_connectionString)
+                        {
+                            MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>()
+                        };
 
-                        action(transport);
+                        configureTransport(transport);
                     });
 
                     cfg.When((bus, c) =>
@@ -66,8 +72,8 @@
                 .Run();
         }
 
-        readonly string connectionString;
-        readonly string anotherConnectionString;
+        readonly string _connectionString;
+        readonly string _anotherConnectionString;
         const string Default = "default";
         const string Another = "another";
 
@@ -94,7 +100,7 @@
                 EndpointSetup<DefaultServer>(c =>
                 {
                     c.UseSerialization<NewtonsoftSerializer>();
-                    c.UseTransport<AzureStorageQueueTransport>();
+                    c.UseTransport(new AzureStorageQueueTransport(Testing.Utilities.GetEnvConfiguredConnectionString()));
                 });
             }
 

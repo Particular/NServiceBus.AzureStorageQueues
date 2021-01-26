@@ -8,6 +8,7 @@
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using Features;
     using NUnit.Framework;
+    using Testing;
 
     public class When_subscribing_to_another_account_with_registered_endpoint : NServiceBusAcceptanceTest
     {
@@ -41,13 +42,12 @@
             {
                 EndpointSetup<DefaultPublisher>(configuration =>
                 {
-                    var routing = configuration.UseTransport<AzureStorageQueueTransport>()
-                        .DefaultAccountAlias(DefaultAccountName)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
-                        .AccountRouting();
-
-                    var anotherAccount = routing.AddAccount(AnotherAccountName, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
+                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, Utilities.GetEnvConfiguredConnectionString2());
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Subscriber)));
+
+                    configuration.UseTransport(transport);
 
                     configuration.OnEndpointSubscribed<Context>((s, context) => { context.Subscribed = true; });
                 });
@@ -62,31 +62,28 @@
                 {
                     configuration.DisableFeature<AutoSubscribe>();
 
-                    var transportConfig = configuration.UseTransport<AzureStorageQueueTransport>();
-                    var accountRouting = transportConfig
-                        .DefaultAccountAlias(AnotherAccountName)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString)
-                        .AccountRouting();
-
-                    var anotherAccount = accountRouting.AddAccount(DefaultAccountName, ConfigureEndpointAzureStorageQueueTransport.ConnectionString);
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2());
+                    transport.AccountRouting.DefaultAccountAlias = AnotherAccountName;
+                    var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName, Utilities.GetEnvConfiguredConnectionString());
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Publisher)));
 
-                    transportConfig.Routing().RegisterPublisher(typeof(MyEvent), Conventions.EndpointNamingConvention(typeof(Publisher)));
+                    var routing = configuration.UseTransport(transport);
+                    routing.RegisterPublisher(typeof(MyEvent), Conventions.EndpointNamingConvention(typeof(Publisher)));
                 });
             }
 
             public class MyMessageHandler : IHandleMessages<MyEvent>
             {
-                Context testContext;
+                readonly Context _testContext;
 
                 public MyMessageHandler(Context testContext)
                 {
-                    this.testContext = testContext;
+                    _testContext = testContext;
                 }
 
                 public Task Handle(MyEvent message, IMessageHandlerContext context)
                 {
-                    testContext.WasCalled = true;
+                    _testContext.WasCalled = true;
                     return Task.FromResult(0);
                 }
             }

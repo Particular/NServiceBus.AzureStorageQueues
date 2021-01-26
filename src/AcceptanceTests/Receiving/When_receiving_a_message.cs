@@ -8,6 +8,7 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_receiving_a_message : NServiceBusAcceptanceTest
     {
@@ -57,9 +58,11 @@
             {
                 EndpointSetup<DefaultServer>(config =>
                 {
-                    config.ConfigureAsqTransport()
-                        .Transactions(TransportTransactionMode.ReceiveOnly)
-                        .MessageInvisibleTime(VisibilityTimeout);
+                    config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        TransportTransactionMode = TransportTransactionMode.ReceiveOnly,
+                        MessageInvisibleTime = VisibilityTimeout
+                    });
                 });
             }
         }

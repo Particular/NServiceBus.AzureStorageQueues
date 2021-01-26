@@ -7,6 +7,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_sending_to_another_account_without_alias : NServiceBusAcceptanceTest
     {
@@ -15,7 +16,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             var queue = Conventions.EndpointNamingConvention(typeof(Receiver));
 
-            var another = ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString;
+            var another = Utilities.GetEnvConfiguredConnectionString2();
             var queueAddress = queue + "@" + another;
 
             var exception = Assert.ThrowsAsync<Exception>(async () =>
@@ -42,8 +43,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    configuration.UseTransport<AzureStorageQueueTransport>()
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                    configuration.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2()));
                 });
             }
         }

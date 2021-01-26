@@ -11,6 +11,7 @@
     using AcceptanceTesting.Customization;
     using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
+    using Testing;
 
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
     {
@@ -19,7 +20,7 @@
         [SetUp]
         public async Task SetUpLocal()
         {
-            delayedMessagesTable = CloudStorageAccount.Parse(Testing.Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
+            delayedMessagesTable = CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
             if (await delayedMessagesTable.ExistsAsync().ConfigureAwait(false))
             {
                 foreach (var dte in await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false))
@@ -121,9 +122,10 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var transport = cfg.UseTransport<AzureStorageQueueTransport>();
-                    transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
-                    var routing = cfg.ConfigureTransport().Routing();
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+
+                    var routing = cfg.UseTransport(transport);
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
             }
@@ -137,9 +139,13 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var transport = cfg.UseTransport<AzureStorageQueueTransport>();
-                    transport.PeekInterval(PeekInterval);
-                    transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        PeekInterval = PeekInterval
+                    };
+                    transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+
+                    cfg.UseTransport(transport);
                 });
             }
         }
@@ -150,8 +156,11 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var transport = cfg.UseTransport<AzureStorageQueueTransport>();
-                    transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+
+                    cfg.UseTransport(transport);
+
                     cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
                 });
             }
@@ -163,7 +172,7 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseTransport<AzureStorageQueueTransport>();
+                    cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString()));
                 });
             }
 

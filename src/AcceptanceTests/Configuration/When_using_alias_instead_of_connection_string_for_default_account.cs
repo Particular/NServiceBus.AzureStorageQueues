@@ -70,8 +70,9 @@
             {
                 EndpointSetup<DefaultServer>(endpointConfiguration =>
                 {
-                    var transport = endpointConfiguration.UseTransport<AzureStorageQueueTransport>();
-                    transport.DefaultAccountAlias("defaultAlias");
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    transport.AccountRouting.DefaultAccountAlias = "defaultAlias";
+                    endpointConfiguration.UseTransport(transport);
                 });
             }
         }
