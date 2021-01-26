@@ -263,7 +263,7 @@ namespace NServiceBus
             Message = "Account aliases have been deprecated. Use the TransportDefinition constructor that accepts fully customized Azure service clients.",
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
-        public void AddAccount(string alias, string connectionString) => AddAccount(alias, new QueueServiceClient(connectionString));
+        public AccountInfo AddAccount(string alias, string connectionString) => AddAccount(alias, new QueueServiceClient(connectionString));
 
         /// <summary>
         /// Adds the mapping between the <paramref alias="alias" /> and its <paramref alias="QueueServiceClient" />.
@@ -272,14 +272,17 @@ namespace NServiceBus
             Message = "Account aliases have been deprecated. Use the TransportDefinition constructor that accepts fully customized Azure service clients.",
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
-        public void AddAccount(string alias, QueueServiceClient connectionClient)
+        public AccountInfo AddAccount(string alias, QueueServiceClient connectionClient)
         {
-            if (mappings.ContainsKey(alias))
+            if (mappings.TryGetValue(alias, out var accountInfo))
             {
-                return;
+                return accountInfo;
             }
 
-            mappings.Add(alias, new AccountInfo(alias, connectionClient));
+            accountInfo = new AccountInfo(alias, connectionClient);
+            mappings.Add(alias, accountInfo);
+
+            return accountInfo;
         }
 
         internal Dictionary<string, AccountInfo> mappings = new Dictionary<string, AccountInfo>();
