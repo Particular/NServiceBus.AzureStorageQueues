@@ -95,7 +95,7 @@ namespace NServiceBus
                 .ConfigureAwait(false);
 
             var azureStorageAddressing = new AzureStorageAddressingSettings(queueAddressGenerator);
-            azureStorageAddressing.RegisterMapping(RoutingSettings.DefaultAccountAlias ?? "", RoutingSettings.mappings);
+            azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias ?? "", AccountRouting.mappings);
             azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
 
             CloudTable delayedMessagesStorageTable = null;
@@ -364,7 +364,7 @@ namespace NServiceBus
         /// Define routing between Azure Storage accounts and map them to a logical alias instead of using bare
         /// connection strings.
         /// </summary>
-        public AccountRoutingSettings RoutingSettings { get; } = new AccountRoutingSettings();
+        public AccountRoutingSettings AccountRouting { get; } = new AccountRoutingSettings();
 
         internal const string SerializerSettingsKey = "MainSerializer";
         readonly TransportTransactionMode[] supportedTransactionModes = new[] { TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly };
