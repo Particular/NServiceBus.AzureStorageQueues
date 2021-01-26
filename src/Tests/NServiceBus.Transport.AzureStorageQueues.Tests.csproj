@@ -22,10 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Transport\NServiceBus.Transport.AzureStorageQueues.csproj" />
   </ItemGroup>
 

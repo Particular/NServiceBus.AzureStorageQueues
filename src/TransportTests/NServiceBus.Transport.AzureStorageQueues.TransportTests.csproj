@@ -18,7 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
     <Compile Include="..\AcceptanceTests\BackwardsCompatibleQueueNameSanitizerForTests.cs" Link="BackwardsCompatibleQueueNameSanitizerForTests.cs" />
   </ItemGroup>
 
