@@ -122,7 +122,10 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    };
                     transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
 
                     var routing = cfg.UseTransport(transport);
@@ -141,7 +144,8 @@
                 {
                     var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
                     {
-                        PeekInterval = PeekInterval
+                        PeekInterval = PeekInterval,
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
                     };
                     transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
 
@@ -156,7 +160,10 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    };
                     transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
 
                     cfg.UseTransport(transport);
@@ -172,7 +179,10 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString()));
+                    cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    });
                 });
             }
 
