@@ -44,7 +44,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultPublisher>(configuration =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    };
                     transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
                     var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, Utilities.GetEnvConfiguredConnectionString2());
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Subscriber)));
@@ -64,7 +67,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 {
                     configuration.DisableFeature<AutoSubscribe>();
 
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2());
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    };
                     transport.AccountRouting.DefaultAccountAlias = AnotherAccountName;
                     var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName, Utilities.GetEnvConfiguredConnectionString());
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Publisher)));

@@ -46,7 +46,10 @@
             {
                 EndpointSetup<DefaultServer>(config =>
                 {
-                    config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true));
+                    config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    });
                 });
             }
 

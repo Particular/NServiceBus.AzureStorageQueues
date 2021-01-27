@@ -52,7 +52,8 @@
                     config.LimitMessageProcessingConcurrencyTo(1);
                     config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
                     {
-                        MessageUnwrapper = message => throw new Exception("Custom unwrapper failed")
+                        MessageUnwrapper = message => throw new Exception("Custom unwrapper failed"),
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
                     });
                 });
             }
@@ -64,7 +65,10 @@
             {
                 EndpointSetup<DefaultServer>(config =>
                 {
-                    config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true));
+                    config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    });
                     config.UseSerialization<NewtonsoftSerializer>();
                 });
             }

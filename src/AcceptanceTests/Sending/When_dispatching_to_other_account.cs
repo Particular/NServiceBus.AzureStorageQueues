@@ -49,7 +49,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    };
                     transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
                     transport.AccountRouting.AddAccount(Alias, Utilities.GetEnvConfiguredConnectionString2());
 
@@ -66,7 +69,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2());
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    };
                     transport.AccountRouting.DefaultAccountAlias = Alias;
 
                     configuration.UseTransport(transport);

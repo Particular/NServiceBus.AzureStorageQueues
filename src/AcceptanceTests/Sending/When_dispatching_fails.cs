@@ -70,7 +70,10 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var routing = cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString()));
+                    var routing = cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    });
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
             }

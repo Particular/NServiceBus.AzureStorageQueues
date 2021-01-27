@@ -56,7 +56,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         c.UseSerialization<NewtonsoftSerializer>();
                         var transport = new AzureStorageQueueTransport(_connectionString)
                         {
-                            MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>()
+                            MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>(),
+                            QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
                         };
 
                         configureTransport(transport);
@@ -102,7 +103,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 EndpointSetup<DefaultServer>(c =>
                 {
                     c.UseSerialization<NewtonsoftSerializer>();
-                    c.UseTransport(new AzureStorageQueueTransport(Testing.Utilities.GetEnvConfiguredConnectionString()));
+                    c.UseTransport(new AzureStorageQueueTransport(Testing.Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    });
                 });
             }
 
