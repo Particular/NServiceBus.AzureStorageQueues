@@ -88,13 +88,11 @@ namespace NServiceBus
             Guard.AgainstNull(nameof(receivers), receivers);
             Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
 
-            queueAddressGenerator = new QueueAddressGenerator(QueueNameSanitizer);
-
-            var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, queueAddressGenerator);
+            var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, GetQueueAddressGenerator());
             await queueCreator.CreateQueueIfNecessary(sendingAddresses, receivers.Select(settings => settings.ReceiveAddress).ToArray())
                 .ConfigureAwait(false);
 
-            var azureStorageAddressing = new AzureStorageAddressingSettings(queueAddressGenerator);
+            var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator());
             azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias ?? "", AccountRouting.mappings);
             azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
 
@@ -111,7 +109,7 @@ namespace NServiceBus
             }
 
             var serializer = BuildSerializer(MessageWrapperSerializationDefinition, hostSettings.CoreSettings);
-            var dispatcher = new Dispatcher(queueAddressGenerator, azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence);
+            var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence);
 
             var isSendOnly = receivers.Length == 0;
             var nativeDelayedDeliveryProcessor = NativeDelayedDeliveryProcessor.Disabled();
@@ -190,7 +188,7 @@ namespace NServiceBus
                 ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
                 : new DefaultMessageEnvelopeUnwrapper(serializer);
 
-            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, queueAddressGenerator, settings.PurgeOnStartup, MessageInvisibleTime);
+            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, GetQueueAddressGenerator(), settings.PurgeOnStartup, MessageInvisibleTime);
 
             return new MessageReceiver(
                 settings.Id,
@@ -203,6 +201,17 @@ namespace NServiceBus
                 ReceiverBatchSize,
                 MaximumWaitTimeWhenIdle,
                 PeekInterval);
+        }
+
+        QueueAddressGenerator GetQueueAddressGenerator()
+        {
+            //TODO: Need a lock?
+            if (queueAddressGenerator == null)
+            {
+                queueAddressGenerator = new QueueAddressGenerator(QueueNameSanitizer);
+            }
+
+            return queueAddressGenerator;
         }
 
         /// <inheritdoc cref="ToTransportAddress"/>
@@ -220,7 +229,7 @@ namespace NServiceBus
                 queue.Append("-" + address.Qualifier);
             }
 
-            return queueAddressGenerator.GetQueueName(queue.ToString());
+            return GetQueueAddressGenerator().GetQueueName(queue.ToString());
         }
 
         /// <inheritdoc cref="GetSupportedTransactionModes"/>
