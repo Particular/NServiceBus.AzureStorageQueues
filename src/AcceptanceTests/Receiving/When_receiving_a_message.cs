@@ -61,7 +61,8 @@
                     config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
                     {
                         TransportTransactionMode = TransportTransactionMode.ReceiveOnly,
-                        MessageInvisibleTime = VisibilityTimeout
+                        MessageInvisibleTime = VisibilityTimeout,
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
                     });
                 });
             }

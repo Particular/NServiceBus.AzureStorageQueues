@@ -92,7 +92,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 {
                     cfg.SendOnly();
 
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    };
                     transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
 
                     var routing = cfg.UseTransport(transport);
@@ -109,7 +112,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 {
                     cfg.SendOnly();
 
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    };
                     transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
 
                     cfg.UseTransport(transport);
@@ -124,7 +130,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString()));
+                    cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    {
+                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                    });
                 });
             }
 
