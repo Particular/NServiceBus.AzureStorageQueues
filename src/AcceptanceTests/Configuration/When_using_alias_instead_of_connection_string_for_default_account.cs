@@ -77,6 +77,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
                     };
                     transport.AccountRouting.DefaultAccountAlias = "defaultAlias";
+                    endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
                     endpointConfiguration.UseTransport(transport);
                 });
             }
