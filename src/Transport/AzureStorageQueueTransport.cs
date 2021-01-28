@@ -5,7 +5,6 @@ namespace NServiceBus
     using System.Collections.Immutable;
     using System.Collections.ObjectModel;
     using System.Linq;
-    using System.Reflection;
     using System.Security.Cryptography;
     using System.Text;
     using System.Threading.Tasks;
@@ -176,13 +175,13 @@ namespace NServiceBus
             var (definition, serializerSettings) = serializerSettingsTuple;
 
             // serializerSettings.Merge(settings);
-            var merge = typeof(SettingsHolder).GetMethod("Merge", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            merge.Invoke(serializerSettings, new object[]
-            {
-                settings
-            });
+            //var merge = typeof(SettingsHolder).GetMethod("Merge", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            //merge.Invoke(serializerSettings, new object[]
+            //{
+            //    settings
+            //});
 
-            var serializerFactory = definition.Configure(serializerSettings);
+            var serializerFactory = definition.Configure(settings);
             var serializer = serializerFactory(mapper);
             return serializer;
         }
