@@ -88,9 +88,13 @@ namespace NServiceBus
             Guard.AgainstNull(nameof(receivers), receivers);
             Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
 
-            var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, GetQueueAddressGenerator());
-            await queueCreator.CreateQueueIfNecessary(sendingAddresses, receivers.Select(settings => settings.ReceiveAddress).ToArray())
-                .ConfigureAwait(false);
+            if (hostSettings.SetupInfrastructure)
+            {
+                var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, GetQueueAddressGenerator());
+                await queueCreator.CreateQueueIfNecessary(sendingAddresses,
+                        receivers.Select(settings => settings.ReceiveAddress).ToArray())
+                    .ConfigureAwait(false);
+            }
 
             var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator());
             azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias ?? "", AccountRouting.mappings);
@@ -100,6 +104,7 @@ namespace NServiceBus
             var nativeDelayedDeliveryPersistence = NativeDelayDeliveryPersistence.Disabled();
             if (SupportsDelayedDelivery)
             {
+                //TODO: should this honor the SetupInfrastructure flag?
                 delayedMessagesStorageTable = await EnsureNativeDelayedDeliveryTable(
                     hostSettings.Name,
                     DelayedDelivery.DelayedDeliveryTableName,
