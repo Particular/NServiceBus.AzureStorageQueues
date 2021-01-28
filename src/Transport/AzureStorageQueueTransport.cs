@@ -115,10 +115,12 @@ namespace NServiceBus
             var serializer = BuildSerializer(MessageWrapperSerializationDefinition, hostSettings.CoreSettings);
             var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence);
 
-            var isSendOnly = receivers.Length == 0;
             var nativeDelayedDeliveryProcessor = NativeDelayedDeliveryProcessor.Disabled();
-            if (SupportsDelayedDelivery && !isSendOnly)
+            if (SupportsDelayedDelivery)
             {
+                //TODO: based on conversations SendOnly endpoints should not use the poller,
+                //but looking at tests it seems that is the sender that moves the delayed
+                //message to its final destination
                 nativeDelayedDeliveryProcessor = new NativeDelayedDeliveryProcessor(
                         dispatcher,
                         delayedMessagesStorageTable,
