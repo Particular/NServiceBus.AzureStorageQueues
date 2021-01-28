@@ -30,7 +30,7 @@ namespace NServiceBus
             {
                 Guard.AgainstNullAndEmpty(nameof(DelayedDeliveryTableName), value);
 
-                if (delayedDeliveryTableNameRegex.IsMatch(DelayedDeliveryTableName) == false)
+                if (delayedDeliveryTableNameRegex.IsMatch(value) == false)
                 {
                     throw new ArgumentException($"{nameof(DelayedDeliveryTableName)} must match the following regular expression '{delayedDeliveryTableNameRegex}'");
                 }
