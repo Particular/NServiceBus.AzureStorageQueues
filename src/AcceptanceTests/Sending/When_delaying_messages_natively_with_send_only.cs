@@ -46,7 +46,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     var delayedMessages = await GetDelayedMessageEntities().ConfigureAwait(false);
                     await MoveBeforeNow(delayedMessages[0]).ConfigureAwait(false);
                 }))
-                .WithEndpoint<Receiver>()
+                .WithEndpoint<ErrorQueueReceiver>()
                 .Done(c => c.WasCalled)
                 .Run().ConfigureAwait(false);
 
@@ -84,26 +84,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             public Stopwatch Stopwatch { get; set; }
         }
 
-        public class Sender : EndpointConfigurationBuilder
-        {
-            public Sender()
-            {
-                EndpointSetup<DefaultServer>(cfg =>
-                {
-                    cfg.SendOnly();
-
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
-                    transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
-
-                    var routing = cfg.UseTransport(transport);
-                    routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
-                });
-            }
-        }
-
         public class SenderToNowhere : EndpointConfigurationBuilder
         {
             public SenderToNowhere()
@@ -119,18 +99,18 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
 
                     cfg.UseTransport(transport);
-                    cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
+                    cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(ErrorQueueReceiver)));
                 });
             }
         }
 
-        public class Receiver : EndpointConfigurationBuilder
+        public class ErrorQueueReceiver : EndpointConfigurationBuilder
         {
-            public Receiver()
+            public ErrorQueueReceiver()
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
+                    cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
                     {
                         QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
                     });
