@@ -61,6 +61,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         };
 
                         configureTransport(transport);
+                        c.UseTransport(transport);
                     });
 
                     cfg.When((bus, c) =>
