@@ -22,19 +22,20 @@ namespace NServiceBus
         [System.Obsolete("Account aliases have been deprecated. Use the TransportDefinition constructor tha" +
             "t accepts fully customized Azure service clients. Will be treated as an error fr" +
             "om version 11.0.0. Will be removed in version 12.0.0.", false)]
-        public void AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient connectionClient) { }
+        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient connectionClient) { }
         [System.Obsolete("Account aliases have been deprecated. Use the TransportDefinition constructor tha" +
             "t accepts fully customized Azure service clients. Will be treated as an error fr" +
             "om version 11.0.0. Will be removed in version 12.0.0.", false)]
-        public void AddAccount(string alias, string connectionString) { }
+        public NServiceBus.AccountInfo AddAccount(string alias, string connectionString) { }
     }
-    public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition
+    public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition, NServiceBus.Routing.IMessageDrivenSubscriptionTransport
     {
         public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
         public AzureStorageQueueTransport(string connectionString, bool disableNativeDelayedDeliveries = false) { }
         public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
+        public NServiceBus.AccountRoutingSettings AccountRouting { get; }
         public int? DegreeOfReceiveParallelism { get; set; }
-        public NServiceBus.NativeDelayedDeliverySettings DelayedDeliverySettings { get; }
+        public NServiceBus.NativeDelayedDeliverySettings DelayedDelivery { get; }
         public System.TimeSpan MaximumWaitTimeWhenIdle { get; set; }
         public System.TimeSpan MessageInvisibleTime { get; set; }
         public System.Func<Azure.Storage.Queues.Models.QueueMessage, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> MessageUnwrapper { get; set; }
@@ -42,7 +43,6 @@ namespace NServiceBus
         public System.TimeSpan PeekInterval { get; set; }
         public System.Func<string, string> QueueNameSanitizer { get; set; }
         public int? ReceiverBatchSize { get; set; }
-        public NServiceBus.AccountRoutingSettings RoutingSettings { get; }
         public override System.Collections.Generic.IReadOnlyCollection<NServiceBus.TransportTransactionMode> GetSupportedTransactionModes() { }
         public override System.Threading.Tasks.Task<NServiceBus.Transport.TransportInfrastructure> Initialize(NServiceBus.Transport.HostSettings hostSettings, NServiceBus.Transport.ReceiveSettings[] receivers, string[] sendingAddresses) { }
         public override string ToTransportAddress(NServiceBus.Transport.QueueAddress address) { }
