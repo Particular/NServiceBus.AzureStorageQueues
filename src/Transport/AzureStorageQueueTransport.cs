@@ -91,9 +91,14 @@ namespace NServiceBus
 
             if (hostSettings.SetupInfrastructure)
             {
+                var queuesToCreate = receivers.Select(settings => settings.ReceiveAddress).Union(sendingAddresses).ToList();
+                if (SupportsDelayedDelivery && !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue))
+                {
+                    queuesToCreate.Add(DelayedDelivery.DelayedDeliveryPoisonQueue);
+                }
+
                 var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, GetQueueAddressGenerator());
-                await queueCreator.CreateQueueIfNecessary(sendingAddresses,
-                        receivers.Select(settings => settings.ReceiveAddress).ToArray())
+                await queueCreator.CreateQueueIfNecessary(queuesToCreate)
                     .ConfigureAwait(false);
             }
 
