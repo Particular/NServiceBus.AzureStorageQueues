@@ -35,7 +35,7 @@ namespace NServiceBus
                     throw new ArgumentException($"{nameof(DelayedDeliveryTableName)} must match the following regular expression '{delayedDeliveryTableNameRegex}'");
                 }
 
-                delayedDeliveryTableName = value;
+                delayedDeliveryTableName = value.ToLower();
             }
         }
 
