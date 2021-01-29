@@ -2,12 +2,18 @@
 {
     using Configuration.AdvancedExtensibility;
 
-    static class SettingsExtensionsToAccessCurrentTransport
+    static class EndpointConfigurationExtensions
     {
         public static AzureStorageQueueTransport GetConfiguredTransport(this EndpointConfiguration configuration)
         {
             //TODO this is kind of a hack because the acceptance testing framework doesn't give any access to the transport definition to individual tests.
             return (AzureStorageQueueTransport)configuration.GetSettings().Get<TransportDefinition>();
+        }
+
+        public static string GetEndpointDefinedErrorQueue(this EndpointConfiguration configuration)
+        {
+            //TODO this is kind of a hack because the acceptance testing framework doesn't give any access to the transport definition to individual tests.
+            return configuration.GetSettings().GetOrDefault<string>(ErrorQueueSettings.SettingsKey);
         }
     }
 }
