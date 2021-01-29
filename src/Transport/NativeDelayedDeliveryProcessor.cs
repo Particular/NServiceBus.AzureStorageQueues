@@ -4,7 +4,7 @@
     using System.Threading.Tasks;
     using global::Azure.Storage.Blobs;
     using Microsoft.Azure.Cosmos.Table;
-    using NServiceBus.Logging;
+    using Logging;
     using NServiceBus.Transport.AzureStorageQueues;
 
     class NativeDelayedDeliveryProcessor
