@@ -33,7 +33,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             var delay = TimeSpan.FromDays(30);
 
             var context = await Scenario.Define<Context>()
-                .WithEndpoint<SenderToNowhere>(b => b.When(async (session, c) =>
+                .WithEndpoint<SendOnlySenderToNowhere>(b => b.When(async (session, c) =>
                 {
                     var sendOptions = new SendOptions();
                     sendOptions.DelayDeliveryWith(delay);
@@ -84,9 +84,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             public Stopwatch Stopwatch { get; set; }
         }
 
-        public class SenderToNowhere : EndpointConfigurationBuilder
+        public class SendOnlySenderToNowhere : EndpointConfigurationBuilder
         {
-            public SenderToNowhere()
+            public SendOnlySenderToNowhere()
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {

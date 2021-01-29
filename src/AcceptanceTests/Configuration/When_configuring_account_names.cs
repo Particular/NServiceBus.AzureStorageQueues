@@ -50,7 +50,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         Task Configure(Action<AzureStorageQueueTransport> configureTransport)
         {
             return Scenario.Define<Context>()
-                .WithEndpoint<Endpoint>(cfg =>
+                .WithEndpoint<SendOnlyEndpoint>(cfg =>
                 {
                     cfg.CustomConfig(c =>
                     {
@@ -88,9 +88,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             public bool WasCalled { get; set; }
         }
 
-        class Endpoint : EndpointConfigurationBuilder
+        class SendOnlyEndpoint : EndpointConfigurationBuilder
         {
-            public Endpoint()
+            public SendOnlyEndpoint()
             {
                 EndpointSetup<DefaultServer>(endpointConfiguration =>
                 {
