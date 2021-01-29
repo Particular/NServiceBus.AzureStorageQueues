@@ -87,6 +87,8 @@ namespace NServiceBus
             Guard.AgainstNull(nameof(receivers), receivers);
             Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
 
+            ValidateCurrentSettings(hostSettings, receivers, sendingAddresses);
+
             if (hostSettings.SetupInfrastructure)
             {
                 var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, GetQueueAddressGenerator());
@@ -140,6 +142,18 @@ namespace NServiceBus
                 nativeDelayedDeliveryProcessor);
 
             return infrastructure;
+        }
+
+        void ValidateCurrentSettings(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses)
+        {
+            var isSendOnly = receivers.Length == 0;
+            if (SupportsDelayedDelivery && isSendOnly && string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue))
+            {
+                throw new Exception($"Send only endpoints require a native delayed poison queue." +
+                                    $" Configure a user defined poison queue for delayed deliveries by using the" +
+                                    $" {nameof(AzureStorageQueueTransport)}.{nameof(DelayedDelivery)}" +
+                                    $".{nameof(DelayedDelivery.DelayedDeliveryPoisonQueue)} property.");
+            }
         }
 
         static async Task<CloudTable> EnsureNativeDelayedDeliveryTable(string endpointName, string delayedDeliveryTableName, CloudTableClient cloudTableClient)
