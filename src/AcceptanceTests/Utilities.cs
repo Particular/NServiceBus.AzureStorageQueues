@@ -34,5 +34,22 @@
             var candidate = Environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.User);
             return string.IsNullOrWhiteSpace(candidate) ? Environment.GetEnvironmentVariable(variable) : candidate;
         }
+
+        public static AzureStorageQueueTransport CreateTransportWithDefaultTestsConfiguration(string connectionString, string delayedDeliveryPoisonQueue = null)
+        {
+            var transport = new AzureStorageQueueTransport(connectionString)
+            {
+                MessageInvisibleTime = TimeSpan.FromSeconds(30),
+                MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>(),
+                QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+            };
+
+            if (delayedDeliveryPoisonQueue != null)
+            {
+                transport.DelayedDelivery.DelayedDeliveryPoisonQueue = delayedDeliveryPoisonQueue;
+            }
+
+            return transport;
+        }
     }
 }
