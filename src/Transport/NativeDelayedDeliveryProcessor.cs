@@ -1,6 +1,5 @@
 ﻿namespace NServiceBus
 {
-    using System.Collections.Immutable;
     using System.Threading;
     using System.Threading.Tasks;
     using global::Azure.Storage.Blobs;
@@ -24,7 +23,7 @@
             Dispatcher dispatcher,
             CloudTable delayedMessageStorageTable,
             BlobServiceClient blobServiceClient,
-            ImmutableDictionary<string, string> errorQueueAddresses,
+            string errorQueueAddress,
             TransportTransactionMode transportTransactionMode,
             BackoffStrategy backoffStrategy,
             string userDefinedDelayedDeliveryPoisonQueue)
@@ -33,7 +32,7 @@
             this.dispatcher = dispatcher;
             this.delayedMessageStorageTable = delayedMessageStorageTable;
             this.blobServiceClient = blobServiceClient;
-            this.errorQueueAddresses = errorQueueAddresses;
+            this.errorQueueAddress = errorQueueAddress;
             this.transportTransactionMode = transportTransactionMode;
             this.backoffStrategy = backoffStrategy;
             this.userDefinedDelayedDeliveryPoisonQueue = userDefinedDelayedDeliveryPoisonQueue;
@@ -54,7 +53,7 @@
             poller = new DelayedMessagesPoller(
                 delayedMessageStorageTable,
                 blobServiceClient,
-                errorQueueAddresses,
+                errorQueueAddress,
                 userDefinedDelayedDeliveryPoisonQueue,
                 isAtMostOnce,
                 dispatcher,
@@ -72,7 +71,7 @@
         readonly Dispatcher dispatcher;
         CloudTable delayedMessageStorageTable;
         readonly BlobServiceClient blobServiceClient;
-        readonly ImmutableDictionary<string, string> errorQueueAddresses;
+        readonly string errorQueueAddress;
         readonly TransportTransactionMode transportTransactionMode;
         readonly BackoffStrategy backoffStrategy;
         readonly string userDefinedDelayedDeliveryPoisonQueue;

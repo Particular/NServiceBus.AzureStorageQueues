@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
@@ -14,9 +13,9 @@
 
     class DelayedMessagesPoller
     {
-        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, ImmutableDictionary<string, string> errorQueueAddresses, string userDefinedDelayedDeliveryPoisonQueue, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
+        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, string errorQueueAddress, string userDefinedDelayedDeliveryPoisonQueue, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
-            this.errorQueueAddresses = errorQueueAddresses;
+            this.errorQueueAddress = errorQueueAddress;
             this.userDefinedDelayedDeliveryPoisonQueue = userDefinedDelayedDeliveryPoisonQueue;
             this.isAtMostOnce = isAtMostOnce;
             this.delayedDeliveryTable = delayedDeliveryTable;
@@ -229,20 +228,9 @@
 
         UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
-            if (!errorQueueAddresses.TryGetValue(operation.Destination, out var errorQueue))
-            {
-                errorQueue = userDefinedDelayedDeliveryPoisonQueue;
-            }
+            var errorQueue = errorQueueAddress ?? userDefinedDelayedDeliveryPoisonQueue;
 
-            if (string.IsNullOrWhiteSpace(errorQueue))
-            {
-                throw new Exception($"Cannot find a valid error queue for destination '{operation.Destination}'." +
-                    $" Configure a user defined poison queue for delayed deliveries by using the" +
-                    $" {nameof(AzureStorageQueueTransport)}.{nameof(AzureStorageQueueTransport.DelayedDelivery)}" +
-                    $".{nameof(AzureStorageQueueTransport.DelayedDelivery.DelayedDeliveryPoisonQueue)} property.");
-            }
-
-            //TODO does this need to set the FailedQ header too?
+            //TODO does this need to set the FailedQ header and the failure reason?
             return new UnicastTransportOperation(operation.Message, errorQueue, new DispatchProperties(), operation.RequiredDispatchConsistency);
         }
 
@@ -255,7 +243,7 @@
         readonly Dispatcher dispatcher;
         readonly BackoffStrategy backoffStrategy;
         readonly bool isAtMostOnce;
-        readonly ImmutableDictionary<string, string> errorQueueAddresses;
+        readonly string errorQueueAddress;
         readonly string userDefinedDelayedDeliveryPoisonQueue;
         CloudTable delayedDeliveryTable;
         LockManager lockManager;

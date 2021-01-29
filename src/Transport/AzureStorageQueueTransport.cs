@@ -2,7 +2,6 @@ namespace NServiceBus
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.Collections.ObjectModel;
     using System.Linq;
     using System.Security.Cryptography;
@@ -132,7 +131,7 @@ namespace NServiceBus
                         dispatcher,
                         delayedMessagesStorageTable,
                         blobServiceClientProvider.Client,
-                        receivers.ToImmutableDictionary(settings => settings.ReceiveAddress, settings => settings.ErrorQueue),
+                        receivers.Select(settings => settings.ErrorQueue).FirstOrDefault(),
                         TransportTransactionMode,
                         new BackoffStrategy(PeekInterval, MaximumWaitTimeWhenIdle),
                         DelayedDelivery.DelayedDeliveryPoisonQueue);
