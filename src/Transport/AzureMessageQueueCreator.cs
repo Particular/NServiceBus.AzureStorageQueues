@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
     using global::Azure;
@@ -16,10 +17,9 @@
             this.addressGenerator = addressGenerator;
         }
 
-        public Task CreateQueueIfNecessary(string[] sendingAddresses, string[] receivingAddresses)
+        public Task CreateQueueIfNecessary(List<string> queuesToCreate)
         {
-            var addresses = receivingAddresses.Union(sendingAddresses);
-            return Task.WhenAll(addresses.Select(CreateQueue));
+            return Task.WhenAll(queuesToCreate.Select(CreateQueue));
         }
 
         async Task CreateQueue(string address)
