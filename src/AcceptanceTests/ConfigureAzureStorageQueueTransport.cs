@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.AcceptanceTests.Routing.MessageDrivenSubscriptions;
+using NServiceBus.Transport.AzureStorageQueues.AcceptanceTests;
 using NUnit.Framework;
 using Conventions = NServiceBus.AcceptanceTesting.Customization.Conventions;
 
@@ -10,6 +11,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
 {
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
+        var errorQueue = configuration.GetEndpointDefinedErrorQueue();
         var connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
         var transport = new AzureStorageQueueTransport(connectionString)
         {
@@ -17,6 +19,7 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>(),
             QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
         };
+        transport.DelayedDelivery.DelayedDeliveryPoisonQueue = errorQueue;
 
         var routingConfig = configuration.UseTransport(transport);
 
