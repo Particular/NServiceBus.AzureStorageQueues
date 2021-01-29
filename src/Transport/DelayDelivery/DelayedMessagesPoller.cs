@@ -13,10 +13,9 @@
 
     class DelayedMessagesPoller
     {
-        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, string errorQueueAddress, string userDefinedDelayedDeliveryPoisonQueue, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
+        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, string errorQueueAddress, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
             this.errorQueueAddress = errorQueueAddress;
-            this.userDefinedDelayedDeliveryPoisonQueue = userDefinedDelayedDeliveryPoisonQueue;
             this.isAtMostOnce = isAtMostOnce;
             this.delayedDeliveryTable = delayedDeliveryTable;
             this.blobServiceClient = blobServiceClient;
@@ -228,10 +227,8 @@
 
         UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
-            var errorQueue = errorQueueAddress ?? userDefinedDelayedDeliveryPoisonQueue;
-
             //TODO does this need to set the FailedQ header and the failure reason?
-            return new UnicastTransportOperation(operation.Message, errorQueue, new DispatchProperties(), operation.RequiredDispatchConsistency);
+            return new UnicastTransportOperation(operation.Message, errorQueueAddress, new DispatchProperties(), operation.RequiredDispatchConsistency);
         }
 
         const int DelayedMessagesProcessedAtOnce = 50;
@@ -244,7 +241,6 @@
         readonly BackoffStrategy backoffStrategy;
         readonly bool isAtMostOnce;
         readonly string errorQueueAddress;
-        readonly string userDefinedDelayedDeliveryPoisonQueue;
         CloudTable delayedDeliveryTable;
         LockManager lockManager;
         Task delayedMessagesPollerTask;

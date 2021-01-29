@@ -127,14 +127,18 @@ namespace NServiceBus
                 //TODO: based on conversations SendOnly endpoints should not use the poller,
                 //but looking at tests it seems that is the sender that moves the delayed
                 //message to its final destination
+
+                var nativeDelayedDeliveryErrorQueue = hostSettings.CoreSettings?.GetOrDefault<string>(ErrorQueueSettings.SettingsKey)
+                    ?? receivers.Select(settings => settings.ErrorQueue).FirstOrDefault()
+                    ?? DelayedDelivery.DelayedDeliveryPoisonQueue;
+
                 nativeDelayedDeliveryProcessor = new NativeDelayedDeliveryProcessor(
                         dispatcher,
                         delayedMessagesStorageTable,
                         blobServiceClientProvider.Client,
-                        receivers.Select(settings => settings.ErrorQueue).FirstOrDefault(),
+                        nativeDelayedDeliveryErrorQueue,
                         TransportTransactionMode,
-                        new BackoffStrategy(PeekInterval, MaximumWaitTimeWhenIdle),
-                        DelayedDelivery.DelayedDeliveryPoisonQueue);
+                        new BackoffStrategy(PeekInterval, MaximumWaitTimeWhenIdle));
                 nativeDelayedDeliveryProcessor.Start();
             }
 

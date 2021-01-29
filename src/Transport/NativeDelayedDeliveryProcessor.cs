@@ -25,8 +25,7 @@
             BlobServiceClient blobServiceClient,
             string errorQueueAddress,
             TransportTransactionMode transportTransactionMode,
-            BackoffStrategy backoffStrategy,
-            string userDefinedDelayedDeliveryPoisonQueue)
+            BackoffStrategy backoffStrategy)
         {
             enabled = true;
             this.dispatcher = dispatcher;
@@ -35,7 +34,6 @@
             this.errorQueueAddress = errorQueueAddress;
             this.transportTransactionMode = transportTransactionMode;
             this.backoffStrategy = backoffStrategy;
-            this.userDefinedDelayedDeliveryPoisonQueue = userDefinedDelayedDeliveryPoisonQueue;
         }
 
         public void Start()
@@ -54,7 +52,6 @@
                 delayedMessageStorageTable,
                 blobServiceClient,
                 errorQueueAddress,
-                userDefinedDelayedDeliveryPoisonQueue,
                 isAtMostOnce,
                 dispatcher,
                 backoffStrategy);
@@ -74,7 +71,6 @@
         readonly string errorQueueAddress;
         readonly TransportTransactionMode transportTransactionMode;
         readonly BackoffStrategy backoffStrategy;
-        readonly string userDefinedDelayedDeliveryPoisonQueue;
         bool enabled;
         CancellationTokenSource nativeDelayedMessagesCancellationSource;
 
