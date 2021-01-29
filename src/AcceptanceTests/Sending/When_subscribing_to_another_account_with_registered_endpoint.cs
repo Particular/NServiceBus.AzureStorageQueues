@@ -6,10 +6,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using AcceptanceTesting.Customization;
+    using Features;
+    using NServiceBus.AcceptanceTesting.Customization;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
-    using Features;
     using NUnit.Framework;
     using Testing;
 
@@ -45,10 +45,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultPublisher>(configuration =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
+                    var transport = configuration.GetConfiguredTransport();
+
                     transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
                     var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, Utilities.GetEnvConfiguredConnectionString2());
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Subscriber)));
@@ -64,21 +62,19 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public Subscriber()
             {
-                EndpointSetup<DefaultServer>(configuration =>
-                {
-                    configuration.DisableFeature<AutoSubscribe>();
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
 
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2())
+                transport.AccountRouting.DefaultAccountAlias = AnotherAccountName;
+                var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName, Utilities.GetEnvConfiguredConnectionString());
+                anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Publisher)));
+
+                EndpointSetup(
+                    endpointTemplate: new CustomizedServer(transport),
+                    configurationBuilderCustomization: (config, rd) =>
                     {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
-                    transport.AccountRouting.DefaultAccountAlias = AnotherAccountName;
-                    var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName, Utilities.GetEnvConfiguredConnectionString());
-                    anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Publisher)));
-
-                    var routing = configuration.UseTransport(transport);
-                    routing.RegisterPublisher(typeof(MyEvent), Conventions.EndpointNamingConvention(typeof(Publisher)));
-                });
+                        config.DisableFeature<AutoSubscribe>();
+                    },
+                    publisherMetadata: p => p.RegisterPublisherFor<MyEvent>(typeof(Publisher)));
             }
 
             public class MyMessageHandler : IHandleMessages<MyEvent>
