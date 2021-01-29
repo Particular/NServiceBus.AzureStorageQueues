@@ -60,6 +60,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                             MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>(),
                             QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
                         };
+                        transport.DelayedDelivery.DelayedDeliveryPoisonQueue = c.GetEndpointDefinedErrorQueue();
 
                         configureTransport(transport);
                         c.UseTransport(transport);

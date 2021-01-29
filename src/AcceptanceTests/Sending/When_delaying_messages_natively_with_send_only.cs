@@ -97,6 +97,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
                     };
                     transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+                    transport.DelayedDelivery.DelayedDeliveryPoisonQueue = Conventions.EndpointNamingConvention(typeof(ErrorQueueReceiver));
 
                     cfg.UseTransport(transport);
                     cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(ErrorQueueReceiver)));
