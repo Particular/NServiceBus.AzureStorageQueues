@@ -413,7 +413,7 @@ namespace NServiceBus
         IQueueServiceClientProvider queueServiceClientProvider;
         IBlobServiceClientProvider blobServiceClientProvider;
         ICloudTableClientProvider cloudTableClientProvider;
-        int? receiverBatchSize = DefaultConfigurationValues.DefaultBatchSize;
+        int? receiverBatchSize;
         int? degreeOfReceiveParallelism;
         Func<QueueMessage, MessageWrapper> messageUnwrapper;
     }
