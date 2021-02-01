@@ -405,10 +405,10 @@ namespace NServiceBus
 
         internal const string SerializerSettingsKey = "MainSerializer";
         readonly TransportTransactionMode[] supportedTransactionModes = new[] { TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly };
-        TimeSpan messageInvisibleTime = DefaultConfigurationValues.DefaultMessageInvisibleTime;
-        TimeSpan peekInterval = DefaultConfigurationValues.DefaultPeekInterval;
-        TimeSpan maximumWaitTimeWhenIdle = DefaultConfigurationValues.DefaultMaximumWaitTimeWhenIdle;
-        Func<string, string> queueNameSanitizer = DefaultConfigurationValues.DefaultQueueNameSanitizer;
+        TimeSpan messageInvisibleTime = TimeSpan.FromSeconds(30);
+        TimeSpan peekInterval = TimeSpan.FromMilliseconds(125);
+        TimeSpan maximumWaitTimeWhenIdle = TimeSpan.FromSeconds(30);
+        Func<string, string> queueNameSanitizer = entityName => entityName;
         QueueAddressGenerator queueAddressGenerator;
         IQueueServiceClientProvider queueServiceClientProvider;
         IBlobServiceClientProvider blobServiceClientProvider;
