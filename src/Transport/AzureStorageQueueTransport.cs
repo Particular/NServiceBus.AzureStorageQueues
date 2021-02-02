@@ -109,11 +109,11 @@ namespace NServiceBus
             var nativeDelayedDeliveryPersistence = NativeDelayDeliveryPersistence.Disabled();
             if (SupportsDelayedDelivery)
             {
-                //TODO: should this honor the SetupInfrastructure flag?
                 delayedMessagesStorageTable = await EnsureNativeDelayedDeliveryTable(
                     hostSettings.Name,
                     DelayedDelivery.DelayedDeliveryTableName,
-                    cloudTableClientProvider.Client).ConfigureAwait(false);
+                    cloudTableClientProvider.Client,
+                    hostSettings.SetupInfrastructure).ConfigureAwait(false);
 
                 nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTable);
             }
@@ -164,7 +164,7 @@ namespace NServiceBus
             }
         }
 
-        static async Task<CloudTable> EnsureNativeDelayedDeliveryTable(string endpointName, string delayedDeliveryTableName, CloudTableClient cloudTableClient)
+        static async Task<CloudTable> EnsureNativeDelayedDeliveryTable(string endpointName, string delayedDeliveryTableName, CloudTableClient cloudTableClient, bool setupInfrastructure)
         {
             if (string.IsNullOrEmpty(delayedDeliveryTableName))
             {
@@ -172,7 +172,10 @@ namespace NServiceBus
             }
 
             var delayedMessagesStorageTable = cloudTableClient.GetTableReference(delayedDeliveryTableName);
-            await delayedMessagesStorageTable.CreateIfNotExistsAsync().ConfigureAwait(false);
+            if (setupInfrastructure)
+            {
+                await delayedMessagesStorageTable.CreateIfNotExistsAsync().ConfigureAwait(false);
+            }
 
             return delayedMessagesStorageTable;
         }
