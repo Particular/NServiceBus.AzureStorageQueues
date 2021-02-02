@@ -18,6 +18,7 @@ namespace NServiceBus
     using Serialization;
     using Transport;
     using Transport.AzureStorageQueues;
+    using System.Globalization;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
@@ -105,6 +106,7 @@ namespace NServiceBus
             azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias ?? "", AccountRouting.mappings);
             azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
 
+            object delayedDeliveryPersistenceDiagnosticSection = new { };
             CloudTable delayedMessagesStorageTable = null;
             var nativeDelayedDeliveryPersistence = NativeDelayDeliveryPersistence.Disabled();
             if (SupportsDelayedDelivery)
@@ -116,11 +118,18 @@ namespace NServiceBus
                     hostSettings.SetupInfrastructure).ConfigureAwait(false);
 
                 nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTable);
+
+                delayedDeliveryPersistenceDiagnosticSection = new
+                {
+                    NativeDelayedDeliveryTableName = delayedMessagesStorageTable.Name,
+                    UserDefinedNativeDelayedDeliveryTableName = !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryTableName)
+                };
             }
 
             var serializer = BuildSerializer(MessageWrapperSerializationDefinition, hostSettings.CoreSettings);
             var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence);
 
+            object delayedDeliveryProcessorDiagnosticSection = new { };
             var nativeDelayedDeliveryProcessor = NativeDelayedDeliveryProcessor.Disabled();
             if (SupportsDelayedDelivery)
             {
@@ -136,6 +145,12 @@ namespace NServiceBus
                         TransportTransactionMode,
                         new BackoffStrategy(PeekInterval, MaximumWaitTimeWhenIdle));
                 nativeDelayedDeliveryProcessor.Start();
+
+                delayedDeliveryProcessorDiagnosticSection = new
+                {
+                    DelayedDeliveryPoisonQueue = nativeDelayedDeliveryErrorQueue,
+                    UserDefinedDelayedDeliveryPoisonQueue = !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue)
+                };
             }
 
             var messageReceivers = receivers.Select(settings => BuildReceiver(settings, serializer, hostSettings.CriticalErrorAction)).ToList();
@@ -144,6 +159,30 @@ namespace NServiceBus
                 dispatcher,
                 new ReadOnlyCollection<IMessageReceiver>(messageReceivers),
                 nativeDelayedDeliveryProcessor);
+
+            hostSettings.StartupDiagnostic.Add("NServiceBus.Transport.AzureStorageQueues", new
+            {
+                ConnectionMechanism = new
+                {
+                    Queue = queueServiceClientProvider is ConnectionStringQueueServiceClientProvider ? "ConnectionString" : "QueueServiceClient",
+                    Table = cloudTableClientProvider is ConnectionStringCloudTableClientProvider ? "ConnectionString" : "CloudTableClient",
+                    Blob = blobServiceClientProvider is ConnectionStringBlobServiceClientProvider ? "ConnectionString" : "BlobServiceClient",
+                },
+                MessageWrapperSerializer = MessageWrapperSerializationDefinition == null ? "Default" : "Custom",
+                MessageEnvelopeUnwrapper = MessageUnwrapper == null ? "Default" : "Custom",
+                NativeDelayedDelivery = new
+                {
+                    IsEnabled = SupportsDelayedDelivery,
+                    Processor = nativeDelayedDeliveryProcessor,
+                    Persistence = nativeDelayedDeliveryPersistence
+                },
+                TransactionMode = Enum.GetName(typeof(TransportTransactionMode), TransportTransactionMode),
+                ReceiverBatchSize = ReceiverBatchSize.HasValue ? ReceiverBatchSize.Value.ToString(CultureInfo.InvariantCulture) : "Default",
+                DegreeOfReceiveParallelism = DegreeOfReceiveParallelism.HasValue ? DegreeOfReceiveParallelism.Value.ToString(CultureInfo.InvariantCulture) : "Default",
+                MaximumWaitTimeWhenIdle,
+                PeekInterval,
+                MessageInvisibleTime
+            });
 
             return infrastructure;
         }
