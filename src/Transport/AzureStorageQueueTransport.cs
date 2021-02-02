@@ -236,7 +236,6 @@ namespace NServiceBus
 
         QueueAddressGenerator GetQueueAddressGenerator()
         {
-            //TODO: Need a lock?
             if (queueAddressGenerator == null)
             {
                 queueAddressGenerator = new QueueAddressGenerator(QueueNameSanitizer);
