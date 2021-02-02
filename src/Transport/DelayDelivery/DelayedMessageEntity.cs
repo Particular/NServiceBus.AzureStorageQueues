@@ -35,7 +35,6 @@
 
         public UnicastTransportOperation GetOperation()
         {
-            //TODO what about DispatchConsistency?
             return new UnicastTransportOperation(new OutgoingMessage(MessageId, Deserialize<Dictionary<string, string>>(Headers), Body), Destination, new DispatchProperties());
         }
 
