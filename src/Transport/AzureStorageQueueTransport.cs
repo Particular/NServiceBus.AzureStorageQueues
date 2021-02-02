@@ -124,9 +124,9 @@ namespace NServiceBus
             var nativeDelayedDeliveryProcessor = NativeDelayedDeliveryProcessor.Disabled();
             if (SupportsDelayedDelivery)
             {
-                var nativeDelayedDeliveryErrorQueue = hostSettings.CoreSettings?.GetOrDefault<string>(ErrorQueueSettings.SettingsKey)
-                    ?? receivers.Select(settings => settings.ErrorQueue).FirstOrDefault()
-                    ?? DelayedDelivery.DelayedDeliveryPoisonQueue;
+                var nativeDelayedDeliveryErrorQueue = DelayedDelivery.DelayedDeliveryPoisonQueue
+                    ?? hostSettings.CoreSettings?.GetOrDefault<string>(ErrorQueueSettings.SettingsKey)
+                    ?? receivers.Select(settings => settings.ErrorQueue).FirstOrDefault();
 
                 nativeDelayedDeliveryProcessor = new NativeDelayedDeliveryProcessor(
                         dispatcher,
