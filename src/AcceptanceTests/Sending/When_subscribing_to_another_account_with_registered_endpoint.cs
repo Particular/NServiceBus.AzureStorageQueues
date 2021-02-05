@@ -51,8 +51,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, Utilities.GetEnvConfiguredConnectionString2());
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Subscriber)));
 
-                    configuration.UseTransport(transport);
-
                     configuration.OnEndpointSubscribed<Context>((s, context) => { context.Subscribed = true; });
                 });
             }
