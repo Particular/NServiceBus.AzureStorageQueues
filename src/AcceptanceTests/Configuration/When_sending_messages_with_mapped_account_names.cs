@@ -174,15 +174,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             }
         }
 
-        class ReceiverUsingRawConnectionStrings : Receiver
-        {
-            protected override AzureStorageQueueTransport CreateTransport()
-            {
-                var transport = new AzureStorageQueueTransport(defaultConnectionString);
-                return transport;
-            }
-        }
-
         class ReceiverUsingMappedConnectionStrings : Receiver
         {
             protected override AzureStorageQueueTransport CreateTransport()
