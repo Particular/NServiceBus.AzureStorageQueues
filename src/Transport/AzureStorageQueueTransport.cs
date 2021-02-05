@@ -126,7 +126,7 @@ namespace NServiceBus
                 };
             }
 
-            var serializer = BuildSerializer(MessageWrapperSerializationDefinition, hostSettings.CoreSettings);
+            var serializer = BuildSerializer(MessageWrapperSerializationDefinition, hostSettings.CoreSettings ?? new SettingsHolder());
             var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence);
 
             object delayedDeliveryProcessorDiagnosticSection = new { };
