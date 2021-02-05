@@ -236,14 +236,6 @@ namespace NServiceBus
 
             var (definition, serializerSettings) = serializerSettingsTuple;
 
-            // TODO: why were settings merged?
-            // serializerSettings.Merge(settings);
-            //var merge = typeof(SettingsHolder).GetMethod("Merge", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            //merge.Invoke(serializerSettings, new object[]
-            //{
-            //    settings
-            //});
-
             var serializerFactory = definition.Configure(settings);
             var serializer = serializerFactory(mapper);
             return serializer;
