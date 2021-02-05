@@ -22,14 +22,14 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     {
         public When_sending_messages_with_mapped_account_names()
         {
-            _defaultConnectionString = Utilities.GetEnvConfiguredConnectionString();
-            _anotherConnectionString = Utilities.GetEnvConfiguredConnectionString2();
+            defaultConnectionString = Utilities.GetEnvConfiguredConnectionString();
+            anotherConnectionString = Utilities.GetEnvConfiguredConnectionString2();
         }
 
         [Test]
         public async Task Is_enabled_and_single_account_is_used_Should_audit_just_queue_name_without_account()
         {
-            var ctx = await SendMessage<ReceiverUsingOneMappedConnectionString>(ReceiverName, _defaultConnectionString).ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingOneMappedConnectionString>(ReceiverName, defaultConnectionString).ConfigureAwait(false);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             foreach (var propertyWithSenderName in ctx.AllPropertiesFlattened.Where(property => property.Value.Contains(SenderName)))
@@ -41,7 +41,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         [Test]
         public async Task Is_enabled_and_sending_to_another_account_Should_audit_fully_qualified_queue()
         {
-            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}", _anotherConnectionString).ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}", anotherConnectionString).ConfigureAwait(false);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             var excluded = new HashSet<string>
@@ -110,7 +110,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
             ctx.AllPropertiesFlattened = propertiesFlattened;
 
-            ctx.ContainingRawConnectionString = ctx.AllPropertiesFlattened.Where(kvp => kvp.Value.Contains(_defaultConnectionString))
+            ctx.ContainingRawConnectionString = ctx.AllPropertiesFlattened.Where(kvp => kvp.Value.Contains(defaultConnectionString))
                 .Select(kvp => kvp.Key).ToArray();
 
             return ctx;
@@ -126,8 +126,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         const string AuditName = "mapping-names-audit";
         const string DefaultConnectionStringName = "default_account";
         const string AnotherConnectionStringName = "another_account";
-        static string _defaultConnectionString;
-        static string _anotherConnectionString;
+        static string defaultConnectionString;
+        static string anotherConnectionString;
 
         class Context : ScenarioContext
         {
@@ -144,7 +144,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 {
                     var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, _anotherConnectionString);
+                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, anotherConnectionString);
 
                     cfg.UseSerialization<NewtonsoftSerializer>();
                     cfg.UseTransport(transport);
@@ -178,7 +178,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             protected override AzureStorageQueueTransport CreateTransport()
             {
-                var transport = new AzureStorageQueueTransport(_defaultConnectionString);
+                var transport = new AzureStorageQueueTransport(defaultConnectionString);
                 return transport;
             }
         }
@@ -187,9 +187,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             protected override AzureStorageQueueTransport CreateTransport()
             {
-                var transport = new AzureStorageQueueTransport(_anotherConnectionString);
+                var transport = new AzureStorageQueueTransport(anotherConnectionString);
                 transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
-                transport.AccountRouting.AddAccount(DefaultConnectionStringName, _defaultConnectionString);
+                transport.AccountRouting.AddAccount(DefaultConnectionStringName, defaultConnectionString);
                 return transport;
             }
         }
@@ -197,9 +197,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             protected override AzureStorageQueueTransport CreateTransport()
             {
-                var transport = new AzureStorageQueueTransport(_defaultConnectionString);
+                var transport = new AzureStorageQueueTransport(defaultConnectionString);
                 transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                transport.AccountRouting.AddAccount(AnotherConnectionStringName, _anotherConnectionString);
+                transport.AccountRouting.AddAccount(AnotherConnectionStringName, anotherConnectionString);
                 return transport;
             }
         }
