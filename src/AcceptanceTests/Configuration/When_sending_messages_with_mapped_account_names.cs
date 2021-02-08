@@ -20,16 +20,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
     public class When_sending_messages_with_mapped_account_names : NServiceBusAcceptanceTest
     {
-        public When_sending_messages_with_mapped_account_names()
-        {
-            defaultConnectionString = Utilities.GetEnvConfiguredConnectionString();
-            anotherConnectionString = Utilities.GetEnvConfiguredConnectionString2();
-        }
-
         [Test]
         public async Task Is_enabled_and_single_account_is_used_Should_audit_just_queue_name_without_account()
         {
-            var ctx = await SendMessage<ReceiverUsingOneMappedConnectionString>(ReceiverName, defaultConnectionString).ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingOneMappedConnectionString>(ReceiverName, Utilities.GetEnvConfiguredConnectionString()).ConfigureAwait(false);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             foreach (var propertyWithSenderName in ctx.AllPropertiesFlattened.Where(property => property.Value.Contains(SenderName)))
@@ -41,7 +35,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         [Test]
         public async Task Is_enabled_and_sending_to_another_account_Should_audit_fully_qualified_queue()
         {
-            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}", anotherConnectionString).ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}", Utilities.GetEnvConfiguredConnectionString2()).ConfigureAwait(false);
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             var excluded = new HashSet<string>
@@ -110,7 +104,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
             ctx.AllPropertiesFlattened = propertiesFlattened;
 
-            ctx.ContainingRawConnectionString = ctx.AllPropertiesFlattened.Where(kvp => kvp.Value.Contains(defaultConnectionString))
+            ctx.ContainingRawConnectionString = ctx.AllPropertiesFlattened.Where(kvp => kvp.Value.Contains(Utilities.GetEnvConfiguredConnectionString()))
                 .Select(kvp => kvp.Key).ToArray();
 
             return ctx;
@@ -126,8 +120,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         const string AuditName = "mapping-names-audit";
         const string DefaultConnectionStringName = "default_account";
         const string AnotherConnectionStringName = "another_account";
-        static string defaultConnectionString;
-        static string anotherConnectionString;
 
         class Context : ScenarioContext
         {
@@ -144,7 +136,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 {
                     var transport = cfg.GetConfiguredTransport();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, anotherConnectionString);
+                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, Utilities.GetEnvConfiguredConnectionString2());
 
                     cfg.UseSerialization<NewtonsoftSerializer>();
                 });
@@ -152,45 +144,36 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             }
         }
 
-        abstract class Receiver : EndpointConfigurationBuilder
+        class ReceiverUsingMappedConnectionStrings : EndpointConfigurationBuilder
         {
-            protected Receiver()
+            public ReceiverUsingMappedConnectionStrings()
             {
                 EndpointSetup<DefaultPublisher>(cfg =>
                 {
                     cfg.UseSerialization<NewtonsoftSerializer>();
                     cfg.AuditProcessedMessagesTo(AuditName);
 
-                    cfg.UseTransport(CreateTransport());
+                    var transport = cfg.GetConfiguredTransport();
+                    transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
+                    transport.AccountRouting.AddAccount(DefaultConnectionStringName, Utilities.GetEnvConfiguredConnectionString());
                 });
                 CustomEndpointName(ReceiverName);
             }
-
-            protected virtual AzureStorageQueueTransport CreateTransport()
-            {
-                var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
-                return transport;
-            }
         }
+        class ReceiverUsingOneMappedConnectionString : EndpointConfigurationBuilder
+        {
+            public ReceiverUsingOneMappedConnectionString()
+            {
+                EndpointSetup<DefaultPublisher>(cfg =>
+                {
+                    cfg.UseSerialization<NewtonsoftSerializer>();
+                    cfg.AuditProcessedMessagesTo(AuditName);
 
-        class ReceiverUsingMappedConnectionStrings : Receiver
-        {
-            protected override AzureStorageQueueTransport CreateTransport()
-            {
-                var transport = new AzureStorageQueueTransport(anotherConnectionString);
-                transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
-                transport.AccountRouting.AddAccount(DefaultConnectionStringName, defaultConnectionString);
-                return transport;
-            }
-        }
-        class ReceiverUsingOneMappedConnectionString : Receiver
-        {
-            protected override AzureStorageQueueTransport CreateTransport()
-            {
-                var transport = new AzureStorageQueueTransport(defaultConnectionString);
-                transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                transport.AccountRouting.AddAccount(AnotherConnectionStringName, anotherConnectionString);
-                return transport;
+                    var transport = cfg.GetConfiguredTransport();
+                    transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
+                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, Utilities.GetEnvConfiguredConnectionString2());
+                });
+                CustomEndpointName(ReceiverName);
             }
         }
 
