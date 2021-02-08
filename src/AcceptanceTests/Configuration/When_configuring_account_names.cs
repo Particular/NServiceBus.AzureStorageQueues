@@ -106,10 +106,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 EndpointSetup<DefaultServer>(c =>
                 {
                     c.UseSerialization<NewtonsoftSerializer>();
-                    c.UseTransport(new AzureStorageQueueTransport(Testing.Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    });
                 });
             }
 
