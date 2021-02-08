@@ -1,6 +1,4 @@
-﻿#pragma warning disable CS0618 // Type or member is obsolete
-
-namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System.Threading.Tasks;
     using AcceptanceTesting;
@@ -117,5 +115,3 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
     }
 }
-
-#pragma warning restore CS0618 // Type or member is obsolete
