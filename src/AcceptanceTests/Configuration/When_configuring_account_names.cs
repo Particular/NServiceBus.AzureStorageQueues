@@ -12,12 +12,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
     public class When_configuring_account_names : NServiceBusAcceptanceTest
     {
-        public When_configuring_account_names()
-        {
-            _connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
-            _anotherConnectionString = Testing.Utilities.GetEnvConfiguredConnectionString2();
-        }
-
         [Test]
         public Task Should_accept_no_mappings_at_all()
         {
@@ -31,7 +25,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 return Configure(transport =>
                 {
-                    transport.AccountRouting.AddAccount(Another, _anotherConnectionString);
+                    transport.AccountRouting.AddAccount(Another, Testing.Utilities.GetEnvConfiguredConnectionString2());
                 });
             });
             Assert.IsTrue(exception.Message.Contains("The mapping of storage accounts connection strings to aliases is enforced but the the alias for the default connection string isn't provided"), "Exception message is missing or incorrect");
@@ -43,11 +37,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             return Configure(transport =>
             {
                 transport.AccountRouting.DefaultAccountAlias = Default;
-                transport.AccountRouting.AddAccount(Another, _anotherConnectionString);
+                transport.AccountRouting.AddAccount(Another, Testing.Utilities.GetEnvConfiguredConnectionString2());
             });
         }
 
-        Task Configure(Action<AzureStorageQueueTransport> configureTransport)
+        Task Configure(Action<AzureStorageQueueTransport> customizeTransport)
         {
             return Scenario.Define<Context>()
                 .WithEndpoint<SendOnlyEndpoint>(cfg =>
@@ -55,15 +49,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     cfg.CustomConfig(c =>
                     {
                         c.UseSerialization<NewtonsoftSerializer>();
-                        var transport = new AzureStorageQueueTransport(_connectionString)
-                        {
-                            MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>(),
-                            QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                        };
-                        transport.DelayedDelivery.DelayedDeliveryPoisonQueue = c.GetEndpointDefinedErrorQueue();
 
-                        configureTransport(transport);
-                        c.UseTransport(transport);
+                        var transport = c.GetConfiguredTransport();
+                        customizeTransport(transport);
                     });
 
                     cfg.When((bus, c) =>
@@ -78,8 +66,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .Run();
         }
 
-        readonly string _connectionString;
-        readonly string _anotherConnectionString;
         const string Default = "default";
         const string Another = "another";
 
