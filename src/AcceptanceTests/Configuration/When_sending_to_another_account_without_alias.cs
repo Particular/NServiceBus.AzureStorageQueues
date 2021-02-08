@@ -5,7 +5,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
     using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using Testing;
 
@@ -41,13 +40,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(configuration =>
-                {
-                    configuration.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    });
-                });
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }
         }
 
