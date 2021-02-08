@@ -142,12 +142,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString());
+                    var transport = cfg.GetConfiguredTransport();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
                     transport.AccountRouting.AddAccount(AnotherConnectionStringName, anotherConnectionString);
 
                     cfg.UseSerialization<NewtonsoftSerializer>();
-                    cfg.UseTransport(transport);
                 });
                 CustomEndpointName(SenderName);
             }
