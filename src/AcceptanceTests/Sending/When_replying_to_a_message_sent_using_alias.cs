@@ -45,10 +45,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
+                    var transport = configuration.GetConfiguredTransport();
                     transport.AccountRouting.DefaultAccountAlias = SenderAlias;
                     var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, Utilities.GetEnvConfiguredConnectionString2());
 
@@ -56,9 +53,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     var receiverEndpointName = Conventions.EndpointNamingConvention(typeof(Receiver));
                     receiverAccountInfo.RegisteredEndpoints.Add(receiverEndpointName);
 
-                    var routing = configuration.UseTransport(transport);
-
-                    routing.RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
+                    configuration.ConfigureRouting()
+                        .RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
                 });
             }
 
@@ -83,21 +79,15 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(configuration =>
-                {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
-                    transport.AccountRouting.DefaultAccountAlias = ReceiverAlias;
-                    var senderEndpointAccountInfo = transport.AccountRouting.AddAccount(SenderAlias, Utilities.GetEnvConfiguredConnectionString());
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
+                transport.AccountRouting.DefaultAccountAlias = ReceiverAlias;
+                var senderEndpointAccountInfo = transport.AccountRouting.AddAccount(SenderAlias, Utilities.GetEnvConfiguredConnectionString());
 
-                    // Route MyMessage messages to the receiver endpoint configured to use sender alias (on a different storage account)
-                    var senderEndpointName = Conventions.EndpointNamingConvention(typeof(Sender));
-                    senderEndpointAccountInfo.RegisteredEndpoints.Add(senderEndpointName);
+                // Route MyMessage messages to the receiver endpoint configured to use sender alias (on a different storage account)
+                var senderEndpointName = Conventions.EndpointNamingConvention(typeof(Sender));
+                senderEndpointAccountInfo.RegisteredEndpoints.Add(senderEndpointName);
 
-                    configuration.UseTransport(transport);
-                });
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
