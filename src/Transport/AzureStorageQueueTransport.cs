@@ -87,7 +87,7 @@ namespace NServiceBus
             Guard.AgainstNull(nameof(receivers), receivers);
             Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
 
-            ValidateCurrentSettings(hostSettings, receivers, sendingAddresses);
+            ValidateReceiversSettings(receivers);
 
             if (hostSettings.SetupInfrastructure)
             {
@@ -187,7 +187,7 @@ namespace NServiceBus
             return infrastructure;
         }
 
-        void ValidateCurrentSettings(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses)
+        void ValidateReceiversSettings(ReceiveSettings[] receivers)
         {
             var isSendOnly = receivers.Length == 0;
             if (SupportsDelayedDelivery && isSendOnly && string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue))
