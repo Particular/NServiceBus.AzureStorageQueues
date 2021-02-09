@@ -9,7 +9,6 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
-    using Testing;
     using LogLevel = Logging.LogLevel;
 
     public class When_dispatching_fails : NServiceBusAcceptanceTest
@@ -70,10 +69,7 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var routing = cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    });
+                    var routing = cfg.ConfigureRouting();
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
             }
