@@ -120,15 +120,12 @@
         {
             public Sender()
             {
-                EndpointSetup<DefaultServer>(cfg =>
-                {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
-                    transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString());
+                transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
 
-                    var routing = cfg.UseTransport(transport);
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) =>
+                {
+                    var routing = cfg.ConfigureRouting();
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
             }
@@ -140,17 +137,11 @@
 
             public SlowlyPeekingSender()
             {
-                EndpointSetup<DefaultServer>(cfg =>
-                {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        PeekInterval = PeekInterval,
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
-                    transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString());
+                transport.PeekInterval = PeekInterval;
+                transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
 
-                    cfg.UseTransport(transport);
-                });
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }
         }
 
@@ -158,16 +149,11 @@
         {
             public SenderToNowhere()
             {
-                EndpointSetup<DefaultServer>(cfg =>
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString());
+                transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
-                    transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
-
-                    cfg.UseTransport(transport);
-
                     cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
                 });
             }
@@ -177,13 +163,7 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(cfg =>
-                {
-                    cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    });
-                });
+                EndpointSetup<DefaultServer>(cfg => { });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>

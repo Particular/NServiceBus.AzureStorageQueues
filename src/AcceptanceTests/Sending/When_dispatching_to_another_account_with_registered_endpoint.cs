@@ -1,6 +1,4 @@
-﻿#pragma warning disable CS0618 // Type or member is obsolete
-
-namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Threading.Tasks;
@@ -43,16 +41,19 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
+#pragma warning disable IDE0079
+#pragma warning disable CS0618
+
+                    var transport = configuration.GetConfiguredTransport();
                     transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
 
                     var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, Utilities.GetEnvConfiguredConnectionString2());
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Receiver)));
 
-                    var routing = configuration.UseTransport(transport);
+#pragma warning restore CS0618
+#pragma warning restore IDE0079
+
+                    var routing = configuration.ConfigureRouting();
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
             }
@@ -62,13 +63,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(configuration =>
-                {
-                    configuration.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    });
-                });
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
+
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
@@ -94,5 +91,3 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         }
     }
 }
-
-#pragma warning restore CS0618 // Type or member is obsolete

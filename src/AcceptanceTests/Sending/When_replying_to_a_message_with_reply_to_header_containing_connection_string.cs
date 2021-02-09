@@ -1,6 +1,4 @@
-﻿#pragma warning disable CS0618 // Type or member is obsolete
-
-namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Threading.Tasks;
@@ -48,18 +46,22 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
+                    var transport = configuration.GetConfiguredTransport();
+
+#pragma warning disable IDE0079
+#pragma warning disable CS0618
+
                     transport.AccountRouting.DefaultAccountAlias = SenderAlias;
                     var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, Utilities.GetEnvConfiguredConnectionString2());
+
+#pragma warning restore CS0618
+#pragma warning restore IDE0079
 
                     // Route MyMessage messages to the receiver endpoint configured to use receiver alias (on a different storage account)
                     var receiverEndpointName = Conventions.EndpointNamingConvention(typeof(Receiver));
                     receiverAccountInfo.RegisteredEndpoints.Add(receiverEndpointName);
 
-                    var routing = configuration.UseTransport(transport);
+                    var routing = configuration.ConfigureRouting();
                     routing.RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
 
                     configuration.Pipeline.Register(typeof(VerifyReplyMessage), "Verifies the expected reply message has arrived.");
@@ -91,15 +93,17 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(configuration =>
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
+
+                EndpointSetup(new CustomizedServer(transport), (configuration, rd) =>
                 {
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
+#pragma warning disable IDE0079
+#pragma warning disable CS0618
+
                     transport.AccountRouting.DefaultAccountAlias = ReceiverAlias;
 
-                    configuration.UseTransport(transport);
+#pragma warning restore CS0618
+#pragma warning restore IDE0079
 
                     configuration.Pipeline.Register(typeof(OverrideReplyToHeaderWithConnectionString), "Override reply-to header with connection string to emulate an older endpoint.");
                 });
@@ -127,5 +131,3 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         }
     }
 }
-
-#pragma warning restore CS0618 // Type or member is obsolete

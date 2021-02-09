@@ -4,7 +4,6 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using Testing;
 
@@ -44,13 +43,9 @@
         {
             public Endpoint()
             {
-                EndpointSetup<DefaultServer>(config =>
-                {
-                    config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    });
-                });
+                var transport = Utilities.SetTransportDefaultTestsConfiguration(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true));
+
+                EndpointSetup(new CustomizedServer(transport), (config, rd) => { });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>

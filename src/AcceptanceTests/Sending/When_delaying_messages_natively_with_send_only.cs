@@ -8,7 +8,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using AcceptanceTesting.Customization;
     using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using Testing;
 
@@ -88,18 +87,13 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public SendOnlySenderToNowhere()
             {
-                EndpointSetup<DefaultServer>(cfg =>
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString());
+                transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+                transport.DelayedDelivery.DelayedDeliveryPoisonQueue = Conventions.EndpointNamingConvention(typeof(ErrorQueueReceiver));
+
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) =>
                 {
                     cfg.SendOnly();
-
-                    var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    };
-                    transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
-                    transport.DelayedDelivery.DelayedDeliveryPoisonQueue = Conventions.EndpointNamingConvention(typeof(ErrorQueueReceiver));
-
-                    cfg.UseTransport(transport);
                     cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(ErrorQueueReceiver)));
                 });
             }
@@ -109,13 +103,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public ErrorQueueReceiver()
             {
-                EndpointSetup<DefaultServer>(cfg =>
-                {
-                    cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    });
-                });
+                var transport = Utilities.SetTransportDefaultTestsConfiguration(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true));
+
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>

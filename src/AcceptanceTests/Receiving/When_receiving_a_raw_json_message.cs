@@ -26,11 +26,8 @@
                     b.CustomConfig((cfg, context) =>
                     {
                         cfg.UseSerialization<NewtonsoftSerializer>();
-                        cfg.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString())
-                        {
-                            QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize,
-                            MessageUnwrapper = message => MyCustomUnwrapper(message, context.TestRunId)
-                        });
+                        var transport = cfg.GetConfiguredTransport();
+                        transport.MessageUnwrapper = message => MyCustomUnwrapper(message, context.TestRunId);
                     });
 
                     b.When((bus, c) =>
