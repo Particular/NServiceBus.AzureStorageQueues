@@ -10,28 +10,28 @@ namespace NServiceBus
         public string ConnectionString { get; }
         public System.Collections.Generic.HashSet<string> RegisteredEndpoints { get; }
     }
-    [System.Obsolete("Account aliases have been deprecated. Use the TransportDefinition constructor tha" +
-        "t accepts fully customized Azure service clients. Will be treated as an error fr" +
-        "om version 11.0.0. Will be removed in version 12.0.0.", false)]
+    [System.Obsolete("Account aliases have been deprecated. Use the AzureStorageQueueTransport construc" +
+        "tor that accepts fully customized Azure service clients. Will be treated as an e" +
+        "rror from version 11.0.0. Will be removed in version 12.0.0.", false)]
     public class AccountRoutingSettings
     {
-        [System.Obsolete("Account aliases have been deprecated. Use the TransportDefinition constructor tha" +
-            "t accepts fully customized Azure service clients. Will be treated as an error fr" +
-            "om version 11.0.0. Will be removed in version 12.0.0.", false)]
+        [System.Obsolete("Account aliases have been deprecated. Use the AzureStorageQueueTransport construc" +
+            "tor that accepts fully customized Azure service clients. Will be treated as an e" +
+            "rror from version 11.0.0. Will be removed in version 12.0.0.", false)]
         public string DefaultAccountAlias { get; set; }
-        [System.Obsolete("Account aliases have been deprecated. Use the TransportDefinition constructor tha" +
-            "t accepts fully customized Azure service clients. Will be treated as an error fr" +
-            "om version 11.0.0. Will be removed in version 12.0.0.", false)]
+        [System.Obsolete("Account aliases have been deprecated. Use the AzureStorageQueueTransport construc" +
+            "tor that accepts fully customized Azure service clients. Will be treated as an e" +
+            "rror from version 11.0.0. Will be removed in version 12.0.0.", false)]
         public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient connectionClient) { }
-        [System.Obsolete("Account aliases have been deprecated. Use the TransportDefinition constructor tha" +
-            "t accepts fully customized Azure service clients. Will be treated as an error fr" +
-            "om version 11.0.0. Will be removed in version 12.0.0.", false)]
+        [System.Obsolete("Account aliases have been deprecated. Use the AzureStorageQueueTransport construc" +
+            "tor that accepts fully customized Azure service clients. Will be treated as an e" +
+            "rror from version 11.0.0. Will be removed in version 12.0.0.", false)]
         public NServiceBus.AccountInfo AddAccount(string alias, string connectionString) { }
     }
     public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition, NServiceBus.Routing.IMessageDrivenSubscriptionTransport
     {
         public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
-        public AzureStorageQueueTransport(string connectionString, bool disableNativeDelayedDeliveries = false) { }
+        public AzureStorageQueueTransport(string connectionString, bool useNativeDelayedDeliveries = true) { }
         public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
         public NServiceBus.AccountRoutingSettings AccountRouting { get; }
         public int? DegreeOfReceiveParallelism { get; set; }

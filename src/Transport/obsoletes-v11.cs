@@ -9,7 +9,7 @@
     /// connection strings.
     /// </summary>
     [ObsoleteEx(
-        Message = "Account aliases have been deprecated. Use the TransportDefinition constructor that accepts fully customized Azure service clients.",
+        Message = "Account aliases have been deprecated. Use the AzureStorageQueueTransport constructor that accepts fully customized Azure service clients.",
         TreatAsErrorFromVersion = "11.0",
         RemoveInVersion = "12.0")]
     public class AccountRoutingSettings
@@ -23,7 +23,7 @@
         /// Get or set default account alias.
         /// </summary>
         [ObsoleteEx(
-            Message = "Account aliases have been deprecated. Use the TransportDefinition constructor that accepts fully customized Azure service clients.",
+            Message = "Account aliases have been deprecated. Use the AzureStorageQueueTransport constructor that accepts fully customized Azure service clients.",
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
         public string DefaultAccountAlias
@@ -44,7 +44,7 @@
         /// </summary>
         /// <remarks>Prefer to use the overload that accepts a <see cref="QueueServiceClient"/>.</remarks>
         [ObsoleteEx(
-            Message = "Account aliases have been deprecated. Use the TransportDefinition constructor that accepts fully customized Azure service clients.",
+            Message = "Account aliases have been deprecated. Use the AzureStorageQueueTransport constructor that accepts fully customized Azure service clients.",
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
         public AccountInfo AddAccount(string alias, string connectionString) => AddAccount(alias, new QueueServiceClient(connectionString));
@@ -53,7 +53,7 @@
         /// Adds the mapping between the <paramref alias="alias" /> and its <paramref alias="QueueServiceClient" />.
         /// </summary>
         [ObsoleteEx(
-            Message = "Account aliases have been deprecated. Use the TransportDefinition constructor that accepts fully customized Azure service clients.",
+            Message = "Account aliases have been deprecated. Use the AzureStorageQueueTransport constructor that accepts fully customized Azure service clients.",
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
         public AccountInfo AddAccount(string alias, QueueServiceClient connectionClient)
