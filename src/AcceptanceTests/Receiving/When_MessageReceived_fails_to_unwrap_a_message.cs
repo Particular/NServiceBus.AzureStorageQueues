@@ -44,7 +44,7 @@
         {
             public Receiver()
             {
-                var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
+                var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), useNativeDelayedDeliveries: false)
                 {
                     MessageUnwrapper = message => throw new Exception("Custom unwrapper failed"),
                     QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
@@ -63,7 +63,7 @@
         {
             public ErrorSpy()
             {
-                var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
+                var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), useNativeDelayedDeliveries: false)
                 {
                     QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
                 };

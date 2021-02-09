@@ -28,8 +28,8 @@ namespace NServiceBus
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue
         /// </summary>
-        public AzureStorageQueueTransport(string connectionString, bool disableNativeDelayedDeliveries = false)
-            : base(TransportTransactionMode.ReceiveOnly, !disableNativeDelayedDeliveries, false, true)
+        public AzureStorageQueueTransport(string connectionString, bool useNativeDelayedDeliveries = true)
+            : base(TransportTransactionMode.ReceiveOnly, useNativeDelayedDeliveries, false, true)
         {
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
@@ -45,7 +45,7 @@ namespace NServiceBus
         /// Initialize a new transport definition for AzureStorageQueue and disable native delayed deliveries
         /// </summary>
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient)
-            : base(TransportTransactionMode.ReceiveOnly, false, false, true)
+            : base(TransportTransactionMode.ReceiveOnly, true, false, true)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
 

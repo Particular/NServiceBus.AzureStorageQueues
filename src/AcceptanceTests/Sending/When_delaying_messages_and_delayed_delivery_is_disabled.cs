@@ -43,7 +43,7 @@
         {
             public Endpoint()
             {
-                var transport = Utilities.SetTransportDefaultTestsConfiguration(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true));
+                var transport = Utilities.SetTransportDefaultTestsConfiguration(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), useNativeDelayedDeliveries: false));
 
                 EndpointSetup(new CustomizedServer(transport), (config, rd) => { });
             }
