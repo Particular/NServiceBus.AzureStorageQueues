@@ -173,8 +173,8 @@ namespace NServiceBus
                 NativeDelayedDelivery = new
                 {
                     IsEnabled = SupportsDelayedDelivery,
-                    Processor = nativeDelayedDeliveryProcessor,
-                    Persistence = nativeDelayedDeliveryPersistence
+                    Processor = delayedDeliveryProcessorDiagnosticSection,
+                    Persistence = delayedDeliveryPersistenceDiagnosticSection
                 },
                 TransactionMode = Enum.GetName(typeof(TransportTransactionMode), TransportTransactionMode),
                 ReceiverBatchSize = ReceiverBatchSize.HasValue ? ReceiverBatchSize.Value.ToString(CultureInfo.InvariantCulture) : "Default",
