@@ -5,7 +5,6 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using Testing;
 
@@ -45,16 +44,17 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(config =>
+                var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
+                {
+                    MessageUnwrapper = message => throw new Exception("Custom unwrapper failed"),
+                    QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                };
+
+                EndpointSetup(new CustomizedServer(transport), (config, rd) =>
                 {
                     config.SendFailedMessagesTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(ErrorSpy)));
                     config.UseSerialization<NewtonsoftSerializer>();
                     config.LimitMessageProcessingConcurrencyTo(1);
-                    config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
-                    {
-                        MessageUnwrapper = message => throw new Exception("Custom unwrapper failed"),
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    });
                 });
             }
         }
@@ -63,12 +63,13 @@
         {
             public ErrorSpy()
             {
-                EndpointSetup<DefaultServer>(config =>
+                var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
                 {
-                    config.UseTransport(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), disableNativeDelayedDeliveries: true)
-                    {
-                        QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
-                    });
+                    QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                };
+
+                EndpointSetup(new CustomizedServer(transport), (config, rd) =>
+                {
                     config.UseSerialization<NewtonsoftSerializer>();
                 });
             }
