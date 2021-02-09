@@ -43,6 +43,9 @@
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
+#pragma warning disable IDE0079
+#pragma warning disable CS0618
+
                     var transport = configuration.GetConfiguredTransport();
                     transport.AccountRouting.DefaultAccountAlias = SenderAlias;
                     var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, Utilities.GetEnvConfiguredConnectionString2());
@@ -50,6 +53,9 @@
                     // Route MyMessage messages to the receiver endpoint configured to use receiver alias (on a different storage account)
                     var receiverEndpointName = Conventions.EndpointNamingConvention(typeof(Receiver));
                     receiverAccountInfo.RegisteredEndpoints.Add(receiverEndpointName);
+
+#pragma warning restore CS0618
+#pragma warning restore IDE0079
 
                     configuration.ConfigureRouting()
                         .RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
@@ -77,6 +83,8 @@
         {
             public Receiver()
             {
+#pragma warning disable IDE0079
+#pragma warning disable CS0618
                 var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
                 transport.AccountRouting.DefaultAccountAlias = ReceiverAlias;
                 var senderEndpointAccountInfo = transport.AccountRouting.AddAccount(SenderAlias, Utilities.GetEnvConfiguredConnectionString());
@@ -84,6 +92,8 @@
                 // Route MyMessage messages to the receiver endpoint configured to use sender alias (on a different storage account)
                 var senderEndpointName = Conventions.EndpointNamingConvention(typeof(Sender));
                 senderEndpointAccountInfo.RegisteredEndpoints.Add(senderEndpointName);
+#pragma warning restore CS0618
+#pragma warning restore IDE0079
 
                 EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }
