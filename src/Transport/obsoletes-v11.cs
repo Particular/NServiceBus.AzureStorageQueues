@@ -70,6 +70,6 @@
         }
 
         internal Dictionary<string, AccountInfo> mappings = new Dictionary<string, AccountInfo>();
-        string _defaultAccountAlias;
+        string _defaultAccountAlias = string.Empty;
     }
 }
