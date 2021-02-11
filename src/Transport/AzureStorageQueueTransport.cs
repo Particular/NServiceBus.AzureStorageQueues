@@ -19,6 +19,8 @@ namespace NServiceBus
     using Transport;
     using Transport.AzureStorageQueues;
     using System.Globalization;
+    using NServiceBus.Unicast.Messages;
+    using System.Reflection;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
@@ -126,7 +128,23 @@ namespace NServiceBus
                 };
             }
 
-            var serializer = BuildSerializer(MessageWrapperSerializationDefinition, hostSettings.CoreSettings ?? new SettingsHolder());
+            var serializerSettingsHolder = hostSettings.CoreSettings;
+            if (serializerSettingsHolder == null)
+            {
+                //HACK:
+                //in raw transport mode to set up the required serializer a settings holder
+                //is needed to store MessageMetadataRegistry and Conventions instances.
+
+                var tempSettingsHolder = new SettingsHolder();
+                const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.CreateInstance;
+                var conventions = tempSettingsHolder.GetOrCreate<Conventions>();
+                var registry = (MessageMetadataRegistry)Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, new object[] { new Func<Type, bool>(t => conventions.IsMessageType(t)) }, CultureInfo.InvariantCulture);
+
+                tempSettingsHolder.Set(registry);
+                serializerSettingsHolder = tempSettingsHolder;
+            }
+
+            var serializer = BuildSerializer(MessageWrapperSerializationDefinition, serializerSettingsHolder);
             var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence);
 
             object delayedDeliveryProcessorDiagnosticSection = new { };
