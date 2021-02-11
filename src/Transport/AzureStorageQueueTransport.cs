@@ -29,7 +29,7 @@ namespace NServiceBus
         /// Initialize a new transport definition for AzureStorageQueue
         /// </summary>
         public AzureStorageQueueTransport(string connectionString, bool useNativeDelayedDeliveries = true)
-            : base(TransportTransactionMode.ReceiveOnly, useNativeDelayedDeliveries, false, true)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: useNativeDelayedDeliveries, supportsPublishSubscribe: false, supportsTTBR: true)
         {
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
@@ -45,7 +45,7 @@ namespace NServiceBus
         /// Initialize a new transport definition for AzureStorageQueue and disable native delayed deliveries
         /// </summary>
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient)
-            : base(TransportTransactionMode.ReceiveOnly, true, false, true)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: false, supportsPublishSubscribe: false, supportsTTBR: true)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
 
@@ -56,7 +56,7 @@ namespace NServiceBus
         /// Initialize a new transport definition for AzureStorageQueue with native delayed deliveries support
         /// </summary>
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient, BlobServiceClient blobServiceClient, CloudTableClient cloudTableClient)
-            : base(TransportTransactionMode.ReceiveOnly, true, false, true)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: true, supportsPublishSubscribe: false, supportsTTBR: true)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
             Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
