@@ -230,8 +230,7 @@ namespace NServiceBus
                                     "use 'endpointConfiguration.UseSerialization<T>();' to select a serializer. " +
                                     "If you are upgrading, install the `NServiceBus.Newtonsoft.Json` NuGet package " +
                                     "and consult the upgrade guide for further information. If the transport is used in isolation, " +
-                                    "set a serializer definition in an empty SettingsHolder instance and invoke ValidateNServiceBusSettings() " +
-                                    "before starting the transport.");
+                                    "set a HostSettings.CoreSettings to an empty SettingsHolder instance before starting the transport.");
             }
 
             var (definition, serializerSettings) = serializerSettingsTuple;
