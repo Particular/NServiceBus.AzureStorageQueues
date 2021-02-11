@@ -2,7 +2,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
-    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
@@ -11,10 +10,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AtLeastOnceReceiveStrategy : ReceiveStrategy
     {
-        public AtLeastOnceReceiveStrategy(Func<MessageContext, Task> pipeline, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, Action<string, Exception> criticalErrorAction)
+        public AtLeastOnceReceiveStrategy(OnMessage onMessage, OnError onError, Action<string, Exception> criticalErrorAction)
         {
-            this.pipeline = pipeline;
-            this.errorPipe = errorPipe;
+            this.onMessage = onMessage;
+            this.onError = onError;
             this.criticalErrorAction = criticalErrorAction;
         }
 
@@ -24,22 +23,22 @@ namespace NServiceBus.Transport.AzureStorageQueues
             var body = message.Body ?? new byte[0];
             try
             {
-                using (var tokenSource = new CancellationTokenSource())
-                {
-                    var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), tokenSource, new ContextBag());
-                    await pipeline(pushContext).ConfigureAwait(false);
+                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new ContextBag());
+                await onMessage(pushContext).ConfigureAwait(false);
 
-                    if (tokenSource.IsCancellationRequested)
-                    {
-                        // if the pipeline cancelled the execution, nack the message to go back to the queue
-                        await retrieved.Nack().ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        // the pipeline hasn't been cancelled, the message should be acked
-                        await retrieved.Ack().ConfigureAwait(false);
-                    }
-                }
+                //TODO: what this should look like given the new cancellation support?
+                //if (tokenSource.IsCancellationRequested)
+                //{
+                //    // if the pipeline canceled the execution, nack the message to go back to the queue
+                //    await retrieved.Nack().ConfigureAwait(false);
+                //}
+                //else
+                //{
+                //  // the pipeline hasn't been canceled, the message should be acked
+                //  await retrieved.Ack().ConfigureAwait(false);
+                //}
+
+                await retrieved.Ack().ConfigureAwait(false);
             }
             catch (LeaseTimeoutException)
             {
@@ -54,7 +53,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 try
                 {
-                    immediateRetry = await errorPipe(context).ConfigureAwait(false);
+                    immediateRetry = await onError(context).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -80,8 +79,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        readonly Func<MessageContext, Task> pipeline;
-        readonly Func<ErrorContext, Task<ErrorHandleResult>> errorPipe;
+        readonly OnMessage onMessage;
+        readonly OnError onError;
         readonly Action<string, Exception> criticalErrorAction;
 
         static readonly ILog Logger = LogManager.GetLogger<ReceiveStrategy>();

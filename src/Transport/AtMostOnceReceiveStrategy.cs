@@ -2,7 +2,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
-    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
@@ -15,10 +14,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
     /// </summary>
     class AtMostOnceReceiveStrategy : ReceiveStrategy
     {
-        public AtMostOnceReceiveStrategy(Func<MessageContext, Task> pipeline, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe)
+        public AtMostOnceReceiveStrategy(OnMessage onMessage, OnError onError)
         {
-            this.pipeline = pipeline;
-            this.errorPipe = errorPipe;
+            this.onMessage = onMessage;
+            this.onError = onError;
         }
 
         public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message)
@@ -29,8 +28,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             try
             {
-                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new CancellationTokenSource(), new ContextBag());
-                await pipeline(pushContext).ConfigureAwait(false);
+                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new ContextBag());
+                await onMessage(pushContext).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -40,12 +39,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 // The exception is pushed through the error pipeline in a fire and forget manner.
                 // There's no call to onCriticalError if errorPipe fails. Exceptions are handled on the transport level.
-                await errorPipe(context).ConfigureAwait(false);
+                await onError(context).ConfigureAwait(false);
             }
         }
 
-        readonly Func<MessageContext, Task> pipeline;
-        readonly Func<ErrorContext, Task<ErrorHandleResult>> errorPipe;
+        readonly OnMessage onMessage;
+        readonly OnError onError;
 
         static readonly ILog Logger = LogManager.GetLogger<ReceiveStrategy>();
     }

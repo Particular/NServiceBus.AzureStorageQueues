@@ -36,7 +36,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public ISubscriptionManager Subscriptions { get; } = null;
         public string Id { get; }
 
-        public Task Initialize(PushRuntimeSettings limitations, Func<MessageContext, Task> onMessage, Func<ErrorContext, Task<ErrorHandleResult>> onError)
+        public Task Initialize(PushRuntimeSettings limitations, OnMessage onMessage, OnError onError)
         {
             this.limitations = limitations;
 
