@@ -83,17 +83,17 @@ namespace NServiceBus
         }
 
         /// <inheritdoc cref="Initialize"/>
-        public override async Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receivers, string[] sendingAddresses)
+        public override async Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receiversSettings, string[] sendingAddresses)
         {
             Guard.AgainstNull(nameof(hostSettings), hostSettings);
-            Guard.AgainstNull(nameof(receivers), receivers);
+            Guard.AgainstNull(nameof(receiversSettings), receiversSettings);
             Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
 
-            ValidateReceiversSettings(receivers);
+            ValidateReceiversSettings(receiversSettings);
 
             if (hostSettings.SetupInfrastructure)
             {
-                var queuesToCreate = receivers.Select(settings => settings.ReceiveAddress).Union(sendingAddresses).ToList();
+                var queuesToCreate = receiversSettings.Select(settings => settings.ReceiveAddress).Union(sendingAddresses).ToList();
                 if (SupportsDelayedDelivery && !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue))
                 {
                     queuesToCreate.Add(DelayedDelivery.DelayedDeliveryPoisonQueue);
@@ -153,7 +153,7 @@ namespace NServiceBus
             {
                 var nativeDelayedDeliveryErrorQueue = DelayedDelivery.DelayedDeliveryPoisonQueue
                     ?? hostSettings.CoreSettings?.GetOrDefault<string>(ErrorQueueSettings.SettingsKey)
-                    ?? receivers.Select(settings => settings.ErrorQueue).FirstOrDefault();
+                    ?? receiversSettings.Select(settings => settings.ErrorQueue).FirstOrDefault();
 
                 nativeDelayedDeliveryProcessor = new NativeDelayedDeliveryProcessor(
                         dispatcher,
@@ -171,11 +171,12 @@ namespace NServiceBus
                 };
             }
 
-            var messageReceivers = receivers.Select(settings => BuildReceiver(settings, serializer, hostSettings.CriticalErrorAction)).ToList();
+            var messageReceivers = receiversSettings.Select(settings => BuildReceiver(settings, serializer, hostSettings.CriticalErrorAction))
+                .ToDictionary(receiver => receiver.Id, receiver => receiver.Receiver);
 
             var infrastructure = new AzureStorageQueueInfrastructure(
                 dispatcher,
-                new ReadOnlyCollection<IMessageReceiver>(messageReceivers),
+                new ReadOnlyDictionary<string, IMessageReceiver>(messageReceivers),
                 nativeDelayedDeliveryProcessor);
 
             hostSettings.StartupDiagnostic.Add("NServiceBus.Transport.AzureStorageQueues", new
@@ -258,7 +259,7 @@ namespace NServiceBus
             return serializer;
         }
 
-        IMessageReceiver BuildReceiver(ReceiveSettings settings, MessageWrapperSerializer serializer, Action<string, Exception> criticalErrorAction)
+        (string Id, IMessageReceiver Receiver) BuildReceiver(ReceiveSettings settings, MessageWrapperSerializer serializer, Action<string, Exception> criticalErrorAction)
         {
             var unwrapper = MessageUnwrapper != null
                 ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
@@ -266,7 +267,7 @@ namespace NServiceBus
 
             var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, GetQueueAddressGenerator(), settings.PurgeOnStartup, MessageInvisibleTime);
 
-            return new MessageReceiver(
+            return (settings.Id, new MessageReceiver(
                 settings.Id,
                 TransportTransactionMode,
                 receiver,
@@ -276,7 +277,7 @@ namespace NServiceBus
                 DegreeOfReceiveParallelism,
                 ReceiverBatchSize,
                 MaximumWaitTimeWhenIdle,
-                PeekInterval);
+                PeekInterval));
         }
 
         QueueAddressGenerator GetQueueAddressGenerator()
