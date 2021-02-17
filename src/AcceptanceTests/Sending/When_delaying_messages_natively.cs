@@ -163,7 +163,7 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(cfg => { });
+                EndpointSetup<DefaultServer>();
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
