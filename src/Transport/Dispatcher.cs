@@ -81,7 +81,7 @@
                 }
 
                 // user explicitly specified TimeToBeReceived that is not TimeSpan.MaxValue - fail
-                if (timeToBeReceived != null && timeToBeReceived.Value > CloudQueueMessageMaxTimeToLive && timeToBeReceived.Value != TimeSpan.MaxValue)
+                if (timeToBeReceived.Value > CloudQueueMessageMaxTimeToLive && timeToBeReceived.Value != TimeSpan.MaxValue)
                 {
                     var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
                     throw new InvalidOperationException($"TimeToBeReceived is set to more than 30 days for message type '{messageType}'.");
