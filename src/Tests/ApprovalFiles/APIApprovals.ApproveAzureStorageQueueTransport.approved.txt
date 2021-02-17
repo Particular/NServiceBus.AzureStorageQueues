@@ -44,7 +44,7 @@ namespace NServiceBus
         public System.Func<string, string> QueueNameSanitizer { get; set; }
         public int? ReceiverBatchSize { get; set; }
         public override System.Collections.Generic.IReadOnlyCollection<NServiceBus.TransportTransactionMode> GetSupportedTransactionModes() { }
-        public override System.Threading.Tasks.Task<NServiceBus.Transport.TransportInfrastructure> Initialize(NServiceBus.Transport.HostSettings hostSettings, NServiceBus.Transport.ReceiveSettings[] receivers, string[] sendingAddresses) { }
+        public override System.Threading.Tasks.Task<NServiceBus.Transport.TransportInfrastructure> Initialize(NServiceBus.Transport.HostSettings hostSettings, NServiceBus.Transport.ReceiveSettings[] receiversSettings, string[] sendingAddresses) { }
         public override string ToTransportAddress(NServiceBus.Transport.QueueAddress address) { }
     }
     public static class AzureStorageTransportExtensions
