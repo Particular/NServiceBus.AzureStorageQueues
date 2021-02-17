@@ -1,11 +1,10 @@
-﻿namespace NServiceBus
+﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System.Threading;
     using System.Threading.Tasks;
     using global::Azure.Storage.Blobs;
     using Microsoft.Azure.Cosmos.Table;
     using Logging;
-    using NServiceBus.Transport.AzureStorageQueues;
 
     class NativeDelayedDeliveryProcessor
     {
