@@ -77,16 +77,16 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
             public class MyMessageHandler : IHandleMessages<MyEvent>
             {
-                readonly Context _testContext;
+                Context testContext;
 
                 public MyMessageHandler(Context testContext)
                 {
-                    _testContext = testContext;
+                    this.testContext = testContext;
                 }
 
                 public Task Handle(MyEvent message, IMessageHandlerContext context)
                 {
-                    _testContext.WasCalled = true;
+                    testContext.WasCalled = true;
                     return Task.FromResult(0);
                 }
             }

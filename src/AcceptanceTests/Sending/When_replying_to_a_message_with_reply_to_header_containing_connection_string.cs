@@ -70,18 +70,18 @@
 
             class VerifyReplyMessage : Behavior<IIncomingPhysicalMessageContext>
             {
-                readonly Context _testContext;
+                Context testContext;
 
                 public VerifyReplyMessage(Context testContext)
                 {
-                    _testContext = testContext;
+                    this.testContext = testContext;
                 }
 
                 public override Task Invoke(IIncomingPhysicalMessageContext context, Func<Task> next)
                 {
                     if (context.Message.Headers.TryGetValue("reply-message-as-expected", out _))
                     {
-                        _testContext.ReplyReceived = true;
+                        testContext.ReplyReceived = true;
                     }
 
                     return Task.CompletedTask;

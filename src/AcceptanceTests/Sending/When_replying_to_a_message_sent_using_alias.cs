@@ -64,16 +64,16 @@
 
             public class MyReplyMessageHandler : IHandleMessages<MyReplyMessage>
             {
-                readonly Context _testContext;
+                Context testContext;
 
                 public MyReplyMessageHandler(Context testContext)
                 {
-                    _testContext = testContext;
+                    this.testContext = testContext;
                 }
 
                 public Task Handle(MyReplyMessage message, IMessageHandlerContext context)
                 {
-                    _testContext.ReplyMessageReceived = true;
+                    testContext.ReplyMessageReceived = true;
                     return Task.CompletedTask;
                 }
             }
@@ -100,16 +100,16 @@
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                readonly Context _testContext;
+                Context testContext;
 
                 public MyMessageHandler(Context testContext)
                 {
-                    _testContext = testContext;
+                    this.testContext = testContext;
                 }
 
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
-                    _testContext.ReceiverWasCalled = true;
+                    testContext.ReceiverWasCalled = true;
                     return context.Reply(new MyReplyMessage());
                 }
             }

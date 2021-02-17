@@ -76,7 +76,7 @@
 
             class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                readonly Context testContext;
+                Context testContext;
 
                 public MyMessageHandler(Context testContext)
                 {

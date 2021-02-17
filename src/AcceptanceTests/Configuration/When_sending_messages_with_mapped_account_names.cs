@@ -181,16 +181,16 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public Handler(Context testContext)
             {
-                _testContext = testContext;
+                this.testContext = testContext;
             }
 
             public Task Handle(MyCommand message, IMessageHandlerContext context)
             {
-                _testContext.Received = true;
+                testContext.Received = true;
                 return Task.FromResult(0);
             }
 
-            readonly Context _testContext;
+            Context testContext;
         }
 
         public class MyCommand : ICommand
