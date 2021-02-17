@@ -2,9 +2,9 @@
 {
     using global::Azure.Storage.Blobs;
 
-    class UserBlobServiceClientProvider : IBlobServiceClientProvider
+    class BlobServiceClientProvidedByUser : IBlobServiceClientProvider
     {
-        public UserBlobServiceClientProvider(BlobServiceClient blobServiceClient)
+        public BlobServiceClientProvidedByUser(BlobServiceClient blobServiceClient)
         {
             Client = blobServiceClient;
         }

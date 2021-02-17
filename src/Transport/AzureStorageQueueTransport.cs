@@ -35,11 +35,11 @@ namespace NServiceBus
         {
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
-            queueServiceClientProvider = new ConnectionStringQueueServiceClientProvider(connectionString);
+            queueServiceClientProvider = new QueueServiceClientByConnectionString(connectionString);
             if (SupportsDelayedDelivery)
             {
-                blobServiceClientProvider = new ConnectionStringBlobServiceClientProvider(connectionString);
-                cloudTableClientProvider = new ConnectionStringCloudTableClientProvider(connectionString);
+                blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(connectionString);
+                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
             }
         }
 
@@ -51,7 +51,7 @@ namespace NServiceBus
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
 
-            queueServiceClientProvider = new UserQueueServiceClientProvider(queueServiceClient);
+            queueServiceClientProvider = new QueueServiceClientProvidedByUser(queueServiceClient);
         }
 
         /// <summary>
@@ -64,9 +64,9 @@ namespace NServiceBus
             Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
             Guard.AgainstNull(nameof(cloudTableClient), cloudTableClient);
 
-            queueServiceClientProvider = new UserQueueServiceClientProvider(queueServiceClient);
-            blobServiceClientProvider = new UserBlobServiceClientProvider(blobServiceClient);
-            cloudTableClientProvider = new UserCloudTableClientProvider(cloudTableClient);
+            queueServiceClientProvider = new QueueServiceClientProvidedByUser(queueServiceClient);
+            blobServiceClientProvider = new BlobServiceClientProvidedByUser(blobServiceClient);
+            cloudTableClientProvider = new CloudTableClientProvidedByUser(cloudTableClient);
         }
 
         static string GenerateDelayedDeliveryTableName(string endpointName)
@@ -183,9 +183,9 @@ namespace NServiceBus
             {
                 ConnectionMechanism = new
                 {
-                    Queue = queueServiceClientProvider is ConnectionStringQueueServiceClientProvider ? "ConnectionString" : "QueueServiceClient",
-                    Table = cloudTableClientProvider is ConnectionStringCloudTableClientProvider ? "ConnectionString" : "CloudTableClient",
-                    Blob = blobServiceClientProvider is ConnectionStringBlobServiceClientProvider ? "ConnectionString" : "BlobServiceClient",
+                    Queue = queueServiceClientProvider is QueueServiceClientByConnectionString ? "ConnectionString" : "QueueServiceClient",
+                    Table = cloudTableClientProvider is CloudTableClientByConnectionString ? "ConnectionString" : "CloudTableClient",
+                    Blob = blobServiceClientProvider is BlobServiceClientProvidedByConnectionString ? "ConnectionString" : "BlobServiceClient",
                 },
                 MessageWrapperSerializer = MessageWrapperSerializationDefinition == null ? "Default" : "Custom",
                 MessageEnvelopeUnwrapper = MessageUnwrapper == null ? "Default" : "Custom",

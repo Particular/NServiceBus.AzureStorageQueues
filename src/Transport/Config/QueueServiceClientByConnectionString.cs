@@ -2,9 +2,9 @@
 {
     using global::Azure.Storage.Queues;
 
-    class ConnectionStringQueueServiceClientProvider : IQueueServiceClientProvider
+    class QueueServiceClientByConnectionString : IQueueServiceClientProvider
     {
-        public ConnectionStringQueueServiceClientProvider(string connectionString)
+        public QueueServiceClientByConnectionString(string connectionString)
         {
             ConnectionStringValidator.ThrowIfPremiumEndpointConnectionString(connectionString);
 

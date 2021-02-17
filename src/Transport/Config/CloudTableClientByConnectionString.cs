@@ -2,9 +2,9 @@
 {
     using Microsoft.Azure.Cosmos.Table;
 
-    class ConnectionStringCloudTableClientProvider : ICloudTableClientProvider
+    class CloudTableClientByConnectionString : ICloudTableClientProvider
     {
-        public ConnectionStringCloudTableClientProvider(string connectionString)
+        public CloudTableClientByConnectionString(string connectionString)
         {
             var cloudStorageAccount = CloudStorageAccount.Parse(connectionString);
             Client = cloudStorageAccount.CreateCloudTableClient();

@@ -2,9 +2,9 @@
 {
     using global::Azure.Storage.Blobs;
 
-    class ConnectionStringBlobServiceClientProvider : IBlobServiceClientProvider
+    class BlobServiceClientProvidedByConnectionString : IBlobServiceClientProvider
     {
-        public ConnectionStringBlobServiceClientProvider(string connectionString)
+        public BlobServiceClientProvidedByConnectionString(string connectionString)
         {
             ConnectionStringValidator.ThrowIfPremiumEndpointConnectionString(connectionString);
 

@@ -2,9 +2,9 @@
 {
     using Microsoft.Azure.Cosmos.Table;
 
-    class UserCloudTableClientProvider : ICloudTableClientProvider
+    class CloudTableClientProvidedByUser : ICloudTableClientProvider
     {
-        public UserCloudTableClientProvider(CloudTableClient cloudTableClient)
+        public CloudTableClientProvidedByUser(CloudTableClient cloudTableClient)
         {
             Client = cloudTableClient;
         }
