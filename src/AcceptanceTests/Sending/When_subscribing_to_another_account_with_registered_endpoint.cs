@@ -45,7 +45,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultPublisher>(configuration =>
                 {
-                    var transport = configuration.GetConfiguredTransport();
+                    var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
 
                     transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
                     var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, Utilities.GetEnvConfiguredConnectionString2());

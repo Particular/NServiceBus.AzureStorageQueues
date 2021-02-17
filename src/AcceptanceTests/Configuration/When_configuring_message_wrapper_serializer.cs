@@ -45,7 +45,7 @@
                 {
                     e.UseSerialization<NewtonsoftSerializer>();
 
-                    var transport = e.GetConfiguredTransport();
+                    var transport = e.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<CustomSerializer>();
                 });
             }

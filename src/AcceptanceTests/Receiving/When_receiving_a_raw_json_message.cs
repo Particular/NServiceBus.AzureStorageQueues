@@ -26,7 +26,7 @@
                     b.CustomConfig((cfg, context) =>
                     {
                         cfg.UseSerialization<NewtonsoftSerializer>();
-                        var transport = cfg.GetConfiguredTransport();
+                        var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                         transport.MessageUnwrapper = message => MyCustomUnwrapper(message, context.TestRunId);
                     });
 

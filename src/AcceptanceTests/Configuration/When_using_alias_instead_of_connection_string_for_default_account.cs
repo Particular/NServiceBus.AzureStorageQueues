@@ -74,7 +74,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 EndpointSetup<DefaultServer>(endpointConfiguration =>
                 {
                     endpointConfiguration.UseSerialization<NewtonsoftSerializer>();
-                    var transport = endpointConfiguration.GetConfiguredTransport();
+                    var transport = endpointConfiguration.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = "defaultAlias";
                 });
             }

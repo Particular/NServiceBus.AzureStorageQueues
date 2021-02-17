@@ -50,7 +50,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     {
                         c.UseSerialization<NewtonsoftSerializer>();
 
-                        var transport = c.GetConfiguredTransport();
+                        var transport = c.ConfigureTransport<AzureStorageQueueTransport>();
                         customizeTransport(transport);
                     });
 

@@ -134,7 +134,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    var transport = cfg.GetConfiguredTransport();
+                    var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
                     transport.AccountRouting.AddAccount(AnotherConnectionStringName, Utilities.GetEnvConfiguredConnectionString2());
 
@@ -153,7 +153,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     cfg.UseSerialization<NewtonsoftSerializer>();
                     cfg.AuditProcessedMessagesTo(AuditName);
 
-                    var transport = cfg.GetConfiguredTransport();
+                    var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
                     transport.AccountRouting.AddAccount(DefaultConnectionStringName, Utilities.GetEnvConfiguredConnectionString());
                 });
@@ -169,7 +169,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     cfg.UseSerialization<NewtonsoftSerializer>();
                     cfg.AuditProcessedMessagesTo(AuditName);
 
-                    var transport = cfg.GetConfiguredTransport();
+                    var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
                     transport.AccountRouting.AddAccount(AnotherConnectionStringName, Utilities.GetEnvConfiguredConnectionString2());
                 });

@@ -46,7 +46,7 @@
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    var transport = configuration.GetConfiguredTransport();
+                    var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
 
 #pragma warning disable IDE0079
 #pragma warning disable CS0618
