@@ -30,7 +30,7 @@
             {
                 if (operation.Properties.DiscardIfNotReceivedBefore != null)
                 {
-                    throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
+                    throw new Exception($"Delayed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
                 }
 
                 dueDate = DateTimeOffset.UtcNow + delay.Value;
