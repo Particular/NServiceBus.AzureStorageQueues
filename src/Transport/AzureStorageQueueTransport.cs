@@ -131,9 +131,9 @@ namespace NServiceBus
             var serializerSettingsHolder = hostSettings.CoreSettings;
             if (serializerSettingsHolder == null)
             {
-                //HACK:
                 //in raw transport mode to set up the required serializer a settings holder
                 //is needed to store MessageMetadataRegistry and Conventions instances.
+                //https://github.com/Particular/NServiceBus.AzureStorageQueues/issues/524
 
                 var tempSettingsHolder = new SettingsHolder();
                 const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.CreateInstance;
