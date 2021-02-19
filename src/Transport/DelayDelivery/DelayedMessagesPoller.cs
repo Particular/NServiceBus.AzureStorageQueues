@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading;
@@ -9,6 +10,7 @@
     using global::Azure.Storage.Blobs.Specialized;
     using Logging;
     using Microsoft.Azure.Cosmos.Table;
+    using NServiceBus.Faults;
     using Transport;
 
     class DelayedMessagesPoller
@@ -221,14 +223,68 @@
             {
                 // if send fails for any reason
                 Logger.Warn($"Failed to send the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'", exception);
-                await dispatcher.Send(CreateOperationForErrorQueue(operation), cancellationToken).ConfigureAwait(false);
+                await dispatcher.Send(CreateOperationForErrorQueue(operation, exception), cancellationToken).ConfigureAwait(false);
             }
         }
 
-        UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
+        UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation, Exception exception)
         {
-            //TODO does this need to set the FailedQ header and the failure reason?
+            SetExceptionHeaders(operation.Message.Headers, exception);
+            operation.Message.Headers.Add(FaultsHeaderKeys.FailedQ, operation.Destination);
+
             return new UnicastTransportOperation(operation.Message, errorQueueAddress, new DispatchProperties(), operation.RequiredDispatchConsistency);
+        }
+
+        static void SetExceptionHeaders(Dictionary<string, string> headers, Exception e)
+        {
+            headers["NServiceBus.ExceptionInfo.ExceptionType"] = e.GetType().FullName;
+
+            if (e.InnerException != null)
+            {
+                headers["NServiceBus.ExceptionInfo.InnerExceptionType"] = e.InnerException.GetType().FullName;
+            }
+
+            headers["NServiceBus.ExceptionInfo.HelpLink"] = e.HelpLink;
+            headers["NServiceBus.ExceptionInfo.Message"] = Truncate(GetMessage(e), 16384);
+            headers["NServiceBus.ExceptionInfo.Source"] = e.Source;
+            headers["NServiceBus.ExceptionInfo.StackTrace"] = e.ToString();
+            headers["NServiceBus.TimeOfFailure"] = DateTimeOffsetHelper.ToWireFormattedString(DateTimeOffset.UtcNow);
+
+            if (e.Data == null)
+            {
+                return;
+            }
+#pragma warning disable DE0006
+            foreach (DictionaryEntry entry in e.Data)
+#pragma warning restore DE0006
+            {
+                if (entry.Value == null)
+                {
+                    continue;
+                }
+                headers["NServiceBus.ExceptionInfo.Data." + entry.Key] = entry.Value.ToString();
+            }
+        }
+
+        static string Truncate(string value, int maxLength)
+        {
+            return string.IsNullOrEmpty(value)
+                ? value
+                : (value.Length <= maxLength
+                    ? value
+                    : value.Substring(0, maxLength));
+        }
+
+        static string GetMessage(Exception exception)
+        {
+            try
+            {
+                return exception.Message;
+            }
+            catch (Exception)
+            {
+                return $"Could not read Message from exception type '{exception.GetType()}'.";
+            }
         }
 
         const int DelayedMessagesProcessedAtOnce = 50;
