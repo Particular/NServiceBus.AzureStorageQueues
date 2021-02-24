@@ -11,7 +11,7 @@
             var connectionString = GetEnvironmentVariable(environmentVariableName);
             if (string.IsNullOrEmpty(connectionString))
             {
-                throw new Exception($"Oh no! We couldn't find an environment variable '{environmentVariableName}' with Azure Storage connection string.");
+                throw new Exception($"Couldn't find an environment variable '{environmentVariableName}' with Azure Storage connection string.");
             }
 
             return connectionString;
@@ -23,7 +23,7 @@
             var connectionString = GetEnvironmentVariable(environmentVariableName);
             if (string.IsNullOrEmpty(connectionString))
             {
-                throw new Exception($"Oh no! We couldn't find an environment variable '{environmentVariableName}' with Azure Storage connection string.");
+                throw new Exception($"Couldn't find an environment variable '{environmentVariableName}' with Azure Storage connection string.");
             }
 
             return connectionString;

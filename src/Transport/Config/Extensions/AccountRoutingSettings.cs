@@ -16,7 +16,7 @@
         }
 
         /// <summary>
-        /// Get or set default account alias.
+        /// Get or set the default account alias.
         /// </summary>
         public string DefaultAccountAlias
         {

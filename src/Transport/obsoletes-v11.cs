@@ -13,7 +13,7 @@
         /// </summary>
         /// <remarks>Prefer to use the overload that accepts a <see cref="QueueServiceClient"/>.</remarks>
         [ObsoleteEx(
-            Message = "Account aliases using connection strings have been deprecated. Use the AddCount overload that accepts a QueueServiceClient instance.",
+            Message = "Account aliases using connection strings have been deprecated. Use the AddAccount overload that accepts a QueueServiceClient instance.",
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
         public AccountInfo AddAccount(string alias, string connectionString) => AddAccount(alias, new QueueServiceClient(connectionString));
