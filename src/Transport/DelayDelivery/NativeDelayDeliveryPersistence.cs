@@ -12,14 +12,14 @@
             return new NativeDelayDeliveryPersistence();
         }
 
-        NativeDelayDeliveryPersistence()
+        NativeDelayDeliveryPersistence(bool enabled = false)
         {
-            enabled = false;
+            this.enabled = enabled;
         }
 
         public NativeDelayDeliveryPersistence(CloudTable delayedMessageStorageTable)
+            : this(enabled: true)
         {
-            enabled = true;
             this.delayedMessageStorageTable = delayedMessageStorageTable;
         }
 
