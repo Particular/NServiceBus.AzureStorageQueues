@@ -47,7 +47,7 @@
                 logger.DebugFormat("Sending message (ID: '{0}') to {1}", operation.Message.MessageId, operation.Destination);
             }
 
-            if (nativeDelayDeliveryPersistence.IsDelayedMessage(operation, out var dueDate))
+            if (NativeDelayDeliveryPersistence.IsDelayedMessage(operation, out var dueDate))
             {
                 await nativeDelayDeliveryPersistence.ScheduleAt(operation, dueDate, cancellationToken).ConfigureAwait(false);
                 return;

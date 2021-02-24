@@ -23,7 +23,7 @@
             this.delayedMessageStorageTable = delayedMessageStorageTable;
         }
 
-        public bool IsDelayedMessage(UnicastTransportOperation operation, out DateTimeOffset dueDate)
+        public static bool IsDelayedMessage(UnicastTransportOperation operation, out DateTimeOffset dueDate)
         {
             var delay = GetDeliveryDelay(operation.Properties);
             if (delay != null)
