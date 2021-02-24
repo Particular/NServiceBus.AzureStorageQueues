@@ -20,14 +20,14 @@
         /// </summary>
         public string DefaultAccountAlias
         {
-            get => _defaultAccountAlias;
+            get => defaultAccountAlias;
             set
             {
                 if (string.IsNullOrWhiteSpace(value))
                 {
                     throw new ArgumentException("Should not be null or white space", nameof(DefaultAccountAlias));
                 }
-                _defaultAccountAlias = value;
+                defaultAccountAlias = value;
             }
         }
 
@@ -48,6 +48,6 @@
         }
 
         internal Dictionary<string, AccountInfo> mappings = new Dictionary<string, AccountInfo>();
-        string _defaultAccountAlias = string.Empty;
+        string defaultAccountAlias = string.Empty;
     }
 }
