@@ -48,11 +48,11 @@
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
+                    transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
 
 #pragma warning disable IDE0079
 #pragma warning disable CS0618
 
-                    transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
                     transport.AccountRouting.AddAccount(Alias, Utilities.GetEnvConfiguredConnectionString2());
 
 #pragma warning restore CS0618
@@ -70,13 +70,7 @@
             {
                 var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
 
-#pragma warning disable IDE0079
-#pragma warning disable CS0618
-
                 transport.AccountRouting.DefaultAccountAlias = Alias;
-
-#pragma warning restore CS0618
-#pragma warning restore IDE0079
 
                 EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }

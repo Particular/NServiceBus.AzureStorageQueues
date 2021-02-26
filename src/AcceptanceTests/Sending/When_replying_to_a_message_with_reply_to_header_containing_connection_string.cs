@@ -47,11 +47,11 @@
                 EndpointSetup<DefaultServer>(configuration =>
                 {
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
+                    transport.AccountRouting.DefaultAccountAlias = SenderAlias;
 
 #pragma warning disable IDE0079
 #pragma warning disable CS0618
 
-                    transport.AccountRouting.DefaultAccountAlias = SenderAlias;
                     var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, Utilities.GetEnvConfiguredConnectionString2());
 
 #pragma warning restore CS0618
@@ -97,14 +97,7 @@
 
                 EndpointSetup(new CustomizedServer(transport), (configuration, rd) =>
                 {
-#pragma warning disable IDE0079
-#pragma warning disable CS0618
-
                     transport.AccountRouting.DefaultAccountAlias = ReceiverAlias;
-
-#pragma warning restore CS0618
-#pragma warning restore IDE0079
-
                     configuration.Pipeline.Register(typeof(OverrideReplyToHeaderWithConnectionString), "Override reply-to header with connection string to emulate an older endpoint.");
                 });
             }

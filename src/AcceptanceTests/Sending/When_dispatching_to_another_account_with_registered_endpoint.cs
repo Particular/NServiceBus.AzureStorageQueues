@@ -41,11 +41,11 @@
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-#pragma warning disable IDE0079
-#pragma warning disable CS0618
-
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
+
+#pragma warning disable IDE0079
+#pragma warning disable CS0618
 
                     var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, Utilities.GetEnvConfiguredConnectionString2());
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Receiver)));
