@@ -4,6 +4,7 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Storage.Queues;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -49,14 +50,7 @@
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = SenderAlias;
 
-#pragma warning disable IDE0079
-#pragma warning disable CS0618
-
-                    var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, Utilities.GetEnvConfiguredConnectionString2());
-
-#pragma warning restore CS0618
-#pragma warning restore IDE0079
-
+                    var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                     // Route MyMessage messages to the receiver endpoint configured to use receiver alias (on a different storage account)
                     var receiverEndpointName = Conventions.EndpointNamingConvention(typeof(Receiver));
                     receiverAccountInfo.RegisteredEndpoints.Add(receiverEndpointName);

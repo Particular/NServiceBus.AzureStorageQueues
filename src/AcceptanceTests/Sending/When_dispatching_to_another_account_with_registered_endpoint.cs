@@ -4,6 +4,7 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Storage.Queues;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -47,7 +48,7 @@
 #pragma warning disable IDE0079
 #pragma warning disable CS0618
 
-                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, Utilities.GetEnvConfiguredConnectionString2());
+                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Receiver)));
 
 #pragma warning restore CS0618

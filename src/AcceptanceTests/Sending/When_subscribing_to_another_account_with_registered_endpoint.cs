@@ -7,6 +7,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Features;
+    using global::Azure.Storage.Queues;
     using NServiceBus.AcceptanceTesting.Customization;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
@@ -48,7 +49,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
 
                     transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
-                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, Utilities.GetEnvConfiguredConnectionString2());
+                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Subscriber)));
 
                     configuration.OnEndpointSubscribed<Context>((s, context) => { context.Subscribed = true; });
@@ -63,7 +64,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
 
                 transport.AccountRouting.DefaultAccountAlias = AnotherAccountName;
-                var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName, Utilities.GetEnvConfiguredConnectionString());
+                var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()));
                 anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Publisher)));
 
                 EndpointSetup(

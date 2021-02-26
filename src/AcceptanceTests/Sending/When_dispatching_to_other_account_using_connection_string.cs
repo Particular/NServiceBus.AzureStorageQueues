@@ -4,6 +4,7 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Storage.Queues;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -51,14 +52,7 @@
                 {
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
-
-#pragma warning disable IDE0079
-#pragma warning disable CS0618
-
-                    transport.AccountRouting.AddAccount(Alias, Utilities.GetEnvConfiguredConnectionString2());
-
-#pragma warning restore CS0618
-#pragma warning restore IDE0079
+                    transport.AccountRouting.AddAccount(Alias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
 
                     var routing = configuration.ConfigureRouting();
                     routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));

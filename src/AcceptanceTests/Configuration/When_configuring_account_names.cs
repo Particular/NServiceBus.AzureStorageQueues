@@ -6,6 +6,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using global::Azure.Storage.Queues;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -25,7 +26,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             {
                 return Configure(transport =>
                 {
-                    transport.AccountRouting.AddAccount(Another, Testing.Utilities.GetEnvConfiguredConnectionString2());
+                    transport.AccountRouting.AddAccount(Another, new QueueServiceClient(Testing.Utilities.GetEnvConfiguredConnectionString2()));
                 });
             });
             Assert.IsTrue(exception.Message.Contains("The mapping of storage accounts connection strings to aliases is enforced but the the alias for the default connection string isn't provided"), "Exception message is missing or incorrect");
@@ -37,7 +38,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             return Configure(transport =>
             {
                 transport.AccountRouting.DefaultAccountAlias = Default;
-                transport.AccountRouting.AddAccount(Another, Testing.Utilities.GetEnvConfiguredConnectionString2());
+                transport.AccountRouting.AddAccount(Another, new QueueServiceClient(Testing.Utilities.GetEnvConfiguredConnectionString2()));
             });
         }
 

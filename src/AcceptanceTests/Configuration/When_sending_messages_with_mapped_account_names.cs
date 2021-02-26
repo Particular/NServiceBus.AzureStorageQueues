@@ -136,7 +136,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 {
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, Utilities.GetEnvConfiguredConnectionString2());
+                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
 
                     cfg.UseSerialization<NewtonsoftSerializer>();
                 });
@@ -155,7 +155,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
-                    transport.AccountRouting.AddAccount(DefaultConnectionStringName, Utilities.GetEnvConfiguredConnectionString());
+                    transport.AccountRouting.AddAccount(DefaultConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()));
                 });
                 CustomEndpointName(ReceiverName);
             }
@@ -171,7 +171,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, Utilities.GetEnvConfiguredConnectionString2());
+                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                 });
                 CustomEndpointName(ReceiverName);
             }
