@@ -1,7 +1,4 @@
-﻿#pragma warning disable IDE0079 // Remove unnecessary suppression
-#pragma warning disable CS0618 // Type or member is obsolete
-
-namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
+﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Threading.Tasks;
@@ -119,6 +116,3 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         }
     }
 }
-
-#pragma warning restore CS0618 // Type or member is obsolete
-#pragma warning restore IDE0079 // Remove unnecessary suppression
