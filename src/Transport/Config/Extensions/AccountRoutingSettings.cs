@@ -1,25 +1,34 @@
-namespace NServiceBus
+﻿namespace NServiceBus
 {
+    using System;
+    using System.Collections.Generic;
     using global::Azure.Storage.Queues;
 
     /// <summary>
     /// Provides methods to define routing between Azure Storage accounts and map them to a logical alias instead of using bare
     /// connection strings.
     /// </summary>
-    public class AccountRoutingSettings
+    public partial class AccountRoutingSettings
     {
-        internal AccountRoutingSettings(AccountConfigurations accounts)
+        internal AccountRoutingSettings()
         {
-            this.accounts = accounts;
+
         }
 
         /// <summary>
-        /// Adds the mapping between the <paramref alias="alias" /> and its <paramref alias="connectionString" />.
+        /// Get or set the default account alias.
         /// </summary>
-        /// <remarks>Prefer to use the overload that accepts a <see cref="QueueServiceClient"/>.</remarks>
-        public AccountInfo AddAccount(string alias, string connectionString)
+        public string DefaultAccountAlias
         {
-            return accounts.Add(alias, connectionString);
+            get => defaultAccountAlias;
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    throw new ArgumentException("Should not be null or white space", nameof(DefaultAccountAlias));
+                }
+                defaultAccountAlias = value;
+            }
         }
 
         /// <summary>
@@ -27,9 +36,18 @@ namespace NServiceBus
         /// </summary>
         public AccountInfo AddAccount(string alias, QueueServiceClient connectionClient)
         {
-            return accounts.Add(alias, connectionClient);
+            if (mappings.TryGetValue(alias, out var accountInfo))
+            {
+                return accountInfo;
+            }
+
+            accountInfo = new AccountInfo(alias, connectionClient);
+            mappings.Add(alias, accountInfo);
+
+            return accountInfo;
         }
 
-        readonly AccountConfigurations accounts;
+        internal Dictionary<string, AccountInfo> mappings = new Dictionary<string, AccountInfo>();
+        string defaultAccountAlias = string.Empty;
     }
 }

@@ -3,9 +3,11 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Storage.Queues;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_replying_to_a_message_sent_using_alias : NServiceBusAcceptanceTest
     {
@@ -42,22 +44,22 @@
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    var receiverAccountInfo = configuration.UseTransport<AzureStorageQueueTransport>()
-                        .DefaultAccountAlias(SenderAlias)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
-                        .AccountRouting()
-                        .AddAccount(ReceiverAlias, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                    var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
+                    transport.AccountRouting.DefaultAccountAlias = SenderAlias;
 
+                    var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                     // Route MyMessage messages to the receiver endpoint configured to use receiver alias (on a different storage account)
                     var receiverEndpointName = Conventions.EndpointNamingConvention(typeof(Receiver));
                     receiverAccountInfo.RegisteredEndpoints.Add(receiverEndpointName);
-                    configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
+
+                    configuration.ConfigureRouting()
+                        .RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
                 });
             }
 
             public class MyReplyMessageHandler : IHandleMessages<MyReplyMessage>
             {
-                readonly Context testContext;
+                Context testContext;
 
                 public MyReplyMessageHandler(Context testContext)
                 {
@@ -76,23 +78,20 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(configuration =>
-                {
-                    var senderEndpointAccountInfo = configuration.UseTransport<AzureStorageQueueTransport>()
-                        .DefaultAccountAlias(ReceiverAlias)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString)
-                        .AccountRouting()
-                        .AddAccount(SenderAlias, ConfigureEndpointAzureStorageQueueTransport.ConnectionString);
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
+                transport.AccountRouting.DefaultAccountAlias = ReceiverAlias;
 
-                    // Route MyMessage messages to the receiver endpoint configured to use sender alias (on a different storage account)
-                    var senderEndpointName = Conventions.EndpointNamingConvention(typeof(Sender));
-                    senderEndpointAccountInfo.RegisteredEndpoints.Add(senderEndpointName);
-                });
+                var senderEndpointAccountInfo = transport.AccountRouting.AddAccount(SenderAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()));
+                // Route MyMessage messages to the receiver endpoint configured to use sender alias (on a different storage account)
+                var senderEndpointName = Conventions.EndpointNamingConvention(typeof(Sender));
+                senderEndpointAccountInfo.RegisteredEndpoints.Add(senderEndpointName);
+
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                readonly Context testContext;
+                Context testContext;
 
                 public MyMessageHandler(Context testContext)
                 {

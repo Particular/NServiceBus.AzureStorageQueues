@@ -4,9 +4,11 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Storage.Queues;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_dispatching_to_another_account_using_alias : NServiceBusAcceptanceTest
     {
@@ -46,13 +48,12 @@
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    configuration.UseTransport<AzureStorageQueueTransport>()
-                        .DefaultAccountAlias(DefaultAccountName)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
-                        .AccountRouting()
-                        .AddAccount(Alias, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                    var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
+                    transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
+                    transport.AccountRouting.AddAccount(Alias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
 
-                    configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
+                    var routing = configuration.ConfigureRouting();
+                    routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
             }
         }
@@ -61,12 +62,11 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(configuration =>
-                {
-                    configuration.UseTransport<AzureStorageQueueTransport>()
-                        .DefaultAccountAlias(Alias)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
-                });
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
+
+                transport.AccountRouting.DefaultAccountAlias = Alias;
+
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>

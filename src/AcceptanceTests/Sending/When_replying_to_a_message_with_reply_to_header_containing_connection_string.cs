@@ -4,10 +4,12 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Storage.Queues;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using NServiceBus.Pipeline;
+    using Testing;
 
     public class When_replying_to_a_message_with_reply_to_header_containing_connection_string : NServiceBusAcceptanceTest
     {
@@ -45,16 +47,16 @@
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    var receiverAccountInfo = configuration.UseTransport<AzureStorageQueueTransport>()
-                        .DefaultAccountAlias(SenderAlias)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
-                        .AccountRouting()
-                        .AddAccount(ReceiverAlias, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                    var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
+                    transport.AccountRouting.DefaultAccountAlias = SenderAlias;
 
+                    var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                     // Route MyMessage messages to the receiver endpoint configured to use receiver alias (on a different storage account)
                     var receiverEndpointName = Conventions.EndpointNamingConvention(typeof(Receiver));
                     receiverAccountInfo.RegisteredEndpoints.Add(receiverEndpointName);
-                    configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
+
+                    var routing = configuration.ConfigureRouting();
+                    routing.RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
 
                     configuration.Pipeline.Register(typeof(VerifyReplyMessage), "Verifies the expected reply message has arrived.");
                 });
@@ -62,7 +64,7 @@
 
             class VerifyReplyMessage : Behavior<IIncomingPhysicalMessageContext>
             {
-                readonly Context testContext;
+                Context testContext;
 
                 public VerifyReplyMessage(Context testContext)
                 {
@@ -85,12 +87,11 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(configuration =>
-                {
-                    configuration.UseTransport<AzureStorageQueueTransport>()
-                        .DefaultAccountAlias(ReceiverAlias)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
 
+                EndpointSetup(new CustomizedServer(transport), (configuration, rd) =>
+                {
+                    transport.AccountRouting.DefaultAccountAlias = ReceiverAlias;
                     configuration.Pipeline.Register(typeof(OverrideReplyToHeaderWithConnectionString), "Override reply-to header with connection string to emulate an older endpoint.");
                 });
             }
@@ -100,7 +101,7 @@
                 public override Task Invoke(IIncomingPhysicalMessageContext context, Func<Task> next)
                 {
                     var replyOptions = new ReplyOptions();
-                    replyOptions.SetDestination(context.Message.Headers[Headers.ReplyToAddress].Replace(SenderAlias, ConfigureEndpointAzureStorageQueueTransport.ConnectionString));
+                    replyOptions.SetDestination(context.Message.Headers[Headers.ReplyToAddress].Replace(SenderAlias, Utilities.GetEnvConfiguredConnectionString()));
                     replyOptions.SetHeader("reply-message-as-expected", "OK");
 
                     return context.Reply(new MyMessageReply(), replyOptions);

@@ -11,11 +11,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AtLeastOnceReceiveStrategy : ReceiveStrategy
     {
-        public AtLeastOnceReceiveStrategy(Func<MessageContext, Task> pipeline, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, CriticalError criticalError)
+        public AtLeastOnceReceiveStrategy(OnMessage onMessage, OnError onError, Action<string, Exception, CancellationToken> criticalErrorAction)
         {
-            this.pipeline = pipeline;
-            this.errorPipe = errorPipe;
-            this.criticalError = criticalError;
+            this.onMessage = onMessage;
+            this.onError = onError;
+            this.criticalErrorAction = criticalErrorAction;
         }
 
         public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message)
@@ -24,22 +24,24 @@ namespace NServiceBus.Transport.AzureStorageQueues
             var body = message.Body ?? new byte[0];
             try
             {
-                using (var tokenSource = new CancellationTokenSource())
-                {
-                    var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), tokenSource, new ContextBag());
-                    await pipeline(pushContext).ConfigureAwait(false);
+                //TODO: what this should look like given the new cancellation support?
+                // https://github.com/Particular/NServiceBus.AzureStorageQueues/issues/526
 
-                    if (tokenSource.IsCancellationRequested)
-                    {
-                        // if the pipeline cancelled the execution, nack the message to go back to the queue
-                        await retrieved.Nack().ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        // the pipeline hasn't been cancelled, the message should be acked
-                        await retrieved.Ack().ConfigureAwait(false);
-                    }
-                }
+                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new ContextBag());
+                await onMessage(pushContext, CancellationToken.None).ConfigureAwait(false);
+
+                //if (tokenSource.IsCancellationRequested)
+                //{
+                //    // if the pipeline canceled the execution, nack the message to go back to the queue
+                //    await retrieved.Nack().ConfigureAwait(false);
+                //}
+                //else
+                //{
+                //  // the pipeline hasn't been canceled, the message should be acked
+                //  await retrieved.Ack().ConfigureAwait(false);
+                //}
+
+                await retrieved.Ack().ConfigureAwait(false);
             }
             catch (LeaseTimeoutException)
             {
@@ -54,11 +56,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 try
                 {
-                    immediateRetry = await errorPipe(context).ConfigureAwait(false);
+                    immediateRetry = await onError(context, CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
-                    criticalError.Raise($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e);
+                    criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e, CancellationToken.None);
 
                     await retrieved.Nack().ConfigureAwait(false);
 
@@ -80,9 +82,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        readonly Func<MessageContext, Task> pipeline;
-        readonly Func<ErrorContext, Task<ErrorHandleResult>> errorPipe;
-        readonly CriticalError criticalError;
+        readonly OnMessage onMessage;
+        readonly OnError onError;
+        readonly Action<string, Exception, CancellationToken> criticalErrorAction;
 
         static readonly ILog Logger = LogManager.GetLogger<ReceiveStrategy>();
     }

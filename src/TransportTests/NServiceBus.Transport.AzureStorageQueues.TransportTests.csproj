@@ -14,11 +14,10 @@
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="NUnit" Version="3.13.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.1" />
-    <PackageReference Include="NServiceBus.TransportTests.Sources" Version="8.0.0-alpha.644" />
+    <PackageReference Include="NServiceBus.TransportTests.Sources" Version="8.0.0-alpha.852" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
     <Compile Include="..\AcceptanceTests\BackwardsCompatibleQueueNameSanitizerForTests.cs" Link="BackwardsCompatibleQueueNameSanitizerForTests.cs" />
   </ItemGroup>
 

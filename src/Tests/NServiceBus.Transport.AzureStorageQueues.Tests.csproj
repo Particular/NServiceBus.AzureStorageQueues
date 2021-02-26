@@ -14,15 +14,11 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.8.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
     <PackageReference Include="Particular.Approvals" Version="0.2.0" />
-    <PackageReference Include="NServiceBus" Version="8.0.0-alpha.644" />
+    <PackageReference Include="NServiceBus" Version="8.0.0-alpha.852" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
     <PackageReference Include="NUnit" Version="3.13.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.1" />
     <PackageReference Include="PublicApiGenerator" Version="10.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
   </ItemGroup>
 
   <ItemGroup>

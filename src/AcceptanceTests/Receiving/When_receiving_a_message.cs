@@ -57,9 +57,9 @@
             {
                 EndpointSetup<DefaultServer>(config =>
                 {
-                    config.ConfigureAsqTransport()
-                        .Transactions(TransportTransactionMode.ReceiveOnly)
-                        .MessageInvisibleTime(VisibilityTimeout);
+                    var transport = config.ConfigureTransport<AzureStorageQueueTransport>();
+                    transport.TransportTransactionMode = TransportTransactionMode.ReceiveOnly;
+                    transport.MessageInvisibleTime = VisibilityTimeout;
                 });
             }
         }

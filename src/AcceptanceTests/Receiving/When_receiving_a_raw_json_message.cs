@@ -13,6 +13,7 @@
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NUnit.Framework;
+    using Testing;
 
     public class When_receiving_a_raw_json_message : NServiceBusAcceptanceTest
     {
@@ -25,8 +26,8 @@
                     b.CustomConfig((cfg, context) =>
                     {
                         cfg.UseSerialization<NewtonsoftSerializer>();
-                        cfg.ConfigureAsqTransport()
-                            .UnwrapMessagesWith(message => MyCustomUnwrapper(message, context.TestRunId));
+                        var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
+                        transport.MessageUnwrapper = message => MyCustomUnwrapper(message, context.TestRunId);
                     });
 
                     b.When((bus, c) =>
@@ -37,10 +38,10 @@
                         };
                         var jsonPayload = JsonConvert.SerializeObject(message, new JsonSerializerSettings
                         {
-                            TypeNameHandling = TypeNameHandling.All //we need this in order fo $type="x" to be embedded in the json
+                            TypeNameHandling = TypeNameHandling.All //we need this in order for $type="x" to be embedded in the json
                         });
 
-                        var connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
+                        var connectionString = Utilities.GetEnvConfiguredConnectionString();
                         var queueClient = new QueueClient(connectionString, "receivingarawjsonmessage-receiver");
 
                         return queueClient.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonPayload)));

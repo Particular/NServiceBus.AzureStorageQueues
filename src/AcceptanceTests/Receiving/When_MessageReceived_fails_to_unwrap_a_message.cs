@@ -5,8 +5,8 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_MessageReceived_fails_to_unwrap_a_message : NServiceBusAcceptanceTest
     {
@@ -44,14 +44,17 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(config =>
+                var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), useNativeDelayedDeliveries: false)
+                {
+                    MessageUnwrapper = message => throw new Exception("Custom unwrapper failed"),
+                    QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                };
+
+                EndpointSetup(new CustomizedServer(transport), (config, rd) =>
                 {
                     config.SendFailedMessagesTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(ErrorSpy)));
                     config.UseSerialization<NewtonsoftSerializer>();
                     config.LimitMessageProcessingConcurrencyTo(1);
-                    var transport = config.ConfigureAsqTransport();
-                    transport.UnwrapMessagesWith(message => throw new Exception("Custom unwrapper failed"));
-                    transport.DelayedDelivery().DisableDelayedDelivery();
                 });
             }
         }
@@ -60,17 +63,20 @@
         {
             public ErrorSpy()
             {
-                EndpointSetup<DefaultServer>(config =>
+                var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), useNativeDelayedDeliveries: false)
                 {
-                    var transport = config.ConfigureAsqTransport();
+                    QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+                };
+
+                EndpointSetup(new CustomizedServer(transport), (config, rd) =>
+                {
                     config.UseSerialization<NewtonsoftSerializer>();
-                    transport.DelayedDelivery().DisableDelayedDelivery();
                 });
             }
 
             class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                readonly Context testContext;
+                Context testContext;
 
                 public MyMessageHandler(Context testContext)
                 {

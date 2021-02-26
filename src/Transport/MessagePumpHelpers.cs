@@ -8,6 +8,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
     {
         public static ReadOnlyCollection<ReceiverConfiguration> DetermineReceiverConfiguration(int? receiveBatchSize, int? degreeOfReceiveParallelism, int maximumConcurrency)
         {
+            const int DefaultBatchSize = 32;
+
             // When user overrides both parameters we stick with user choices
             if (receiveBatchSize.HasValue && degreeOfReceiveParallelism.HasValue)
             {
@@ -19,7 +21,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             // By default we don't over-fetch
             if (receiveBatchSize.HasValue == false && degreeOfReceiveParallelism.HasValue == false)
             {
-                return BuildConfiguration(Convert.ToInt32(totalMessagesWithOverfetching), DefaultConfigurationValues.DefaultBatchSize);
+                return BuildConfiguration(Convert.ToInt32(totalMessagesWithOverfetching), DefaultBatchSize);
             }
 
             int maximumBatchSize;
@@ -28,7 +30,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             // In other cases we adjust unset parameter to make sure we do not over-fetch by more than 20%
             if (receiveBatchSize.HasValue == false)
             {
-                maximumBatchSize = DefaultConfigurationValues.DefaultBatchSize;
+                maximumBatchSize = DefaultBatchSize;
                 receiveParallelism = degreeOfReceiveParallelism.Value;
 
                 var batchSizeForReceiver = Math.Min(maximumBatchSize, Math.Max(1, Convert.ToInt32(Math.Ceiling(totalMessagesWithOverfetching / receiveParallelism))));

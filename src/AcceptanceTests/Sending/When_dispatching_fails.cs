@@ -67,7 +67,11 @@
         {
             public Sender()
             {
-                EndpointSetup<DefaultServer>(cfg => cfg.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), typeof(Receiver)));
+                EndpointSetup<DefaultServer>(cfg =>
+                {
+                    var routing = cfg.ConfigureRouting();
+                    routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
+                });
             }
         }
 

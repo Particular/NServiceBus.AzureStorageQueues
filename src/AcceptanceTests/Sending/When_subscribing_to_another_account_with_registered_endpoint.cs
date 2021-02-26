@@ -3,11 +3,13 @@
     using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using AcceptanceTesting.Customization;
+    using Features;
+    using global::Azure.Storage.Queues;
+    using NServiceBus.AcceptanceTesting.Customization;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
-    using Features;
     using NUnit.Framework;
+    using Testing;
 
     public class When_subscribing_to_another_account_with_registered_endpoint : NServiceBusAcceptanceTest
     {
@@ -41,12 +43,10 @@
             {
                 EndpointSetup<DefaultPublisher>(configuration =>
                 {
-                    var routing = configuration.UseTransport<AzureStorageQueueTransport>()
-                        .DefaultAccountAlias(DefaultAccountName)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
-                        .AccountRouting();
+                    var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
 
-                    var anotherAccount = routing.AddAccount(AnotherAccountName, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                    transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
+                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Subscriber)));
 
                     configuration.OnEndpointSubscribed<Context>((s, context) => { context.Subscribed = true; });
@@ -58,21 +58,19 @@
         {
             public Subscriber()
             {
-                EndpointSetup<DefaultServer>(configuration =>
-                {
-                    configuration.DisableFeature<AutoSubscribe>();
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
 
-                    var transportConfig = configuration.UseTransport<AzureStorageQueueTransport>();
-                    var accountRouting = transportConfig
-                        .DefaultAccountAlias(AnotherAccountName)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString)
-                        .AccountRouting();
+                transport.AccountRouting.DefaultAccountAlias = AnotherAccountName;
+                var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()));
+                anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Publisher)));
 
-                    var anotherAccount = accountRouting.AddAccount(DefaultAccountName, ConfigureEndpointAzureStorageQueueTransport.ConnectionString);
-                    anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Publisher)));
-
-                    transportConfig.Routing().RegisterPublisher(typeof(MyEvent), Conventions.EndpointNamingConvention(typeof(Publisher)));
-                });
+                EndpointSetup(
+                    endpointTemplate: new CustomizedServer(transport),
+                    configurationBuilderCustomization: (config, rd) =>
+                    {
+                        config.DisableFeature<AutoSubscribe>();
+                    },
+                    publisherMetadata: p => p.RegisterPublisherFor<MyEvent>(typeof(Publisher)));
             }
 
             public class MyMessageHandler : IHandleMessages<MyEvent>

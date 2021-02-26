@@ -1,28 +1,34 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
 using NServiceBus.AcceptanceTests.Routing.MessageDrivenSubscriptions;
+using NServiceBus.Transport.AzureStorageQueues.AcceptanceTests;
 using NUnit.Framework;
+using Testing;
 using Conventions = NServiceBus.AcceptanceTesting.Customization.Conventions;
 
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
-    internal static string ConnectionString => Testing.Utilities.GetEnvConfiguredConnectionString();
-    internal static string AnotherConnectionString => Testing.Utilities.GetEnvConfiguredConnectionString2();
+    AzureStorageQueueTransport transport;
+
+    public ConfigureEndpointAzureStorageQueueTransport(AzureStorageQueueTransport transport)
+    {
+        this.transport = transport;
+    }
+
+    public ConfigureEndpointAzureStorageQueueTransport()
+    { }
 
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
-        var connectionString = ConnectionString;
+        if (transport == null)
+        {
+            var errorQueue = configuration.GetEndpointDefinedErrorQueue();
+            var connectionString = Utilities.GetEnvConfiguredConnectionString();
+            transport = Utilities.CreateTransportWithDefaultTestsConfiguration(connectionString, delayedDeliveryPoisonQueue: errorQueue);
+        }
 
-        var transportConfig = configuration
-            .UseTransport<AzureStorageQueueTransport>()
-            .ConnectionString(connectionString)
-            .MessageInvisibleTime(TimeSpan.FromSeconds(30));
-
-        transportConfig.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
-
-        var routingConfig = transportConfig.Routing();
+        var routingConfig = configuration.UseTransport(transport);
 
         foreach (var publisher in publisherMetadata.Publishers)
         {
@@ -46,13 +52,12 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
 
         configuration.Pipeline.Register("test-independence-skip", typeof(TestIndependence.SkipBehavior), "Skips messages from other runs");
         configuration.Pipeline.Register("test-independence-stamp", typeof(TestIndependence.StampOutgoingBehavior), "Stamps outgoing messages from this run");
-        transportConfig.SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>>();
 
-        return Task.FromResult(0);
+        return Task.CompletedTask;
     }
 
     public Task Cleanup()
     {
-        return Task.FromResult(0);
+        return Task.CompletedTask;
     }
 }

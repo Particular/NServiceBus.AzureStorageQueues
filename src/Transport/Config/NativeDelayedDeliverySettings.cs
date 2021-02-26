@@ -1,0 +1,45 @@
+namespace NServiceBus
+{
+    using System;
+    using System.Text.RegularExpressions;
+
+    /// <summary>
+    /// Provides options to define settings for the transport DelayedDelivery feature.
+    /// </summary>
+    public class NativeDelayedDeliverySettings
+    {
+        internal NativeDelayedDeliverySettings()
+        {
+
+        }
+
+        /// <summary>
+        /// The queue to send messages to when native delayed delivery dispatch fails.
+        /// When running in the context of an NServiceBus endpoint, if not set, this
+        /// value defaults to the endpoint error queue.
+        /// </summary>
+        public string DelayedDeliveryPoisonQueue { get; set; }
+
+        /// <summary>
+        /// Override the default table name used for storing delayed messages.
+        /// </summary>
+        public string DelayedDeliveryTableName
+        {
+            get => delayedDeliveryTableName;
+            set
+            {
+                Guard.AgainstNullAndEmpty(nameof(DelayedDeliveryTableName), value);
+
+                if (delayedDeliveryTableNameRegex.IsMatch(value) == false)
+                {
+                    throw new ArgumentException($"{nameof(DelayedDeliveryTableName)} must match the following regular expression '{delayedDeliveryTableNameRegex}'");
+                }
+
+                delayedDeliveryTableName = value.ToLower();
+            }
+        }
+
+        string delayedDeliveryTableName;
+        static readonly Regex delayedDeliveryTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
+    }
+}

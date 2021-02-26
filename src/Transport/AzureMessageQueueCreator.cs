@@ -1,30 +1,25 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
     using global::Azure;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using Logging;
-    using Transport;
 
-    /// <summary>
-    /// Creates the queues. Note that this class will only be invoked when running the windows host and not when running in
-    /// the fabric
-    /// </summary>
-    class AzureMessageQueueCreator : ICreateQueues
+    class AzureMessageQueueCreator
     {
-        public AzureMessageQueueCreator(IProvideQueueServiceClient queueServiceClientProvider, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueCreator(IQueueServiceClientProvider queueServiceClientProvider, QueueAddressGenerator addressGenerator)
         {
             queueServiceClient = queueServiceClientProvider.Client;
             this.addressGenerator = addressGenerator;
         }
 
-        public Task CreateQueueIfNecessary(QueueBindings queueBindings, string identity)
+        public Task CreateQueueIfNecessary(List<string> queuesToCreate)
         {
-            var addresses = queueBindings.ReceivingAddresses.Union(queueBindings.SendingAddresses);
-            return Task.WhenAll(addresses.Select(CreateQueue));
+            return Task.WhenAll(queuesToCreate.Select(CreateQueue));
         }
 
         async Task CreateQueue(string address)

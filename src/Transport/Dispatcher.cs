@@ -1,6 +1,5 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
-    using NServiceBus.AzureStorageQueues;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
@@ -8,24 +7,24 @@
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-    using NServiceBus.Extensibility;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Queues;
-    using NServiceBus.Logging;
-    using NServiceBus.Transport;
-    using NServiceBus.Unicast.Queuing;
+    using Logging;
+    using NServiceBus.AzureStorageQueues;
+    using Transport;
+    using Unicast.Queuing;
 
-    class Dispatcher : IDispatchMessages
+    class Dispatcher : IMessageDispatcher
     {
-        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDelivery nativeDelayDelivery)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence)
         {
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
             this.serializer = serializer;
-            this.nativeDelayDelivery = nativeDelayDelivery;
+            this.nativeDelayDeliveryPersistence = nativeDelayDeliveryPersistence;
         }
 
-        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
+        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken token = default)
         {
             if (outgoingMessages.MulticastTransportOperations.Any())
             {
@@ -48,14 +47,10 @@
                 logger.DebugFormat("Sending message (ID: '{0}') to {1}", operation.Message.MessageId, operation.Destination);
             }
 
-            if (nativeDelayDelivery != null)
+            if (NativeDelayDeliveryPersistence.IsDelayedMessage(operation, out var dueDate))
             {
-                var dispatchDecision = await nativeDelayDelivery.ShouldDispatch(operation, cancellationToken).ConfigureAwait(false);
-
-                if (dispatchDecision == false)
-                {
-                    return;
-                }
+                await nativeDelayDeliveryPersistence.ScheduleAt(operation, dueDate, cancellationToken).ConfigureAwait(false);
+                return;
             }
 
             // The destination might be in a queue@destination format
@@ -73,27 +68,26 @@
                 throw new QueueNotFoundException(queueAddress.ToString(), $"Destination queue '{queueAddress}' does not exist. This queue may have to be created manually.", null);
             }
 
-            var toBeReceived = operation.GetTimeToBeReceived();
-            var timeToBeReceived = toBeReceived.HasValue && toBeReceived.Value < TimeSpan.MaxValue ? toBeReceived : null;
-
-            if (timeToBeReceived != null && timeToBeReceived.Value == TimeSpan.Zero)
-            {
-                var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
-                logger.WarnFormat("TimeToBeReceived is set to zero for message of type '{0}'. Cannot send operation.", messageType);
-                return;
-            }
-
-            // user explicitly specified TimeToBeReceived that is not TimeSpan.MaxValue - fail
-            if (timeToBeReceived != null && timeToBeReceived.Value > CloudQueueMessageMaxTimeToLive && timeToBeReceived != TimeSpan.MaxValue)
-            {
-                var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
-                throw new InvalidOperationException($"TimeToBeReceived is set to more than 30 days for message type '{messageType}'.");
-            }
+            var toBeReceived = operation.Properties.DiscardIfNotReceivedBefore;
+            var timeToBeReceived = toBeReceived != null && toBeReceived.MaxTime < TimeSpan.MaxValue ? toBeReceived.MaxTime : (TimeSpan?)null;
 
             if (timeToBeReceived.HasValue)
             {
-                var seconds = Convert.ToInt64(Math.Ceiling(timeToBeReceived.Value.TotalSeconds));
+                if (timeToBeReceived.Value == TimeSpan.Zero)
+                {
+                    var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
+                    logger.WarnFormat("TimeToBeReceived is set to zero for message of type '{0}'. Cannot send operation.", messageType);
+                    return;
+                }
 
+                // user explicitly specified TimeToBeReceived that is not TimeSpan.MaxValue - fail
+                if (timeToBeReceived.Value > CloudQueueMessageMaxTimeToLive && timeToBeReceived.Value != TimeSpan.MaxValue)
+                {
+                    var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
+                    throw new InvalidOperationException($"TimeToBeReceived is set to more than 30 days for message type '{messageType}'.");
+                }
+
+                var seconds = Convert.ToInt64(Math.Ceiling(timeToBeReceived.Value.TotalSeconds));
                 if (seconds <= 0)
                 {
                     throw new Exception($"Message cannot be sent with a provided delay of {timeToBeReceived.Value.TotalMilliseconds} ms.");
@@ -152,7 +146,7 @@
         }
 
         readonly MessageWrapperSerializer serializer;
-        readonly NativeDelayDelivery nativeDelayDelivery;
+        readonly NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence;
 
         readonly QueueAddressGenerator addressGenerator;
         readonly AzureStorageAddressingSettings addressing;

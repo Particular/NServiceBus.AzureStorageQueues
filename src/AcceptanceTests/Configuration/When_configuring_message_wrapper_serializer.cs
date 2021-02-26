@@ -10,7 +10,6 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using MessageInterfaces;
-    using NServiceBus.Configuration.AdvancedExtensibility;
     using NServiceBus.Serialization;
     using NUnit.Framework;
     using Settings;
@@ -45,7 +44,9 @@
                 EndpointSetup<DefaultServer>(e =>
                 {
                     e.UseSerialization<NewtonsoftSerializer>();
-                    e.GetSettings().Set("Transport.AzureStorageQueue.MessageWrapperSerializationDefinition", new TestIndependence.TestIdAppendingSerializationDefinition<CustomSerializer>());
+
+                    var transport = e.ConfigureTransport<AzureStorageQueueTransport>();
+                    transport.MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<CustomSerializer>();
                 });
             }
 

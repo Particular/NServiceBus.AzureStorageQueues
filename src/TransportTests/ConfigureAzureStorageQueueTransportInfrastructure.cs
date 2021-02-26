@@ -1,45 +1,51 @@
 ﻿using System;
-using System.Globalization;
-using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using NServiceBus;
-using NServiceBus.Transport.AzureStorageQueues.TransportTests;
 using NServiceBus.Logging;
-using NServiceBus.Serialization;
-using NServiceBus.Settings;
+using NServiceBus.Transport;
+using NServiceBus.Transport.AzureStorageQueues.TransportTests;
 using NServiceBus.TransportTests;
-using NServiceBus.Unicast.Messages;
 
 public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTransportInfrastructure
 {
-    public TransportConfigurationResult Configure(SettingsHolder settings, TransportTransactionMode transactionMode)
+    public TransportDefinition CreateTransportDefinition()
     {
         LogManager.UseFactory(new ConsoleLoggerFactory());
 
-        if (settings.TryGet<MessageMetadataRegistry>(out var registry) == false)
+        var connectionStringEnvVarName = "AzureStorageQueueTransport_ConnectionString";
+        var connectionString = Environment.GetEnvironmentVariable(connectionStringEnvVarName);
+        if (string.IsNullOrWhiteSpace(connectionString))
         {
-            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.CreateInstance;
-
-            var conventions = settings.GetOrCreate<Conventions>();
-            registry = (MessageMetadataRegistry)Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, new object[] { new Func<Type, bool>(t => conventions.IsMessageType(t)) }, CultureInfo.InvariantCulture);
-
-            settings.Set(registry);
+            throw new Exception(
+                $"Connection string is required for Acceptance tests. Set it in an environment variable named '{connectionStringEnvVarName}'");
         }
 
-        settings.Set(AzureStorageQueueTransport.SerializerSettingsKey, Tuple.Create<SerializationDefinition, SettingsHolder>(new XmlSerializer(), settings));
-
-        var transportExtension = new TransportExtensions<AzureStorageQueueTransport>(settings);
-        transportExtension.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
-
-        return new TransportConfigurationResult
+        var transport = new AzureStorageQueueTransport(connectionString)
         {
-            TransportInfrastructure = new AzureStorageQueueTransport().Initialize(settings, Testing.Utilities.GetEnvConfiguredConnectionString()),
-            PurgeInputQueueOnStartup = false
+            MessageWrapperSerializationDefinition = new XmlSerializer(),
+            QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
         };
+
+        return transport;
     }
 
-    public Task Cleanup()
+    public async Task<TransportInfrastructure> Configure(TransportDefinition transportDefinition, HostSettings hostSettings, string inputQueueName, string errorQueueName, CancellationToken token = default)
     {
-        return Task.FromResult(0);
+        var transportInfrastructure = await transportDefinition.Initialize(
+            hostSettings,
+            new[]
+            {
+                new ReceiveSettings(inputQueueName, inputQueueName, true, false, errorQueueName),
+            },
+            new string[0],
+            CancellationToken.None);
+
+        return transportInfrastructure;
+    }
+
+    public Task Cleanup(CancellationToken token = default)
+    {
+        return Task.CompletedTask;
     }
 }

@@ -8,7 +8,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using AcceptanceTesting.Customization;
     using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using Testing;
 
@@ -33,7 +32,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             var delay = TimeSpan.FromDays(30);
 
             var context = await Scenario.Define<Context>()
-                .WithEndpoint<SenderToNowhere>(b => b.When(async (session, c) =>
+                .WithEndpoint<SendOnlySenderToNowhere>(b => b.When(async (session, c) =>
                 {
                     var sendOptions = new SendOptions();
                     sendOptions.DelayDeliveryWith(delay);
@@ -46,7 +45,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     var delayedMessages = await GetDelayedMessageEntities().ConfigureAwait(false);
                     await MoveBeforeNow(delayedMessages[0]).ConfigureAwait(false);
                 }))
-                .WithEndpoint<Receiver>()
+                .WithEndpoint<ErrorQueueReceiver>()
                 .Done(c => c.WasCalled)
                 .Run().ConfigureAwait(false);
 
@@ -84,42 +83,29 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             public Stopwatch Stopwatch { get; set; }
         }
 
-        public class Sender : EndpointConfigurationBuilder
+        public class SendOnlySenderToNowhere : EndpointConfigurationBuilder
         {
-            public Sender()
+            public SendOnlySenderToNowhere()
             {
-                EndpointSetup<DefaultServer>(cfg =>
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString());
+                transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
+                transport.DelayedDelivery.DelayedDeliveryPoisonQueue = Conventions.EndpointNamingConvention(typeof(ErrorQueueReceiver));
+
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) =>
                 {
                     cfg.SendOnly();
-
-                    var transport = cfg.UseTransport<AzureStorageQueueTransport>();
-                    transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
-                    var routing = cfg.ConfigureTransport().Routing();
-                    routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
+                    cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(ErrorQueueReceiver)));
                 });
             }
         }
 
-        public class SenderToNowhere : EndpointConfigurationBuilder
+        public class ErrorQueueReceiver : EndpointConfigurationBuilder
         {
-            public SenderToNowhere()
+            public ErrorQueueReceiver()
             {
-                EndpointSetup<DefaultServer>(cfg =>
-                {
-                    cfg.SendOnly();
+                var transport = Utilities.SetTransportDefaultTestsConfiguration(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), useNativeDelayedDeliveries: false));
 
-                    var transport = cfg.UseTransport<AzureStorageQueueTransport>();
-                    transport.DelayedDelivery().UseTableName(SenderDelayedMessagesTable);
-                    cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
-                });
-            }
-        }
-
-        public class Receiver : EndpointConfigurationBuilder
-        {
-            public Receiver()
-            {
-                EndpointSetup<DefaultServer>(cfg => { cfg.UseTransport<AzureStorageQueueTransport>(); });
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>

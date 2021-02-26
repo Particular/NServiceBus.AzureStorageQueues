@@ -13,24 +13,9 @@
 
     class DelayedMessagesPoller
     {
-        const int DelayedMessagesProcessedAtOnce = 50;
-        static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
-        static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
-        static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
-
-        readonly BlobServiceClient blobServiceClient;
-        readonly Dispatcher dispatcher;
-        readonly BackoffStrategy backoffStrategy;
-        readonly bool isAtMostOnce;
-        readonly string errorQueue;
-
-        CloudTable delayedDeliveryTable;
-        LockManager lockManager;
-        Task delayedMessagesPollerTask;
-
-        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, string errorQueue, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
+        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, string errorQueueAddress, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
-            this.errorQueue = errorQueue;
+            this.errorQueueAddress = errorQueueAddress;
             this.isAtMostOnce = isAtMostOnce;
             this.delayedDeliveryTable = delayedDeliveryTable;
             this.blobServiceClient = blobServiceClient;
@@ -242,7 +227,22 @@
 
         UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
         {
-            return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
+            //TODO does this need to set the FailedQ header and the failure reason?
+            return new UnicastTransportOperation(operation.Message, errorQueueAddress, new DispatchProperties(), operation.RequiredDispatchConsistency);
         }
+
+        const int DelayedMessagesProcessedAtOnce = 50;
+        static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
+        static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
+        static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
+
+        readonly BlobServiceClient blobServiceClient;
+        readonly Dispatcher dispatcher;
+        readonly BackoffStrategy backoffStrategy;
+        readonly bool isAtMostOnce;
+        readonly string errorQueueAddress;
+        CloudTable delayedDeliveryTable;
+        LockManager lockManager;
+        Task delayedMessagesPollerTask;
     }
 }

@@ -9,6 +9,7 @@
         public bool SupportsNativePubSub => false;
         public bool SupportsDelayedDelivery => true;
         public bool SupportsOutbox => false;
+        public bool SupportsPurgeOnStartup => true;
         public IConfigureEndpointTestExecution CreateTransportConfiguration() => new ConfigureEndpointAzureStorageQueueTransport();
         public IConfigureEndpointTestExecution CreatePersistenceConfiguration() => new ConfigureEndpointAcceptanceTestingPersistence();
     }

@@ -2,7 +2,7 @@
 {
     using global::Azure.Storage.Blobs;
 
-    class BlobServiceClientProvidedByConnectionString : IProvideBlobServiceClient
+    class BlobServiceClientProvidedByConnectionString : IBlobServiceClientProvider
     {
         public BlobServiceClientProvidedByConnectionString(string connectionString)
         {

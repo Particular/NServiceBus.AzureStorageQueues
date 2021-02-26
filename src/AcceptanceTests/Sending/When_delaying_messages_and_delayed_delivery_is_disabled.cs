@@ -4,8 +4,8 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_delaying_messages_and_delayed_delivery_is_disabled : NServiceBusAcceptanceTest
     {
@@ -43,11 +43,9 @@
         {
             public Endpoint()
             {
-                EndpointSetup<DefaultServer>(config =>
-                {
-                    var delayedDelivery = config.UseTransport<AzureStorageQueueTransport>().DelayedDelivery();
-                    delayedDelivery.DisableDelayedDelivery();
-                });
+                var transport = Utilities.SetTransportDefaultTestsConfiguration(new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString(), useNativeDelayedDeliveries: false));
+
+                EndpointSetup(new CustomizedServer(transport), (config, rd) => { });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>

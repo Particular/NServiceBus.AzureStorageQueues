@@ -4,9 +4,11 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Storage.Queues;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_dispatching_to_another_account_with_registered_endpoint : NServiceBusAcceptanceTest
     {
@@ -40,15 +42,14 @@
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    var routing = configuration.UseTransport<AzureStorageQueueTransport>()
-                        .DefaultAccountAlias(DefaultAccountName)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
-                        .AccountRouting();
+                    var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
+                    transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
 
-                    var anotherAccount = routing.AddAccount(AnotherAccountName, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                     anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Receiver)));
 
-                    configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
+                    var routing = configuration.ConfigureRouting();
+                    routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
             }
         }
@@ -57,11 +58,9 @@
         {
             public Receiver()
             {
-                EndpointSetup<DefaultServer>(configuration =>
-                {
-                    configuration.UseTransport<AzureStorageQueueTransport>()
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
-                });
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
+
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
