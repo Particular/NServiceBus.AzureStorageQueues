@@ -24,10 +24,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
             var body = message.Body ?? new byte[0];
             try
             {
+                //TODO: what this should look like given the new cancellation support?
+                // https://github.com/Particular/NServiceBus.AzureStorageQueues/issues/526
+
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new ContextBag());
                 await onMessage(pushContext, CancellationToken.None).ConfigureAwait(false);
 
-                //TODO: what this should look like given the new cancellation support?
                 //if (tokenSource.IsCancellationRequested)
                 //{
                 //    // if the pipeline canceled the execution, nack the message to go back to the queue
