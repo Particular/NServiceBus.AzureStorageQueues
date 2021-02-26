@@ -21,6 +21,7 @@ namespace NServiceBus
     using System.Globalization;
     using NServiceBus.Unicast.Messages;
     using System.Reflection;
+    using System.Threading;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
@@ -83,7 +84,7 @@ namespace NServiceBus
         }
 
         /// <inheritdoc cref="Initialize"/>
-        public override async Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receiversSettings, string[] sendingAddresses)
+        public override async Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receiversSettings, string[] sendingAddresses, CancellationToken token = default)
         {
             Guard.AgainstNull(nameof(hostSettings), hostSettings);
             Guard.AgainstNull(nameof(receiversSettings), receiversSettings);
@@ -259,7 +260,7 @@ namespace NServiceBus
             return serializer;
         }
 
-        (string Id, IMessageReceiver Receiver) BuildReceiver(ReceiveSettings settings, MessageWrapperSerializer serializer, Action<string, Exception> criticalErrorAction)
+        (string Id, IMessageReceiver Receiver) BuildReceiver(ReceiveSettings settings, MessageWrapperSerializer serializer, Action<string, Exception, CancellationToken> criticalErrorAction)
         {
             var unwrapper = MessageUnwrapper != null
                 ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)

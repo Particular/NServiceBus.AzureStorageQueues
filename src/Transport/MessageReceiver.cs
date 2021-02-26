@@ -15,7 +15,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             AzureMessageQueueReceiver azureMessageQueueReceiver,
             string receiveAddress,
             string errorQueue,
-            Action<string, Exception> criticalErrorAction,
+            Action<string, Exception, CancellationToken> criticalErrorAction,
             int? degreeOfReceiveParallelism,
             int? receiveBatchSize,
             TimeSpan maximumWaitTime,
@@ -36,19 +36,19 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public ISubscriptionManager Subscriptions { get; } = null;
         public string Id { get; }
 
-        public Task Initialize(PushRuntimeSettings limitations, OnMessage onMessage, OnError onError)
+        public Task Initialize(PushRuntimeSettings limitations, OnMessage onMessage, OnError onError, CancellationToken token = default)
         {
             this.limitations = limitations;
 
             Logger.Debug($"Initializing MessageReceiver {Id}");
 
-            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalErrorAction("Failed to receive message from Azure Storage Queue.", ex));
+            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalErrorAction("Failed to receive message from Azure Storage Queue.", ex, CancellationToken.None));
             receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, requiredTransactionMode, criticalErrorAction);
 
             return azureMessageQueueReceiver.Init(receiveAddress, errorQueue);
         }
 
-        public Task StartReceive()
+        public Task StartReceive(CancellationToken token = default)
         {
             maximumConcurrency = limitations.MaxConcurrency;
             concurrencyLimiter = new SemaphoreSlim(maximumConcurrency, maximumConcurrency);
@@ -72,7 +72,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return Task.CompletedTask;
         }
 
-        public async Task StopReceive()
+        public async Task StopReceive(CancellationToken token = default)
         {
             Logger.Debug($"Stopping MessageReceiver {Id}");
             cancellationTokenSource.Cancel();
@@ -203,7 +203,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         AzureMessageQueueReceiver azureMessageQueueReceiver;
         readonly string receiveAddress;
         readonly string errorQueue;
-        readonly Action<string, Exception> criticalErrorAction;
+        readonly Action<string, Exception, CancellationToken> criticalErrorAction;
 
         CancellationToken cancellationToken;
         CancellationTokenSource cancellationTokenSource;

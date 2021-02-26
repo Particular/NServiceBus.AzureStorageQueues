@@ -24,7 +24,7 @@
             this.nativeDelayDeliveryPersistence = nativeDelayDeliveryPersistence;
         }
 
-        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction)
+        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken token = default)
         {
             if (outgoingMessages.MulticastTransportOperations.Any())
             {

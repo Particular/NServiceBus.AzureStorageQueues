@@ -1,6 +1,7 @@
 namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Transport;
@@ -9,7 +10,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     {
         public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message);
 
-        public static ReceiveStrategy BuildReceiveStrategy(OnMessage onMessage, OnError onError, TransportTransactionMode transactionMode, Action<string, Exception> criticalErrorAction)
+        public static ReceiveStrategy BuildReceiveStrategy(OnMessage onMessage, OnError onError, TransportTransactionMode transactionMode, Action<string, Exception, CancellationToken> criticalErrorAction)
         {
             switch (transactionMode)
             {

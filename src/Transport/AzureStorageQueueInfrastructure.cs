@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System.Collections.ObjectModel;
+    using System.Threading;
     using System.Threading.Tasks;
     using Transport;
 
@@ -13,7 +14,7 @@
             this.nativeDelayedDeliveryProcessor = nativeDelayedDeliveryProcessor;
         }
 
-        public override Task Shutdown()
+        public override Task Shutdown(CancellationToken token = default)
         {
             return nativeDelayedDeliveryProcessor.Stop();
         }

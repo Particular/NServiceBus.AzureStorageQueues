@@ -2,6 +2,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
@@ -10,7 +11,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AtLeastOnceReceiveStrategy : ReceiveStrategy
     {
-        public AtLeastOnceReceiveStrategy(OnMessage onMessage, OnError onError, Action<string, Exception> criticalErrorAction)
+        public AtLeastOnceReceiveStrategy(OnMessage onMessage, OnError onError, Action<string, Exception, CancellationToken> criticalErrorAction)
         {
             this.onMessage = onMessage;
             this.onError = onError;
@@ -24,7 +25,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             try
             {
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new ContextBag());
-                await onMessage(pushContext).ConfigureAwait(false);
+                await onMessage(pushContext, CancellationToken.None).ConfigureAwait(false);
 
                 //TODO: what this should look like given the new cancellation support?
                 //if (tokenSource.IsCancellationRequested)
@@ -53,11 +54,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 try
                 {
-                    immediateRetry = await onError(context).ConfigureAwait(false);
+                    immediateRetry = await onError(context, CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
-                    criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e);
+                    criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e, CancellationToken.None);
 
                     await retrieved.Nack().ConfigureAwait(false);
 
@@ -81,7 +82,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         readonly OnMessage onMessage;
         readonly OnError onError;
-        readonly Action<string, Exception> criticalErrorAction;
+        readonly Action<string, Exception, CancellationToken> criticalErrorAction;
 
         static readonly ILog Logger = LogManager.GetLogger<ReceiveStrategy>();
     }

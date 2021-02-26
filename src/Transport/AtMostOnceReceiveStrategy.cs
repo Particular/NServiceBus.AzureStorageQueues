@@ -2,6 +2,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
@@ -29,7 +30,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             try
             {
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new ContextBag());
-                await onMessage(pushContext).ConfigureAwait(false);
+                await onMessage(pushContext, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -39,7 +40,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 // The exception is pushed through the error pipeline in a fire and forget manner.
                 // There's no call to onCriticalError if errorPipe fails. Exceptions are handled on the transport level.
-                await onError(context).ConfigureAwait(false);
+                await onError(context, CancellationToken.None).ConfigureAwait(false);
             }
         }
 
