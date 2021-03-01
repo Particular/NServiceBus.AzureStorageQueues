@@ -253,7 +253,7 @@ namespace NServiceBus
                                     "set a HostSettings.CoreSettings to an empty SettingsHolder instance before starting the transport.");
             }
 
-            var (definition, serializerSettings) = serializerSettingsTuple;
+            var (definition, _) = serializerSettingsTuple;
 
             var serializerFactory = definition.Configure(settings);
             var serializer = serializerFactory(mapper);
