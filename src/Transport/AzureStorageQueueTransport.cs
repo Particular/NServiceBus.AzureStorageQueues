@@ -212,8 +212,8 @@ namespace NServiceBus
             var isSendOnly = receivers.Length == 0;
             if (SupportsDelayedDelivery && isSendOnly && string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue))
             {
-                throw new Exception($"Send only endpoints require a native delayed poison queue." +
-                                    $" Configure a user defined poison queue for delayed deliveries by using the" +
+                throw new Exception("Send only endpoints require a native delayed poison queue." +
+                                    " Configure a user defined poison queue for delayed deliveries by using the" +
                                     $" {nameof(AzureStorageQueueTransport)}.{nameof(DelayedDelivery)}" +
                                     $".{nameof(DelayedDelivery.DelayedDeliveryPoisonQueue)} property.");
             }
