@@ -4,7 +4,7 @@
     using System.Threading;
     using System.Threading.Tasks;
     using NUnit.Framework;
-    using Transport.AzureStorageQueues;
+    using AzureStorageQueues;
 
     public class BackoffStrategyTests
     {

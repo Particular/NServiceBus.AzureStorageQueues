@@ -5,7 +5,7 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Microsoft.Azure.Cosmos.Table;
-    using NServiceBus.AcceptanceTesting.Customization;
+    using AcceptanceTesting.Customization;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;

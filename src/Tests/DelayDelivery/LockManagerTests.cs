@@ -6,7 +6,7 @@
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Blobs.Specialized;
     using NUnit.Framework;
-    using Transport.AzureStorageQueues;
+    using AzureStorageQueues;
 
     public class LockManagerTests
     {

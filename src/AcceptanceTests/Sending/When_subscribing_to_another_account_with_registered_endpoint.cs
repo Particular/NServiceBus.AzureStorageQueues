@@ -5,7 +5,7 @@
     using AcceptanceTesting;
     using Features;
     using global::Azure.Storage.Queues;
-    using NServiceBus.AcceptanceTesting.Customization;
+    using AcceptanceTesting.Customization;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;

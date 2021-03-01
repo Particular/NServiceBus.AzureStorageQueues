@@ -10,7 +10,7 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using MessageInterfaces;
-    using NServiceBus.Serialization;
+    using Serialization;
     using NUnit.Framework;
     using Settings;
 

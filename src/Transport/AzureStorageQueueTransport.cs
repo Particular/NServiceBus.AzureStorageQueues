@@ -19,7 +19,7 @@ namespace NServiceBus
     using Transport;
     using Transport.AzureStorageQueues;
     using System.Globalization;
-    using NServiceBus.Unicast.Messages;
+    using Unicast.Messages;
     using System.Reflection;
     using System.Threading;
 
