@@ -19,7 +19,7 @@ namespace NServiceBus
     using Transport;
     using Transport.AzureStorageQueues;
     using System.Globalization;
-    using NServiceBus.Unicast.Messages;
+    using Unicast.Messages;
     using System.Reflection;
     using System.Threading;
 
@@ -106,7 +106,7 @@ namespace NServiceBus
             }
 
             var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator());
-            azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias, AccountRouting.mappings);
+            azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias, AccountRouting.Mappings);
             azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
 
             object delayedDeliveryPersistenceDiagnosticSection = new { };
@@ -212,8 +212,8 @@ namespace NServiceBus
             var isSendOnly = receivers.Length == 0;
             if (SupportsDelayedDelivery && isSendOnly && string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue))
             {
-                throw new Exception($"Send only endpoints require a native delayed poison queue." +
-                                    $" Configure a user defined poison queue for delayed deliveries by using the" +
+                throw new Exception("Send only endpoints require a native delayed poison queue." +
+                                    " Configure a user defined poison queue for delayed deliveries by using the" +
                                     $" {nameof(AzureStorageQueueTransport)}.{nameof(DelayedDelivery)}" +
                                     $".{nameof(DelayedDelivery.DelayedDeliveryPoisonQueue)} property.");
             }
@@ -253,7 +253,7 @@ namespace NServiceBus
                                     "set a HostSettings.CoreSettings to an empty SettingsHolder instance before starting the transport.");
             }
 
-            var (definition, serializerSettings) = serializerSettingsTuple;
+            var (definition, _) = serializerSettingsTuple;
 
             var serializerFactory = definition.Configure(settings);
             var serializer = serializerFactory(mapper);

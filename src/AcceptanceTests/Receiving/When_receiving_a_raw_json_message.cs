@@ -11,7 +11,7 @@
     using global::Newtonsoft.Json;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using NUnit.Framework;
     using Testing;
 

@@ -3,7 +3,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
     using System.Collections.Generic;
     using System.Linq;
     using NUnit.Framework;
-    using Transport.AzureStorageQueues;
+    using AzureStorageQueues;
 
     [TestFixture]
     class MessagePumpHelpersTests
