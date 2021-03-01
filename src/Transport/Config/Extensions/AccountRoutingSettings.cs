@@ -36,18 +36,18 @@
         /// </summary>
         public AccountInfo AddAccount(string alias, QueueServiceClient connectionClient)
         {
-            if (mappings.TryGetValue(alias, out var accountInfo))
+            if (Mappings.TryGetValue(alias, out var accountInfo))
             {
                 return accountInfo;
             }
 
             accountInfo = new AccountInfo(alias, connectionClient);
-            mappings.Add(alias, accountInfo);
+            Mappings.Add(alias, accountInfo);
 
             return accountInfo;
         }
 
-        internal Dictionary<string, AccountInfo> mappings = new Dictionary<string, AccountInfo>();
+        internal Dictionary<string, AccountInfo> Mappings = new Dictionary<string, AccountInfo>();
         string defaultAccountAlias = string.Empty;
     }
 }

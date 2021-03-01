@@ -106,7 +106,7 @@ namespace NServiceBus
             }
 
             var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator());
-            azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias, AccountRouting.mappings);
+            azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias, AccountRouting.Mappings);
             azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
 
             object delayedDeliveryPersistenceDiagnosticSection = new { };
