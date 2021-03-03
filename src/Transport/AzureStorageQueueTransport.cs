@@ -22,6 +22,7 @@ namespace NServiceBus
     using Unicast.Messages;
     using System.Reflection;
     using System.Threading;
+    using AzureStorageQueues.PubSub;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
@@ -32,7 +33,7 @@ namespace NServiceBus
         /// Initialize a new transport definition for AzureStorageQueue
         /// </summary>
         public AzureStorageQueueTransport(string connectionString, bool useNativeDelayedDeliveries = true)
-            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: useNativeDelayedDeliveries, supportsPublishSubscribe: false, supportsTTBR: true)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: useNativeDelayedDeliveries, supportsPublishSubscribe: true, supportsTTBR: true)
         {
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
@@ -48,7 +49,7 @@ namespace NServiceBus
         /// Initialize a new transport definition for AzureStorageQueue and disable native delayed deliveries
         /// </summary>
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient)
-            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: false, supportsPublishSubscribe: false, supportsTTBR: true)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: false, supportsPublishSubscribe: true, supportsTTBR: true)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
 
@@ -59,7 +60,7 @@ namespace NServiceBus
         /// Initialize a new transport definition for AzureStorageQueue with native delayed deliveries support
         /// </summary>
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient, BlobServiceClient blobServiceClient, CloudTableClient cloudTableClient)
-            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: true, supportsPublishSubscribe: false, supportsTTBR: true)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: true, supportsPublishSubscribe: true, supportsTTBR: true)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
             Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
@@ -68,6 +69,22 @@ namespace NServiceBus
             queueServiceClientProvider = new QueueServiceClientProvidedByUser(queueServiceClient);
             blobServiceClientProvider = new BlobServiceClientProvidedByUser(blobServiceClient);
             cloudTableClientProvider = new CloudTableClientProvidedByUser(cloudTableClient);
+        }
+
+        /// <summary>
+        /// For the pub-sub migration tests only
+        /// </summary>
+        internal AzureStorageQueueTransport(string connectionString, bool supportsDelayedDelivery, bool supportsPublishSubscribe)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery, supportsPublishSubscribe, true)
+        {
+            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+
+            queueServiceClientProvider = new QueueServiceClientByConnectionString(connectionString);
+            if (SupportsDelayedDelivery)
+            {
+                blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(connectionString);
+                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
+            }
         }
 
         static string GenerateDelayedDeliveryTableName(string endpointName)
@@ -172,7 +189,22 @@ namespace NServiceBus
                 };
             }
 
-            var messageReceivers = receiversSettings.Select(settings => BuildReceiver(settings, serializer, hostSettings.CriticalErrorAction))
+            ISubscriptionManager subscriptionManager;
+            if (SupportsPublishSubscribe)
+            {
+                var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, hostSettings.SetupInfrastructure)
+                    .ConfigureAwait(false);
+                subscriptionManager = new SubscriptionManager(subscriptionTable);
+            }
+            else
+            {
+                subscriptionManager = new NoOpSubscriptionManager();
+            }
+
+            var messageReceivers = receiversSettings.Select(settings => BuildReceiver(settings,
+                    serializer,
+                    hostSettings.CriticalErrorAction,
+                    subscriptionManager))
                 .ToDictionary(receiver => receiver.Id, receiver => receiver.Receiver);
 
             var infrastructure = new AzureStorageQueueInfrastructure(
@@ -235,6 +267,18 @@ namespace NServiceBus
             return delayedMessagesStorageTable;
         }
 
+        static async Task<CloudTable> EnsureSubscriptionTableExists(CloudTableClient cloudTableClient, bool setupInfrastructure)
+        {
+            // TODO: Make it configurable
+            var subscriptionTable = cloudTableClient.GetTableReference("subscriptiontable");
+            if (setupInfrastructure)
+            {
+                await subscriptionTable.CreateIfNotExistsAsync().ConfigureAwait(false);
+            }
+
+            return subscriptionTable;
+        }
+
         static MessageWrapperSerializer BuildSerializer(SerializationDefinition userWrapperSerializationDefinition, ReadOnlySettings settings)
         {
             return userWrapperSerializationDefinition != null
@@ -260,7 +304,9 @@ namespace NServiceBus
             return serializer;
         }
 
-        (string Id, IMessageReceiver Receiver) BuildReceiver(ReceiveSettings settings, MessageWrapperSerializer serializer, Action<string, Exception, CancellationToken> criticalErrorAction)
+        (string Id, IMessageReceiver Receiver) BuildReceiver(ReceiveSettings settings,
+            MessageWrapperSerializer serializer,
+            Action<string, Exception, CancellationToken> criticalErrorAction, ISubscriptionManager subscriptionManager)
         {
             var unwrapper = MessageUnwrapper != null
                 ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
@@ -272,6 +318,7 @@ namespace NServiceBus
                 settings.Id,
                 TransportTransactionMode,
                 receiver,
+                subscriptionManager,
                 settings.ReceiveAddress,
                 settings.ErrorQueue,
                 criticalErrorAction,
