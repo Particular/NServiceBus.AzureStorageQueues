@@ -10,6 +10,7 @@
     using Features;
     using NServiceBus.Routing.MessageDrivenSubscriptions;
     using NUnit.Framework;
+    using Transport.AzureStorageQueues.AcceptanceTests;
 
     public class When_publisher_runs_in_compat_mode : NServiceBusAcceptanceTest
     {
@@ -57,10 +58,8 @@
         {
             public Subscriber()
             {
-                EndpointSetup<DefaultServer>(c =>
+                EndpointSetup(new CustomizedServer(supportsNativeDelayedDelivery: true, supportsPublishSubscribe: false), (c, rd) =>
                 {
-                    c.GetSettings().Set("NServiceBus.Transport.AzureStorageQueues.DisableNativePubSub", true);
-                    //SqlServerTransport no longer implements message-driven pub sub interface so we need to configure Publishers "manually"
                     c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig", new List<PublisherTableEntry>
                     {
                         new PublisherTableEntry(typeof(MyEvent), PublisherAddress.CreateFromEndpointName(PublisherEndpoint))

@@ -4,10 +4,10 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
-    using Configuration.AdvancedExtensibility;
     using EndpointTemplates;
     using Features;
     using NUnit.Framework;
+    using Transport.AzureStorageQueues.AcceptanceTests;
 
     public class When_subscriber_runs_in_compat_mode : NServiceBusAcceptanceTest
     {
@@ -35,9 +35,8 @@
         {
             public LegacyPublisher()
             {
-                EndpointSetup<DefaultPublisher>(c =>
+                EndpointSetup(new CustomizedServer(supportsNativeDelayedDelivery: true, supportsPublishSubscribe: false), (c, rd) =>
                 {
-                    c.GetSettings().Set("NServiceBus.Transport.AzureStorageQueues.DisableNativePubSub", true);
                     c.OnEndpointSubscribed<Context>((s, context) =>
                     {
                         if (s.SubscriberEndpoint.Contains(Conventions.EndpointNamingConvention(typeof(MigratedSubscriber))))
