@@ -76,6 +76,20 @@
             }, topics);
         }
 
+        [Test]
+        public async Task GetSubscribers()
+        {
+            var subscriptionStore = new SubscriptionStore(table);
+
+            await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherEvent), CancellationToken.None);
+            await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
+
+            var subcribers =
+                await subscriptionStore.GetSubscribers("endpointName", typeof(MyOtherEvent), CancellationToken.None);
+
+            CollectionAssert.AreEqual(new[] { "localaddress" }, subcribers);
+        }
+
         class MyEvent : IEvent
         {
         }
