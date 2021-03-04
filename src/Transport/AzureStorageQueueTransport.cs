@@ -189,24 +189,15 @@ namespace NServiceBus
                 };
             }
 
-            ISubscriptionManager subscriptionManager;
-            if (SupportsPublishSubscribe)
-            {
-                var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, hostSettings.SetupInfrastructure)
-                    .ConfigureAwait(false);
+            var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, hostSettings.SetupInfrastructure)
+                .ConfigureAwait(false);
 
-                // TODO: needs to get the local address for the endpoint as part of the message receiver creation
-                subscriptionManager = new SubscriptionManager(subscriptionTable, "TODO");
-            }
-            else
-            {
-                subscriptionManager = new NoOpSubscriptionManager();
-            }
+            var subscriptionStore = new SubscriptionStore(subscriptionTable);
 
-            var messageReceivers = receiversSettings.Select(settings => BuildReceiver(settings,
+            var messageReceivers = receiversSettings.Select(settings => BuildReceiver(hostSettings, settings,
                     serializer,
                     hostSettings.CriticalErrorAction,
-                    subscriptionManager))
+                    subscriptionStore))
                 .ToDictionary(receiver => receiver.Id, receiver => receiver.Receiver);
 
             var infrastructure = new AzureStorageQueueInfrastructure(
@@ -306,23 +297,27 @@ namespace NServiceBus
             return serializer;
         }
 
-        (string Id, IMessageReceiver Receiver) BuildReceiver(ReceiveSettings settings,
+        (string Id, IMessageReceiver Receiver) BuildReceiver(HostSettings hostSettings, ReceiveSettings receiveSettings,
             MessageWrapperSerializer serializer,
-            Action<string, Exception, CancellationToken> criticalErrorAction, ISubscriptionManager subscriptionManager)
+            Action<string, Exception, CancellationToken> criticalErrorAction, SubscriptionStore subscriptionStore)
         {
             var unwrapper = MessageUnwrapper != null
                 ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
                 : new DefaultMessageEnvelopeUnwrapper(serializer);
 
-            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, GetQueueAddressGenerator(), settings.PurgeOnStartup, MessageInvisibleTime);
+            ISubscriptionManager subscriptionManager = SupportsPublishSubscribe
+                ? (ISubscriptionManager)new SubscriptionManager(subscriptionStore, hostSettings.Name, receiveSettings.ReceiveAddress)
+                : new NoOpSubscriptionManager();
 
-            return (settings.Id, new MessageReceiver(
-                settings.Id,
+            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, GetQueueAddressGenerator(), receiveSettings.PurgeOnStartup, MessageInvisibleTime);
+
+            return (receiveSettings.Id, new MessageReceiver(
+                receiveSettings.Id,
                 TransportTransactionMode,
                 receiver,
                 subscriptionManager,
-                settings.ReceiveAddress,
-                settings.ErrorQueue,
+                receiveSettings.ReceiveAddress,
+                receiveSettings.ErrorQueue,
                 criticalErrorAction,
                 DegreeOfReceiveParallelism,
                 ReceiverBatchSize,

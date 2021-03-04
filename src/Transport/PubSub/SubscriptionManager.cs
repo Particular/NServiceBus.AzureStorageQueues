@@ -1,68 +1,35 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
-    using System;
-    using System.Linq;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using Extensibility;
-    using Microsoft.Azure.Cosmos.Table;
     using Unicast.Messages;
 
     class SubscriptionManager : ISubscriptionManager
     {
-        readonly CloudTable subscriptionTable;
+        readonly SubscriptionStore subscriptionStore;
         readonly string localAddress;
+        readonly string endpointName;
 
-        public SubscriptionManager(CloudTable subscriptionTable, string localAddress)
+        public SubscriptionManager(SubscriptionStore subscriptionStore, string endpointName, string localAddress)
         {
-            this.subscriptionTable = subscriptionTable;
+            this.endpointName = endpointName;
             this.localAddress = localAddress;
+            this.subscriptionStore = subscriptionStore;
         }
 
-        public async Task SubscribeAll(MessageMetadata[] eventTypes, ContextBag context, CancellationToken cancellationToken)
+        public Task SubscribeAll(MessageMetadata[] eventTypes, ContextBag context, CancellationToken cancellationToken)
         {
-            try
+            var tasks = new List<Task>(eventTypes.Length);
+            foreach (var eventType in eventTypes)
             {
-                var tasks = eventTypes.Select(eventMetadata => CreateTopics(eventMetadata.MessageHierarchy, cancellationToken));
-
-                await Task.WhenAll(tasks).ConfigureAwait(false);
+                tasks.Add(subscriptionStore.Subscribe(endpointName, localAddress, eventType.MessageType, cancellationToken));
             }
-            catch (OperationCanceledException)
-            {
-                // Gracefully finish
-            }
+            return Task.WhenAll(tasks);
         }
 
-        async Task CreateTopics(Type[] types, CancellationToken cancellationToken)
-        {
-            foreach (var type in types)
-            {
-                var operation = TableOperation.InsertOrReplace(new TableEntity(partitionKey: type.FullName, rowKey: localAddress));
-
-                await subscriptionTable.ExecuteAsync(operation, cancellationToken).ConfigureAwait(false);
-            }
-        }
-
-        public async Task Unsubscribe(MessageMetadata eventType, ContextBag context, CancellationToken cancellationToken)
-        {
-            try
-            {
-                await DeleteTopics(eventType.MessageHierarchy, cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                // Gracefully finish
-            }
-        }
-
-        async Task DeleteTopics(Type[] types, CancellationToken cancellationToken)
-        {
-            foreach (var type in types)
-            {
-                var operation = TableOperation.Delete(new TableEntity(partitionKey: type.FullName, rowKey: localAddress) { ETag = "*" });
-
-                await subscriptionTable.ExecuteAsync(operation, cancellationToken).ConfigureAwait(false);
-            }
-        }
+        public Task Unsubscribe(MessageMetadata eventType, ContextBag context, CancellationToken cancellationToken) =>
+            subscriptionStore.Unsubscribe(endpointName, eventType.MessageType, cancellationToken);
     }
 }
