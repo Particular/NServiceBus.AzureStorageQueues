@@ -3,26 +3,26 @@ namespace NServiceBus
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Globalization;
     using System.Linq;
+    using System.Reflection;
     using System.Security.Cryptography;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using AzureStorageQueues.PubSub;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
-    using Microsoft.Azure.Cosmos.Table;
     using MessageInterfaces;
+    using Microsoft.Azure.Cosmos.Table;
     using Routing;
-    using Settings;
     using Serialization;
+    using Settings;
     using Transport;
     using Transport.AzureStorageQueues;
-    using System.Globalization;
     using Unicast.Messages;
-    using System.Reflection;
-    using System.Threading;
-    using AzureStorageQueues.PubSub;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
@@ -194,7 +194,9 @@ namespace NServiceBus
             {
                 var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, hostSettings.SetupInfrastructure)
                     .ConfigureAwait(false);
-                subscriptionManager = new SubscriptionManager(subscriptionTable);
+
+                // TODO: needs to get the local address for the endpoint as part of the message receiver creation
+                subscriptionManager = new SubscriptionManager(subscriptionTable, "TODO");
             }
             else
             {
