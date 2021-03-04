@@ -4,11 +4,9 @@
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using Extensibility;
     using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
     using Testing;
-    using Unicast.Messages;
 
     [TestFixture]
     public class SubscriptionStoreTests
@@ -88,6 +86,14 @@
                 await subscriptionStore.GetSubscribers("endpointName", typeof(MyOtherEvent), CancellationToken.None);
 
             CollectionAssert.AreEqual(new[] { "localaddress" }, subcribers);
+        }
+
+        [Test]
+        public void Type_hierarchy_should_not_include_object()
+        {
+            var types = SubscriptionStore.GenerateTopics(typeof(MyOtherEvent));
+
+            Assert.That(types, Has.None.EqualTo(typeof(object).FullName));
         }
 
         class MyEvent : IEvent

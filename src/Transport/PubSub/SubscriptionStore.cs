@@ -77,7 +77,7 @@
 
         string[] GetTopics(Type messageType) => eventTypeToTopicListMap.GetOrAdd(messageType, GenerateTopics);
 
-        static string[] GenerateTopics(Type messageType) =>
+        internal static string[] GenerateTopics(Type messageType) =>
             GenerateMessageHierarchy(messageType)
                 .Select(TopicName.From)
                 .ToArray();
