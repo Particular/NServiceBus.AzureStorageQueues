@@ -84,15 +84,23 @@
 
         static IEnumerable<Type> GenerateMessageHierarchy(Type messageType)
         {
-            var t = messageType;
-            while (t != null)
+            if (messageType == null)
             {
-                yield return t;
-                t = t.BaseType;
+                yield break;
             }
-            foreach (var iface in messageType.GetInterfaces())
+
+            var type = messageType;
+
+            while (type.UnderlyingSystemType != typeof(object))
             {
-                yield return iface;
+                yield return type;
+
+                type = type.BaseType;
+            }
+
+            foreach (var @interface in messageType.GetInterfaces())
+            {
+                yield return @interface;
             }
         }
 
