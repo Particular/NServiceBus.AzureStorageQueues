@@ -16,28 +16,52 @@
 
     class Dispatcher : IMessageDispatcher
     {
-        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence)
+        public Dispatcher(string endpointName, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence, SubscriptionStore subscriptionStore)
         {
+            this.endpointName = endpointName;
+            this.subscriptionStore = subscriptionStore;
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
             this.serializer = serializer;
             this.nativeDelayDeliveryPersistence = nativeDelayDeliveryPersistence;
         }
 
-        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken token = default)
+        public async Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken token = default)
         {
-            if (outgoingMessages.MulticastTransportOperations.Any())
+            int totalNumberOfOperations = outgoingMessages.UnicastTransportOperations.Count + outgoingMessages.MulticastTransportOperations.Count;
+
+            var unicastOperations = new List<UnicastTransportOperation>(totalNumberOfOperations);
+            unicastOperations.AddRange(outgoingMessages.UnicastTransportOperations);
+
+            foreach (var multicastTransportOperation in outgoingMessages.MulticastTransportOperations)
             {
-                throw new Exception("The Azure Storage Queue transport only supports unicast transport operations.");
+                unicastOperations.AddRange(await ConvertTo(multicastTransportOperation, token).ConfigureAwait(false));
             }
 
-            var sends = new List<Task>(outgoingMessages.UnicastTransportOperations.Count);
-            foreach (var unicastTransportOperation in outgoingMessages.UnicastTransportOperations)
+            // TODO: Deduplicate by MessageId and Destination
+            var sends = new List<Task>(totalNumberOfOperations);
+            foreach (var unicastTransportOperation in unicastOperations)
             {
                 sends.Add(Send(unicastTransportOperation, CancellationToken.None));
             }
 
-            return Task.WhenAll(sends);
+            await Task.WhenAll(sends).ConfigureAwait(false);
+        }
+
+        async Task<IEnumerable<UnicastTransportOperation>> ConvertTo(MulticastTransportOperation transportOperation,
+            CancellationToken cancellationToken)
+        {
+            var subscribers =
+                await subscriptionStore.GetSubscribers(endpointName, transportOperation.MessageType, cancellationToken)
+                    .ConfigureAwait(false);
+
+            return from subscriber in subscribers
+                   select new UnicastTransportOperation(
+                       transportOperation.Message,
+                       subscriber,
+                       transportOperation.Properties,
+                       transportOperation.RequiredDispatchConsistency
+                   );
         }
 
         public async Task Send(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -151,6 +175,8 @@
         readonly QueueAddressGenerator addressGenerator;
         readonly AzureStorageAddressingSettings addressing;
         readonly ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
+        readonly SubscriptionStore subscriptionStore;
+        readonly string endpointName;
 
         static readonly TimeSpan CloudQueueMessageMaxTimeToLive = TimeSpan.FromDays(30);
         static readonly ILog logger = LogManager.GetLogger<Dispatcher>();

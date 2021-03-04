@@ -163,7 +163,13 @@ namespace NServiceBus
             }
 
             var serializer = BuildSerializer(MessageWrapperSerializationDefinition, serializerSettingsHolder);
-            var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence);
+
+            var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, hostSettings.SetupInfrastructure)
+                .ConfigureAwait(false);
+
+            var subscriptionStore = new SubscriptionStore(subscriptionTable);
+
+            var dispatcher = new Dispatcher(hostSettings.Name, GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence, subscriptionStore);
 
             object delayedDeliveryProcessorDiagnosticSection = new { };
             var nativeDelayedDeliveryProcessor = NativeDelayedDeliveryProcessor.Disabled();
@@ -188,11 +194,6 @@ namespace NServiceBus
                     UserDefinedDelayedDeliveryPoisonQueue = !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue)
                 };
             }
-
-            var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, hostSettings.SetupInfrastructure)
-                .ConfigureAwait(false);
-
-            var subscriptionStore = new SubscriptionStore(subscriptionTable);
 
             var messageReceivers = receiversSettings.Select(settings => BuildReceiver(hostSettings, settings,
                     serializer,
