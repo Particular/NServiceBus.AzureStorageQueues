@@ -48,7 +48,7 @@
 
         static async Task<SubscriptionEntity> Retrieve(string topic, string endpointName, CloudTable table, CancellationToken cancellationToken)
         {
-            var result = await table.ExecuteAsync(TableOperation.Retrieve<SubscriptionEntity>(topic, endpointName, retrieveSubscribersColumns), cancellationToken).ConfigureAwait(false);
+            var result = await table.ExecuteAsync(TableOperation.Retrieve<SubscriptionEntity>(topic, endpointName), cancellationToken).ConfigureAwait(false);
             return (SubscriptionEntity)result.Result;
         }
 
@@ -97,6 +97,5 @@
         }
 
         ConcurrentDictionary<Type, string[]> eventTypeToTopicListMap = new ConcurrentDictionary<Type, string[]>();
-        static readonly List<string> retrieveSubscribersColumns = new List<string> { nameof(SubscriptionEntity.Address) };
     }
 }
