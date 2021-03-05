@@ -174,7 +174,7 @@ namespace NServiceBus
 
             var subscriptionStore = new SubscriptionStore(subscriptionTable);
 
-            var dispatcher = new Dispatcher(hostSettings.Name, GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence, subscriptionStore);
+            var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence, subscriptionStore);
 
             object delayedDeliveryProcessorDiagnosticSection = new { };
             var nativeDelayedDeliveryProcessor = NativeDelayedDeliveryProcessor.Disabled();

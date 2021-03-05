@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -16,9 +16,8 @@
 
     class Dispatcher : IMessageDispatcher
     {
-        public Dispatcher(string endpointName, QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence, SubscriptionStore subscriptionStore)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence, SubscriptionStore subscriptionStore)
         {
-            this.endpointName = endpointName;
             this.subscriptionStore = subscriptionStore;
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
@@ -52,7 +51,7 @@
             CancellationToken cancellationToken)
         {
             var subscribers =
-                await subscriptionStore.GetSubscribers(endpointName, transportOperation.MessageType, cancellationToken)
+                await subscriptionStore.GetSubscribers(transportOperation.MessageType, cancellationToken)
                     .ConfigureAwait(false);
 
             return from subscriber in subscribers
@@ -176,7 +175,6 @@
         readonly AzureStorageAddressingSettings addressing;
         readonly ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
         readonly SubscriptionStore subscriptionStore;
-        readonly string endpointName;
 
         static readonly TimeSpan CloudQueueMessageMaxTimeToLive = TimeSpan.FromDays(30);
         static readonly ILog logger = LogManager.GetLogger<Dispatcher>();

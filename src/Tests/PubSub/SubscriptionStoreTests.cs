@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
+namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 {
     using System;
     using System.Linq;
@@ -83,7 +83,7 @@
             await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
 
             var subcribers =
-                await subscriptionStore.GetSubscribers("endpointName", typeof(MyOtherEvent), CancellationToken.None);
+                await subscriptionStore.GetSubscribers(typeof(MyOtherEvent), CancellationToken.None);
 
             CollectionAssert.AreEqual(new[] { "localaddress" }, subcribers);
         }
