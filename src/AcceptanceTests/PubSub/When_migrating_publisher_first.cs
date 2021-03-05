@@ -1,4 +1,4 @@
-namespace NServiceBus.AcceptanceTests.PubSub
+namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Collections.Generic;
@@ -6,11 +6,11 @@ namespace NServiceBus.AcceptanceTests.PubSub
     using AcceptanceTesting;
     using AcceptanceTesting.Support;
     using Configuration.AdvancedExtensibility;
-    using EndpointTemplates;
     using Features;
+    using NServiceBus.AcceptanceTests;
+    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.Routing.MessageDrivenSubscriptions;
     using NUnit.Framework;
-    using Transport.AzureStorageQueues.AcceptanceTests;
     using Conventions = AcceptanceTesting.Customization.Conventions;
 
     public class When_migrating_publisher_first : NServiceBusAcceptanceTest

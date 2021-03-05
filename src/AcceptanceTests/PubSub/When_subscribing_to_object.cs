@@ -1,8 +1,9 @@
-namespace NServiceBus.AcceptanceTests.PubSub
+namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
 {
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using EndpointTemplates;
+    using NServiceBus.AcceptanceTests;
+    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
 
     public class When_subscribing_to_object : NServiceBusAcceptanceTest
