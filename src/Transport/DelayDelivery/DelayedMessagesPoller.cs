@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
@@ -134,7 +134,7 @@
                 TakeCount = DelayedMessagesProcessedAtOnce // max batch size
             };
 
-            var delayedMessages = await delayedDeliveryTable.ExecuteQueryAsync(query, DelayedMessagesProcessedAtOnce, cancellationToken)
+            var delayedMessages = await delayedDeliveryTable.QueryUpTo(query, DelayedMessagesProcessedAtOnce, cancellationToken)
                 .ConfigureAwait(false);
 
             if (await lockManager.TryLockOrRenew(cancellationToken).ConfigureAwait(false) == false)

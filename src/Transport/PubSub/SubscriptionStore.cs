@@ -49,7 +49,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         static async Task<IEnumerable<SubscriptionEntity>> Retrieve(string topic, CloudTable table, CancellationToken cancellationToken)
         {
             var query = new TableQuery<SubscriptionEntity>().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, topic));
-            return await table.ExecuteQueryAsync(query, 1000, cancellationToken).ConfigureAwait(false);
+            return await table.QueryAll(query, cancellationToken).ConfigureAwait(false);
         }
 
         public Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken)

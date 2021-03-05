@@ -41,7 +41,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
             await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
 
             var query = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "endpointName"));
-            var entities = (await table.ExecuteQueryAsync(query, take: 100, CancellationToken.None)).ToArray();
+            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100, CancellationToken.None)).ToArray();
             var topics = entities.Select(x => x.PartitionKey).ToList();
 
             CollectionAssert.AreEqual(new[]
@@ -65,7 +65,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
             await subscriptionStore.Unsubscribe("endpointName", typeof(MyOtherEvent), CancellationToken.None);
 
             var query = new TableQuery<TableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "endpointName"));
-            var entities = (await table.ExecuteQueryAsync(query, take: 100, CancellationToken.None)).ToArray();
+            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100, CancellationToken.None)).ToArray();
             var topics = entities.Select(x => x.PartitionKey).ToList();
 
             CollectionAssert.AreEqual(new[]
