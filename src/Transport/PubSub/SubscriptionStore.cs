@@ -91,7 +91,7 @@
 
             var type = messageType;
 
-            while (type.UnderlyingSystemType != typeof(object))
+            while (type != null)
             {
                 yield return type;
 

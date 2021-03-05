@@ -89,11 +89,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         }
 
         [Test]
-        public void Type_hierarchy_should_not_include_object()
+        public void Type_hierarchy_should_include_object()
         {
             var types = SubscriptionStore.GenerateTopics(typeof(MyOtherEvent));
 
-            Assert.That(types, Has.None.EqualTo(typeof(object).FullName));
+            Assert.That(types, Has.One.EqualTo(typeof(object).FullName));
         }
 
         class MyEvent : IEvent
