@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -8,7 +8,7 @@
     using System.Threading.Tasks;
     using Microsoft.Azure.Cosmos.Table;
 
-    class SubscriptionStore
+    class SubscriptionStore : ISubscriptionStore
     {
         readonly CloudTable subscriptionTable;
 

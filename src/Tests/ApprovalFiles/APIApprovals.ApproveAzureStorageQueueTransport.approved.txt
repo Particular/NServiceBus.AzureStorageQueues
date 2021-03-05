@@ -35,6 +35,7 @@ namespace NServiceBus
         public System.TimeSpan PeekInterval { get; set; }
         public System.Func<string, string> QueueNameSanitizer { get; set; }
         public int? ReceiverBatchSize { get; set; }
+        public NServiceBus.SubscriptionSettings Subscriptions { get; }
         public override System.Collections.Generic.IReadOnlyCollection<NServiceBus.TransportTransactionMode> GetSupportedTransactionModes() { }
         public override System.Threading.Tasks.Task<NServiceBus.Transport.TransportInfrastructure> Initialize(NServiceBus.Transport.HostSettings hostSettings, NServiceBus.Transport.ReceiveSettings[] receiversSettings, string[] sendingAddresses, System.Threading.CancellationToken token = default) { }
         public override string ToTransportAddress(NServiceBus.Transport.QueueAddress address) { }
@@ -122,6 +123,10 @@ namespace NServiceBus
     {
         public string DelayedDeliveryPoisonQueue { get; set; }
         public string DelayedDeliveryTableName { get; set; }
+    }
+    public class SubscriptionSettings
+    {
+        public string SubscriptionTableName { get; set; }
     }
 }
 namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues

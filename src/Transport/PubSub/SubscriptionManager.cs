@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System.Collections.Generic;
     using System.Threading;
@@ -8,11 +8,11 @@
 
     class SubscriptionManager : ISubscriptionManager
     {
-        readonly SubscriptionStore subscriptionStore;
+        readonly ISubscriptionStore subscriptionStore;
         readonly string localAddress;
         readonly string endpointName;
 
-        public SubscriptionManager(SubscriptionStore subscriptionStore, string endpointName, string localAddress)
+        public SubscriptionManager(ISubscriptionStore subscriptionStore, string endpointName, string localAddress)
         {
             this.endpointName = endpointName;
             this.localAddress = localAddress;

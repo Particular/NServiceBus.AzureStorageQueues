@@ -16,7 +16,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class Dispatcher : IMessageDispatcher
     {
-        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence, SubscriptionStore subscriptionStore)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence, ISubscriptionStore subscriptionStore)
         {
             this.subscriptionStore = subscriptionStore;
             this.addressGenerator = addressGenerator;
@@ -173,7 +173,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly QueueAddressGenerator addressGenerator;
         readonly AzureStorageAddressingSettings addressing;
         readonly ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
-        readonly SubscriptionStore subscriptionStore;
+        readonly ISubscriptionStore subscriptionStore;
 
         static readonly TimeSpan CloudQueueMessageMaxTimeToLive = TimeSpan.FromDays(30);
         static readonly ILog logger = LogManager.GetLogger<Dispatcher>();
