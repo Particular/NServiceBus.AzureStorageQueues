@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AcceptanceTests.PubSub
+namespace NServiceBus.AcceptanceTests.PubSub
 {
     using System.Threading.Tasks;
     using AcceptanceTesting;
@@ -62,18 +62,20 @@
 
             public class MyEventHandler : IHandleMessages<IMyEvent>
             {
-                public Context Context { get; set; }
+                readonly Context testContext;
+
+                public MyEventHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(IMyEvent messageThatIsEnlisted, IMessageHandlerContext context)
                 {
-                    Context.AddTrace($"Got event '{messageThatIsEnlisted}'");
+                    testContext.AddTrace($"Got event '{messageThatIsEnlisted}'");
                     if (messageThatIsEnlisted is MyEvent2)
                     {
-                        Context.SubscriberGotMyEvent2 = true;
+                        testContext.SubscriberGotMyEvent2 = true;
                     }
                     else
                     {
-                        Context.SubscriberGotIMyEvent = true;
+                        testContext.SubscriberGotIMyEvent = true;
                     }
 
                     return Task.FromResult(0);

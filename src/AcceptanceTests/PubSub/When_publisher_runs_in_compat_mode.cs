@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AcceptanceTests.PubSub
+namespace NServiceBus.AcceptanceTests.PubSub
 {
     using System;
     using System.Collections.Generic;
@@ -40,9 +40,7 @@
             {
                 EndpointSetup<DefaultPublisher>(c =>
                 {
-#pragma warning disable 618
                     c.ConfigureRouting().EnableMessageDrivenPubSubCompatibilityMode();
-#pragma warning restore 618
                     c.OnEndpointSubscribed<Context>((s, context) =>
                     {
                         if (s.SubscriberEndpoint.Contains(Conventions.EndpointNamingConvention(typeof(Subscriber))))
@@ -70,11 +68,13 @@
 
             public class MyEventHandler : IHandleMessages<MyEvent>
             {
-                public Context Context { get; set; }
+                readonly Context testContext;
+
+                public MyEventHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyEvent @event, IMessageHandlerContext context)
                 {
-                    Context.GotTheEvent = true;
+                    testContext.GotTheEvent = true;
                     return Task.FromResult(0);
                 }
             }

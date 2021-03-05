@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AcceptanceTests.PubSub
+namespace NServiceBus.AcceptanceTests.PubSub
 {
     using System;
     using System.Threading.Tasks;
@@ -54,9 +54,8 @@
             {
                 EndpointSetup<DefaultServer>(c =>
                 {
-#pragma warning disable 618
                     var compatMode = c.ConfigureRouting().EnableMessageDrivenPubSubCompatibilityMode();
-#pragma warning restore 618
+
                     compatMode.RegisterPublisher(typeof(MyEvent), PublisherEndpoint);
                     c.DisableFeature<AutoSubscribe>();
                 });
@@ -64,11 +63,13 @@
 
             public class MyEventHandler : IHandleMessages<MyEvent>
             {
-                public Context Context { get; set; }
+                readonly Context testContext;
+
+                public MyEventHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyEvent @event, IMessageHandlerContext context)
                 {
-                    Context.GotTheEvent = true;
+                    testContext.GotTheEvent = true;
                     return Task.FromResult(0);
                 }
             }

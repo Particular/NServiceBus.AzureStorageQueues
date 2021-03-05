@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.AcceptanceTests.PubSub
+namespace NServiceBus.AcceptanceTests.PubSub
 {
     using System.Threading.Tasks;
     using AcceptanceTesting;
@@ -44,11 +44,13 @@
 
             public class MyEventHandler : IHandleMessages<object>
             {
-                public Context Context { get; set; }
+                readonly Context testContext;
+
+                public MyEventHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(object @event, IMessageHandlerContext context)
                 {
-                    Context.GotTheEvent = true;
+                    testContext.GotTheEvent = true;
                     return Task.FromResult(0);
                 }
             }
