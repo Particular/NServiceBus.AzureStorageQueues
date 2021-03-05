@@ -19,25 +19,25 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
         {
             var context = await Scenario.Define<Context>()
                 .WithEndpoint<Publisher>(b => b.When(c => c.Instance1SubscribedMessageDriven && c.Instance2SubscribedNative, (session, ctx) => session.Publish(new MyEvent())))
-                .WithEndpoint(new Subscriber(false),b =>
-                {
-                    b.CustomConfig(c =>
-                    {
-                        c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig", new List<PublisherTableEntry>
-                        {
+                .WithEndpoint(new Subscriber(false), b =>
+                 {
+                     b.CustomConfig(c =>
+                     {
+                         c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig", new List<PublisherTableEntry>
+                         {
                             new PublisherTableEntry(typeof(MyEvent), PublisherAddress.CreateFromEndpointName(Conventions.EndpointNamingConvention(typeof(Publisher))))
-                        });
-                    });
-                    b.When(async (session, ctx) =>
-                    {
-                        await session.Subscribe<MyEvent>();
-                    });
-                })
-                .WithEndpoint(new Subscriber(true),b => b.When(async (session, ctx) =>
-                {
-                    await session.Subscribe<MyEvent>();
-                    ctx.Instance2SubscribedNative = true;
-                }))
+                         });
+                     });
+                     b.When(async (session, ctx) =>
+                     {
+                         await session.Subscribe<MyEvent>();
+                     });
+                 })
+                .WithEndpoint(new Subscriber(true), b => b.When(async (session, ctx) =>
+                 {
+                     await session.Subscribe<MyEvent>();
+                     ctx.Instance2SubscribedNative = true;
+                 }))
                 .Done(c => c.EventReceived >= 1)
                 .Run();
 
