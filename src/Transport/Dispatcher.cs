@@ -29,7 +29,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             int totalNumberOfOperations = outgoingMessages.UnicastTransportOperations.Count + outgoingMessages.MulticastTransportOperations.Count;
 
-            var unicastOperations = new List<UnicastTransportOperation>(totalNumberOfOperations);
+            var unicastOperations = new HashSet<UnicastTransportOperation>(totalNumberOfOperations, MessageIdAndDestinationEqualityComparer.Instance);
             unicastOperations.AddRange(outgoingMessages.UnicastTransportOperations);
 
             foreach (var multicastTransportOperation in outgoingMessages.MulticastTransportOperations)
@@ -37,7 +37,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 unicastOperations.AddRange(await ConvertTo(multicastTransportOperation, token).ConfigureAwait(false));
             }
 
-            // TODO: Deduplicate by MessageId and Destination
             var sends = new List<Task>(totalNumberOfOperations);
             foreach (var unicastTransportOperation in unicastOperations)
             {
@@ -178,5 +177,45 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         static readonly TimeSpan CloudQueueMessageMaxTimeToLive = TimeSpan.FromDays(30);
         static readonly ILog logger = LogManager.GetLogger<Dispatcher>();
+
+        class MessageIdAndDestinationEqualityComparer : IEqualityComparer<UnicastTransportOperation>
+        {
+            public static MessageIdAndDestinationEqualityComparer Instance = new MessageIdAndDestinationEqualityComparer();
+
+            public bool Equals(UnicastTransportOperation x, UnicastTransportOperation y)
+            {
+                if (ReferenceEquals(x, y))
+                {
+                    return true;
+                }
+
+                if (x is null)
+                {
+                    return false;
+                }
+
+                if (y is null)
+                {
+                    return false;
+                }
+
+                if (x.GetType() != y.GetType())
+                {
+                    return false;
+                }
+
+                return x.Destination == y.Destination && Equals(x.Message.MessageId, y.Message.MessageId);
+            }
+
+            public int GetHashCode(UnicastTransportOperation obj)
+            {
+                unchecked
+                {
+                    int hashCode = obj.Destination != null ? obj.Destination.GetHashCode() : 0;
+                    hashCode = (hashCode * 397) ^ (obj.Message.MessageId != null ? obj.Message.MessageId.GetHashCode() : 0);
+                    return hashCode;
+                }
+            }
+        }
     }
 }
