@@ -38,10 +38,15 @@ namespace NServiceBus
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
             queueServiceClientProvider = new QueueServiceClientByConnectionString(connectionString);
+
+            if (SupportsDelayedDelivery || SupportsPublishSubscribe)
+            {
+                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
+            }
+
             if (SupportsDelayedDelivery)
             {
                 blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(connectionString);
-                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
             }
         }
 
