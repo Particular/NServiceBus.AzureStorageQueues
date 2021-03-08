@@ -38,6 +38,13 @@ namespace NServiceBus
         public override System.Threading.Tasks.Task<NServiceBus.Transport.TransportInfrastructure> Initialize(NServiceBus.Transport.HostSettings hostSettings, NServiceBus.Transport.ReceiveSettings[] receiversSettings, string[] sendingAddresses, System.Threading.CancellationToken token = default) { }
         public override string ToTransportAddress(NServiceBus.Transport.QueueAddress address) { }
     }
+    public static class AzureStorageQueueTransportApiExtensions
+    {
+        [System.Obsolete("Use `EndpointConfiguration.UseTransport(TransportDefinition)` instead. Will be tr" +
+            "eated as an error from version 11.0.0. Will be removed in version 12.0.0.", false)]
+        public static NServiceBus.AzureStorageQueueTransportLegacySettings UseTransport<T>(this NServiceBus.EndpointConfiguration config, string connectionString)
+            where T : NServiceBus.AzureStorageQueueTransport { }
+    }
     [System.Obsolete("Configure the transport via the AzureStorageQueueTransport properties. Will be tr" +
         "eated as an error from version 11.0.0. Will be removed in version 12.0.0.", false)]
     public class AzureStorageQueueTransportLegacySettings : NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport>
@@ -88,27 +95,25 @@ namespace NServiceBus
             " 12.0.0.", false)]
         public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> UnwrapMessagesWith(System.Func<Azure.Storage.Queues.Models.QueueMessage, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> unwrapper) { }
         [System.Obsolete("Configure the transport via the AzureStorageQueueTransport instance constructor. " +
-            "The member currently throws a NotImplementedException. Will be removed in versio" +
-            "n 11.0.0.", true)]
+            "Will be treated as an error from version 10.0.0. The member currently throws a N" +
+            "otImplementedException. Will be removed in version 11.0.0.", false)]
         public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> UseBlobServiceClient(Azure.Storage.Blobs.BlobServiceClient blobServiceClient) { }
         [System.Obsolete("Configure the transport via the AzureStorageQueueTransport instance constructor. " +
-            "The member currently throws a NotImplementedException. Will be removed in versio" +
-            "n 11.0.0.", true)]
+            "Will be treated as an error from version 10.0.0. The member currently throws a N" +
+            "otImplementedException. Will be removed in version 11.0.0.", false)]
         public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> UseCloudTableClient(Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
         [System.Obsolete("Configure the transport via the AzureStorageQueueTransport instance constructor. " +
-            "The member currently throws a NotImplementedException. Will be removed in versio" +
-            "n 11.0.0.", true)]
+            "Will be treated as an error from version 10.0.0. The member currently throws a N" +
+            "otImplementedException. Will be removed in version 11.0.0.", false)]
         public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> UseQueueServiceClient(Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
     }
     public class DelayedDeliverySettings : NServiceBus.Configuration.AdvancedExtensibility.ExposeSettings
     {
         [System.Obsolete("Configure delayed delivery support via the AzureStorageQueueTransport constructor" +
-            ". The member currently throws a NotImplementedException. Will be removed in vers" +
-            "ion 11.0.0.", true)]
+            ". Will be treated as an error from version 10.0.0. The member currently throws a" +
+            " NotImplementedException. Will be removed in version 11.0.0.", false)]
         public void DisableDelayedDelivery() { }
-        [System.Obsolete("The timeout manager has been removed in favor of native delayed delivery support " +
-            "provided by transports. See the upgrade guide for more details. The member curre" +
-            "ntly throws a NotImplementedException. Will be removed in version 11.0.0.", true)]
+        [System.Obsolete(@"The timeout manager has been removed in favor of native delayed delivery support provided by transports. See the upgrade guide for more details. Will be treated as an error from version 10.0.0. The member currently throws a NotImplementedException. Will be removed in version 11.0.0.", false)]
         public void DisableTimeoutManager() { }
         [System.Obsolete("Configure the transport via the AzureStorageQueueTransport DelayedDelivery.Delaye" +
             "dDeliveryTableName property. Will be treated as an error from version 11.0.0. Wi" +
