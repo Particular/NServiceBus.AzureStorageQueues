@@ -13,9 +13,32 @@ namespace NServiceBus
     using Settings;
 
     /// <summary>
+    /// Provides support for <see cref="UseTransport{T}"/> transport APIs.
+    /// </summary>
+    public static class AzureStorageQueueTransportApiExtensions
+    {
+        /// <summary>
+        /// Configures NServiceBus to use the given transport.
+        /// </summary>
+        [ObsoleteEx(
+            TreatAsErrorFromVersion = "11.0",
+            RemoveInVersion = "12.0",
+            ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)")]
+        public static AzureStorageQueueTransportLegacySettings UseTransport<T>(this EndpointConfiguration config, string connectionString)
+            where T : AzureStorageQueueTransport
+        {
+            var transport = new AzureStorageQueueTransport(connectionString);
+            var routing = config.UseTransport(transport);
+            var settings = new AzureStorageQueueTransportLegacySettings(transport, routing);
+
+            return settings;
+        }
+    }
+
+
+    /// <summary>
     /// AzureStorageQueueTransport transport configuration settings.
     /// </summary>
-
     [ObsoleteEx(
         Message = "Configure the transport via the AzureStorageQueueTransport properties",
         TreatAsErrorFromVersion = "11.0",
