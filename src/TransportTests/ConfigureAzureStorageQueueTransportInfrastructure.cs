@@ -39,7 +39,7 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
                 new ReceiveSettings(inputQueueName, inputQueueName, true, false, errorQueueName),
             },
             new string[0],
-            CancellationToken.None);
+            token);
 
         return transportInfrastructure;
     }

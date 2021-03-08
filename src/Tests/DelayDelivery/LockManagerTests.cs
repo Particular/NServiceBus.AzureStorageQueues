@@ -3,10 +3,10 @@
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using AzureStorageQueues;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Blobs.Specialized;
     using NUnit.Framework;
-    using AzureStorageQueues;
 
     public class LockManagerTests
     {
@@ -26,7 +26,7 @@
             const int manyTimes = 10;
             for (var i = 0; i < manyTimes; i++)
             {
-                Assert.IsTrue(await manager.TryLockOrRenew(CancellationToken.None).ConfigureAwait(false));
+                Assert.IsTrue(await manager.TryLockOrRenew().ConfigureAwait(false));
             }
         }
 
@@ -37,8 +37,8 @@
             var manager1 = GetLockManager(id);
             var manager2 = GetLockManager(id);
 
-            await manager1.TryLockOrRenew(CancellationToken.None).ConfigureAwait(false);
-            Assert.IsFalse(await manager2.TryLockOrRenew(CancellationToken.None).ConfigureAwait(false));
+            await manager1.TryLockOrRenew().ConfigureAwait(false);
+            Assert.IsFalse(await manager2.TryLockOrRenew().ConfigureAwait(false));
         }
 
         [Test]
@@ -48,9 +48,9 @@
             var manager1 = GetLockManager(id);
             var manager2 = GetLockManager(id);
 
-            await manager1.TryLockOrRenew(CancellationToken.None).ConfigureAwait(false);
-            await manager1.TryRelease(CancellationToken.None).ConfigureAwait(false);
-            Assert.IsTrue(await manager2.TryLockOrRenew(CancellationToken.None).ConfigureAwait(false));
+            await manager1.TryLockOrRenew().ConfigureAwait(false);
+            await manager1.TryRelease().ConfigureAwait(false);
+            Assert.IsTrue(await manager2.TryLockOrRenew().ConfigureAwait(false));
         }
 
         LockManager GetLockManager(string containerName)

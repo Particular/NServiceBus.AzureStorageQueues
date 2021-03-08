@@ -21,16 +21,20 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.onError = onError;
         }
 
-        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message)
+        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken)
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
-            await retrieved.Ack().ConfigureAwait(false);
+            await retrieved.Ack(cancellationToken).ConfigureAwait(false);
             var body = message.Body ?? new byte[0];
             var contextBag = new ContextBag();
             try
             {
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), contextBag);
-                await onMessage(pushContext, CancellationToken.None).ConfigureAwait(false);
+                await onMessage(pushContext, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Graceful shutdown
             }
             catch (Exception ex)
             {
@@ -38,9 +42,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
 
-                // The exception is pushed through the error pipeline in a fire and forget manner.
+                // The exception is pushed through the error pipeline in a fire and forget manner. Don't care about result.
                 // There's no call to onCriticalError if errorPipe fails. Exceptions are handled on the transport level.
-                await onError(context, CancellationToken.None).ConfigureAwait(false);
+                _ = await onError(context, cancellationToken).ConfigureAwait(false);
             }
         }
 

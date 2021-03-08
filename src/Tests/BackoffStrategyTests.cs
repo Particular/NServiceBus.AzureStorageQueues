@@ -3,8 +3,8 @@
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using NUnit.Framework;
     using AzureStorageQueues;
+    using NUnit.Framework;
 
     public class BackoffStrategyTests
     {
@@ -19,12 +19,12 @@
             const int emptyBatchCount = 5;
             for (var i = 0; i < emptyBatchCount; i++)
             {
-                await strategy.OnBatch(0, CancellationToken.None);
+                await strategy.OnBatch(0);
             }
 
             var lowerBoundary = (int)(peekInterval.TotalMilliseconds * (emptyBatchCount - 1));
             var delay = Task.Delay(lowerBoundary);
-            Assert.AreSame(delay, await Task.WhenAny(strategy.OnBatch(0, CancellationToken.None), delay));
+            Assert.AreSame(delay, await Task.WhenAny(strategy.OnBatch(0), delay));
         }
 
         [Test]
@@ -35,10 +35,10 @@
             const int emptyBatchCount = 5;
             for (var i = 0; i < emptyBatchCount; i++)
             {
-                await strategy.OnBatch(0, CancellationToken.None);
+                await strategy.OnBatch(0);
             }
 
-            var task = strategy.OnBatch(1, CancellationToken.None);
+            var task = strategy.OnBatch(1);
 
             Assert.True(task.IsCompleted);
         }

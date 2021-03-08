@@ -18,31 +18,21 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.criticalErrorAction = criticalErrorAction;
         }
 
-        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message)
+        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken)
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             var body = message.Body ?? new byte[0];
             var contextBag = new ContextBag();
             try
             {
-                //TODO: what this should look like given the new cancellation support?
-                // https://github.com/Particular/NServiceBus.AzureStorageQueues/issues/526
-
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), contextBag);
-                await onMessage(pushContext, CancellationToken.None).ConfigureAwait(false);
+                await onMessage(pushContext, cancellationToken).ConfigureAwait(false);
 
-                //if (tokenSource.IsCancellationRequested)
-                //{
-                //    // if the pipeline canceled the execution, nack the message to go back to the queue
-                //    await retrieved.Nack().ConfigureAwait(false);
-                //}
-                //else
-                //{
-                //  // the pipeline hasn't been canceled, the message should be acked
-                //  await retrieved.Ack().ConfigureAwait(false);
-                //}
-
-                await retrieved.Ack().ConfigureAwait(false);
+                await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Graceful shutdown
             }
             catch (LeaseTimeoutException)
             {
@@ -53,32 +43,43 @@ namespace NServiceBus.Transport.AzureStorageQueues
             catch (Exception ex)
             {
                 var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
-                ErrorHandleResult immediateRetry;
+                ErrorHandleResult errorHandleResult = ErrorHandleResult.RetryRequired;
 
                 try
                 {
-                    immediateRetry = await onError(context, CancellationToken.None).ConfigureAwait(false);
+                    errorHandleResult = await onError(context, cancellationToken).ConfigureAwait(false);
+
+                    if (errorHandleResult == ErrorHandleResult.RetryRequired)
+                    {
+                        // For an immediate retry, the error is logged and the message is returned to the queue to preserve the DequeueCount.
+                        // There is no in memory retry as scale-out scenarios would be handled improperly.
+                        Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline. The message will be requeued", ex);
+                        await retrieved.Nack(cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        // Just acknowledge the message as it's handled by the core retry.
+                        await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // Graceful shutdown
                 }
                 catch (Exception e)
                 {
-                    criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e, CancellationToken.None);
+                    criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e, cancellationToken);
 
-                    await retrieved.Nack().ConfigureAwait(false);
+                    try
+                    {
+                        await retrieved.Nack(cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception)
+                    {
+                        // Best effort to Nack the message
+                    }
 
                     return;
-                }
-
-                if (immediateRetry == ErrorHandleResult.RetryRequired)
-                {
-                    // For an immediate retry, the error is logged and the message is returned to the queue to preserve the DequeueCount.
-                    // There is no in memory retry as scale-out scenarios would be handled improperly.
-                    Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline. The message will be requeued", ex);
-                    await retrieved.Nack().ConfigureAwait(false);
-                }
-                else
-                {
-                    // Just acknowledge the message as it's handled by the core retry.
-                    await retrieved.Ack().ConfigureAwait(false);
                 }
             }
         }

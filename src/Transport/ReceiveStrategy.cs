@@ -9,7 +9,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     abstract class ReceiveStrategy
     {
-        public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message);
+        public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken);
 
         public static ReceiveStrategy BuildReceiveStrategy(OnMessage onMessage, OnError onError, TransportTransactionMode transactionMode, Action<string, Exception, CancellationToken> criticalErrorAction)
         {
@@ -26,7 +26,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        protected static ErrorContext CreateErrorContext(MessageRetrieved retrieved, MessageWrapper message, Exception ex, byte[] body, ReadOnlyContextBag contextBag)
+        protected static ErrorContext CreateErrorContext(MessageRetrieved retrieved, MessageWrapper message, Exception ex, byte[] body, ContextBag contextBag)
         {
             var context = new ErrorContext(ex, message.Headers, message.Id, body, new TransportTransaction(), Convert.ToInt32(retrieved.DequeueCount), contextBag);
             return context;

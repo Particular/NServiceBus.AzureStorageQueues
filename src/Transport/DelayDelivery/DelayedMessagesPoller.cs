@@ -31,14 +31,17 @@
             var leaseClient = new BlobLeaseClient(containerClient);
             lockManager = new LockManager(containerClient, leaseClient, LeaseLength);
 
+            pollerCancellationTokenSource = new CancellationTokenSource();
+
             // No need to pass token to run. to avoid when token is canceled the task changing into
             // the canceled state and when awaited while stopping rethrow the canceled exception
-            delayedMessagesPollerTask = Task.Run(() => Poll(cancellationToken), CancellationToken.None);
+            delayedMessagesPollerTask = Task.Run(() => Poll(pollerCancellationTokenSource.Token), cancellationToken);
         }
 
         public Task Stop()
         {
             Logger.Debug("Stopping delayed message poller");
+            pollerCancellationTokenSource.Cancel();
             return delayedMessagesPollerTask;
         }
 
@@ -244,5 +247,6 @@
         CloudTable delayedDeliveryTable;
         LockManager lockManager;
         Task delayedMessagesPollerTask;
+        CancellationTokenSource pollerCancellationTokenSource;
     }
 }

@@ -2,6 +2,7 @@
 {
     using System;
     using System.Runtime.Serialization;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure;
@@ -26,7 +27,7 @@
         /// </summary>
         /// <exception cref="SerializationException">Thrown when the raw message could not be unwrapped. The raw message is automatically moved to the error queue before this exception is thrown.</exception>
         /// <returns>The actual message wrapper.</returns>
-        public async Task<MessageWrapper> Unwrap()
+        public async Task<MessageWrapper> Unwrap(CancellationToken cancellationToken)
         {
             try
             {
@@ -40,9 +41,9 @@
                 var messageId = rawMessage.MessageId;
                 var messagePopReceipt = rawMessage.PopReceipt;
 
-                await errorQueue.SendMessageAsync(rawMessage.MessageText).ConfigureAwait(false);
+                await errorQueue.SendMessageAsync(rawMessage.MessageText, cancellationToken).ConfigureAwait(false);
                 // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
-                await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt).ConfigureAwait(false);
+                await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt, cancellationToken).ConfigureAwait(false);
 
                 throw new SerializationException($"Failed to deserialize message envelope for message with id {messageId}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
             }
@@ -51,11 +52,11 @@
         /// <summary>
         /// Acknowledges the successful processing of the message.
         /// </summary>
-        public Task Ack()
+        public Task Ack(CancellationToken cancellationToken = default)
         {
             AssertVisibilityTimeout();
 
-            return inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt);
+            return inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken);
         }
 
         void AssertVisibilityTimeout()
@@ -74,7 +75,7 @@
         /// <summary>
         /// Rejects the message requeueing it in the queue.
         /// </summary>
-        public async Task Nack()
+        public async Task Nack(CancellationToken cancellationToken = default)
         {
             AssertVisibilityTimeout();
 
@@ -82,7 +83,7 @@
             {
                 // the simplest solution to push the message back is to update its visibility timeout to 0 which is ok according to the API:
                 // https://msdn.microsoft.com/en-us/library/azure/hh452234.aspx
-                await inputQueue.UpdateMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, visibilityTimeout: TimeSpan.Zero).ConfigureAwait(false);
+                await inputQueue.UpdateMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, visibilityTimeout: TimeSpan.Zero, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
             catch (RequestFailedException ex) when (ex.ErrorCode != QueueErrorCode.MessageNotFound)
             {

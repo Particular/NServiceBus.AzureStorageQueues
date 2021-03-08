@@ -42,7 +42,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             Logger.Debug($"Initializing MessageReceiver {Id}");
 
-            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalErrorAction("Failed to receive message from Azure Storage Queue.", ex, CancellationToken.None));
+            messagePumpCancellationTokenSource = new CancellationTokenSource();
+            messageProcessingCancellationTokenSource = new CancellationTokenSource();
+
+            var cancellationTokenForCriticalErrorAction = messageProcessingCancellationTokenSource.Token;
+
+            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalErrorAction("Failed to receive message from Azure Storage Queue.", ex, cancellationTokenForCriticalErrorAction));
             receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, requiredTransactionMode, criticalErrorAction);
 
             return azureMessageQueueReceiver.Init(receiveAddress, errorQueue);
@@ -52,7 +57,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             maximumConcurrency = limitations.MaxConcurrency;
             concurrencyLimiter = new SemaphoreSlim(maximumConcurrency, maximumConcurrency);
-            cancellationTokenSource = new CancellationTokenSource();
 
             Logger.DebugFormat($"Starting MessageReceiver {Id} with max concurrency: {0}", maximumConcurrency);
 
@@ -60,58 +64,58 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             messagePumpTasks = new Task[receiverConfigurations.Count];
 
-            cancellationToken = cancellationTokenSource.Token;
-
             for (var i = 0; i < receiverConfigurations.Count; i++)
             {
                 var backoffStrategy = new BackoffStrategy(peekInterval, maximumWaitTime);
                 var batchSizeForReceive = receiverConfigurations[i].BatchSize;
-                messagePumpTasks[i] = Task.Run(() => ProcessMessages(batchSizeForReceive, backoffStrategy), CancellationToken.None);
+                messagePumpTasks[i] = Task.Run(() => ProcessMessages(batchSizeForReceive, backoffStrategy, messagePumpCancellationTokenSource.Token), token);
             }
 
             return Task.CompletedTask;
         }
 
-        public async Task StopReceive(CancellationToken token = default)
+        public async Task StopReceive(CancellationToken cancellationToken = default)
         {
             Logger.Debug($"Stopping MessageReceiver {Id}");
-            cancellationTokenSource.Cancel();
+            messagePumpCancellationTokenSource.Cancel();
+            cancellationToken.Register(() => messagePumpCancellationTokenSource.Cancel());
 
-            try
+            while (concurrencyLimiter.CurrentCount != maximumConcurrency)
             {
-                var tcs = new TaskCompletionSource<bool>();
-                using (var timeoutTokenSource = new CancellationTokenSource(StoppingAllTasksTimeout))
-                using (timeoutTokenSource.Token.Register(() => tcs.TrySetCanceled())) // ok to have closure alloc here
-                {
-                    while (concurrencyLimiter.CurrentCount != maximumConcurrency)
-                    {
-                        await Task.Delay(50, timeoutTokenSource.Token).ConfigureAwait(false);
-                    }
-
-                    await Task.WhenAny(Task.WhenAll(messagePumpTasks), tcs.Task).ConfigureAwait(false);
-                    tcs.TrySetResult(true); // if we reach this WhenAll was successful
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.Error("The message pump failed to stop within the time allowed (30s)");
+                // We are deliberately not forwarding the cancellation token here because
+                // this loop is our way of waiting for all pending messaging operations
+                // to participate in cooperative cancellation or not.
+                // We do not want to rudely abort them because the cancellation token has been cancelled.
+                // This allows us to preserve the same behaviour in v8 as in v7 in that,
+                // if CancellationToken.None is passed to this method,
+                // the method will only return when all in flight messages have been processed.
+                // If, on the other hand, a non-default CancellationToken is passed,
+                // all message processing operations have the opportunity to
+                // participate in cooperative cancellation.
+                // If we ever require a method of stopping the endpoint such that
+                // all message processing is cancelled immediately,
+                // we can provide that as a separate feature.
+                await Task.Delay(50, CancellationToken.None).ConfigureAwait(false);
             }
 
             concurrencyLimiter.Dispose();
+
+            messageProcessingCancellationTokenSource?.Dispose();
+            messagePumpCancellationTokenSource?.Dispose();
         }
 
         [DebuggerNonUserCode]
-        async Task ProcessMessages(int batchSizeForReceive, BackoffStrategy backoffStrategy)
+        async Task ProcessMessages(int batchSizeForReceive, BackoffStrategy backoffStrategy, CancellationToken pumpCancellationToken)
         {
             if (Logger.IsDebugEnabled)
             {
                 Logger.Debug("Processing messages");
             }
-            while (!cancellationToken.IsCancellationRequested)
+            while (!pumpCancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    await InnerProcessMessages(batchSizeForReceive, backoffStrategy).ConfigureAwait(false);
+                    await InnerProcessMessages(batchSizeForReceive, backoffStrategy, pumpCancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -120,7 +124,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        async Task InnerProcessMessages(int batchSizeForReceive, BackoffStrategy backoffStrategy)
+        async Task InnerProcessMessages(int batchSizeForReceive, BackoffStrategy backoffStrategy, CancellationToken pumpCancellationToken)
         {
             var receivedMessages = new List<MessageRetrieved>(batchSizeForReceive);
             if (Logger.IsDebugEnabled)
@@ -128,24 +132,24 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 Logger.DebugFormat("Fetching {0} messages", batchSizeForReceive);
             }
 
-            while (!cancellationTokenSource.IsCancellationRequested)
+            while (!pumpCancellationToken.IsCancellationRequested)
             {
                 try
                 {
 
-                    await azureMessageQueueReceiver.Receive(batchSizeForReceive, receivedMessages, backoffStrategy, cancellationTokenSource.Token).ConfigureAwait(false);
+                    await azureMessageQueueReceiver.Receive(batchSizeForReceive, receivedMessages, backoffStrategy, pumpCancellationToken).ConfigureAwait(false);
                     circuitBreaker.Success();
 
                     foreach (var message in receivedMessages)
                     {
-                        await concurrencyLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
+                        await concurrencyLimiter.WaitAsync(pumpCancellationToken).ConfigureAwait(false);
 
-                        if (cancellationTokenSource.IsCancellationRequested)
+                        if (pumpCancellationToken.IsCancellationRequested)
                         {
                             return;
                         }
 
-                        _ = InnerReceive(message);
+                        _ = InnerReceive(message, messageProcessingCancellationTokenSource.Token);
                     }
                 }
                 catch (OperationCanceledException)
@@ -165,17 +169,21 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        async Task InnerReceive(MessageRetrieved retrieved)
+        async Task InnerReceive(MessageRetrieved retrieved, CancellationToken processingCancellationToken)
         {
             try
             {
-                var message = await retrieved.Unwrap().ConfigureAwait(false);
+                var message = await retrieved.Unwrap(processingCancellationToken).ConfigureAwait(false);
                 if (Logger.IsDebugEnabled)
                 {
                     Logger.DebugFormat("Unwrapped message ID: '{0}'", message.Id);
                 }
 
-                await receiveStrategy.Receive(retrieved, message).ConfigureAwait(false);
+                await receiveStrategy.Receive(retrieved, message, processingCancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (processingCancellationToken.IsCancellationRequested)
+            {
+                // Shutting down
             }
             catch (LeaseTimeoutException ex)
             {
@@ -205,8 +213,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly string errorQueue;
         readonly Action<string, Exception, CancellationToken> criticalErrorAction;
 
-        CancellationToken cancellationToken;
-        CancellationTokenSource cancellationTokenSource;
+        CancellationTokenSource messagePumpCancellationTokenSource;
+        CancellationTokenSource messageProcessingCancellationTokenSource;
         RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
         SemaphoreSlim concurrencyLimiter;
 
@@ -216,7 +224,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly TransportTransactionMode requiredTransactionMode;
         int? receiveBatchSize;
         static ILog Logger = LogManager.GetLogger<MessageReceiver>();
-        static TimeSpan StoppingAllTasksTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan TimeToWaitBeforeTriggering = TimeSpan.FromSeconds(30);
         PushRuntimeSettings limitations;
     }
