@@ -78,7 +78,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             Logger.Debug($"Stopping MessageReceiver {Id}");
             messagePumpCancellationTokenSource.Cancel();
-            cancellationToken.Register(() => messagePumpCancellationTokenSource.Cancel());
+            cancellationToken.Register(() => messageProcessingCancellationTokenSource.Cancel());
 
             while (concurrencyLimiter.CurrentCount != maximumConcurrency)
             {

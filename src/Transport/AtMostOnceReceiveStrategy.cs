@@ -15,10 +15,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
     /// </summary>
     class AtMostOnceReceiveStrategy : ReceiveStrategy
     {
-        public AtMostOnceReceiveStrategy(OnMessage onMessage, OnError onError)
+        public AtMostOnceReceiveStrategy(OnMessage onMessage, OnError onError, Action<string, Exception, CancellationToken> criticalError)
         {
             this.onMessage = onMessage;
             this.onError = onError;
+            this.criticalError = criticalError;
         }
 
         public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken)
@@ -40,16 +41,27 @@ namespace NServiceBus.Transport.AzureStorageQueues
             {
                 Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
 
-                var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
-
-                // The exception is pushed through the error pipeline in a fire and forget manner. Don't care about result.
-                // There's no call to onCriticalError if errorPipe fails. Exceptions are handled on the transport level.
-                _ = await onError(context, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
+                    // Since this is TransportTransactionMode.None, we really don't care what the result is,
+                    // we only need to know whether to call criticalErrorAction or not
+                    _ = await onError(context, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // Graceful shutdown
+                }
+                catch (Exception e)
+                {
+                    criticalError($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e, cancellationToken);
+                }
             }
         }
 
         readonly OnMessage onMessage;
         readonly OnError onError;
+        Action<string, Exception, CancellationToken> criticalError;
 
         static readonly ILog Logger = LogManager.GetLogger<ReceiveStrategy>();
     }

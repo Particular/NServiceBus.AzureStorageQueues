@@ -16,7 +16,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             switch (transactionMode)
             {
                 case TransportTransactionMode.None:
-                    return new AtMostOnceReceiveStrategy(onMessage, onError);
+                    return new AtMostOnceReceiveStrategy(onMessage, onError, criticalErrorAction);
                 case TransportTransactionMode.ReceiveOnly:
                     return new AtLeastOnceReceiveStrategy(onMessage, onError, criticalErrorAction);
                 case TransportTransactionMode.SendsAtomicWithReceive:
