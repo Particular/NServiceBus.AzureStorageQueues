@@ -26,17 +26,17 @@ namespace NServiceBus.Transport.AzureStorageQueues
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             await retrieved.Ack().ConfigureAwait(false);
             var body = message.Body ?? new byte[0];
-
+            var contextBag = new ContextBag();
             try
             {
-                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new ContextBag());
+                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), contextBag);
                 await onMessage(pushContext, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
 
-                var context = CreateErrorContext(retrieved, message, ex, body);
+                var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
 
                 // The exception is pushed through the error pipeline in a fire and forget manner.
                 // There's no call to onCriticalError if errorPipe fails. Exceptions are handled on the transport level.

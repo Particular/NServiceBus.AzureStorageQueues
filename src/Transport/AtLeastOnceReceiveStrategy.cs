@@ -22,12 +22,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             var body = message.Body ?? new byte[0];
+            var contextBag = new ContextBag();
             try
             {
                 //TODO: what this should look like given the new cancellation support?
                 // https://github.com/Particular/NServiceBus.AzureStorageQueues/issues/526
 
-                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new ContextBag());
+                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), contextBag);
                 await onMessage(pushContext, CancellationToken.None).ConfigureAwait(false);
 
                 //if (tokenSource.IsCancellationRequested)
@@ -51,7 +52,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             catch (Exception ex)
             {
-                var context = CreateErrorContext(retrieved, message, ex, body);
+                var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
                 ErrorHandleResult immediateRetry;
 
                 try
