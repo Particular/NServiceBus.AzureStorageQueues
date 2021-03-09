@@ -22,15 +22,19 @@
                 {
                     b.When(c => c.Subscribed, session => session.Publish<MyEvent>());
                 })
-                 .WithEndpoint<Subscriber>(b => b.When(async (session, c) => { await session.Subscribe<MyEvent>(); }))
+                 .WithEndpoint<Subscriber>(b => b.When(async (session, c) =>
+                 {
+                     await session.Subscribe<MyEvent>();
+                     c.Subscribed = true;
+                 }))
                  .Done(c => c.WasCalled)
                  .Run().ConfigureAwait(false);
 
             Assert.IsTrue(context.WasCalled);
         }
 
-        const string AnotherAccountName = "another";
-        const string DefaultAccountName = "default";
+        const string SubscriberAccount = "subscriber";
+        const string PublisherAccount = "publisher";
 
         public class Context : ScenarioContext
         {
@@ -46,13 +50,12 @@
                 {
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
 
-                    transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
-                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName,
+                    transport.AccountRouting.DefaultAccountAlias = PublisherAccount;
+
+                    var anotherAccount = transport.AccountRouting.AddAccount(SubscriberAccount,
                         new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
                         CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
                     anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Subscriber)));
-
-                    configuration.OnEndpointSubscribed<Context>((s, context) => { context.Subscribed = true; });
                 });
             }
         }
@@ -63,8 +66,9 @@
             {
                 var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
 
-                transport.AccountRouting.DefaultAccountAlias = AnotherAccountName;
-                var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName,
+                transport.AccountRouting.DefaultAccountAlias = SubscriberAccount;
+
+                var anotherAccount = transport.AccountRouting.AddAccount(PublisherAccount,
                     new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()),
                     CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient());
                 anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Publisher)), new[] { typeof(MyEvent) });
