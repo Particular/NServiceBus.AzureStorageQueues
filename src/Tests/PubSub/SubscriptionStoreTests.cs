@@ -1,9 +1,11 @@
 namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::Azure.Storage.Queues;
     using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
     using Testing;
@@ -11,20 +13,23 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
     [TestFixture]
     public class SubscriptionStoreTests
     {
-        CloudTableClient client;
+        QueueServiceClient queueServiceClient;
+        CloudTableClient cloudTableClient;
         CloudTable table;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
+            queueServiceClient = new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString());
+
             var account = CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString());
-            client = account.CreateCloudTableClient();
+            cloudTableClient = account.CreateCloudTableClient();
         }
 
         [SetUp]
         public void SetUp()
         {
-            table = client.GetTableReference($"atable{Guid.NewGuid():N}");
+            table = cloudTableClient.GetTableReference($"atable{Guid.NewGuid():N}");
             table.CreateIfNotExists();
         }
 
@@ -35,7 +40,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         [Test]
         public async Task SubscribeAll_should_create_topics()
         {
-            var subscriptionStore = new SubscriptionStore(table);
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s));
+            settings.Initialize("default", table.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, cloudTableClient));
+
+            var subscriptionStore = new SubscriptionStore(settings);
 
             await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherEvent), CancellationToken.None);
             await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
@@ -57,7 +65,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         [Test]
         public async Task Unsubscribe_should_delete_topics()
         {
-            var subscriptionStore = new SubscriptionStore(table);
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s));
+            settings.Initialize("default", table.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, cloudTableClient));
+
+            var subscriptionStore = new SubscriptionStore(settings);
 
             await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherEvent), CancellationToken.None);
             await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
@@ -77,7 +88,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         [Test]
         public async Task GetSubscribers()
         {
-            var subscriptionStore = new SubscriptionStore(table);
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s));
+            settings.Initialize("default", table.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, cloudTableClient));
+
+            var subscriptionStore = new SubscriptionStore(settings);
 
             await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherEvent), CancellationToken.None);
             await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);

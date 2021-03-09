@@ -28,8 +28,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             var retrieveTasks = new List<Task<IEnumerable<SubscriptionEntity>>>(topics.Length);
             var addresses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            (_, CloudTableClient cloudTableClient, string subscriptionTableName) = storageAddressingSettings.GetSubscriptionInfo(eventType);
-            var table = cloudTableClient.GetTableReference(subscriptionTableName);
+            (_, CloudTable table) = storageAddressingSettings.GetSubscriptionTable(eventType);
 
             foreach (var topic in topics)
             {
@@ -57,24 +56,21 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken)
         {
-            (string alias, CloudTableClient cloudTableClient, string subscriptionTableName) = storageAddressingSettings.GetSubscriptionInfo(eventType);
-            var table = cloudTableClient.GetTableReference(subscriptionTableName);
-            var address = string.IsNullOrEmpty(alias) ? endpointAddress : $"{endpointAddress}@{alias}";
+            (string alias, CloudTable table) = storageAddressingSettings.GetSubscriptionTable(eventType);
+            var address = new QueueAddress(endpointAddress, alias);
 
             var operation = TableOperation.InsertOrReplace(new SubscriptionEntity
             {
                 Topic = TopicName.From(eventType),
                 Endpoint = endpointName,
-                Address = address
+                Address = address.ToString()
             });
             return table.ExecuteAsync(operation, cancellationToken);
         }
 
         public Task Unsubscribe(string endpointName, Type eventType, CancellationToken cancellationToken)
         {
-            (_, CloudTableClient cloudTableClient, string subscriptionTableName) = storageAddressingSettings.GetSubscriptionInfo(eventType);
-            var table = cloudTableClient.GetTableReference(subscriptionTableName);
-
+            (_, CloudTable table) = storageAddressingSettings.GetSubscriptionTable(eventType);
             var operation = TableOperation.Delete(new SubscriptionEntity
             {
                 Topic = TopicName.From(eventType),

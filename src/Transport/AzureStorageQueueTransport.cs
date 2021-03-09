@@ -132,8 +132,9 @@ namespace NServiceBus
             }
 
             var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator());
-            azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias, Subscriptions.SubscriptionTableName, AccountRouting.Mappings);
-            azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client, cloudTableClientProvider.Client), false);
+            var localAccountInfo =
+                new AccountInfo("", queueServiceClientProvider.Client, cloudTableClientProvider.Client);
+            azureStorageAddressing.Initialize(AccountRouting.DefaultAccountAlias, Subscriptions.SubscriptionTableName, AccountRouting.Mappings, localAccountInfo);
 
             object delayedDeliveryPersistenceDiagnosticSection = new { };
             CloudTable delayedMessagesStorageTable = null;
