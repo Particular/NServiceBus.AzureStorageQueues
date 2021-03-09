@@ -67,10 +67,7 @@ namespace NServiceBus
         [ObsoleteEx(TreatAsErrorFromVersion = "10", RemoveInVersion = "11",
             ReplacementTypeOrMember =
                 "AddEndpoint(string endpointName, IEnumerable<Type> publishedEvents = null, string subscriptionTableName = null)")]
-        public HashSet<string> RegisteredEndpoints
-        {
-            get => throw new NotImplementedException();
-        }
+        public HashSet<string> RegisteredEndpoints => throw new NotImplementedException();
 
         /// <summary>
         /// <see cref="QueueServiceClient"/> associated with the account.
