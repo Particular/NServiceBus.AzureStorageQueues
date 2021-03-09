@@ -17,7 +17,7 @@ namespace NServiceBus
         /// </summary>
         public string SubscriptionTableName
         {
-            get => subscriptionTableName;
+            get => subscriptionTableName ?? "subscriptions";
             set
             {
                 Guard.AgainstNullAndEmpty(nameof(SubscriptionTableName), value);

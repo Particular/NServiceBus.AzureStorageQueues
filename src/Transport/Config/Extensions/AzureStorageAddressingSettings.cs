@@ -12,9 +12,10 @@
             this.addressGenerator = addressGenerator;
         }
 
-        internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, AccountInfo> aliasToConnectionStringMap)
+        internal void RegisterMapping(string defaultConnectionStringAlias, string defaultSubscriptionTableName, Dictionary<string, AccountInfo> aliasToConnectionStringMap)
         {
             this.defaultConnectionStringAlias = defaultConnectionStringAlias;
+            this.defaultSubscriptionTableName = defaultSubscriptionTableName;
 
             var hasAnyMapping = aliasToConnectionStringMap != null && aliasToConnectionStringMap.Count > 0;
             if (hasAnyMapping == false)
@@ -100,18 +101,36 @@
                 aliasToAccountInfoMap[accountInfo.Alias] = accountInfo;
             }
 
-            foreach (var registeredEndpoint in accountInfo.RegisteredEndpoints)
+            foreach (var endpointWithEvents in accountInfo.PublishedEventsByEndpoint)
             {
-                var queue = addressGenerator.GetQueueName(registeredEndpoint);
+                var queue = addressGenerator.GetQueueName(endpointWithEvents.Key);
                 registeredEndpoints[queue] = accountInfo;
+
+                var (events, subscriptionTableName) = endpointWithEvents.Value;
+
+                foreach (var @event in events)
+                {
+                    typeToSubscriptionInformation[@event] = (accountInfo, subscriptionTableName);
+                }
             }
         }
 
-        QueueAddressGenerator addressGenerator;
+        internal (string alias, CloudTableClient cloudTableClient, string subscriptionTableName) GetSubscriptionInfo(Type eventType)
+        {
+            if (typeToSubscriptionInformation.TryGetValue(eventType, out (AccountInfo accountInfo, string subscriptionTableName) found))
+            {
+                return (found.accountInfo.Alias, found.accountInfo.CloudTableClient, found.subscriptionTableName);
+            }
 
+            return (defaultConnectionStringAlias, aliasToAccountInfoMap[defaultConnectionStringAlias].CloudTableClient, defaultSubscriptionTableName);
+        }
+
+        QueueAddressGenerator addressGenerator;
         Dictionary<string, AccountInfo> aliasToAccountInfoMap = new Dictionary<string, AccountInfo>();
         Dictionary<string, AccountInfo> registeredEndpoints = new Dictionary<string, AccountInfo>();
+        Dictionary<Type, (AccountInfo, string)> typeToSubscriptionInformation = new Dictionary<Type, (AccountInfo, string)>();
 
         string defaultConnectionStringAlias;
+        string defaultSubscriptionTableName;
     }
 }

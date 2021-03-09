@@ -132,8 +132,8 @@ namespace NServiceBus
             }
 
             var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator());
-            azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias, AccountRouting.Mappings);
-            azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
+            azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias, Subscriptions.SubscriptionTableName, AccountRouting.Mappings);
+            azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client, cloudTableClientProvider.Client), false);
 
             object delayedDeliveryPersistenceDiagnosticSection = new { };
             CloudTable delayedMessagesStorageTable = null;
@@ -189,7 +189,7 @@ namespace NServiceBus
                     UserDefinedSubscriptionTableName = !string.IsNullOrWhiteSpace(Subscriptions.SubscriptionTableName)
                 };
 
-                subscriptionStore = new SubscriptionStore(subscriptionTable);
+                subscriptionStore = new SubscriptionStore(azureStorageAddressing);
             }
 
             var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence, subscriptionStore);
@@ -291,11 +291,6 @@ namespace NServiceBus
 
         static async Task<CloudTable> EnsureSubscriptionTableExists(CloudTableClient cloudTableClient, string subscriptionTableName, bool setupInfrastructure)
         {
-            if (string.IsNullOrEmpty(subscriptionTableName))
-            {
-                subscriptionTableName = "subscriptions";
-            }
-
             var subscriptionTable = cloudTableClient.GetTableReference(subscriptionTableName);
             if (setupInfrastructure)
             {
