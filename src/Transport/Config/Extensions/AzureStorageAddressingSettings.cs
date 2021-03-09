@@ -116,7 +116,7 @@
             if (typeToSubscriptionInformation.TryGetValue(eventType, out (AccountInfo accountInfo, string tableName) found))
             {
                 subscriptionTable = found.accountInfo.CloudTableClient.GetTableReference(found.tableName);
-                return (found.accountInfo.Alias, subscriptionTable);
+                return (defaultConnectionStringAlias, subscriptionTable);
             }
 
             (AccountInfo accountInfo, string tableName) = typeToSubscriptionInformation[typeof(DefaultLocalEventTypeMatch)];
