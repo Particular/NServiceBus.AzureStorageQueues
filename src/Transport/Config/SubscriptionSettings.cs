@@ -17,7 +17,7 @@ namespace NServiceBus
         /// </summary>
         public string SubscriptionTableName
         {
-            get => subscriptionTableName ?? "subscriptions";
+            get => subscriptionTableName ?? DefaultSubscriptionTableName;
             set
             {
                 Guard.AgainstNullAndEmpty(nameof(SubscriptionTableName), value);
@@ -31,7 +31,9 @@ namespace NServiceBus
             }
         }
 
+
         string subscriptionTableName;
+        internal const string DefaultSubscriptionTableName = "subscriptions";
         static readonly Regex subscriptionTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
     }
 }

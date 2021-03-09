@@ -45,13 +45,7 @@ namespace NServiceBus
         /// <returns></returns>
         public AccountInfo AddEndpoint(string endpointName, IEnumerable<Type> publishedEvents = null, string subscriptionTableName = null)
         {
-            var tableName = "subscriptions";
-
-            if (!string.IsNullOrEmpty(subscriptionTableName))
-            {
-                tableName = subscriptionTableName;
-            }
-
+            var tableName = string.IsNullOrEmpty(subscriptionTableName) ? SubscriptionSettings.DefaultSubscriptionTableName : subscriptionTableName;
             PublishedEventsByEndpoint.Add(endpointName, (publishedEvents ?? Enumerable.Empty<Type>(), tableName));
 
             return this;
