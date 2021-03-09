@@ -74,9 +74,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     {
                         await retrieved.Nack(cancellationToken).ConfigureAwait(false);
                     }
-                    catch (Exception)
+                    catch (Exception e2)
                     {
-                        // Best effort to Nack the message
+                        Logger.Warn($"Failed to release visibility timeout after message with native ID `{message.Id}` failed to execute recoverability policy. The message will be available again when the visibility timeout expires.", e2);
                     }
 
                     return;
