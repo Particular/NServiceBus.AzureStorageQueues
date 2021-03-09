@@ -50,6 +50,8 @@ namespace NServiceBus
         {
         }
 
+        internal AzureStorageQueueTransport AsqTransport => Transport;
+
         /// <summary>
         /// Controls how long messages should be invisible to other callers when receiving messages from the queue
         /// </summary>
