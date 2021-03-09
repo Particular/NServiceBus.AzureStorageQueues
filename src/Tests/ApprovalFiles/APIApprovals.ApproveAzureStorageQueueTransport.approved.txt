@@ -5,20 +5,28 @@ namespace NServiceBus
 {
     public class AccountInfo
     {
-        public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
         public AccountInfo(string alias, string connectionString) { }
+        public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
         public string Alias { get; }
         public string ConnectionString { get; }
+        [System.Obsolete("Use `AddEndpoint(string endpointName, IEnumerable<Type> publishedEvents = null, s" +
+            "tring subscriptionTableName = null)` instead. The member currently throws a NotI" +
+            "mplementedException. Will be removed in version 11.0.0.", true)]
         public System.Collections.Generic.HashSet<string> RegisteredEndpoints { get; }
+        public NServiceBus.AccountInfo AddEndpoint(string endpointName, System.Collections.Generic.IEnumerable<System.Type> publishedEvents = null, string subscriptionTableName = null) { }
     }
     public class AccountRoutingSettings
     {
         public string DefaultAccountAlias { get; set; }
-        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient connectionClient) { }
+        [System.Obsolete("Use `AddAccount(string alias, QueueServiceClient queueServiceClient, CloudTableCl" +
+            "ient cloudTableClient)` instead. The member currently throws a NotImplementedExc" +
+            "eption. Will be removed in version 11.0.0.", true)]
+        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
         [System.Obsolete("Account aliases using connection strings have been deprecated. Use the AddAccount" +
             " overload that accepts a QueueServiceClient instance. Will be treated as an erro" +
             "r from version 11.0.0. Will be removed in version 12.0.0.", false)]
         public NServiceBus.AccountInfo AddAccount(string alias, string connectionString) { }
+        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
     }
     public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition, NServiceBus.Routing.IMessageDrivenSubscriptionTransport
     {
