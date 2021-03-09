@@ -92,7 +92,7 @@
             }
         }
 
-        void Add(AccountInfo accountInfo)
+        internal void Add(AccountInfo accountInfo)
         {
             aliasToAccountInfoMap.Add(accountInfo.Alias, accountInfo);
 
