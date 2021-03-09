@@ -32,7 +32,6 @@ namespace NServiceBus
             Alias = alias;
             QueueServiceClient = queueServiceClient;
             CloudTableClient = cloudTableClient;
-            RegisteredEndpoints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             PublishedEventsByEndpoint = new Dictionary<string, (IEnumerable<Type> publishedEvents, string subscriptionTableName)>();
         }
 
@@ -65,8 +64,13 @@ namespace NServiceBus
         /// <summary>
         /// The endpoints that belong to this account info instance.
         /// </summary>
-        [ObsoleteEx(TreatAsErrorFromVersion = "10", RemoveInVersion = "11", ReplacementTypeOrMember = "AddEndpoint(string endpointName, IEnumerable<Type> publishedEvents = null, string subscriptionTableName = null)")]
-        public HashSet<string> RegisteredEndpoints { get; }
+        [ObsoleteEx(TreatAsErrorFromVersion = "10", RemoveInVersion = "11",
+            ReplacementTypeOrMember =
+                "AddEndpoint(string endpointName, IEnumerable<Type> publishedEvents = null, string subscriptionTableName = null)")]
+        public HashSet<string> RegisteredEndpoints
+        {
+            get => throw new NotImplementedException();
+        }
 
         /// <summary>
         /// <see cref="QueueServiceClient"/> associated with the account.
