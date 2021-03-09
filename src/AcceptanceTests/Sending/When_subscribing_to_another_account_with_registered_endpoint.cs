@@ -6,6 +6,7 @@
     using Features;
     using global::Azure.Storage.Queues;
     using AcceptanceTesting.Customization;
+    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -46,8 +47,10 @@
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
 
                     transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
-                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
-                    anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Subscriber)));
+                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName,
+                        new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                        CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
+                    anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Subscriber)));
 
                     configuration.OnEndpointSubscribed<Context>((s, context) => { context.Subscribed = true; });
                 });
@@ -61,16 +64,17 @@
                 var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
 
                 transport.AccountRouting.DefaultAccountAlias = AnotherAccountName;
-                var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()));
-                anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Publisher)));
+                var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName,
+                    new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()),
+                    CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient());
+                anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Publisher)), new[] { typeof(MyEvent) });
 
                 EndpointSetup(
                     endpointTemplate: new CustomizedServer(transport),
                     configurationBuilderCustomization: (config, rd) =>
                     {
                         config.DisableFeature<AutoSubscribe>();
-                    },
-                    publisherMetadata: p => p.RegisterPublisherFor<MyEvent>(typeof(Publisher)));
+                    });
             }
 
             public class MyMessageHandler : IHandleMessages<MyEvent>
