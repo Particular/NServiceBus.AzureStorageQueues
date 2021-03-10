@@ -57,6 +57,10 @@ namespace NServiceBus
             "erty. Will be treated as an error from version 11.0.0. Will be removed in versio" +
             "n 12.0.0.", false)]
         public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> BatchSize(int value) { }
+        [System.Obsolete("Configure the transport connection string via the AzureStorageQueueTransport inst" +
+            "ance constructor. The member currently throws a NotImplementedException. Will be" +
+            " removed in version 11.0.0.", true)]
+        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> ConnectionString(string connectionString) { }
         [System.Obsolete("Configure the transport via the AzureStorageQueueTransport AccountRouting.Default" +
             "AccountAlias property. Will be treated as an error from version 11.0.0. Will be " +
             "removed in version 12.0.0.", false)]
