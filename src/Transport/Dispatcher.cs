@@ -34,7 +34,7 @@
             var sends = new List<Task>(outgoingMessages.UnicastTransportOperations.Count);
             foreach (var unicastTransportOperation in outgoingMessages.UnicastTransportOperations)
             {
-                sends.Add(Send(unicastTransportOperation, CancellationToken.None));
+                sends.Add(Send(unicastTransportOperation, token));
             }
 
             return Task.WhenAll(sends);

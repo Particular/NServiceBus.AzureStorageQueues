@@ -1,9 +1,9 @@
 namespace NServiceBus.Transport.AzureStorageQueues
 {
-    using Logging;
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using Logging;
 
     class BackoffStrategy
     {
@@ -30,7 +30,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             timeToDelayUntilNextPeek = TimeSpan.Zero;
         }
 
-        Task OnNothingProcessed(CancellationToken token)
+        Task OnNothingProcessed(CancellationToken token = default)
         {
             Logger.Debug("Nothing processed, increasing delay until next peek");
 
@@ -46,7 +46,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return Task.Delay(timeToDelayUntilNextPeek, token);
         }
 
-        public Task OnBatch(int receivedBatchSize, CancellationToken token)
+        public Task OnBatch(int receivedBatchSize, CancellationToken token = default)
         {
             if (receivedBatchSize > 0)
             {

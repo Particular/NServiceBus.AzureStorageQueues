@@ -3,8 +3,8 @@
     using System.Threading;
     using System.Threading.Tasks;
     using global::Azure.Storage.Blobs;
-    using Microsoft.Azure.Cosmos.Table;
     using Logging;
+    using Microsoft.Azure.Cosmos.Table;
 
     class NativeDelayedDeliveryProcessor
     {
@@ -35,7 +35,7 @@
             this.backoffStrategy = backoffStrategy;
         }
 
-        public void Start()
+        public void Start(CancellationToken cancellationToken = default)
         {
             if (!enabled)
             {
@@ -43,8 +43,6 @@
             }
 
             Logger.Debug("Starting delayed delivery poller");
-
-            nativeDelayedMessagesCancellationSource = new CancellationTokenSource();
 
             var isAtMostOnce = transportTransactionMode == TransportTransactionMode.None;
             poller = new DelayedMessagesPoller(
@@ -54,13 +52,14 @@
                 isAtMostOnce,
                 dispatcher,
                 backoffStrategy);
-            poller.Start(nativeDelayedMessagesCancellationSource.Token);
+
+            // Start token is just passed through to the implementation which maintains its own token source for stopping
+            poller.Start(cancellationToken);
         }
 
         public Task Stop()
         {
             Logger.Debug("Stopping delayed delivery poller");
-            nativeDelayedMessagesCancellationSource?.Cancel();
             return poller != null ? poller.Stop() : Task.CompletedTask;
         }
 
@@ -71,7 +70,6 @@
         readonly TransportTransactionMode transportTransactionMode;
         readonly BackoffStrategy backoffStrategy;
         bool enabled;
-        CancellationTokenSource nativeDelayedMessagesCancellationSource;
 
         static readonly ILog Logger = LogManager.GetLogger<NativeDelayedDeliveryProcessor>();
         DelayedMessagesPoller poller;

@@ -3,25 +3,25 @@ namespace NServiceBus
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Globalization;
     using System.Linq;
+    using System.Reflection;
     using System.Security.Cryptography;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
-    using Microsoft.Azure.Cosmos.Table;
     using MessageInterfaces;
+    using Microsoft.Azure.Cosmos.Table;
     using Routing;
-    using Settings;
     using Serialization;
+    using Settings;
     using Transport;
     using Transport.AzureStorageQueues;
-    using System.Globalization;
     using Unicast.Messages;
-    using System.Reflection;
-    using System.Threading;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
@@ -118,7 +118,8 @@ namespace NServiceBus
                     hostSettings.Name,
                     DelayedDelivery.DelayedDeliveryTableName,
                     cloudTableClientProvider.Client,
-                    hostSettings.SetupInfrastructure).ConfigureAwait(false);
+                    hostSettings.SetupInfrastructure,
+                    token).ConfigureAwait(false);
 
                 nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTable);
 
@@ -163,7 +164,7 @@ namespace NServiceBus
                         nativeDelayedDeliveryErrorQueue,
                         TransportTransactionMode,
                         new BackoffStrategy(PeekInterval, MaximumWaitTimeWhenIdle));
-                nativeDelayedDeliveryProcessor.Start();
+                nativeDelayedDeliveryProcessor.Start(token);
 
                 delayedDeliveryProcessorDiagnosticSection = new
                 {
@@ -219,7 +220,7 @@ namespace NServiceBus
             }
         }
 
-        static async Task<CloudTable> EnsureNativeDelayedDeliveryTable(string endpointName, string delayedDeliveryTableName, CloudTableClient cloudTableClient, bool setupInfrastructure)
+        static async Task<CloudTable> EnsureNativeDelayedDeliveryTable(string endpointName, string delayedDeliveryTableName, CloudTableClient cloudTableClient, bool setupInfrastructure, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(delayedDeliveryTableName))
             {
@@ -229,7 +230,7 @@ namespace NServiceBus
             var delayedMessagesStorageTable = cloudTableClient.GetTableReference(delayedDeliveryTableName);
             if (setupInfrastructure)
             {
-                await delayedMessagesStorageTable.CreateIfNotExistsAsync().ConfigureAwait(false);
+                await delayedMessagesStorageTable.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
             }
 
             return delayedMessagesStorageTable;

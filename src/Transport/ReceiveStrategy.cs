@@ -4,18 +4,19 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using Extensibility;
     using Transport;
 
     abstract class ReceiveStrategy
     {
-        public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message);
+        public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken);
 
         public static ReceiveStrategy BuildReceiveStrategy(OnMessage onMessage, OnError onError, TransportTransactionMode transactionMode, Action<string, Exception, CancellationToken> criticalErrorAction)
         {
             switch (transactionMode)
             {
                 case TransportTransactionMode.None:
-                    return new AtMostOnceReceiveStrategy(onMessage, onError);
+                    return new AtMostOnceReceiveStrategy(onMessage, onError, criticalErrorAction);
                 case TransportTransactionMode.ReceiveOnly:
                     return new AtLeastOnceReceiveStrategy(onMessage, onError, criticalErrorAction);
                 case TransportTransactionMode.SendsAtomicWithReceive:
@@ -25,9 +26,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        protected static ErrorContext CreateErrorContext(MessageRetrieved retrieved, MessageWrapper message, Exception ex, byte[] body)
+        protected static ErrorContext CreateErrorContext(MessageRetrieved retrieved, MessageWrapper message, Exception ex, byte[] body, ContextBag contextBag)
         {
-            var context = new ErrorContext(ex, message.Headers, message.Id, body, new TransportTransaction(), Convert.ToInt32(retrieved.DequeueCount));
+            var context = new ErrorContext(ex, message.Headers, message.Id, body, new TransportTransaction(), Convert.ToInt32(retrieved.DequeueCount), contextBag);
             return context;
         }
     }

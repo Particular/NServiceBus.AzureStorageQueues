@@ -25,7 +25,7 @@
             this.span = span;
         }
 
-        public async Task<bool> TryLockOrRenew(CancellationToken cancellationToken)
+        public async Task<bool> TryLockOrRenew(CancellationToken cancellationToken = default)
         {
             await EnsureContainerExists(cancellationToken).ConfigureAwait(false);
 
@@ -55,7 +55,7 @@
             }
         }
 
-        public async Task TryRelease(CancellationToken cancellationToken)
+        public async Task TryRelease(CancellationToken cancellationToken = default)
         {
             await EnsureContainerExists(cancellationToken).ConfigureAwait(false);
 
@@ -75,7 +75,7 @@
             }
         }
 
-        async Task EnsureContainerExists(CancellationToken cancellationToken)
+        async Task EnsureContainerExists(CancellationToken cancellationToken = default)
         {
             if (created == false)
             {
