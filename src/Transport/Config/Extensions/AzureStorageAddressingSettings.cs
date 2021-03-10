@@ -7,15 +7,16 @@
 
     class AzureStorageAddressingSettings
     {
-        public AzureStorageAddressingSettings(QueueAddressGenerator addressGenerator)
+        public AzureStorageAddressingSettings(QueueAddressGenerator addressGenerator, string defaultConnectionStringAlias, string subscriptionTableName, Dictionary<string, AccountInfo> aliasToConnectionStringMap, AccountInfo localAccountInfo)
         {
             this.addressGenerator = addressGenerator;
-        }
-
-        internal void Initialize(string defaultConnectionStringAlias, string subscriptionTableName, Dictionary<string, AccountInfo> aliasToConnectionStringMap, AccountInfo localAccountInfo)
-        {
             this.defaultConnectionStringAlias = defaultConnectionStringAlias;
 
+            Initialize(subscriptionTableName, aliasToConnectionStringMap, localAccountInfo);
+        }
+
+        void Initialize(string subscriptionTableName, Dictionary<string, AccountInfo> aliasToConnectionStringMap, AccountInfo localAccountInfo)
+        {
             aliasToAccountInfoMap.Add(localAccountInfo.Alias, localAccountInfo);
             typeToSubscriptionInformation.Add(typeof(DefaultLocalEventTypeMatch), (localAccountInfo, subscriptionTableName));
 

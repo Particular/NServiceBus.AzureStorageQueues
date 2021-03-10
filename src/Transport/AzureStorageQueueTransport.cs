@@ -131,10 +131,13 @@ namespace NServiceBus
                     .ConfigureAwait(false);
             }
 
-            var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator());
-            var localAccountInfo =
-                new AccountInfo("", queueServiceClientProvider.Client, cloudTableClientProvider.Client);
-            azureStorageAddressing.Initialize(AccountRouting.DefaultAccountAlias, Subscriptions.SubscriptionTableName, AccountRouting.Mappings, localAccountInfo);
+            var localAccountInfo = new AccountInfo("", queueServiceClientProvider.Client, cloudTableClientProvider.Client);
+
+            var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator(),
+                AccountRouting.DefaultAccountAlias,
+                Subscriptions.SubscriptionTableName,
+                AccountRouting.Mappings,
+                localAccountInfo);
 
             object delayedDeliveryPersistenceDiagnosticSection = new { };
             CloudTable delayedMessagesStorageTable = null;
