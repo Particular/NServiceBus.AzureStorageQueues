@@ -36,11 +36,11 @@ namespace NServiceBus
         }
 
         /// <summary>
-        ///
+        /// Adds an endpoint to this account info instance.
         /// </summary>
-        /// <param name="endpointName"></param>
-        /// <param name="publishedEvents"></param>
-        /// <param name="subscriptionTableName"></param>
+        /// <param name="endpointName">The name of the endpoint belonging to this account.</param>
+        /// <param name="publishedEvents">If the endpoint is a publisher and the subscriber is interested in subscribing to events published in this account the events subscribed to need to be listed here.</param>
+        /// <param name="subscriptionTableName">The subscription table name to be used in case the publisher configuration doesn't use the default table name.</param>
         /// <returns></returns>
         public AccountInfo AddEndpoint(string endpointName, IEnumerable<Type> publishedEvents = null, string subscriptionTableName = null)
         {
