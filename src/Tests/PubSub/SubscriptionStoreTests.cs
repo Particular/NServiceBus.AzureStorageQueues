@@ -63,7 +63,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         }
 
         [Test]
-        public async Task Subscribe_with_mapped_events_should_create_aliased_topics()
+        public async Task Subscribe_with_mapped_events_should_create_topics()
         {
             var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s));
             settings.Initialize("subscriber", table.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, cloudTableClient));
@@ -169,6 +169,22 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         }
 
         [Test]
+        public async Task GetSubscribers_supports_polymorphism()
+        {
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s));
+            settings.Initialize("default", table.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, cloudTableClient));
+
+            var subscriptionStore = new SubscriptionStore(settings);
+
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEvent), CancellationToken.None);
+
+            var subcribers =
+                await subscriptionStore.GetSubscribers(typeof(MyOtherEvent), CancellationToken.None);
+
+            CollectionAssert.AreEqual(new[] { "subscriberAddress" }, subcribers);
+        }
+
+        [Test]
         public async Task GetSubscribers_with_mapped_events()
         {
             var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s));
@@ -185,6 +201,25 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             var subcribers =
                 await subscriptionStore.GetSubscribers(typeof(MyEventPublishedOnAnotherAccount), CancellationToken.None);
+
+            CollectionAssert.AreEqual(new[] { "subscriberAddress@subscriber" }, subcribers);
+        }
+
+        [Test]
+        public async Task GetSubscribers_with_mapped_events_supports_polymorphism()
+        {
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s));
+            settings.Initialize("subscriber", table.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, cloudTableClient));
+            var publisherAccount = new AccountInfo("publisher", queueServiceClient, cloudTableClient);
+            publisherAccount.AddEndpoint("publisherEndpoint", new[] { typeof(MyEvent) }, subscriptionTableName: table.Name);
+            settings.Add(publisherAccount);
+
+            var subscriptionStore = new SubscriptionStore(settings);
+
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEvent), CancellationToken.None);
+
+            var subcribers =
+                await subscriptionStore.GetSubscribers(typeof(MyOtherEvent), CancellationToken.None);
 
             CollectionAssert.AreEqual(new[] { "subscriberAddress@subscriber" }, subcribers);
         }
