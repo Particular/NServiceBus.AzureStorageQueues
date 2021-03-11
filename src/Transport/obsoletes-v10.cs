@@ -24,10 +24,10 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0",
             ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)")]
-        public static AzureStorageQueueTransportLegacySettings UseTransport<T>(this EndpointConfiguration config, string connectionString)
+        public static AzureStorageQueueTransportLegacySettings UseTransport<T>(this EndpointConfiguration config)
             where T : AzureStorageQueueTransport
         {
-            var transport = new AzureStorageQueueTransport(connectionString);
+            var transport = new AzureStorageQueueTransport();
             var routing = config.UseTransport(transport);
             var settings = new AzureStorageQueueTransportLegacySettings(transport, routing);
 
@@ -227,7 +227,9 @@ namespace NServiceBus
             RemoveInVersion = "12.0")]
         public TransportSettings<AzureStorageQueueTransport> ConnectionString(string connectionString)
         {
-            throw new NotImplementedException();
+            Transport.LegacyAPIShimSetConnectionString(connectionString);
+
+            return this;
         }
 
         /// <summary>
