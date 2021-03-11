@@ -4,6 +4,7 @@
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
     using global::Azure.Storage.Queues;
+    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -47,10 +48,10 @@
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = SenderAlias;
 
-                    var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
+                    var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
                     // Route MyMessage messages to the receiver endpoint configured to use receiver alias (on a different storage account)
                     var receiverEndpointName = Conventions.EndpointNamingConvention(typeof(Receiver));
-                    receiverAccountInfo.RegisteredEndpoints.Add(receiverEndpointName);
+                    receiverAccountInfo.AddEndpoint(receiverEndpointName);
 
                     configuration.ConfigureRouting()
                         .RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
@@ -81,10 +82,10 @@
                 var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
                 transport.AccountRouting.DefaultAccountAlias = ReceiverAlias;
 
-                var senderEndpointAccountInfo = transport.AccountRouting.AddAccount(SenderAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()));
+                var senderEndpointAccountInfo = transport.AccountRouting.AddAccount(SenderAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient());
                 // Route MyMessage messages to the receiver endpoint configured to use sender alias (on a different storage account)
                 var senderEndpointName = Conventions.EndpointNamingConvention(typeof(Sender));
-                senderEndpointAccountInfo.RegisteredEndpoints.Add(senderEndpointName);
+                senderEndpointAccountInfo.AddEndpoint(senderEndpointName);
 
                 EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
             }

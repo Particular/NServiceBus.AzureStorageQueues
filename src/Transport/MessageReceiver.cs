@@ -13,6 +13,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public MessageReceiver(string id,
             TransportTransactionMode requiredTransactionMode,
             AzureMessageQueueReceiver azureMessageQueueReceiver,
+            ISubscriptionManager subscriptionManager,
             string receiveAddress,
             string errorQueue,
             Action<string, Exception, CancellationToken> criticalErrorAction,
@@ -28,12 +29,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.maximumWaitTime = maximumWaitTime;
             this.peekInterval = peekInterval;
             this.azureMessageQueueReceiver = azureMessageQueueReceiver;
+            Subscriptions = subscriptionManager;
             this.receiveAddress = receiveAddress;
             this.errorQueue = errorQueue;
             this.criticalErrorAction = criticalErrorAction;
         }
 
-        public ISubscriptionManager Subscriptions { get; } = null;
+        public ISubscriptionManager Subscriptions { get; }
         public string Id { get; }
 
         public Task Initialize(PushRuntimeSettings limitations, OnMessage onMessage, OnError onError, CancellationToken token = default)

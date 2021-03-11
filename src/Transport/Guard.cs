@@ -1,4 +1,4 @@
-﻿namespace NServiceBus
+namespace NServiceBus
 {
     using System;
 
@@ -19,6 +19,7 @@
                 throw new ArgumentNullException(argumentName);
             }
         }
+
         public static void AgainstNegativeAndZero(string argumentName, TimeSpan value)
         {
             if (value <= TimeSpan.Zero)

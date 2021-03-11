@@ -7,14 +7,18 @@
 
     class AzureStorageAddressingSettings
     {
-        public AzureStorageAddressingSettings(QueueAddressGenerator addressGenerator)
+        public AzureStorageAddressingSettings(QueueAddressGenerator addressGenerator, string defaultConnectionStringAlias, string subscriptionTableName, Dictionary<string, AccountInfo> aliasToConnectionStringMap, AccountInfo localAccountInfo)
         {
             this.addressGenerator = addressGenerator;
+            this.defaultConnectionStringAlias = defaultConnectionStringAlias;
+
+            Initialize(subscriptionTableName, aliasToConnectionStringMap, localAccountInfo);
         }
 
-        internal void RegisterMapping(string defaultConnectionStringAlias, Dictionary<string, AccountInfo> aliasToConnectionStringMap)
+        void Initialize(string subscriptionTableName, Dictionary<string, AccountInfo> aliasToConnectionStringMap, AccountInfo localAccountInfo)
         {
-            this.defaultConnectionStringAlias = defaultConnectionStringAlias;
+            aliasToAccountInfoMap.Add(localAccountInfo.Alias, localAccountInfo);
+            typeToSubscriptionInformation.Add(typeof(DefaultLocalEventTypeMatch), (localAccountInfo, subscriptionTableName));
 
             var hasAnyMapping = aliasToConnectionStringMap != null && aliasToConnectionStringMap.Count > 0;
             if (hasAnyMapping == false)
@@ -46,7 +50,7 @@
         /// </summary>
         internal QueueServiceClient Map(QueueAddress address, MessageIntentEnum messageIntent)
         {
-            if (registeredEndpoints.TryGetValue(address.QueueName, out var accountInfo))
+            if (registeredEndpoints.TryGetValue(address, out var accountInfo))
             {
                 return accountInfo.QueueServiceClient;
             }
@@ -89,28 +93,47 @@
             }
         }
 
-        internal void Add(AccountInfo accountInfo, bool throwOnExistingEntry = true)
+        internal void Add(AccountInfo accountInfo)
         {
-            if (throwOnExistingEntry)
-            {
-                aliasToAccountInfoMap.Add(accountInfo.Alias, accountInfo);
-            }
-            else
-            {
-                aliasToAccountInfoMap[accountInfo.Alias] = accountInfo;
-            }
+            aliasToAccountInfoMap.Add(accountInfo.Alias, accountInfo);
 
-            foreach (var registeredEndpoint in accountInfo.RegisteredEndpoints)
+            foreach (var endpointWithEvents in accountInfo.PublishedEventsByEndpoint)
             {
-                var queue = addressGenerator.GetQueueName(registeredEndpoint);
-                registeredEndpoints[queue] = accountInfo;
+                var queueAddress = new QueueAddress(addressGenerator.GetQueueName(endpointWithEvents.Key), accountInfo.Alias);
+                registeredEndpoints[queueAddress] = accountInfo;
+
+                var (events, tableName) = endpointWithEvents.Value;
+
+                foreach (var @event in events)
+                {
+                    typeToSubscriptionInformation[@event] = (accountInfo, tableName);
+                }
             }
         }
 
-        QueueAddressGenerator addressGenerator;
+        internal (string alias, CloudTable cloudTable) GetSubscriptionTable(Type eventType)
+        {
+            CloudTable subscriptionTable;
+            if (typeToSubscriptionInformation.TryGetValue(eventType, out (AccountInfo accountInfo, string tableName) found))
+            {
+                subscriptionTable = found.accountInfo.CloudTableClient.GetTableReference(found.tableName);
+                return (defaultConnectionStringAlias, subscriptionTable);
+            }
 
+            (AccountInfo accountInfo, string tableName) = typeToSubscriptionInformation[typeof(DefaultLocalEventTypeMatch)];
+            subscriptionTable = accountInfo.CloudTableClient.GetTableReference(tableName);
+            return (accountInfo.Alias, subscriptionTable);
+        }
+
+        QueueAddressGenerator addressGenerator;
         Dictionary<string, AccountInfo> aliasToAccountInfoMap = new Dictionary<string, AccountInfo>();
-        Dictionary<string, AccountInfo> registeredEndpoints = new Dictionary<string, AccountInfo>();
+        Dictionary<QueueAddress, AccountInfo> registeredEndpoints = new Dictionary<QueueAddress, AccountInfo>();
+        Dictionary<Type, (AccountInfo, string)> typeToSubscriptionInformation = new Dictionary<Type, (AccountInfo, string)>();
+
+        // kind of a wildcard for the local account info
+        sealed class DefaultLocalEventTypeMatch
+        {
+        }
 
         string defaultConnectionStringAlias;
     }

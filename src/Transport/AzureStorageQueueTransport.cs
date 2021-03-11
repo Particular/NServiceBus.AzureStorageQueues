@@ -32,15 +32,20 @@ namespace NServiceBus
         /// Initialize a new transport definition for AzureStorageQueue
         /// </summary>
         public AzureStorageQueueTransport(string connectionString, bool useNativeDelayedDeliveries = true)
-            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: useNativeDelayedDeliveries, supportsPublishSubscribe: false, supportsTTBR: true)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: useNativeDelayedDeliveries, supportsPublishSubscribe: true, supportsTTBR: true)
         {
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
             queueServiceClientProvider = new QueueServiceClientByConnectionString(connectionString);
+
+            if (SupportsDelayedDelivery || SupportsPublishSubscribe)
+            {
+                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
+            }
+
             if (SupportsDelayedDelivery)
             {
                 blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(connectionString);
-                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
             }
         }
 
@@ -48,7 +53,7 @@ namespace NServiceBus
         /// Initialize a new transport definition for AzureStorageQueue and disable native delayed deliveries
         /// </summary>
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient)
-            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: false, supportsPublishSubscribe: false, supportsTTBR: true)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: false, supportsPublishSubscribe: true, supportsTTBR: true)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
 
@@ -59,7 +64,7 @@ namespace NServiceBus
         /// Initialize a new transport definition for AzureStorageQueue with native delayed deliveries support
         /// </summary>
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient, BlobServiceClient blobServiceClient, CloudTableClient cloudTableClient)
-            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: true, supportsPublishSubscribe: false, supportsTTBR: true)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: true, supportsPublishSubscribe: true, supportsTTBR: true)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
             Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
@@ -68,6 +73,27 @@ namespace NServiceBus
             queueServiceClientProvider = new QueueServiceClientProvidedByUser(queueServiceClient);
             blobServiceClientProvider = new BlobServiceClientProvidedByUser(blobServiceClient);
             cloudTableClientProvider = new CloudTableClientProvidedByUser(cloudTableClient);
+        }
+
+        /// <summary>
+        /// For the pub-sub migration tests only
+        /// </summary>
+        internal AzureStorageQueueTransport(string connectionString, bool supportsDelayedDelivery, bool supportsPublishSubscribe)
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery, supportsPublishSubscribe, true)
+        {
+            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+
+            queueServiceClientProvider = new QueueServiceClientByConnectionString(connectionString);
+
+            if (SupportsDelayedDelivery || SupportsPublishSubscribe)
+            {
+                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
+            }
+
+            if (SupportsDelayedDelivery)
+            {
+                blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(connectionString);
+            }
         }
 
         static string GenerateDelayedDeliveryTableName(string endpointName)
@@ -105,9 +131,13 @@ namespace NServiceBus
                     .ConfigureAwait(false);
             }
 
-            var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator());
-            azureStorageAddressing.RegisterMapping(AccountRouting.DefaultAccountAlias, AccountRouting.Mappings);
-            azureStorageAddressing.Add(new AccountInfo("", queueServiceClientProvider.Client), false);
+            var localAccountInfo = new AccountInfo("", queueServiceClientProvider.Client, cloudTableClientProvider.Client);
+
+            var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator(),
+                AccountRouting.DefaultAccountAlias,
+                Subscriptions.SubscriptionTableName,
+                AccountRouting.Mappings,
+                localAccountInfo);
 
             object delayedDeliveryPersistenceDiagnosticSection = new { };
             CloudTable delayedMessagesStorageTable = null;
@@ -125,8 +155,8 @@ namespace NServiceBus
 
                 delayedDeliveryPersistenceDiagnosticSection = new
                 {
-                    NativeDelayedDeliveryTableName = delayedMessagesStorageTable.Name,
-                    UserDefinedNativeDelayedDeliveryTableName = !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryTableName)
+                    DelayedDeliveryTableName = delayedMessagesStorageTable.Name,
+                    UserDefinedDelayedDeliveryTableName = !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryTableName)
                 };
             }
 
@@ -147,7 +177,40 @@ namespace NServiceBus
             }
 
             var serializer = BuildSerializer(MessageWrapperSerializationDefinition, serializerSettingsHolder);
-            var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence);
+
+            object subscriptionsPersistenceDiagnosticSection = new { };
+            ISubscriptionStore subscriptionStore = new NoOpSubscriptionStore();
+            if (SupportsPublishSubscribe)
+            {
+                var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, Subscriptions.SubscriptionTableName, hostSettings.SetupInfrastructure)
+                    .ConfigureAwait(false);
+
+                nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTable);
+
+                object subscriptionPersistenceCachingSection = new { IsEnabled = false };
+
+                subscriptionStore = new SubscriptionStore(azureStorageAddressing);
+
+                if (Subscriptions.DisableCaching == false)
+                {
+                    subscriptionPersistenceCachingSection = new
+                    {
+                        IsEnabled = true,
+                        Subscriptions.CacheInvalidationPeriod
+                    };
+
+                    subscriptionStore = new CachedSubscriptionStore(subscriptionStore, Subscriptions.CacheInvalidationPeriod);
+                }
+
+                subscriptionsPersistenceDiagnosticSection = new
+                {
+                    SubscriptionTableName = subscriptionTable.Name,
+                    UserDefinedSubscriptionTableName = !string.IsNullOrWhiteSpace(Subscriptions.SubscriptionTableName),
+                    Caching = subscriptionPersistenceCachingSection
+                };
+            }
+
+            var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence, subscriptionStore);
 
             object delayedDeliveryProcessorDiagnosticSection = new { };
             var nativeDelayedDeliveryProcessor = NativeDelayedDeliveryProcessor.Disabled();
@@ -173,7 +236,10 @@ namespace NServiceBus
                 };
             }
 
-            var messageReceivers = receiversSettings.Select(settings => BuildReceiver(settings, serializer, hostSettings.CriticalErrorAction))
+            var messageReceivers = receiversSettings.Select(settings => BuildReceiver(hostSettings, settings,
+                    serializer,
+                    hostSettings.CriticalErrorAction,
+                    subscriptionStore))
                 .ToDictionary(receiver => receiver.Id, receiver => receiver.Receiver);
 
             var infrastructure = new AzureStorageQueueInfrastructure(
@@ -196,6 +262,11 @@ namespace NServiceBus
                     IsEnabled = SupportsDelayedDelivery,
                     Processor = delayedDeliveryProcessorDiagnosticSection,
                     Persistence = delayedDeliveryPersistenceDiagnosticSection
+                },
+                Subscriptions = new
+                {
+                    IsEnabled = SupportsPublishSubscribe,
+                    Persistence = subscriptionsPersistenceDiagnosticSection
                 },
                 TransactionMode = Enum.GetName(typeof(TransportTransactionMode), TransportTransactionMode),
                 ReceiverBatchSize = ReceiverBatchSize.HasValue ? ReceiverBatchSize.Value.ToString(CultureInfo.InvariantCulture) : "Default",
@@ -236,6 +307,17 @@ namespace NServiceBus
             return delayedMessagesStorageTable;
         }
 
+        static async Task<CloudTable> EnsureSubscriptionTableExists(CloudTableClient cloudTableClient, string subscriptionTableName, bool setupInfrastructure)
+        {
+            var subscriptionTable = cloudTableClient.GetTableReference(subscriptionTableName);
+            if (setupInfrastructure)
+            {
+                await subscriptionTable.CreateIfNotExistsAsync().ConfigureAwait(false);
+            }
+
+            return subscriptionTable;
+        }
+
         static MessageWrapperSerializer BuildSerializer(SerializationDefinition userWrapperSerializationDefinition, ReadOnlySettings settings)
         {
             return userWrapperSerializationDefinition != null
@@ -261,20 +343,25 @@ namespace NServiceBus
             return serializer;
         }
 
-        (string Id, IMessageReceiver Receiver) BuildReceiver(ReceiveSettings settings, MessageWrapperSerializer serializer, Action<string, Exception, CancellationToken> criticalErrorAction)
+        (string Id, IMessageReceiver Receiver) BuildReceiver(HostSettings hostSettings, ReceiveSettings receiveSettings,
+            MessageWrapperSerializer serializer,
+            Action<string, Exception, CancellationToken> criticalErrorAction, ISubscriptionStore subscriptionStore)
         {
             var unwrapper = MessageUnwrapper != null
                 ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
                 : new DefaultMessageEnvelopeUnwrapper(serializer);
 
-            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, GetQueueAddressGenerator(), settings.PurgeOnStartup, MessageInvisibleTime);
+            var subscriptionManager = new SubscriptionManager(subscriptionStore, hostSettings.Name, receiveSettings.ReceiveAddress);
 
-            return (settings.Id, new MessageReceiver(
-                settings.Id,
+            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, GetQueueAddressGenerator(), receiveSettings.PurgeOnStartup, MessageInvisibleTime);
+
+            return (receiveSettings.Id, new MessageReceiver(
+                receiveSettings.Id,
                 TransportTransactionMode,
                 receiver,
-                settings.ReceiveAddress,
-                settings.ErrorQueue,
+                subscriptionManager,
+                receiveSettings.ReceiveAddress,
+                receiveSettings.ErrorQueue,
                 criticalErrorAction,
                 DegreeOfReceiveParallelism,
                 ReceiverBatchSize,
@@ -446,6 +533,11 @@ namespace NServiceBus
         /// Provides options to define settings for the transport DelayedDelivery feature.
         /// </summary>
         public NativeDelayedDeliverySettings DelayedDelivery { get; } = new NativeDelayedDeliverySettings();
+
+        /// <summary>
+        /// Provides options to define settings for the transport subscription feature.
+        /// </summary>
+        public SubscriptionSettings Subscriptions { get; } = new SubscriptionSettings();
 
         /// <summary>
         /// Define routing between Azure Storage accounts and map them to a logical alias instead of using bare

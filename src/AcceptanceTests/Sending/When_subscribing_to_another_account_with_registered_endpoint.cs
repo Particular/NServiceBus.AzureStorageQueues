@@ -6,6 +6,7 @@
     using Features;
     using global::Azure.Storage.Queues;
     using AcceptanceTesting.Customization;
+    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -21,15 +22,19 @@
                 {
                     b.When(c => c.Subscribed, session => session.Publish<MyEvent>());
                 })
-                 .WithEndpoint<Subscriber>(b => b.When(async (session, c) => { await session.Subscribe<MyEvent>(); }))
+                 .WithEndpoint<Subscriber>(b => b.When(async (session, c) =>
+                 {
+                     await session.Subscribe<MyEvent>();
+                     c.Subscribed = true;
+                 }))
                  .Done(c => c.WasCalled)
                  .Run().ConfigureAwait(false);
 
             Assert.IsTrue(context.WasCalled);
         }
 
-        const string AnotherAccountName = "another";
-        const string DefaultAccountName = "default";
+        const string SubscriberAccount = "subscriber";
+        const string PublisherAccount = "publisher";
 
         public class Context : ScenarioContext
         {
@@ -45,11 +50,12 @@
                 {
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
 
-                    transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
-                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
-                    anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Subscriber)));
+                    transport.AccountRouting.DefaultAccountAlias = PublisherAccount;
 
-                    configuration.OnEndpointSubscribed<Context>((s, context) => { context.Subscribed = true; });
+                    var anotherAccount = transport.AccountRouting.AddAccount(SubscriberAccount,
+                        new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                        CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
+                    anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Subscriber)));
                 });
             }
         }
@@ -60,17 +66,19 @@
             {
                 var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
 
-                transport.AccountRouting.DefaultAccountAlias = AnotherAccountName;
-                var anotherAccount = transport.AccountRouting.AddAccount(DefaultAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()));
-                anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Publisher)));
+                transport.AccountRouting.DefaultAccountAlias = SubscriberAccount;
+
+                var anotherAccount = transport.AccountRouting.AddAccount(PublisherAccount,
+                    new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()),
+                    CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient());
+                anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Publisher)), new[] { typeof(MyEvent) });
 
                 EndpointSetup(
                     endpointTemplate: new CustomizedServer(transport),
                     configurationBuilderCustomization: (config, rd) =>
                     {
                         config.DisableFeature<AutoSubscribe>();
-                    },
-                    publisherMetadata: p => p.RegisterPublisherFor<MyEvent>(typeof(Publisher)));
+                    });
             }
 
             public class MyMessageHandler : IHandleMessages<MyEvent>
