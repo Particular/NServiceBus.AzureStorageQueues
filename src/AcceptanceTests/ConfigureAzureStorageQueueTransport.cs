@@ -28,6 +28,8 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             transport = Utilities.CreateTransportWithDefaultTestsConfiguration(connectionString, delayedDeliveryPoisonQueue: errorQueue);
         }
 
+        transport.Subscriptions.DisableCaching = true;
+
         var routingConfig = configuration.UseTransport(transport);
 
         foreach (var publisher in publisherMetadata.Publishers)
@@ -36,11 +38,6 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             {
                 routingConfig.RegisterPublisher(eventType, publisher.PublisherName);
             }
-        }
-
-        if (endpointName.StartsWith(Conventions.EndpointNamingConvention(typeof(When_unsubscribing_from_event.Publisher))))
-        {
-            Assert.Ignore("Ignored until issue #173 is resolved.");
         }
 
         if (endpointName.StartsWith("RegisteringAdditionalDeserializers.CustomSerializationSender"))

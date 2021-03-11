@@ -24,7 +24,8 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
         var transport = new AzureStorageQueueTransport(connectionString)
         {
             MessageWrapperSerializationDefinition = new XmlSerializer(),
-            QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
+            QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize,
+            Subscriptions = { DisableCaching = true }
         };
 
         return transport;
@@ -44,8 +45,5 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
         return transportInfrastructure;
     }
 
-    public Task Cleanup(CancellationToken token = default)
-    {
-        return Task.CompletedTask;
-    }
+    public Task Cleanup(CancellationToken token = default) => Task.CompletedTask;
 }

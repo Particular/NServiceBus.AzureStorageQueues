@@ -12,6 +12,7 @@
     using global::Azure.Storage.Queues.Models;
     using global::Newtonsoft.Json;
     using global::Newtonsoft.Json.Linq;
+    using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
     using Testing;
 
@@ -133,7 +134,7 @@
                 {
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
+                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
 
                     cfg.UseSerialization<NewtonsoftSerializer>();
                 });
@@ -152,7 +153,7 @@
 
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
-                    transport.AccountRouting.AddAccount(DefaultConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()));
+                    transport.AccountRouting.AddAccount(DefaultConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient());
                 });
                 CustomEndpointName(ReceiverName);
             }
@@ -168,7 +169,7 @@
 
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
+                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
                 });
                 CustomEndpointName(ReceiverName);
             }

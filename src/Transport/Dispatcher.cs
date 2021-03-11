@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Concurrent;
@@ -16,28 +16,50 @@
 
     class Dispatcher : IMessageDispatcher
     {
-        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, NativeDelayDeliveryPersistence nativeDelayDeliveryPersistence, ISubscriptionStore subscriptionStore)
         {
+            this.subscriptionStore = subscriptionStore;
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
             this.serializer = serializer;
             this.nativeDelayDeliveryPersistence = nativeDelayDeliveryPersistence;
         }
 
-        public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken token = default)
+        public async Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken token = default)
         {
-            if (outgoingMessages.MulticastTransportOperations.Any())
+            int totalNumberOfOperations = outgoingMessages.UnicastTransportOperations.Count + outgoingMessages.MulticastTransportOperations.Count;
+
+            var unicastOperations = new HashSet<UnicastTransportOperation>(totalNumberOfOperations, MessageIdAndDestinationEqualityComparer.Instance);
+            unicastOperations.AddRange(outgoingMessages.UnicastTransportOperations);
+
+            foreach (var multicastTransportOperation in outgoingMessages.MulticastTransportOperations)
             {
-                throw new Exception("The Azure Storage Queue transport only supports unicast transport operations.");
+                unicastOperations.AddRange(await ConvertTo(multicastTransportOperation, token).ConfigureAwait(false));
             }
 
-            var sends = new List<Task>(outgoingMessages.UnicastTransportOperations.Count);
-            foreach (var unicastTransportOperation in outgoingMessages.UnicastTransportOperations)
+            var sends = new List<Task>(totalNumberOfOperations);
+            foreach (var unicastTransportOperation in unicastOperations)
             {
                 sends.Add(Send(unicastTransportOperation, token));
             }
 
-            return Task.WhenAll(sends);
+            await Task.WhenAll(sends).ConfigureAwait(false);
+        }
+
+        async Task<IEnumerable<UnicastTransportOperation>> ConvertTo(MulticastTransportOperation transportOperation,
+            CancellationToken cancellationToken)
+        {
+            var subscribers =
+                await subscriptionStore.GetSubscribers(transportOperation.MessageType, cancellationToken)
+                    .ConfigureAwait(false);
+
+            return from subscriber in subscribers
+                   select new UnicastTransportOperation(
+                       transportOperation.Message,
+                       subscriber,
+                       transportOperation.Properties,
+                       transportOperation.RequiredDispatchConsistency
+                   );
         }
 
         public async Task Send(UnicastTransportOperation operation, CancellationToken cancellationToken)
@@ -151,8 +173,49 @@
         readonly QueueAddressGenerator addressGenerator;
         readonly AzureStorageAddressingSettings addressing;
         readonly ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
+        readonly ISubscriptionStore subscriptionStore;
 
         static readonly TimeSpan CloudQueueMessageMaxTimeToLive = TimeSpan.FromDays(30);
         static readonly ILog logger = LogManager.GetLogger<Dispatcher>();
+
+        class MessageIdAndDestinationEqualityComparer : IEqualityComparer<UnicastTransportOperation>
+        {
+            public static MessageIdAndDestinationEqualityComparer Instance = new MessageIdAndDestinationEqualityComparer();
+
+            public bool Equals(UnicastTransportOperation x, UnicastTransportOperation y)
+            {
+                if (ReferenceEquals(x, y))
+                {
+                    return true;
+                }
+
+                if (x is null)
+                {
+                    return false;
+                }
+
+                if (y is null)
+                {
+                    return false;
+                }
+
+                if (x.GetType() != y.GetType())
+                {
+                    return false;
+                }
+
+                return x.Destination == y.Destination && Equals(x.Message.MessageId, y.Message.MessageId);
+            }
+
+            public int GetHashCode(UnicastTransportOperation obj)
+            {
+                unchecked
+                {
+                    int hashCode = obj.Destination != null ? obj.Destination.GetHashCode() : 0;
+                    hashCode = (hashCode * 397) ^ (obj.Message.MessageId != null ? obj.Message.MessageId.GetHashCode() : 0);
+                    return hashCode;
+                }
+            }
+        }
     }
 }

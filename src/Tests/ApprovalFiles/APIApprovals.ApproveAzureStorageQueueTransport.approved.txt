@@ -1,23 +1,32 @@
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo(@"NServiceBus.Transport.AzureStorageQueues.AcceptanceTests, PublicKey=00240000048000009400000006020000002400005253413100040000010001007f16e21368ff041183fab592d9e8ed37e7be355e93323147a1d29983d6e591b04282e4da0c9e18bd901e112c0033925eb7d7872c2f1706655891c5c9d57297994f707d16ee9a8f40d978f064ee1ffc73c0db3f4712691b23bf596f75130f4ec978cf78757ec034625a5f27e6bb50c618931ea49f6f628fd74271c32959efb1c5")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo(@"NServiceBus.Transport.AzureStorageQueues.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001007f16e21368ff041183fab592d9e8ed37e7be355e93323147a1d29983d6e591b04282e4da0c9e18bd901e112c0033925eb7d7872c2f1706655891c5c9d57297994f707d16ee9a8f40d978f064ee1ffc73c0db3f4712691b23bf596f75130f4ec978cf78757ec034625a5f27e6bb50c618931ea49f6f628fd74271c32959efb1c5")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo(@"NServiceBus.Transport.AzureStorageQueues.TransportTests, PublicKey=00240000048000009400000006020000002400005253413100040000010001007f16e21368ff041183fab592d9e8ed37e7be355e93323147a1d29983d6e591b04282e4da0c9e18bd901e112c0033925eb7d7872c2f1706655891c5c9d57297994f707d16ee9a8f40d978f064ee1ffc73c0db3f4712691b23bf596f75130f4ec978cf78757ec034625a5f27e6bb50c618931ea49f6f628fd74271c32959efb1c5")]
 namespace NServiceBus
 {
     public class AccountInfo
     {
-        public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
         public AccountInfo(string alias, string connectionString) { }
+        public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
         public string Alias { get; }
         public string ConnectionString { get; }
+        [System.Obsolete("Use `AddEndpoint(string endpointName, IEnumerable<Type> publishedEvents = null, s" +
+            "tring subscriptionTableName = null)` instead. The member currently throws a NotI" +
+            "mplementedException. Will be removed in version 11.0.0.", true)]
         public System.Collections.Generic.HashSet<string> RegisteredEndpoints { get; }
+        public NServiceBus.AccountInfo AddEndpoint(string endpointName, System.Collections.Generic.IEnumerable<System.Type> publishedEvents = null, string subscriptionTableName = null) { }
     }
     public class AccountRoutingSettings
     {
         public string DefaultAccountAlias { get; set; }
-        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient connectionClient) { }
+        [System.Obsolete("Use `AddAccount(string alias, QueueServiceClient queueServiceClient, CloudTableCl" +
+            "ient cloudTableClient)` instead. The member currently throws a NotImplementedExc" +
+            "eption. Will be removed in version 11.0.0.", true)]
+        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
         [System.Obsolete("Account aliases using connection strings have been deprecated. Use the AddAccount" +
             " overload that accepts a QueueServiceClient instance. Will be treated as an erro" +
             "r from version 11.0.0. Will be removed in version 12.0.0.", false)]
         public NServiceBus.AccountInfo AddAccount(string alias, string connectionString) { }
+        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
     }
     public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition, NServiceBus.Routing.IMessageDrivenSubscriptionTransport
     {
@@ -34,6 +43,7 @@ namespace NServiceBus
         public System.TimeSpan PeekInterval { get; set; }
         public System.Func<string, string> QueueNameSanitizer { get; set; }
         public int? ReceiverBatchSize { get; set; }
+        public NServiceBus.SubscriptionSettings Subscriptions { get; }
         public override System.Collections.Generic.IReadOnlyCollection<NServiceBus.TransportTransactionMode> GetSupportedTransactionModes() { }
         public override System.Threading.Tasks.Task<NServiceBus.Transport.TransportInfrastructure> Initialize(NServiceBus.Transport.HostSettings hostSettings, NServiceBus.Transport.ReceiveSettings[] receiversSettings, string[] sendingAddresses, System.Threading.CancellationToken token = default) { }
         public override string ToTransportAddress(NServiceBus.Transport.QueueAddress address) { }
@@ -126,10 +136,20 @@ namespace NServiceBus
             "ll be removed in version 12.0.0.", false)]
         public void UseTableName(string delayedMessagesTableName) { }
     }
+    public static class MessageDrivenPubSubCompatibilityModeConfiguration
+    {
+        public static NServiceBus.SubscriptionMigrationModeSettings EnableMessageDrivenPubSubCompatibilityMode(this NServiceBus.RoutingSettings routingSettings) { }
+    }
     public class NativeDelayedDeliverySettings
     {
         public string DelayedDeliveryPoisonQueue { get; set; }
         public string DelayedDeliveryTableName { get; set; }
+    }
+    public class SubscriptionSettings
+    {
+        public System.TimeSpan CacheInvalidationPeriod { get; set; }
+        public bool DisableCaching { get; set; }
+        public string SubscriptionTableName { get; set; }
     }
 }
 namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues

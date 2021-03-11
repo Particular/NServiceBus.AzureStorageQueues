@@ -4,9 +4,11 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using global::Azure.Storage.Queues;
+    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_configuring_account_names : NServiceBusAcceptanceTest
     {
@@ -23,7 +25,7 @@
             {
                 return Configure(transport =>
                 {
-                    transport.AccountRouting.AddAccount(Another, new QueueServiceClient(Testing.Utilities.GetEnvConfiguredConnectionString2()));
+                    transport.AccountRouting.AddAccount(Another, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
                 });
             });
             Assert.IsTrue(exception.Message.Contains("The mapping of storage accounts connection strings to aliases is enforced but the the alias for the default connection string isn't provided"), "Exception message is missing or incorrect");
@@ -35,7 +37,7 @@
             return Configure(transport =>
             {
                 transport.AccountRouting.DefaultAccountAlias = Default;
-                transport.AccountRouting.AddAccount(Another, new QueueServiceClient(Testing.Utilities.GetEnvConfiguredConnectionString2()));
+                transport.AccountRouting.AddAccount(Another, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
             });
         }
 
