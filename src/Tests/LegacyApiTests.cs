@@ -12,6 +12,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
         [Test]
         public void Legacy_api_shim_sets_corresponding_new_api_properties()
         {
+            var expectedConnectionString = "UseDevelopmentStorage=true";
             var expectedMessageInvisibleTime = TimeSpan.FromSeconds(42);
             var expectedPeekInterval = TimeSpan.FromMilliseconds(42);
             var expectedMaximumWaitTimeWhenIdle = TimeSpan.FromSeconds(42);
@@ -23,8 +24,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
             var expectedDefaultAccountAlias = "alias42";
 
             var config = new EndpointConfiguration("MyEndpoint");
-            var transport = config.UseTransport<AzureStorageQueueTransport>("UseDevelopmentStorage=true");
+            var transport = config.UseTransport<AzureStorageQueueTransport>();
 
+            transport.ConnectionString(expectedConnectionString);
             transport.MessageInvisibleTime(expectedMessageInvisibleTime);
             transport.PeekInterval(expectedPeekInterval);
             transport.MaximumWaitTimeWhenIdle(expectedMaximumWaitTimeWhenIdle);
