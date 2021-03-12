@@ -185,8 +185,6 @@ namespace NServiceBus
                 var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, Subscriptions.SubscriptionTableName, hostSettings.SetupInfrastructure)
                     .ConfigureAwait(false);
 
-                nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTable);
-
                 object subscriptionPersistenceCachingSection = new { IsEnabled = false };
 
                 subscriptionStore = new SubscriptionStore(azureStorageAddressing);
