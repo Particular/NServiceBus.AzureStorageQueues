@@ -195,6 +195,30 @@ namespace NServiceBus
         }
 
         /// <summary>
+        /// Sets the flag to disable or enable subscriptions caching.
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the AzureStorageQueueTransport Subscription property",
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> DisableCaching()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Cache subscriptions for a given <see cref="TimeSpan" />.
+        /// </summary>
+        [ObsoleteEx(
+            Message = "Configure the transport via the AzureStorageQueueTransport Subscription property",
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> CacheInvalidationPeriod(TimeSpan cacheInvalidationPeriod)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Sets the connection string to be use to connect to the Azure Storage Queue service.
         /// </summary>
         [ObsoleteEx(
