@@ -9,6 +9,7 @@
     using DelayedDelivery;
     using Features;
     using Logging;
+    using Microsoft.Azure.Cosmos.Table;
     using Performance.TimeToBeReceived;
     using Routing;
     using Serialization;
@@ -27,6 +28,15 @@
                 throw new Exception($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
             }
 
+            if (settings.HasSetting(WellKnownConfigurationKeys.PubSub.DisablePublishSubscribe))
+            {
+                OutboundRoutingPolicy = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
+            }
+            else
+            {
+                OutboundRoutingPolicy = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Multicast, OutboundRoutingType.Unicast);
+            }
+
             serializer = BuildSerializer(settings, out var userProvidedSerializer);
 
             settings.SetDefault(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, true);
@@ -37,21 +47,30 @@
                 settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
             }
 
-            if (!settings.TryGet<IProvideCloudTableClient>(out var cloudTableClientProvider))
+            if (!settings.TryGet(out cloudTableClientProvider))
             {
                 cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
             }
 
-            if (!settings.TryGet<IProvideBlobServiceClient>(out var blobServiceClientProvider))
+            if (!settings.TryGet(out blobServiceClientProvider))
             {
                 blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
+            }
+
+            if (!settings.TryGet(out queueServiceClientProvider))
+            {
+                queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
             }
 
             maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
             peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
             messageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime);
 
-            var nativeDelayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled();
+            addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
+
+            addressing = GetAddressing();
+
+            var delayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled();
 
             // This call mutates settings holder and should not be invoked more than once. This value is used for Diagnostics Section upon startup as well.
             var delayedDeliveryTableName = GetDelayedDeliveryTableName(settings);
@@ -60,17 +79,15 @@
                 cloudTableClientProvider,
                 blobServiceClientProvider,
                 delayedDeliveryTableName,
-                nativeDelayedDeliveryIsEnabled,
+                delayedDeliveryIsEnabled,
                 settings.ErrorQueueAddress(),
                 GetRequiredTransactionMode(),
                 maximumWaitTime,
                 peekInterval,
                 BuildDispatcher);
 
-            addressGenerator = new QueueAddressGenerator(settings.GetOrDefault<Func<string, string>>(WellKnownConfigurationKeys.QueueSanitizer));
-
             object delayedDelivery;
-            if (nativeDelayedDeliveryIsEnabled)
+            if (delayedDeliveryIsEnabled)
             {
                 delayedDelivery = new
                 {
@@ -88,6 +105,37 @@
                 };
             }
 
+            var subscriptionTableName = GetSubscriptionTableName(settings);
+
+            object publishSubscribe = new { NativePublishSubscribeIsEnabled = false, };
+            subscriptionStore = new NoOpSubscriptionStore();
+            if (PublishSubscribeIsEnabled())
+            {
+                object subscriptionPersistenceCachingSection = new { IsEnabled = false };
+
+                subscriptionStore = new SubscriptionStore(addressing);
+
+                if (settings.Get<bool>(WellKnownConfigurationKeys.PubSub.DisableCaching) == false)
+                {
+                    var cacheInvalidationPeriod = settings.Get<TimeSpan>(WellKnownConfigurationKeys.PubSub.CacheInvalidationPeriod);
+
+                    subscriptionPersistenceCachingSection = new
+                    {
+                        IsEnabled = true,
+                        CacheInvalidationPeriod = cacheInvalidationPeriod
+                    };
+
+                    subscriptionStore = new CachedSubscriptionStore(subscriptionStore, cacheInvalidationPeriod);
+                }
+
+                publishSubscribe = new
+                {
+                    NativePublishSubscribeIsEnabled = true,
+                    SubscriptionTableName = subscriptionTableName,
+                    Caching = subscriptionPersistenceCachingSection
+                };
+            }
+
             settings.AddStartupDiagnosticsSection("NServiceBus.Transport.AzureStorageQueues", new
             {
                 ConnectionMechanism = new
@@ -99,6 +147,7 @@
                 MessageWrapperSerializer = userProvidedSerializer ? "Custom" : "Default",
                 MessageEnvelopeUnwrapper = settings.HasExplicitValue<IMessageEnvelopeUnwrapper>() ? "Custom" : "Default",
                 DelayedDelivery = delayedDelivery,
+                PublishSubscribe = publishSubscribe,
                 TransactionMode = Enum.GetName(typeof(TransportTransactionMode), GetRequiredTransactionMode()),
                 ReceiverBatchSize = this.settings.TryGet(WellKnownConfigurationKeys.ReceiverBatchSize, out int receiverBatchSize) ? receiverBatchSize.ToString(CultureInfo.InvariantCulture) : "Default",
                 DegreeOfReceiveParallelism = this.settings.TryGet(WellKnownConfigurationKeys.DegreeOfReceiveParallelism, out int degreeOfReceiveParallelism) ? degreeOfReceiveParallelism.ToString(CultureInfo.InvariantCulture) : "Default",
@@ -118,7 +167,7 @@
         public override IEnumerable<Type> DeliveryConstraints => new List<Type> { typeof(DiscardIfNotReceivedBefore), typeof(NonDurableDelivery), typeof(DoNotDeliverBefore), typeof(DelayDeliveryWith) };
 
         public override TransportTransactionMode TransactionMode { get; } = TransportTransactionMode.ReceiveOnly;
-        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; } = new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
+        public override OutboundRoutingPolicy OutboundRoutingPolicy { get; }
 
         static string GetDelayedDeliveryTableName(SettingsHolder settings)
         {
@@ -132,6 +181,11 @@
             }
 
             return delayedDeliveryTableName;
+        }
+
+        static string GetSubscriptionTableName(ReadOnlySettings settings)
+        {
+            return settings.GetOrDefault<string>(WellKnownConfigurationKeys.PubSub.TableName);
         }
 
         static string GenerateDelayedDeliveryTableName(string endpointName)
@@ -149,14 +203,11 @@
 
         bool NativeDelayedDeliveryIsEnabled() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.DelayedDelivery.DisableDelayedDelivery) == false;
 
+        bool PublishSubscribeIsEnabled() => settings.GetOrDefault<bool>(WellKnownConfigurationKeys.PubSub.DisablePublishSubscribe) == false;
+
         public override TransportReceiveInfrastructure ConfigureReceiveInfrastructure()
         {
             Logger.Debug("Configuring receive infrastructure");
-
-            if (!settings.TryGet<IProvideQueueServiceClient>(out var queueServiceClientProvider))
-            {
-                queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
-            }
 
             return new TransportReceiveInfrastructure(
                 () =>
@@ -206,36 +257,26 @@
 
         Dispatcher BuildDispatcher()
         {
-            if (!settings.TryGet<IProvideQueueServiceClient>(out var queueServiceClientProvider))
-            {
-                queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
-            }
-
-            var addressing = GetAddressing(settings, queueServiceClientProvider);
-            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ShouldDispatch);
+            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ShouldDispatch, subscriptionStore);
         }
 
-        AzureStorageAddressingSettings GetAddressing(ReadOnlySettings settings, IProvideQueueServiceClient queueServiceClientProvider)
+        AzureStorageAddressingSettings GetAddressing()
         {
-            var addressing = settings.GetOrDefault<AzureStorageAddressingSettings>() ?? new AzureStorageAddressingSettings();
+            const string defaultAccountAlias = "";
 
             if (settings.TryGet<AccountConfigurations>(out var accounts) == false)
             {
                 accounts = new AccountConfigurations();
             }
 
-            const string defaultAccountAlias = "";
-
-            addressing.SetAddressGenerator(addressGenerator);
-            addressing.RegisterMapping(accounts.defaultAlias ?? defaultAccountAlias, accounts.mappings);
-            addressing.Add(new AccountInfo(defaultAccountAlias, queueServiceClientProvider.Client), false);
-
-            return addressing;
+            var localAccountInfo = new AccountInfo(defaultAccountAlias, queueServiceClientProvider.Client, cloudTableClientProvider.Client);
+            var addressingSettings = new AzureStorageAddressingSettings(addressGenerator, accounts.defaultAlias ?? defaultAccountAlias, GetSubscriptionTableName(settings), accounts.mappings, localAccountInfo);
+            return addressingSettings;
         }
 
         public override TransportSubscriptionInfrastructure ConfigureSubscriptionInfrastructure()
         {
-            throw new NotSupportedException("Azure Storage Queue transport doesn't support native pub sub");
+            return new TransportSubscriptionInfrastructure(() => new SubscriptionManager(subscriptionStore, settings.EndpointName(), settings.LocalAddress()));
         }
 
         public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance)
@@ -260,9 +301,19 @@
             return addressGenerator.GetQueueName(queue.ToString());
         }
 
-        public override Task Start()
+        public override async Task Start()
         {
-            return nativeDelayedDelivery.Start();
+            if (PublishSubscribeIsEnabled())
+            {
+                await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, GetSubscriptionTableName(settings)).ConfigureAwait(false);
+            }
+            await nativeDelayedDelivery.Start().ConfigureAwait(false);
+        }
+
+        static async Task EnsureSubscriptionTableExists(CloudTableClient cloudTableClient, string subscriptionTableName)
+        {
+            var subscriptionTable = cloudTableClient.GetTableReference(subscriptionTableName);
+            await subscriptionTable.CreateIfNotExistsAsync().ConfigureAwait(false);
         }
 
         public override Task Stop()
@@ -288,11 +339,27 @@
             return requestedTransportTransactionMode;
         }
 
+        static async Task<CloudTable> EnsureSubscriptionTableExists(CloudTableClient cloudTableClient, string subscriptionTableName, bool setupInfrastructure)
+        {
+            var subscriptionTable = cloudTableClient.GetTableReference(subscriptionTableName);
+            if (setupInfrastructure)
+            {
+                await subscriptionTable.CreateIfNotExistsAsync().ConfigureAwait(false);
+            }
+
+            return subscriptionTable;
+        }
+
         readonly ReadOnlySettings settings;
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
+        IProvideCloudTableClient cloudTableClientProvider;
+        IProvideBlobServiceClient blobServiceClientProvider;
+        IProvideQueueServiceClient queueServiceClientProvider;
         NativeDelayDelivery nativeDelayedDelivery;
         QueueAddressGenerator addressGenerator;
+        ISubscriptionStore subscriptionStore;
+        AzureStorageAddressingSettings addressing;
         readonly TimeSpan maximumWaitTime;
         readonly TimeSpan peekInterval;
         readonly TimeSpan messageInvisibleTime;
