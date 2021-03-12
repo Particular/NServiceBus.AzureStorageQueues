@@ -32,15 +32,6 @@
             }
         }
 
-        // TODO: adjust as needed
-        [ObsoleteEx(TreatAsErrorFromVersion = "10", RemoveInVersion = "11", ReplacementTypeOrMember = "AddAccount(string alias, QueueServiceClient queueServiceClient, CloudTableClient cloudTableClient)")]
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public AccountInfo AddAccount(string alias, QueueServiceClient queueServiceClient)
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
-        {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// Adds the mapping between the <paramref alias="alias" /> its <paramref alias="QueueServiceClient" /> and <paramref alias="CloudTableClient" />.
         /// </summary>

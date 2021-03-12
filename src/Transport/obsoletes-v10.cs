@@ -21,8 +21,8 @@ namespace NServiceBus
         /// Configures NServiceBus to use the given transport.
         /// </summary>
         [ObsoleteEx(
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0",
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0",
             ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)")]
         public static AzureStorageQueueTransportLegacySettings UseTransport<T>(this EndpointConfiguration config, string connectionString)
             where T : AzureStorageQueueTransport
@@ -41,8 +41,8 @@ namespace NServiceBus
     /// </summary>
     [ObsoleteEx(
         Message = "Configure the transport via the AzureStorageQueueTransport properties",
-        TreatAsErrorFromVersion = "11.0",
-        RemoveInVersion = "12.0")]
+        TreatAsErrorFromVersion = "12.0",
+        RemoveInVersion = "13.0")]
     public class AzureStorageQueueTransportLegacySettings : TransportSettings<AzureStorageQueueTransport>
     {
         internal AzureStorageQueueTransportLegacySettings(AzureStorageQueueTransport transport, RoutingSettings<AzureStorageQueueTransport> routing)
@@ -57,8 +57,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport MessageInvisibleTime property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public TransportSettings<AzureStorageQueueTransport> MessageInvisibleTime(TimeSpan value)
         {
             Transport.MessageInvisibleTime = value;
@@ -70,8 +70,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport PeekInterval property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public TransportSettings<AzureStorageQueueTransport> PeekInterval(TimeSpan value)
         {
             Transport.PeekInterval = value;
@@ -83,8 +83,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport MaximumWaitTimeWhenIdle property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public TransportSettings<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(TimeSpan value)
         {
             Transport.MaximumWaitTimeWhenIdle = value;
@@ -97,8 +97,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport QueueNameSanitizer property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public TransportSettings<AzureStorageQueueTransport> SanitizeQueueNamesWith(Func<string, string> queueNameSanitizer)
         {
             Transport.QueueNameSanitizer = queueNameSanitizer;
@@ -110,8 +110,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport ReceiverBatchSize property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public TransportSettings<AzureStorageQueueTransport> BatchSize(int value)
         {
             Transport.ReceiverBatchSize = value;
@@ -123,8 +123,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport DegreeOfReceiveParallelism property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public TransportSettings<AzureStorageQueueTransport> DegreeOfReceiveParallelism(int degreeOfReceiveParallelism)
         {
             Transport.DegreeOfReceiveParallelism = degreeOfReceiveParallelism;
@@ -136,8 +136,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport MessageWrapperSerializationDefinition property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public TransportSettings<AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>()
             where TSerializationDefinition : SerializationDefinition, new()
         {
@@ -150,8 +150,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport MessageUnwrapper property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public TransportSettings<AzureStorageQueueTransport> UnwrapMessagesWith(Func<QueueMessage, MessageWrapper> unwrapper)
         {
             Transport.MessageUnwrapper = unwrapper;
@@ -163,8 +163,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport instance constructor",
-            TreatAsErrorFromVersion = "10.0",
-            RemoveInVersion = "11.0")]
+            TreatAsErrorFromVersion = "11.0",
+            RemoveInVersion = "12.0")]
         public TransportSettings<AzureStorageQueueTransport> UseQueueServiceClient(QueueServiceClient queueServiceClient)
         {
             throw new NotImplementedException();
@@ -175,8 +175,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport instance constructor",
-            TreatAsErrorFromVersion = "10.0",
-            RemoveInVersion = "11.0")]
+            TreatAsErrorFromVersion = "11.0",
+            RemoveInVersion = "12.0")]
         public TransportSettings<AzureStorageQueueTransport> UseBlobServiceClient(BlobServiceClient blobServiceClient)
         {
             throw new NotImplementedException();
@@ -187,8 +187,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport instance constructor",
-            TreatAsErrorFromVersion = "10.0",
-            RemoveInVersion = "11.0")]
+            TreatAsErrorFromVersion = "11.0",
+            RemoveInVersion = "12.0")]
         public TransportSettings<AzureStorageQueueTransport> UseCloudTableClient(CloudTableClient cloudTableClient)
         {
             throw new NotImplementedException();
@@ -199,8 +199,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport connection string via the AzureStorageQueueTransport instance constructor",
-            TreatAsErrorFromVersion = "10.0",
-            RemoveInVersion = "11.0")]
+            TreatAsErrorFromVersion = "11.0",
+            RemoveInVersion = "12.0")]
         public TransportSettings<AzureStorageQueueTransport> ConnectionString(string connectionString)
         {
             throw new NotImplementedException();
@@ -211,8 +211,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport DelayedDelivery property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public DelayedDeliverySettings DelayedDelivery()
         {
             return new DelayedDeliverySettings(Transport.DelayedDelivery);
@@ -223,8 +223,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport AccountRouting property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public AccountRoutingSettings AccountRouting()
         {
             return Transport.AccountRouting;
@@ -235,8 +235,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport AccountRouting.DefaultAccountAlias property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public TransportSettings<AzureStorageQueueTransport> DefaultAccountAlias(string alias)
         {
             Transport.AccountRouting.DefaultAccountAlias = alias;
@@ -259,8 +259,8 @@ namespace NServiceBus
         /// <param name="delayedMessagesTableName">New table name.</param>
         [ObsoleteEx(
             Message = "Configure the transport via the AzureStorageQueueTransport DelayedDelivery.DelayedDeliveryTableName property",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public void UseTableName(string delayedMessagesTableName)
         {
             transportDelayedDelivery.DelayedDeliveryTableName = delayedMessagesTableName;
@@ -276,8 +276,8 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure delayed delivery support via the AzureStorageQueueTransport constructor.",
-            TreatAsErrorFromVersion = "10.0",
-            RemoveInVersion = "11.0")]
+            TreatAsErrorFromVersion = "11.0",
+            RemoveInVersion = "12.0")]
         public void DisableDelayedDelivery()
         {
             throw new NotImplementedException();
