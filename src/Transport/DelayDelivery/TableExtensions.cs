@@ -8,7 +8,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     static class TableExtensions
     {
-        public static async Task<IList<T>> QueryUpTo<T>(this CloudTable table, TableQuery<T> query, int maxItemsToReturn, CancellationToken cancellationToken)
+        public static async Task<IList<T>> QueryUpTo<T>(this CloudTable table, TableQuery<T> query, int maxItemsToReturn, CancellationToken cancellationToken = default)
             where T : ITableEntity, new()
         {
             var items = new List<T>();
@@ -34,7 +34,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return items;
         }
 
-        public static async Task<IList<T>> QueryAll<T>(this CloudTable table, TableQuery<T> query, CancellationToken cancellationToken)
+        public static async Task<IList<T>> QueryAll<T>(this CloudTable table, TableQuery<T> query, CancellationToken cancellationToken = default)
             where T : ITableEntity, new()
         {
             var items = new List<T>();

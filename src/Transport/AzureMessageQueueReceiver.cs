@@ -30,36 +30,36 @@ namespace NServiceBus.Transport.AzureStorageQueues
         /// </summary>
         public TimeSpan MessageInvisibleTime { get; }
 
-        public async Task Init(string inputQueueAddress, string errorQueueAddress)
+        public async Task Init(string inputQueueAddress, string errorQueueAddress, CancellationToken cancellationToken = default)
         {
-            inputQueue = await GetQueue(inputQueueAddress).ConfigureAwait(false);
-            errorQueue = await GetQueue(errorQueueAddress).ConfigureAwait(false);
+            inputQueue = await GetQueue(inputQueueAddress, cancellationToken).ConfigureAwait(false);
+            errorQueue = await GetQueue(errorQueueAddress, cancellationToken).ConfigureAwait(false);
 
             if (PurgeOnStartup)
             {
-                await inputQueue.ClearMessagesAsync().ConfigureAwait(false);
+                await inputQueue.ClearMessagesAsync(cancellationToken).ConfigureAwait(false);
             }
         }
 
-        async Task<QueueClient> GetQueue(string address)
+        async Task<QueueClient> GetQueue(string address, CancellationToken cancellationToken)
         {
             var name = addressGenerator.GetQueueName(address);
             var queue = queueServiceClient.GetQueueClient(name);
-            await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
+            await queue.CreateIfNotExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             return queue;
         }
 
-        internal async Task Receive(int batchSize, List<MessageRetrieved> receivedMessages, BackoffStrategy backoffStrategy, CancellationToken token)
+        internal async Task Receive(int batchSize, List<MessageRetrieved> receivedMessages, BackoffStrategy backoffStrategy, CancellationToken cancellationToken = default)
         {
             Logger.DebugFormat("Getting messages from queue with max batch size of {0}", batchSize);
-            QueueMessage[] rawMessages = await inputQueue.ReceiveMessagesAsync(batchSize, MessageInvisibleTime, token).ConfigureAwait(false);
+            QueueMessage[] rawMessages = await inputQueue.ReceiveMessagesAsync(batchSize, MessageInvisibleTime, cancellationToken).ConfigureAwait(false);
 
             foreach (var rawMessage in rawMessages)
             {
                 receivedMessages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue, errorQueue));
             }
 
-            await backoffStrategy.OnBatch(receivedMessages.Count, token).ConfigureAwait(false);
+            await backoffStrategy.OnBatch(receivedMessages.Count, cancellationToken).ConfigureAwait(false);
         }
 
         IMessageEnvelopeUnwrapper unwrapper;

@@ -27,7 +27,7 @@
         /// </summary>
         /// <exception cref="SerializationException">Thrown when the raw message could not be unwrapped. The raw message is automatically moved to the error queue before this exception is thrown.</exception>
         /// <returns>The actual message wrapper.</returns>
-        public async Task<MessageWrapper> Unwrap(CancellationToken cancellationToken)
+        public async Task<MessageWrapper> Unwrap(CancellationToken cancellationToken = default)
         {
             try
             {

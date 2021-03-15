@@ -19,7 +19,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.subscriptionStore = subscriptionStore;
         }
 
-        public Task SubscribeAll(MessageMetadata[] eventTypes, ContextBag context, CancellationToken cancellationToken)
+        public Task SubscribeAll(MessageMetadata[] eventTypes, ContextBag context, CancellationToken cancellationToken = default)
         {
             var tasks = new List<Task>(eventTypes.Length);
             foreach (var eventType in eventTypes)
@@ -29,7 +29,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return Task.WhenAll(tasks);
         }
 
-        public Task Unsubscribe(MessageMetadata eventType, ContextBag context, CancellationToken cancellationToken) =>
+        public Task Unsubscribe(MessageMetadata eventType, ContextBag context, CancellationToken cancellationToken = default) =>
             subscriptionStore.Unsubscribe(endpointName, eventType.MessageType, cancellationToken);
     }
 }

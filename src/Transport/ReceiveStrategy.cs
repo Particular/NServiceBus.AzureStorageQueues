@@ -9,7 +9,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     abstract class ReceiveStrategy
     {
-        public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken);
+        public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken = default);
 
         public static ReceiveStrategy BuildReceiveStrategy(OnMessage onMessage, OnError onError, TransportTransactionMode transactionMode, Action<string, Exception, CancellationToken> criticalErrorAction)
         {

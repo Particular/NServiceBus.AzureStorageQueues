@@ -17,7 +17,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.storageAddressingSettings = storageAddressingSettings;
         }
 
-        public async Task<IEnumerable<string>> GetSubscribers(Type eventType, CancellationToken cancellationToken)
+        public async Task<IEnumerable<string>> GetSubscribers(Type eventType, CancellationToken cancellationToken = default)
         {
             var topics = GetTopics(eventType);
 
@@ -54,7 +54,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return await table.QueryAll(query, cancellationToken).ConfigureAwait(false);
         }
 
-        public Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken)
+        public Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken = default)
         {
             (string alias, CloudTable table) = storageAddressingSettings.GetSubscriptionTable(eventType);
             var address = new QueueAddress(endpointAddress, alias);
@@ -68,7 +68,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return table.ExecuteAsync(operation, cancellationToken);
         }
 
-        public Task Unsubscribe(string endpointName, Type eventType, CancellationToken cancellationToken)
+        public Task Unsubscribe(string endpointName, Type eventType, CancellationToken cancellationToken = default)
         {
             (_, CloudTable table) = storageAddressingSettings.GetSubscriptionTable(eventType);
             var operation = TableOperation.Delete(new SubscriptionEntity

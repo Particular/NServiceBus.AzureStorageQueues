@@ -25,7 +25,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.nativeDelayDeliveryPersistence = nativeDelayDeliveryPersistence;
         }
 
-        public async Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken token = default)
+        public async Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, CancellationToken cancellationToken = default)
         {
             int totalNumberOfOperations = outgoingMessages.UnicastTransportOperations.Count + outgoingMessages.MulticastTransportOperations.Count;
 
@@ -34,13 +34,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             foreach (var multicastTransportOperation in outgoingMessages.MulticastTransportOperations)
             {
-                unicastOperations.AddRange(await ConvertTo(multicastTransportOperation, token).ConfigureAwait(false));
+                unicastOperations.AddRange(await ConvertTo(multicastTransportOperation, cancellationToken).ConfigureAwait(false));
             }
 
             var sends = new List<Task>(totalNumberOfOperations);
             foreach (var unicastTransportOperation in unicastOperations)
             {
-                sends.Add(Send(unicastTransportOperation, token));
+                sends.Add(Send(unicastTransportOperation, cancellationToken));
             }
 
             await Task.WhenAll(sends).ConfigureAwait(false);
@@ -62,7 +62,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                    );
         }
 
-        public async Task Send(UnicastTransportOperation operation, CancellationToken cancellationToken)
+        public async Task Send(UnicastTransportOperation operation, CancellationToken cancellationToken = default)
         {
             if (logger.IsDebugEnabled)
             {
@@ -85,7 +85,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             var queueName = addressGenerator.GetQueueName(queueAddress.QueueName);
             var sendQueue = queueServiceClient.GetQueueClient(queueName);
 
-            if (!await ExistsAsync(sendQueue).ConfigureAwait(false))
+            if (!await ExistsAsync(sendQueue, cancellationToken).ConfigureAwait(false))
             {
                 throw new QueueNotFoundException(queueAddress.ToString(), $"Destination queue '{queueAddress}' does not exist. This queue may have to be created manually.", null);
             }
@@ -119,10 +119,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
 
             var wrapper = BuildMessageWrapper(operation, queueAddress);
-            await Send(wrapper, sendQueue, timeToBeReceived ?? CloudQueueMessageMaxTimeToLive).ConfigureAwait(false);
+            await Send(wrapper, sendQueue, timeToBeReceived ?? CloudQueueMessageMaxTimeToLive, cancellationToken).ConfigureAwait(false);
         }
 
-        Task Send(MessageWrapper wrapper, QueueClient sendQueue, TimeSpan timeToBeReceived)
+        Task Send(MessageWrapper wrapper, QueueClient sendQueue, TimeSpan timeToBeReceived, CancellationToken cancellationToken)
         {
             string base64String;
 
@@ -134,15 +134,15 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 base64String = Convert.ToBase64String(bytes);
             }
 
-            return sendQueue.SendMessageAsync(base64String, timeToLive: timeToBeReceived);
+            return sendQueue.SendMessageAsync(base64String, timeToLive: timeToBeReceived, cancellationToken: cancellationToken);
         }
 
-        async Task<bool> ExistsAsync(QueueClient sendQueue)
+        async Task<bool> ExistsAsync(QueueClient sendQueue, CancellationToken cancellationToken)
         {
             var key = sendQueue.Uri.ToString();
             return await rememberExistence.GetOrAdd(key, async keyNotFound =>
              {
-                 var exists = await sendQueue.ExistsAsync().ConfigureAwait(false);
+                 var exists = await sendQueue.ExistsAsync(cancellationToken).ConfigureAwait(false);
                  return exists.Value;
              }).ConfigureAwait(false);
         }

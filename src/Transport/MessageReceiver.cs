@@ -38,27 +38,25 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public ISubscriptionManager Subscriptions { get; }
         public string Id { get; }
 
-        public Task Initialize(PushRuntimeSettings limitations, OnMessage onMessage, OnError onError, CancellationToken token = default)
+        public Task Initialize(PushRuntimeSettings limitations, OnMessage onMessage, OnError onError, CancellationToken cancellationToken = default)
         {
             this.limitations = limitations;
 
             Logger.Debug($"Initializing MessageReceiver {Id}");
 
-            messagePumpCancellationTokenSource = new CancellationTokenSource();
-            messageProcessingCancellationTokenSource = new CancellationTokenSource();
-
-            var cancellationTokenForCriticalErrorAction = messageProcessingCancellationTokenSource.Token;
-
-            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalErrorAction("Failed to receive message from Azure Storage Queue.", ex, cancellationTokenForCriticalErrorAction));
             receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, requiredTransactionMode, criticalErrorAction);
 
-            return azureMessageQueueReceiver.Init(receiveAddress, errorQueue);
+            return azureMessageQueueReceiver.Init(receiveAddress, errorQueue, cancellationToken);
         }
 
-        public Task StartReceive(CancellationToken token = default)
+        public Task StartReceive(CancellationToken cancellationToken = default)
         {
             maximumConcurrency = limitations.MaxConcurrency;
             concurrencyLimiter = new SemaphoreSlim(maximumConcurrency, maximumConcurrency);
+            messagePumpCancellationTokenSource = new CancellationTokenSource();
+            messageProcessingCancellationTokenSource = new CancellationTokenSource();
+
+            circuitBreaker = new RepeatedFailuresOverTimeCircuitBreaker("AzureStorageQueue-MessagePump", TimeToWaitBeforeTriggering, ex => criticalErrorAction("Failed to receive message from Azure Storage Queue.", ex, messageProcessingCancellationTokenSource.Token));
 
             Logger.DebugFormat($"Starting MessageReceiver {Id} with max concurrency: {0}", maximumConcurrency);
 
@@ -70,7 +68,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             {
                 var backoffStrategy = new BackoffStrategy(peekInterval, maximumWaitTime);
                 var batchSizeForReceive = receiverConfigurations[i].BatchSize;
-                messagePumpTasks[i] = Task.Run(() => ProcessMessages(batchSizeForReceive, backoffStrategy, messagePumpCancellationTokenSource.Token), token);
+                messagePumpTasks[i] = Task.Run(() => ProcessMessages(batchSizeForReceive, backoffStrategy, messagePumpCancellationTokenSource.Token), cancellationToken);
             }
 
             return Task.CompletedTask;
@@ -79,25 +77,27 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public async Task StopReceive(CancellationToken cancellationToken = default)
         {
             Logger.Debug($"Stopping MessageReceiver {Id}");
-            messagePumpCancellationTokenSource.Cancel();
-            cancellationToken.Register(() => messageProcessingCancellationTokenSource.Cancel());
+            messagePumpCancellationTokenSource?.Cancel();
 
-            while (concurrencyLimiter.CurrentCount != maximumConcurrency)
+            using (cancellationToken.Register(() => messageProcessingCancellationTokenSource?.Cancel()))
             {
-                // We are deliberately not forwarding the cancellation token here because
-                // this loop is our way of waiting for all pending messaging operations
-                // to participate in cooperative cancellation or not.
-                // We do not want to rudely abort them because the cancellation token has been cancelled.
-                // This allows us to preserve the same behaviour in v8 as in v7 in that,
-                // if CancellationToken.None is passed to this method,
-                // the method will only return when all in flight messages have been processed.
-                // If, on the other hand, a non-default CancellationToken is passed,
-                // all message processing operations have the opportunity to
-                // participate in cooperative cancellation.
-                // If we ever require a method of stopping the endpoint such that
-                // all message processing is cancelled immediately,
-                // we can provide that as a separate feature.
-                await Task.Delay(50, CancellationToken.None).ConfigureAwait(false);
+                while (concurrencyLimiter.CurrentCount != maximumConcurrency)
+                {
+                    // We are deliberately not forwarding the cancellation token here because
+                    // this loop is our way of waiting for all pending messaging operations
+                    // to participate in cooperative cancellation or not.
+                    // We do not want to rudely abort them because the cancellation token has been cancelled.
+                    // This allows us to preserve the same behaviour in v8 as in v7 in that,
+                    // if CancellationToken.None is passed to this method,
+                    // the method will only return when all in flight messages have been processed.
+                    // If, on the other hand, a non-default CancellationToken is passed,
+                    // all message processing operations have the opportunity to
+                    // participate in cooperative cancellation.
+                    // If we ever require a method of stopping the endpoint such that
+                    // all message processing is cancelled immediately,
+                    // we can provide that as a separate feature.
+                    await Task.Delay(50, CancellationToken.None).ConfigureAwait(false);
+                }
             }
 
             concurrencyLimiter.Dispose();
