@@ -40,15 +40,16 @@
             {
                 EndpointSetup<DefaultServer>(configuration =>
                 {
-                    var routing = configuration.UseTransport<AzureStorageQueueTransport>()
+                    var accountRouting = configuration.UseTransport<AzureStorageQueueTransport>()
                         .DefaultAccountAlias(DefaultAccountName)
                         .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
                         .AccountRouting();
 
-                    var anotherAccount = routing.AddAccount(AnotherAccountName, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
-                    anotherAccount.RegisteredEndpoints.Add(Conventions.EndpointNamingConvention(typeof(Receiver)));
+                    var anotherAccount = accountRouting.AddAccount(AnotherAccountName, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                    anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Receiver)));
 
-                    configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
+                    var routing = configuration.ConfigureTransport().Routing();
+                    routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
             }
         }

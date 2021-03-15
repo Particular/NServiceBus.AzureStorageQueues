@@ -13,9 +13,17 @@
 
         public static class DelayedDelivery
         {
-            public const string TableName = "Transport.AzureStorageQueue.TableName";
+            public const string TableName = "Transport.AzureStorageQueue.DelayedDeliveryTableName";
             public const string DisableDelayedDelivery = "Transport.AzureStorageQueue.DisableDelayedDelivery";
             public const string EnableTimeoutManager = "NServiceBus.TimeoutManager.EnableMigrationMode";
+        }
+
+        public static class PubSub
+        {
+            public const string DisablePublishSubscribe = "Transport.AzureStorageQueue.DisablePublishSubscribe";
+            public const string DisableCaching = "Transport.AzureStorageQueue.DisableCaching";
+            public const string TableName = "Transport.AzureStorageQueue.SubscriptionTableName";
+            public const string CacheInvalidationPeriod = "Transport.AzureStorageQueue.CacheInvalidationPeriod";
         }
     }
 }

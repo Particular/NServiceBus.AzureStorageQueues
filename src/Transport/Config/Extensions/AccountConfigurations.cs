@@ -3,6 +3,7 @@ namespace NServiceBus
     using System;
     using System.Collections.Generic;
     using global::Azure.Storage.Queues;
+    using Microsoft.Azure.Cosmos.Table;
 
     /// <summary>
     /// Holds mappings for used accounts.
@@ -19,17 +20,17 @@ namespace NServiceBus
             defaultAlias = alias;
         }
 
-        public AccountInfo Add(string alias, QueueServiceClient client)
+        public AccountInfo Add(string alias, QueueServiceClient queueServiceClient, CloudTableClient cloudTableClient)
         {
             if (!mappings.TryGetValue(alias, out var accountInfo))
             {
-                accountInfo = new AccountInfo(alias, client);
+                accountInfo = new AccountInfo(alias, queueServiceClient, cloudTableClient);
                 mappings.Add(alias, accountInfo);
             }
             return accountInfo;
         }
 
-        public AccountInfo Add(string alias, string connectionStringValue) => Add(alias, new QueueServiceClient(connectionStringValue));
+        public AccountInfo Add(string alias, string connectionStringValue) => Add(alias, new QueueServiceClient(connectionStringValue), CloudStorageAccount.Parse(connectionStringValue).CreateCloudTableClient());
 
         internal Dictionary<string, AccountInfo> mappings = new Dictionary<string, AccountInfo>();
         internal string defaultAlias;

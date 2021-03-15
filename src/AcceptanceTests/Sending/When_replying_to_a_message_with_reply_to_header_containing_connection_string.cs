@@ -4,10 +4,13 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Storage.Queues;
+    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
-    using NUnit.Framework;
     using NServiceBus.Pipeline;
+    using NUnit.Framework;
+    using Testing;
 
     public class When_replying_to_a_message_with_reply_to_header_containing_connection_string : NServiceBusAcceptanceTest
     {
@@ -49,11 +52,11 @@
                         .DefaultAccountAlias(SenderAlias)
                         .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
                         .AccountRouting()
-                        .AddAccount(ReceiverAlias, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                        .AddAccount(ReceiverAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
 
                     // Route MyMessage messages to the receiver endpoint configured to use receiver alias (on a different storage account)
                     var receiverEndpointName = Conventions.EndpointNamingConvention(typeof(Receiver));
-                    receiverAccountInfo.RegisteredEndpoints.Add(receiverEndpointName);
+                    receiverAccountInfo.AddEndpoint(receiverEndpointName);
                     configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
 
                     configuration.Pipeline.Register(typeof(VerifyReplyMessage), "Verifies the expected reply message has arrived.");

@@ -1,11 +1,12 @@
 namespace NServiceBus
 {
     using System;
+    using System.Text.RegularExpressions;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Configuration.AdvancedExtensibility;
-    using global::Azure.Storage.Queues.Models;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
     using Microsoft.Azure.Cosmos.Table;
     using Serialization;
     using Transport.AzureStorageQueues;
@@ -173,5 +174,58 @@ namespace NServiceBus
 
             return config;
         }
+
+        /// <summary>
+        /// Sets the flag to disable or enable subscriptions caching.
+        /// </summary>
+        public static TransportExtensions<AzureStorageQueueTransport> DisableCaching(this TransportExtensions<AzureStorageQueueTransport> config)
+        {
+            config.GetSettings().Set(WellKnownConfigurationKeys.PubSub.DisableCaching, true);
+
+            return config;
+        }
+
+        /// <summary>
+        /// Cache subscriptions for a given <see cref="TimeSpan" />.
+        /// </summary>
+        public static TransportExtensions<AzureStorageQueueTransport> CacheInvalidationPeriod(this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan cacheInvalidationPeriod)
+        {
+            Guard.AgainstNegativeAndZero(nameof(CacheInvalidationPeriod), cacheInvalidationPeriod);
+
+            config.GetSettings().Set(WellKnownConfigurationKeys.PubSub.CacheInvalidationPeriod, cacheInvalidationPeriod);
+
+            return config;
+        }
+
+        /// <summary>
+        /// Override the default table name used for storing subscriptions.
+        /// </summary>
+        /// <remarks>All endpoints in a given account need to agree on that name in order for them to be able to subscribe to and publish events.</remarks>
+        public static TransportExtensions<AzureStorageQueueTransport> SubscriptionTableName(this TransportExtensions<AzureStorageQueueTransport> config, string subscriptionTableName)
+        {
+            Guard.AgainstNullAndEmpty(nameof(SubscriptionTableName), subscriptionTableName);
+
+            if (SubscriptionTableNameRegex.IsMatch(subscriptionTableName) == false)
+            {
+                throw new ArgumentException($"{nameof(SubscriptionTableName)} must match the following regular expression '{SubscriptionTableNameRegex}'");
+            }
+
+            config.GetSettings().Set(WellKnownConfigurationKeys.PubSub.TableName, subscriptionTableName.ToLower());
+
+            return config;
+        }
+
+        /// <summary>
+        /// Enables compatibility with endpoints running on message-driven pub-sub
+        /// </summary>
+        public static TransportExtensions<AzureStorageQueueTransport> SubscriptionMigrationModeSettings(this TransportExtensions<AzureStorageQueueTransport> config)
+        {
+            config.GetSettings().SetDefault("NServiceBus.Subscriptions.EnableMigrationMode", true);
+
+            return config;
+        }
+
+        static readonly Regex SubscriptionTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
+        internal const string DefaultSubscriptionTableName = "subscriptions";
     }
 }

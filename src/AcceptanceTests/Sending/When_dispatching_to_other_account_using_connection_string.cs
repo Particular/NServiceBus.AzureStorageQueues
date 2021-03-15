@@ -7,6 +7,7 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_dispatching_to_other_account_using_connection_string : NServiceBusAcceptanceTest
     {
@@ -50,9 +51,8 @@
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
                         .DefaultAccountAlias(DefaultAccountName)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
-                        .AccountRouting()
-                        .AddAccount(Alias, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                        .ConnectionString(Utilities.GetEnvConfiguredConnectionString)
+                        .AccountRouting();
 
                     configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
@@ -67,7 +67,7 @@
                 {
                     configuration.UseTransport<AzureStorageQueueTransport>()
                         .DefaultAccountAlias(Alias)
-                        .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                        .ConnectionString(Utilities.GetEnvConfiguredConnectionString2);
                 });
             }
 

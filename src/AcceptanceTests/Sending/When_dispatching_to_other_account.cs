@@ -4,9 +4,12 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Storage.Queues;
+    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
+    using Testing;
 
     public class When_dispatching_to_another_account_using_alias : NServiceBusAcceptanceTest
     {
@@ -50,7 +53,7 @@
                         .DefaultAccountAlias(DefaultAccountName)
                         .ConnectionString(ConfigureEndpointAzureStorageQueueTransport.ConnectionString)
                         .AccountRouting()
-                        .AddAccount(Alias, ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                        .AddAccount(Alias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
 
                     configuration.ConfigureTransport().Routing().RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
                 });
