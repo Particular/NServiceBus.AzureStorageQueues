@@ -37,7 +37,7 @@ namespace NServiceBus
         public int? ReceiverBatchSize { get; set; }
         public NServiceBus.SubscriptionSettings Subscriptions { get; }
         public override System.Collections.Generic.IReadOnlyCollection<NServiceBus.TransportTransactionMode> GetSupportedTransactionModes() { }
-        public override System.Threading.Tasks.Task<NServiceBus.Transport.TransportInfrastructure> Initialize(NServiceBus.Transport.HostSettings hostSettings, NServiceBus.Transport.ReceiveSettings[] receiversSettings, string[] sendingAddresses, System.Threading.CancellationToken token = default) { }
+        public override System.Threading.Tasks.Task<NServiceBus.Transport.TransportInfrastructure> Initialize(NServiceBus.Transport.HostSettings hostSettings, NServiceBus.Transport.ReceiveSettings[] receiversSettings, string[] sendingAddresses, System.Threading.CancellationToken cancellationToken = default) { }
         public override string ToTransportAddress(NServiceBus.Transport.QueueAddress address) { }
     }
     public static class AzureStorageQueueTransportApiExtensions

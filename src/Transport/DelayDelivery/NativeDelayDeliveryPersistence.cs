@@ -64,7 +64,7 @@
             return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
         }
 
-        public Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken)
+        public Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken = default)
         {
             if (!enabled)
             {

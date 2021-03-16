@@ -15,7 +15,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.cacheFor = cacheFor;
         }
 
-        public Task<IEnumerable<string>> GetSubscribers(Type eventType, CancellationToken cancellationToken)
+        public Task<IEnumerable<string>> GetSubscribers(Type eventType, CancellationToken cancellationToken = default)
         {
             var cacheItem = Cache.GetOrAdd(eventType,
                 (Type type, (ISubscriptionStore store, CancellationToken token) args) => new CachedSubscriptions
@@ -33,13 +33,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return cacheItem.Subscribers;
         }
 
-        public async Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken)
+        public async Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken = default)
         {
             await inner.Subscribe(endpointName, endpointAddress, eventType, cancellationToken).ConfigureAwait(false);
             ClearForMessageType(eventType);
         }
 
-        public async Task Unsubscribe(string endpointName, Type eventType, CancellationToken cancellationToken)
+        public async Task Unsubscribe(string endpointName, Type eventType, CancellationToken cancellationToken = default)
         {
             await inner.Unsubscribe(endpointName, eventType, cancellationToken).ConfigureAwait(false);
             ClearForMessageType(eventType);

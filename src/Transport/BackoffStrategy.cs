@@ -30,7 +30,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             timeToDelayUntilNextPeek = TimeSpan.Zero;
         }
 
-        Task OnNothingProcessed(CancellationToken token = default)
+        Task OnNothingProcessed(CancellationToken cancellationToken)
         {
             Logger.Debug("Nothing processed, increasing delay until next peek");
 
@@ -43,10 +43,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 timeToDelayUntilNextPeek = maximumWaitTimeWhenIdle;
             }
 
-            return Task.Delay(timeToDelayUntilNextPeek, token);
+            return Task.Delay(timeToDelayUntilNextPeek, cancellationToken);
         }
 
-        public Task OnBatch(int receivedBatchSize, CancellationToken token = default)
+        public Task OnBatch(int receivedBatchSize, CancellationToken cancellationToken = default)
         {
             if (receivedBatchSize > 0)
             {
@@ -54,7 +54,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 return Task.CompletedTask;
             }
 
-            return OnNothingProcessed(token);
+            return OnNothingProcessed(cancellationToken);
         }
     }
 }

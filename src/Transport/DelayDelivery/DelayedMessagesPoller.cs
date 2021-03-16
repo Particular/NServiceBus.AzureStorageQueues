@@ -23,7 +23,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.backoffStrategy = backoffStrategy;
         }
 
-        public void Start(CancellationToken cancellationToken)
+        public void Start(CancellationToken cancellationToken = default)
         {
             Logger.Debug("Starting delayed message poller");
 
@@ -169,7 +169,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 }
 
                 // deliberately not using the dispatchers batching capability because every delayed message dispatch should be independent
-                dispatchOperations.Add(DeleteAndDispatch(cancellationToken, delayedMessage));
+                dispatchOperations.Add(DeleteAndDispatch(delayedMessage, cancellationToken));
             }
 
             if (delayedMessagesCount > 0)
@@ -180,7 +180,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             await backoffStrategy.OnBatch(delayedMessagesCount, cancellationToken).ConfigureAwait(false);
         }
 
-        async Task DeleteAndDispatch(CancellationToken cancellationToken, DelayedMessageEntity delayedMessage)
+        async Task DeleteAndDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
         {
             try
             {

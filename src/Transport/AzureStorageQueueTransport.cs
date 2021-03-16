@@ -110,7 +110,7 @@ namespace NServiceBus
         }
 
         /// <inheritdoc cref="Initialize"/>
-        public override async Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receiversSettings, string[] sendingAddresses, CancellationToken token = default)
+        public override async Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receiversSettings, string[] sendingAddresses, CancellationToken cancellationToken = default)
         {
             Guard.AgainstNull(nameof(hostSettings), hostSettings);
             Guard.AgainstNull(nameof(receiversSettings), receiversSettings);
@@ -127,7 +127,7 @@ namespace NServiceBus
                 }
 
                 var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, GetQueueAddressGenerator());
-                await queueCreator.CreateQueueIfNecessary(queuesToCreate)
+                await queueCreator.CreateQueueIfNecessary(queuesToCreate, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -149,7 +149,7 @@ namespace NServiceBus
                     DelayedDelivery.DelayedDeliveryTableName,
                     cloudTableClientProvider.Client,
                     hostSettings.SetupInfrastructure,
-                    token).ConfigureAwait(false);
+                    cancellationToken).ConfigureAwait(false);
 
                 nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTable);
 
@@ -182,7 +182,7 @@ namespace NServiceBus
             ISubscriptionStore subscriptionStore = new NoOpSubscriptionStore();
             if (SupportsPublishSubscribe)
             {
-                var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, Subscriptions.SubscriptionTableName, hostSettings.SetupInfrastructure)
+                var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, Subscriptions.SubscriptionTableName, hostSettings.SetupInfrastructure, cancellationToken)
                     .ConfigureAwait(false);
 
                 object subscriptionPersistenceCachingSection = new { IsEnabled = false };
@@ -225,7 +225,7 @@ namespace NServiceBus
                         nativeDelayedDeliveryErrorQueue,
                         TransportTransactionMode,
                         new BackoffStrategy(PeekInterval, MaximumWaitTimeWhenIdle));
-                nativeDelayedDeliveryProcessor.Start(token);
+                nativeDelayedDeliveryProcessor.Start(cancellationToken);
 
                 delayedDeliveryProcessorDiagnosticSection = new
                 {
@@ -305,12 +305,12 @@ namespace NServiceBus
             return delayedMessagesStorageTable;
         }
 
-        static async Task<CloudTable> EnsureSubscriptionTableExists(CloudTableClient cloudTableClient, string subscriptionTableName, bool setupInfrastructure)
+        static async Task<CloudTable> EnsureSubscriptionTableExists(CloudTableClient cloudTableClient, string subscriptionTableName, bool setupInfrastructure, CancellationToken cancellationToken)
         {
             var subscriptionTable = cloudTableClient.GetTableReference(subscriptionTableName);
             if (setupInfrastructure)
             {
-                await subscriptionTable.CreateIfNotExistsAsync().ConfigureAwait(false);
+                await subscriptionTable.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
             }
 
             return subscriptionTable;

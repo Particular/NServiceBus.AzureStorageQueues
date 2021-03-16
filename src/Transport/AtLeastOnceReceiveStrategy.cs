@@ -18,7 +18,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.criticalErrorAction = criticalErrorAction;
         }
 
-        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken)
+        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken = default)
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             var body = message.Body ?? new byte[0];
@@ -43,11 +43,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
             catch (Exception ex)
             {
                 var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
-                ErrorHandleResult errorHandleResult = ErrorHandleResult.RetryRequired;
 
                 try
                 {
-                    errorHandleResult = await onError(context, cancellationToken).ConfigureAwait(false);
+                    var errorHandleResult = await onError(context, cancellationToken).ConfigureAwait(false);
 
                     if (errorHandleResult == ErrorHandleResult.RetryRequired)
                     {
@@ -78,8 +77,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     {
                         Logger.Warn($"Failed to release visibility timeout after message with native ID `{message.Id}` failed to execute recoverability policy. The message will be available again when the visibility timeout expires.", e2);
                     }
-
-                    return;
                 }
             }
         }

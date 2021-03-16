@@ -3,7 +3,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
     using global::Azure.Storage.Queues;
     using Microsoft.Azure.Cosmos.Table;
@@ -40,11 +39,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             var subscriptionStore = new SubscriptionStore(settings);
 
-            await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherEvent), CancellationToken.None);
-            await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
+            await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherEvent));
+            await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent));
 
             var query = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "endpointName"));
-            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100, CancellationToken.None)).ToArray();
+            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100)).ToArray();
             var topics = entities.Select(x => x.PartitionKey).ToList();
 
             CollectionAssert.AreEqual(new[]
@@ -70,12 +69,12 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             var subscriptionStore = new SubscriptionStore(settings);
 
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherEvent), CancellationToken.None);
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEventPublishedOnAnotherAccount), CancellationToken.None);
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherEvent));
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherUnrelatedEvent));
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEventPublishedOnAnotherAccount));
 
             var query = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "subscriberEndpoint"));
-            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100, CancellationToken.None)).ToArray();
+            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100)).ToArray();
 
             CollectionAssert.AreEqual(new[]
             {
@@ -99,13 +98,13 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             var subscriptionStore = new SubscriptionStore(settings);
 
-            await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherEvent), CancellationToken.None);
-            await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
+            await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherEvent));
+            await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent));
 
-            await subscriptionStore.Unsubscribe("endpointName", typeof(MyOtherEvent), CancellationToken.None);
+            await subscriptionStore.Unsubscribe("endpointName", typeof(MyOtherEvent));
 
             var query = new TableQuery<TableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "endpointName"));
-            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100, CancellationToken.None)).ToArray();
+            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100)).ToArray();
             var topics = entities.Select(x => x.PartitionKey).ToList();
 
             CollectionAssert.AreEqual(new[]
@@ -127,14 +126,14 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             var subscriptionStore = new SubscriptionStore(settings);
 
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherEvent), CancellationToken.None);
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEventPublishedOnAnotherAccount), CancellationToken.None);
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherEvent));
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherUnrelatedEvent));
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEventPublishedOnAnotherAccount));
 
-            await subscriptionStore.Unsubscribe("subscriberEndpoint", typeof(MyEventPublishedOnAnotherAccount), CancellationToken.None);
+            await subscriptionStore.Unsubscribe("subscriberEndpoint", typeof(MyEventPublishedOnAnotherAccount));
 
             var query = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "subscriberEndpoint"));
-            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100, CancellationToken.None)).ToArray();
+            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100)).ToArray();
 
             CollectionAssert.AreEqual(new[]
             {
@@ -156,11 +155,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             var subscriptionStore = new SubscriptionStore(settings);
 
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherEvent), CancellationToken.None);
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherEvent));
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherUnrelatedEvent));
 
             var subcribers =
-                await subscriptionStore.GetSubscribers(typeof(MyOtherEvent), CancellationToken.None);
+                await subscriptionStore.GetSubscribers(typeof(MyOtherEvent));
 
             CollectionAssert.AreEqual(new[] { "subscriberAddress" }, subcribers);
         }
@@ -172,10 +171,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             var subscriptionStore = new SubscriptionStore(settings);
 
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEvent), CancellationToken.None);
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEvent));
 
             var subcribers =
-                await subscriptionStore.GetSubscribers(typeof(MyOtherEvent), CancellationToken.None);
+                await subscriptionStore.GetSubscribers(typeof(MyOtherEvent));
 
             CollectionAssert.AreEqual(new[] { "subscriberAddress" }, subcribers);
         }
@@ -193,12 +192,12 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             var subscriptionStore = new SubscriptionStore(settings);
 
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherEvent), CancellationToken.None);
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherUnrelatedEvent), CancellationToken.None);
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEventPublishedOnAnotherAccount), CancellationToken.None);
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherEvent));
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherUnrelatedEvent));
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEventPublishedOnAnotherAccount));
 
             var subcribers =
-                await subscriptionStore.GetSubscribers(typeof(MyEventPublishedOnAnotherAccount), CancellationToken.None);
+                await subscriptionStore.GetSubscribers(typeof(MyEventPublishedOnAnotherAccount));
 
             CollectionAssert.AreEqual(new[] { "subscriberAddress@subscriber" }, subcribers);
         }
@@ -216,10 +215,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             var subscriptionStore = new SubscriptionStore(settings);
 
-            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEvent), CancellationToken.None);
+            await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEvent));
 
             var subcribers =
-                await subscriptionStore.GetSubscribers(typeof(MyOtherEvent), CancellationToken.None);
+                await subscriptionStore.GetSubscribers(typeof(MyOtherEvent));
 
             CollectionAssert.AreEqual(new[] { "subscriberAddress@subscriber" }, subcribers);
         }

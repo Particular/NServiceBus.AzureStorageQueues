@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using global::Azure;
     using global::Azure.Storage.Queues;
@@ -17,19 +18,19 @@
             this.addressGenerator = addressGenerator;
         }
 
-        public Task CreateQueueIfNecessary(List<string> queuesToCreate)
+        public Task CreateQueueIfNecessary(List<string> queuesToCreate, CancellationToken cancellationToken = default)
         {
-            return Task.WhenAll(queuesToCreate.Select(CreateQueue));
+            return Task.WhenAll(queuesToCreate.Select(queue => CreateQueue(queue, cancellationToken)));
         }
 
-        async Task CreateQueue(string address)
+        async Task CreateQueue(string address, CancellationToken cancellationToken)
         {
             Logger.DebugFormat("Creating queue '{0}'", address);
             var queueName = addressGenerator.GetQueueName(address);
             try
             {
                 var queue = queueServiceClient.GetQueueClient(queueName);
-                await queue.CreateIfNotExistsAsync().ConfigureAwait(false);
+                await queue.CreateIfNotExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             }
             catch (RequestFailedException ex)
             {

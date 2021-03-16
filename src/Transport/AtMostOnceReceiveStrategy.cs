@@ -22,7 +22,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.criticalError = criticalError;
         }
 
-        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken)
+        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken = default)
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             await retrieved.Ack(cancellationToken).ConfigureAwait(false);

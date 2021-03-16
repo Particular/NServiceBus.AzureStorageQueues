@@ -14,7 +14,7 @@
             this.nativeDelayedDeliveryProcessor = nativeDelayedDeliveryProcessor;
         }
 
-        public override Task Shutdown(CancellationToken token = default)
+        public override Task Shutdown(CancellationToken cancellationToken = default)
         {
             return nativeDelayedDeliveryProcessor.Stop();
         }

@@ -75,7 +75,7 @@
             }
         }
 
-        async Task EnsureContainerExists(CancellationToken cancellationToken = default)
+        async Task EnsureContainerExists(CancellationToken cancellationToken)
         {
             if (created == false)
             {

@@ -7,8 +7,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     interface ISubscriptionStore
     {
-        Task<IEnumerable<string>> GetSubscribers(Type eventType, CancellationToken cancellationToken);
-        Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken);
-        Task Unsubscribe(string endpointName, Type eventType, CancellationToken cancellationToken);
+        Task<IEnumerable<string>> GetSubscribers(Type eventType, CancellationToken cancellationToken = default);
+        Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken = default);
+        Task Unsubscribe(string endpointName, Type eventType, CancellationToken cancellationToken = default);
     }
 }
