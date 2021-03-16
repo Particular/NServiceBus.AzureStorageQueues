@@ -215,16 +215,6 @@ namespace NServiceBus
             return config;
         }
 
-        /// <summary>
-        /// Enables compatibility with endpoints running on message-driven pub-sub
-        /// </summary>
-        public static TransportExtensions<AzureStorageQueueTransport> SubscriptionMigrationModeSettings(this TransportExtensions<AzureStorageQueueTransport> config)
-        {
-            config.GetSettings().SetDefault("NServiceBus.Subscriptions.EnableMigrationMode", true);
-
-            return config;
-        }
-
         static readonly Regex SubscriptionTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
         internal const string DefaultSubscriptionTableName = "subscriptions";
     }
