@@ -1,1 +1,2 @@
-
+exclusions:
+- GitVersion.yml
