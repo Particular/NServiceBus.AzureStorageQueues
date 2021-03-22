@@ -1,4 +1,5 @@
 #pragma warning disable 0618
+#pragma warning disable 0619
 namespace NServiceBus.Transport.AzureStorageQueues.Tests
 {
     using System;
@@ -52,4 +53,5 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
         }
     }
 }
+#pragma warning restore 0619
 #pragma warning restore 0618
