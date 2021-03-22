@@ -3,12 +3,12 @@
 namespace NServiceBus
 {
     using System;
+    using Azure.Transports.WindowsAzureStorageQueues;
+    using Configuration.AdvancedExtensibility;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using Microsoft.Azure.Cosmos.Table;
-    using Azure.Transports.WindowsAzureStorageQueues;
-    using Configuration.AdvancedExtensibility;
     using Serialization;
     using Settings;
 
@@ -24,10 +24,10 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0",
             ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)")]
-        public static AzureStorageQueueTransportLegacySettings UseTransport<T>(this EndpointConfiguration config, string connectionString)
+        public static AzureStorageQueueTransportLegacySettings UseTransport<T>(this EndpointConfiguration config)
             where T : AzureStorageQueueTransport
         {
-            var transport = new AzureStorageQueueTransport(connectionString);
+            var transport = new AzureStorageQueueTransport();
             var routing = config.UseTransport(transport);
             var settings = new AzureStorageQueueTransportLegacySettings(transport, routing);
 
@@ -223,11 +223,13 @@ namespace NServiceBus
         /// </summary>
         [ObsoleteEx(
             Message = "Configure the transport connection string via the AzureStorageQueueTransport instance constructor",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
         public TransportSettings<AzureStorageQueueTransport> ConnectionString(string connectionString)
         {
-            throw new NotImplementedException();
+            Transport.LegacyAPIShimSetConnectionString(connectionString);
+
+            return this;
         }
 
         /// <summary>

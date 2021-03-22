@@ -28,6 +28,24 @@ namespace NServiceBus
     /// </summary>
     public class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
     {
+        internal AzureStorageQueueTransport()
+            : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: true, supportsPublishSubscribe: false, supportsTTBR: true)
+        {
+
+        }
+
+        internal void LegacyAPIShimSetConnectionString(string connectionString)
+        {
+            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+
+            queueServiceClientProvider = new QueueServiceClientByConnectionString(connectionString);
+            if (SupportsDelayedDelivery)
+            {
+                blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(connectionString);
+                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
+            }
+        }
+
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue
         /// </summary>
@@ -112,6 +130,15 @@ namespace NServiceBus
         /// <inheritdoc cref="Initialize"/>
         public override async Task<TransportInfrastructure> Initialize(HostSettings hostSettings, ReceiveSettings[] receiversSettings, string[] sendingAddresses, CancellationToken cancellationToken = default)
         {
+            if (queueServiceClientProvider == null)
+            {
+                //legacy shim API guard: if queueServiceClientProvider is null it means that ConnectionString() has not been invoked
+                throw new Exception("Cannot initialize the transport without a valid connection " +
+                                    "string or a configured QueueServiceClient. If using the obsoleted API to " +
+                                    "configure the transport, make sure to call transportConfig.ConnectionString() " +
+                                    "to configure the client connection string.");
+            }
+
             Guard.AgainstNull(nameof(hostSettings), hostSettings);
             Guard.AgainstNull(nameof(receiversSettings), receiversSettings);
             Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
