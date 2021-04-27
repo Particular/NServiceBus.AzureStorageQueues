@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using global::Azure.Storage.Queues;
@@ -41,7 +42,7 @@
             });
         }
 
-        Task Configure(Action<AzureStorageQueueTransport> customizeTransport)
+        Task Configure(Action<AzureStorageQueueTransport> customizeTransport, CancellationToken cancellationToken = default)
         {
             return Scenario.Define<Context>()
                 .WithEndpoint<SendOnlyEndpoint>(cfg =>

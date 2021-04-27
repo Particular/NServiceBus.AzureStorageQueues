@@ -4,12 +4,13 @@
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using AcceptanceTesting.Customization;
     using Microsoft.Azure.Cosmos.Table;
+    using NServiceBus.AcceptanceTests;
+    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using Testing;
 
@@ -89,7 +90,7 @@
             Assert.True(context.WasCalled, "The message should have been moved to the error queue");
         }
 
-        async Task MoveBeforeNow(ITableEntity dte)
+        async Task MoveBeforeNow(ITableEntity dte, CancellationToken cancellationToken = default)
         {
             var earlier = DateTimeOffset.UtcNow - TimeSpan.FromMinutes(5);
 
@@ -101,13 +102,13 @@
             delayedMessageEntity.PartitionKey = earlier.ToString("yyyyMMddHH");
             delayedMessageEntity.RowKey = earlier.ToString("yyyyMMddHHmmss");
 
-            await delayedMessagesTable.ExecuteAsync(TableOperation.Delete(dte)).ConfigureAwait(false);
-            await delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity)).ConfigureAwait(false);
+            await delayedMessagesTable.ExecuteAsync(TableOperation.Delete(dte), cancellationToken).ConfigureAwait(false);
+            await delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), cancellationToken).ConfigureAwait(false);
         }
 
-        async Task<IList<DynamicTableEntity>> GetDelayedMessageEntities()
+        async Task<IList<DynamicTableEntity>> GetDelayedMessageEntities(CancellationToken cancellationToken = default)
         {
-            return (await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false)).Results;
+            return (await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null, cancellationToken).ConfigureAwait(false)).Results;
         }
 
         public class Context : ScenarioContext

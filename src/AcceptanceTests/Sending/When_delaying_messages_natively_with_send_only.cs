@@ -3,6 +3,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
@@ -52,7 +53,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             Assert.True(context.WasCalled, "The message should have been moved to the error queue");
         }
 
-        async Task MoveBeforeNow(ITableEntity dte)
+        async Task MoveBeforeNow(ITableEntity dte, CancellationToken cancellationToken = default)
         {
             var earlier = DateTimeOffset.UtcNow - TimeSpan.FromMinutes(5);
 
@@ -64,13 +65,13 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             delayedMessageEntity.PartitionKey = earlier.ToString("yyyyMMddHH");
             delayedMessageEntity.RowKey = earlier.ToString("yyyyMMddHHmmss");
 
-            await delayedMessagesTable.ExecuteAsync(TableOperation.Delete(dte)).ConfigureAwait(false);
-            await delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity)).ConfigureAwait(false);
+            await delayedMessagesTable.ExecuteAsync(TableOperation.Delete(dte), cancellationToken).ConfigureAwait(false);
+            await delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), cancellationToken).ConfigureAwait(false);
         }
 
-        async Task<IList<DynamicTableEntity>> GetDelayedMessageEntities()
+        async Task<IList<DynamicTableEntity>> GetDelayedMessageEntities(CancellationToken cancellationToken = default)
         {
-            return (await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false)).Results;
+            return (await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null, cancellationToken).ConfigureAwait(false)).Results;
         }
 
         CloudTable delayedMessagesTable;
