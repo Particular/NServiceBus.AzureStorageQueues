@@ -1,11 +1,9 @@
 ﻿using System.Threading.Tasks;
 using NServiceBus;
 using NServiceBus.AcceptanceTesting.Support;
-using NServiceBus.AcceptanceTests.Routing.MessageDrivenSubscriptions;
 using NServiceBus.Transport.AzureStorageQueues.AcceptanceTests;
 using NUnit.Framework;
 using Testing;
-using Conventions = NServiceBus.AcceptanceTesting.Customization.Conventions;
 
 public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTestExecution
 {
@@ -19,7 +17,9 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
     public ConfigureEndpointAzureStorageQueueTransport()
     { }
 
+#pragma warning disable PS0018 // A task-returning method should have a CancellationToken parameter unless it has a parameter implementing ICancellableContext
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
+#pragma warning restore PS0018 // A task-returning method should have a CancellationToken parameter unless it has a parameter implementing ICancellableContext
     {
         if (transport == null)
         {
@@ -53,7 +53,9 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
         return Task.CompletedTask;
     }
 
+#pragma warning disable PS0018 // A task-returning method should have a CancellationToken parameter unless it has a parameter implementing ICancellableContext
     public Task Cleanup()
+#pragma warning restore PS0018 // A task-returning method should have a CancellationToken parameter unless it has a parameter implementing ICancellableContext
     {
         return Task.CompletedTask;
     }

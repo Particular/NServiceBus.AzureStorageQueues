@@ -57,10 +57,10 @@
             poller.Start(cancellationToken);
         }
 
-        public Task Stop()
+        public Task Stop(CancellationToken cancellationToken = default)
         {
             Logger.Debug("Stopping delayed delivery poller");
-            return poller != null ? poller.Stop() : Task.CompletedTask;
+            return poller != null ? poller.Stop(cancellationToken) : Task.CompletedTask;
         }
 
         readonly Dispatcher dispatcher;

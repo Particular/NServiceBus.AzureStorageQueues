@@ -48,7 +48,7 @@
 
     public class TestingInMemorySubscriptionStorage : ISubscriptionStorage
     {
-        public Task Subscribe(Subscriber subscriber, MessageType messageType, ContextBag context, CancellationToken cancellationToken)
+        public Task Subscribe(Subscriber subscriber, MessageType messageType, ContextBag context, CancellationToken cancellationToken = default)
         {
             var dict = storage.GetOrAdd(messageType, type => new ConcurrentDictionary<string, Subscriber>(StringComparer.OrdinalIgnoreCase));
 
@@ -61,7 +61,7 @@
             return $"{subscriber.TransportAddress ?? ""}_{subscriber.Endpoint ?? ""}";
         }
 
-        public Task Unsubscribe(Subscriber subscriber, MessageType messageType, ContextBag context, CancellationToken cancellationToken)
+        public Task Unsubscribe(Subscriber subscriber, MessageType messageType, ContextBag context, CancellationToken cancellationToken = default)
         {
             if (storage.TryGetValue(messageType, out var dict))
             {
@@ -70,7 +70,7 @@
             return Task.FromResult(true);
         }
 
-        public Task<IEnumerable<Subscriber>> GetSubscriberAddressesForMessage(IEnumerable<MessageType> messageTypes, ContextBag context, CancellationToken cancellationToken)
+        public Task<IEnumerable<Subscriber>> GetSubscriberAddressesForMessage(IEnumerable<MessageType> messageTypes, ContextBag context, CancellationToken cancellationToken = default)
         {
             var result = new HashSet<Subscriber>();
             foreach (var m in messageTypes)

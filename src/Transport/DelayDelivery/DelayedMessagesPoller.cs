@@ -38,7 +38,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             delayedMessagesPollerTask = Task.Run(() => Poll(pollerCancellationTokenSource.Token), cancellationToken);
         }
 
-        public Task Stop()
+        public Task Stop(CancellationToken cancellationToken = default)
         {
             Logger.Debug("Stopping delayed message poller");
             pollerCancellationTokenSource.Cancel();

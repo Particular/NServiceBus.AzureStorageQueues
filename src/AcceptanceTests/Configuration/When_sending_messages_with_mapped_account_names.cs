@@ -15,6 +15,7 @@
     using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
     using Testing;
+    using System.Threading;
 
     public class When_sending_messages_with_mapped_account_names : NServiceBusAcceptanceTest
     {
@@ -53,7 +54,7 @@
             }
         }
 
-        async Task<Context> SendMessage<TReceiver>(string destination, string destinationConnectionString)
+        async Task<Context> SendMessage<TReceiver>(string destination, string destinationConnectionString, CancellationToken cancellationToken = default)
             where TReceiver : EndpointConfigurationBuilder
         {
             var ctx = await Scenario.Define<Context>()
@@ -74,13 +75,13 @@
             {
                 var receiverAuditQueue = new QueueClient(destinationConnectionString, AuditName);
 
-                QueueMessage[] rawMessages = await receiverAuditQueue.ReceiveMessagesAsync(1).ConfigureAwait(false);
+                QueueMessage[] rawMessages = await receiverAuditQueue.ReceiveMessagesAsync(1, cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (rawMessages.Length == 0)
                 {
                     Assert.Fail("No message in the audit queue to pick up.");
                 }
                 var rawMessage = rawMessages[0];
-                await receiverAuditQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt).ConfigureAwait(false);
+                await receiverAuditQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken).ConfigureAwait(false);
 
                 JToken message;
                 var bytes = Convert.FromBase64String(rawMessage.MessageText);

@@ -162,7 +162,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 catch (Exception ex)
                 {
                     Logger.Warn("Receiving from the queue failed", ex);
-                    await circuitBreaker.Failure(ex).ConfigureAwait(false);
+                    await circuitBreaker.Failure(ex, pumpCancellationToken).ConfigureAwait(false);
                 }
                 finally
                 {

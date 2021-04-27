@@ -16,7 +16,7 @@
 
         public override Task Shutdown(CancellationToken cancellationToken = default)
         {
-            return nativeDelayedDeliveryProcessor.Stop();
+            return nativeDelayedDeliveryProcessor.Stop(cancellationToken);
         }
 
         readonly NativeDelayedDeliveryProcessor nativeDelayedDeliveryProcessor;

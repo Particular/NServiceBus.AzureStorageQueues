@@ -2,10 +2,11 @@
 {
     using System;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Microsoft.Azure.Cosmos.Table;
     using AcceptanceTesting.Customization;
+    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -41,9 +42,9 @@
                 .Run());
         }
 
-        static async Task Send(IMessageSession messageSession)
+        static async Task Send(IMessageSession messageSession, CancellationToken cancellationToken = default)
         {
-            await messageSession.Send(new MyMessage()).ConfigureAwait(false);
+            await messageSession.Send(new MyMessage(), cancellationToken).ConfigureAwait(false);
 
             // https://github.com/Azure/azure-storage-net/issues/534
             EventHandler<RequestEventArgs> failRequests = (sender, e) => { throw new Exception("Fail on proxy"); };
@@ -51,7 +52,7 @@
 
             try
             {
-                await messageSession.Send(new MyMessage()).ConfigureAwait(false);
+                await messageSession.Send(new MyMessage(), cancellationToken).ConfigureAwait(false);
             }
             finally
             {
