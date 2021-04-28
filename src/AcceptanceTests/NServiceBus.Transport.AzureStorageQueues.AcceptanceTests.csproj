@@ -10,7 +10,7 @@
   <!-- Force latest versions -->
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Queues" Version="12.6.0" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.8.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.8.3" />
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
     <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="8.0.0-alpha.940" />
     <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.2.0" />
