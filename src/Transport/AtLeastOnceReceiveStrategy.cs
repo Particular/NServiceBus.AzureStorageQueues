@@ -30,9 +30,18 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 await retrieved.Ack(cancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException oce)
             {
                 // Graceful shutdown
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.Debug("Message processing cancelled. Rolling back transaction.", oce);
+                }
+                else
+                {
+                    Logger.Warn("OperationCanceledException thrown. Rolling back transaction.", oce);
+                }
+
             }
             catch (LeaseTimeoutException)
             {
@@ -61,9 +70,18 @@ namespace NServiceBus.Transport.AzureStorageQueues
                         await retrieved.Ack(cancellationToken).ConfigureAwait(false);
                     }
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException oce)
                 {
                     // Graceful shutdown
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        Logger.Debug("Message processing cancelled. Rolling back transaction.", oce);
+                    }
+                    else
+                    {
+                        Logger.Warn("OperationCanceledException thrown. Rolling back transaction.", oce);
+                    }
+
                 }
                 catch (Exception e)
                 {

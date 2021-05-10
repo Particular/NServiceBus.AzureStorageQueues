@@ -35,7 +35,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             // No need to pass token to run. to avoid when token is canceled the task changing into
             // the canceled state and when awaited while stopping rethrow the canceled exception
-            delayedMessagesPollerTask = Task.Run(() => Poll(pollerCancellationTokenSource.Token), cancellationToken);
+            delayedMessagesPollerTask = Task.Run(() => Poll(pollerCancellationTokenSource.Token), CancellationToken.None);
         }
 
         public Task Stop(CancellationToken cancellationToken = default)
@@ -54,8 +54,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     await InnerPoll(cancellationToken)
                         .ConfigureAwait(false);
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException ex)
                 {
+                    Logger.Debug("Message receiving cancelled.", ex);
                     // graceful shutdown
                 }
                 catch (Exception ex)

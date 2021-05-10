@@ -33,9 +33,18 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), contextBag);
                 await onMessage(pushContext, cancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException oce)
             {
                 // Graceful shutdown
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.Debug("Message processing cancelled. Rolling back transaction.", oce);
+                }
+                else
+                {
+                    Logger.Warn("OperationCanceledException thrown. Rolling back transaction.", oce);
+                }
+
             }
             catch (Exception ex)
             {
@@ -48,9 +57,18 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     // we only need to know whether to call criticalErrorAction or not
                     _ = await onError(context, cancellationToken).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException oce)
                 {
                     // Graceful shutdown
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        Logger.Debug("Message processing cancelled. Rolling back transaction.", oce);
+                    }
+                    else
+                    {
+                        Logger.Warn("OperationCanceledException thrown. Rolling back transaction.", oce);
+                    }
+
                 }
                 catch (Exception e)
                 {
