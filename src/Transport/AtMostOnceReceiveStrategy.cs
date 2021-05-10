@@ -38,11 +38,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 // Graceful shutdown
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    Logger.Debug("Message processing cancelled. Rolling back transaction.", oce);
+                    Logger.Debug("Message processing cancelled.", oce);
                 }
                 else
                 {
-                    Logger.Warn("OperationCanceledException thrown. Rolling back transaction.", oce);
+                    Logger.Warn("OperationCanceledException thrown.", oce);
                 }
 
             }
@@ -62,11 +62,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     // Graceful shutdown
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        Logger.Debug("Message processing cancelled. Rolling back transaction.", oce);
+                        Logger.Debug("Message processing cancelled.", oce);
                     }
                     else
                     {
-                        Logger.Warn("OperationCanceledException thrown. Rolling back transaction.", oce);
+                        Logger.Warn("OperationCanceledException thrown.", oce);
                     }
 
                 }
