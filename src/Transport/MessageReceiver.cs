@@ -68,7 +68,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             {
                 var backoffStrategy = new BackoffStrategy(peekInterval, maximumWaitTime);
                 var batchSizeForReceive = receiverConfigurations[i].BatchSize;
-                messagePumpTasks[i] = Task.Run(() => ProcessMessages(batchSizeForReceive, backoffStrategy, messagePumpCancellationTokenSource.Token), cancellationToken);
+                messagePumpTasks[i] = Task.Run(() => ProcessMessages(batchSizeForReceive, backoffStrategy, messagePumpCancellationTokenSource.Token), CancellationToken.None);
             }
 
             return Task.CompletedTask;
@@ -154,9 +154,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
                         _ = InnerReceive(message, messageProcessingCancellationTokenSource.Token);
                     }
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException ex)
                 {
                     // For graceful shutdown purposes
+                    Logger.Debug("Message receiving cancelled.", ex);
                     return;
                 }
                 catch (Exception ex)
@@ -183,8 +184,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 await receiveStrategy.Receive(retrieved, message, processingCancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) when (processingCancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException ex)
             {
+                Logger.Debug("Message receiving cancelled.", ex);
                 // Shutting down
             }
             catch (LeaseTimeoutException ex)
