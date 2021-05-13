@@ -110,5 +110,5 @@ jobs:
         if: ${{ always() }}
         shell: pwsh
         run: |
-          #$ignore = az storage account delete --resource-group GitHubActions-RG --name ${{ steps.infra.outputs.accountname1 }} --yes
-          #$ignore = az storage account delete --resource-group GitHubActions-RG --name ${{ steps.infra.outputs.accountname2 }} --yes
+          $ignore = az storage account delete --resource-group GitHubActions-RG --name ${{ steps.infra.outputs.accountname1 }} --yes
+          $ignore = az storage account delete --resource-group GitHubActions-RG --name ${{ steps.infra.outputs.accountname2 }} --yes
