@@ -4,21 +4,31 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using global::Newtonsoft.Json;
     using global::Newtonsoft.Json.Linq;
     using Microsoft.Azure.Cosmos.Table;
+    using NServiceBus.AcceptanceTests;
+    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
     using Testing;
-    using System.Threading;
 
     public class When_sending_messages_with_mapped_account_names : NServiceBusAcceptanceTest
     {
+        [OneTimeSetUp]
+        public async Task Setup()
+        {
+            // Set up receiver queue on 2nd storage account
+            var queueServiceClient = new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2());
+            _ = await queueServiceClient.CreateQueueAsync(ReceiverName);
+            _ = await queueServiceClient.CreateQueueAsync(AuditName);
+            _ = await queueServiceClient.CreateQueueAsync("error");
+        }
+
         [Test]
         public async Task Is_enabled_and_single_account_is_used_Should_audit_just_queue_name_without_account()
         {
@@ -147,15 +157,16 @@
         {
             public ReceiverUsingMappedConnectionStrings()
             {
-                EndpointSetup<DefaultPublisher>(cfg =>
+                var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2(), useNativeDelayedDeliveries: false);
+                EndpointSetup(new CustomizedServer(transport), (cfg, runDescriptor) =>
                 {
                     cfg.UseSerialization<NewtonsoftSerializer>();
                     cfg.AuditProcessedMessagesTo(AuditName);
 
-                    var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
                     transport.AccountRouting.AddAccount(DefaultConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient());
                 });
+
                 CustomEndpointName(ReceiverName);
             }
         }
