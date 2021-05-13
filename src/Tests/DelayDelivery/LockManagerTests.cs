@@ -1,7 +1,6 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues.Tests
 {
     using System;
-    using System.Threading;
     using System.Threading.Tasks;
     using AzureStorageQueues;
     using global::Azure.Storage.Blobs;
@@ -21,7 +20,8 @@
         [Test]
         public async Task WhenLeaseTaken_ThenItCanBeRenewedManyTimes()
         {
-            var manager = GetLockManager("a156ef954f9594f51b24392d0df5e7771");
+            string id = Guid.NewGuid().ToString("n");
+            var manager = GetLockManager(id);
 
             const int manyTimes = 10;
             for (var i = 0; i < manyTimes; i++)
@@ -33,7 +33,7 @@
         [Test]
         public async Task WhenLeaseTaken_ThenNoOtherLeaseCanBeTaken()
         {
-            const string id = "a99173943b8c74a00bff8fd1d850665fb";
+            string id = Guid.NewGuid().ToString("n");
             var manager1 = GetLockManager(id);
             var manager2 = GetLockManager(id);
 
@@ -44,7 +44,7 @@
         [Test]
         public async Task WhenLeaseReleased_ThenAnotherCanBeTaken()
         {
-            const string id = "a9a8ca20acb1f43b19415eba8997be991";
+            string id = Guid.NewGuid().ToString("n");
             var manager1 = GetLockManager(id);
             var manager2 = GetLockManager(id);
 
