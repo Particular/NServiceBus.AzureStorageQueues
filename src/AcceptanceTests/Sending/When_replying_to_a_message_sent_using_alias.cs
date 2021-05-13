@@ -10,6 +10,7 @@
     public class When_replying_to_a_message_sent_using_alias : NServiceBusAcceptanceTest
     {
         [Test]
+        [Ignore("Test does not actually work when using independent storage accounts")]
         public async Task Should_work()
         {
             var context = await Scenario.Define<Context>()
