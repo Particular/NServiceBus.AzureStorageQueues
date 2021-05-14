@@ -10,6 +10,7 @@
     public class When_dispatching_to_another_account_with_registered_endpoint : NServiceBusAcceptanceTest
     {
         [Test]
+        [Ignore("Test does not actually work when using independent storage accounts")]
         public async Task Account_mapped_should_be_respected()
         {
            var context = await Scenario.Define<Context>()
