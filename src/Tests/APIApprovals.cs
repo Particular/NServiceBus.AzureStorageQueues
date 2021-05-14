@@ -10,6 +10,6 @@ public class APIApprovals
     public void ApproveAzureStorageQueueTransport()
     {
         var publicApi = ApiGenerator.GeneratePublicApi(typeof(AzureStorageQueueTransport).Assembly, excludeAttributes: new[] { "System.Runtime.Versioning.TargetFrameworkAttribute", "System.Reflection.AssemblyMetadataAttribute" });
-        Approver.Verify(publicApi);
+        Approver.Verify(publicApi, s => s.Replace(@"\\r\\n", @"\\n"));
     }
 }
