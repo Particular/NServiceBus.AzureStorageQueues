@@ -5,6 +5,7 @@
     <AssemblyName>NServiceBus.Azure.Transports.WindowsAzureStorageQueues</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
+    <GitVersion_ToolArgments>$(GitVersion_ToolArgments) -nonormalize</GitVersion_ToolArgments>
   </PropertyGroup>
 
   <PropertyGroup>
