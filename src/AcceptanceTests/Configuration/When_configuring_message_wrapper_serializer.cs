@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Runtime.Serialization.Formatters.Binary;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Azure.Transports.WindowsAzureStorageQueues;
@@ -93,16 +92,16 @@
                     scenarioContext.SerializedWrapper = true;
                 }
 
-                var serializer = new System.Xml.Serialization.XmlSerializer(typeof(MessageWrapper));
-                serializer.Serialize(stream, message);
+                var serializer = new System.Runtime.Serialization.DataContractSerializer(typeof(MessageWrapper));
+                serializer.WriteObject(stream, message);
             }
 
             public object[] Deserialize(Stream stream, IList<Type> messageTypes = null)
             {
-                var serializer = new System.Xml.Serialization.XmlSerializer(typeof(MessageWrapper));
+                var serializer = new System.Runtime.Serialization.DataContractSerializer(typeof(MessageWrapper));
 
                 stream.Position = 0;
-                var message = serializer.Deserialize(stream);
+                var message = serializer.ReadObject(stream);
 
                 if (message is MessageWrapper)
                 {
