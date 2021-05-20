@@ -92,13 +92,13 @@
                     scenarioContext.SerializedWrapper = true;
                 }
 
-                var serializer = new BinaryFormatter();
+                var serializer = new System.Xml.Serialization.XmlSerializer(typeof(MessageWrapper));
                 serializer.Serialize(stream, message);
             }
 
             public object[] Deserialize(Stream stream, IList<Type> messageTypes = null)
             {
-                var serializer = new BinaryFormatter();
+                var serializer = new System.Xml.Serialization.XmlSerializer(typeof(MessageWrapper));
 
                 stream.Position = 0;
                 var message = serializer.Deserialize(stream);
