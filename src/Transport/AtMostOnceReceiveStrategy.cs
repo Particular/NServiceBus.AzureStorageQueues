@@ -33,20 +33,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), contextBag);
                 await onMessage(pushContext, cancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException oce)
-            {
-                // Graceful shutdown
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    Logger.Debug("Message processing cancelled.", oce);
-                }
-                else
-                {
-                    Logger.Warn("OperationCanceledException thrown.", oce);
-                }
-
-            }
-            catch (Exception ex)
+            catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
                 Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
 
@@ -57,22 +44,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     // we only need to know whether to call criticalErrorAction or not
                     _ = await onError(context, cancellationToken).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException oce)
+                catch (Exception onErrorEx) when (!onErrorEx.IsCausedBy(cancellationToken))
                 {
-                    // Graceful shutdown
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        Logger.Debug("Message processing cancelled.", oce);
-                    }
-                    else
-                    {
-                        Logger.Warn("OperationCanceledException thrown.", oce);
-                    }
-
-                }
-                catch (Exception e)
-                {
-                    criticalError($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e, cancellationToken);
+                    criticalError($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", onErrorEx, cancellationToken);
                 }
             }
         }

@@ -83,6 +83,8 @@
             Dictionary<string, string> propertiesFlattened;
             do
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var receiverAuditQueue = new QueueClient(destinationConnectionString, AuditName);
 
                 QueueMessage[] rawMessages = await receiverAuditQueue.ReceiveMessagesAsync(1, cancellationToken: cancellationToken).ConfigureAwait(false);

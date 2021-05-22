@@ -491,9 +491,9 @@ namespace NServiceBus
                     {
                         return value(entityName);
                     }
-                    catch (Exception exception)
+                    catch (Exception ex)
                     {
-                        throw new Exception("Registered queue name sanitizer threw an exception.", exception);
+                        throw new Exception("Registered queue name sanitizer threw an exception.", ex);
                     }
                 };
 

@@ -33,9 +33,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             pollerCancellationTokenSource = new CancellationTokenSource();
 
-            // No need to pass token to run. to avoid when token is canceled the task changing into
-            // the canceled state and when awaited while stopping rethrow the canceled exception
-            delayedMessagesPollerTask = Task.Run(() => Poll(pollerCancellationTokenSource.Token), CancellationToken.None);
+            // Task.Run() so the call returns immediately instead of waiting for the first await or return down the call stack
+            delayedMessagesPollerTask = Task.Run(() => PollAndSwallowExceptions(pollerCancellationTokenSource.Token), CancellationToken.None);
         }
 
         public Task Stop(CancellationToken cancellationToken = default)
@@ -45,19 +44,19 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return delayedMessagesPollerTask;
         }
 
-        async Task Poll(CancellationToken cancellationToken)
+        async Task PollAndSwallowExceptions(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    await InnerPoll(cancellationToken)
-                        .ConfigureAwait(false);
+                    await Poll(cancellationToken).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException ex)
+                catch (Exception ex) when (ex.IsCausedBy(cancellationToken))
                 {
-                    Logger.Debug("Message receiving cancelled.", ex);
-                    // graceful shutdown
+                    // private token, poller is being cancelled, log exception in case stack trace is ever needed for debugging
+                    Logger.Debug("Operation canceled while stopping delayed messages poller.", ex);
+                    break;
                 }
                 catch (Exception ex)
                 {
@@ -67,44 +66,39 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             try
             {
-                await lockManager.TryRelease(cancellationToken)
-                    .ConfigureAwait(false);
+                await lockManager.TryRelease(cancellationToken).ConfigureAwait(false);
             }
+#pragma warning disable PS0019 // Do not catch Exception without considering OperationCanceledException - handling is same for OCE
             catch
+#pragma warning restore PS0019 // Do not catch Exception without considering OperationCanceledException
             {
                 // ignored as lease will expire on its own
             }
         }
 
-        async Task InnerPoll(CancellationToken cancellationToken)
+        async Task Poll(CancellationToken cancellationToken)
         {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                if (Logger.IsDebugEnabled)
-                {
-                    Logger.Debug("Checking for delayed messages");
-                }
+            Logger.Debug("Checking for delayed messages");
 
-                if (await lockManager.TryLockOrRenew(cancellationToken)
-                    .ConfigureAwait(false))
+            if (await lockManager.TryLockOrRenew(cancellationToken)
+                .ConfigureAwait(false))
+            {
+                try
                 {
-                    try
-                    {
-                        await SpinOnce(cancellationToken)
-                            .ConfigureAwait(false);
-                    }
-                    catch (Exception ex) when (!(ex is OperationCanceledException))
-                    {
-                        Logger.Warn("Failed at spinning the poller", ex);
-                        await BackoffOnError(cancellationToken)
-                            .ConfigureAwait(false);
-                    }
+                    await SpinOnce(cancellationToken)
+                        .ConfigureAwait(false);
                 }
-                else
+                catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
                 {
+                    Logger.Warn("Failed at spinning the poller", ex);
                     await BackoffOnError(cancellationToken)
                         .ConfigureAwait(false);
                 }
+            }
+            else
+            {
+                await BackoffOnError(cancellationToken)
+                    .ConfigureAwait(false);
             }
         }
 
@@ -122,15 +116,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
         async Task SpinOnce(CancellationToken cancellationToken)
         {
             var now = DateTimeOffset.UtcNow;
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
 
-            if (Logger.IsDebugEnabled)
-            {
-                Logger.DebugFormat("Polling for delayed messages at {0}.", now);
-            }
+            Logger.Debug($"Polling for delayed messages at {now}.");
 
             var query = new TableQuery<DelayedMessageEntity>
             {
@@ -151,10 +138,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             var dispatchOperations = new List<Task>(delayedMessagesCount);
             foreach (var delayedMessage in delayedMessages)
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return;
-                }
+                cancellationToken.ThrowIfCancellationRequested();
 
                 // only allocate if needed
                 stopwatch = stopwatch ?? Stopwatch.StartNew();
@@ -200,12 +184,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
                 }
             }
-            catch (Exception exception)
+            catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
                 // just log and move on with the rest
                 Logger.Warn(
                     $"Failed at dispatching the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'",
-                    exception);
+                    ex);
             }
         }
 
@@ -217,14 +201,15 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
 
             var operation = delayedMessage.GetOperation();
+
             try
             {
                 await dispatcher.Send(operation, cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception exception)
+            catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
                 // if send fails for any reason
-                Logger.Warn($"Failed to send the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'", exception);
+                Logger.Warn($"Failed to send the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'", ex);
                 await dispatcher.Send(CreateOperationForErrorQueue(operation), cancellationToken).ConfigureAwait(false);
             }
         }
@@ -236,16 +221,18 @@ namespace NServiceBus.Transport.AzureStorageQueues
         }
 
         const int DelayedMessagesProcessedAtOnce = 50;
+
         static readonly TimeSpan LeaseLength = TimeSpan.FromSeconds(15);
         static readonly TimeSpan HalfOfLeaseLength = TimeSpan.FromTicks(LeaseLength.Ticks / 2);
-        static ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
+        static readonly ILog Logger = LogManager.GetLogger<DelayedMessagesPoller>();
 
         readonly BlobServiceClient blobServiceClient;
         readonly Dispatcher dispatcher;
         readonly BackoffStrategy backoffStrategy;
         readonly bool isAtMostOnce;
         readonly string errorQueueAddress;
-        CloudTable delayedDeliveryTable;
+        readonly CloudTable delayedDeliveryTable;
+
         LockManager lockManager;
         Task delayedMessagesPollerTask;
         CancellationTokenSource pollerCancellationTokenSource;
