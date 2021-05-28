@@ -16,6 +16,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             do
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var seg = await table.ExecuteQuerySegmentedAsync(query, token, null, null, cancellationToken).ConfigureAwait(false);
                 token = seg.ContinuationToken;
 
@@ -29,7 +31,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     items.AddRange(seg);
                 }
             }
-            while (token != null && !cancellationToken.IsCancellationRequested && items.Count < maxItemsToReturn);
+            while (token != null && items.Count < maxItemsToReturn);
 
             return items;
         }
@@ -42,11 +44,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             do
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var seg = await table.ExecuteQuerySegmentedAsync(query, token, null, null, cancellationToken).ConfigureAwait(false);
                 token = seg.ContinuationToken;
                 items.AddRange(seg);
             }
-            while (token != null && !cancellationToken.IsCancellationRequested);
+            while (token != null);
 
             return items;
         }

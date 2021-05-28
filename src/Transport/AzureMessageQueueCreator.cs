@@ -47,7 +47,7 @@
                 // TODO: should we throw with Message or Message+ErrorCode
                 throw new RequestFailedException($"Failed to create queue: {queueName}, because {ex.Status}-{ex.Message}.", ex);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
                 throw new RequestFailedException($"Failed to create queue: {queueName}, because {ex.Message}.", ex);
             }

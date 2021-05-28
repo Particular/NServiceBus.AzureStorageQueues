@@ -30,26 +30,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 await retrieved.Ack(cancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException oce)
-            {
-                // Graceful shutdown
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    Logger.Debug("Message processing cancelled.", oce);
-                }
-                else
-                {
-                    Logger.Warn("OperationCanceledException thrown.", oce);
-                }
-
-            }
             catch (LeaseTimeoutException)
             {
                 // The lease has expired and cannot be used any longer to Ack or Nack the message.
                 // see original issue: https://github.com/Azure/azure-storage-net/issues/285
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
                 var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
 
@@ -70,30 +57,17 @@ namespace NServiceBus.Transport.AzureStorageQueues
                         await retrieved.Ack(cancellationToken).ConfigureAwait(false);
                     }
                 }
-                catch (OperationCanceledException oce)
+                catch (Exception onErrorEx) when (!onErrorEx.IsCausedBy(cancellationToken))
                 {
-                    // Graceful shutdown
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        Logger.Debug("Message processing cancelled.", oce);
-                    }
-                    else
-                    {
-                        Logger.Warn("OperationCanceledException thrown.", oce);
-                    }
-
-                }
-                catch (Exception e)
-                {
-                    criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e, cancellationToken);
+                    criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", onErrorEx, cancellationToken);
 
                     try
                     {
                         await retrieved.Nack(cancellationToken).ConfigureAwait(false);
                     }
-                    catch (Exception e2)
+                    catch (Exception nackEx) when (!nackEx.IsCausedBy(cancellationToken))
                     {
-                        Logger.Warn($"Failed to release visibility timeout after message with native ID `{message.Id}` failed to execute recoverability policy. The message will be available again when the visibility timeout expires.", e2);
+                        Logger.Warn($"Failed to release visibility timeout after message with native ID `{message.Id}` failed to execute recoverability policy. The message will be available again when the visibility timeout expires.", nackEx);
                     }
                 }
             }
