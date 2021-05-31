@@ -45,7 +45,7 @@
                 Logger.WarnFormat("The circuit breaker for {0} is now in the armed state", name);
             }
 
-            return Task.Delay(TimeSpan.FromSeconds(1), CancellationToken.None);
+            return Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
         }
 
         void CircuitBreakerTriggered(object state)
