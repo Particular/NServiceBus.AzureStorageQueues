@@ -54,7 +54,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 }
                 catch (Exception ex) when (ex.IsCausedBy(cancellationToken))
                 {
-                    // private token, poller is being cancelled, log exception in case stack trace is ever needed for debugging
+                    // private token, poller is being canceled, log exception in case stack trace is ever needed for debugging
                     Logger.Debug("Operation canceled while stopping delayed messages poller.", ex);
                     break;
                 }
