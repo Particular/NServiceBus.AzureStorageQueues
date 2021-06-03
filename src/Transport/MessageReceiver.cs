@@ -123,7 +123,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 }
                 catch (Exception ex) when (ex.IsCausedBy(pumpCancellationToken))
                 {
-                    // private token, receiver is being cancelled, log exception in case stack trace is ever needed for debugging
+                    // private token, receiver is being canceled, log exception in case stack trace is ever needed for debugging
                     Logger.Debug("Operation canceled while stopping message receiver.", ex);
                     break;
                 }
@@ -148,8 +148,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
 #pragma warning disable PS0021 // Highlight when a try block passes multiple cancellation tokens - justification:
                 // The message processing cancellation token is used for processing,
-                // since we only want that to be cancelled when the public token passed to Stop() is cancelled.
-                // The message pump token is being used elsewhere, because we want those operations to be cancelled as soon as Stop() is called.
+                // since we only want that to be canceled when the public token passed to Stop() is canceled.
+                // The message pump token is being used elsewhere, because we want those operations to be canceled as soon as Stop() is called.
                 // The catch clause is correctly filtered on the message pump cancellation token.
                 try
 #pragma warning restore PS0021 // Highlight when a try block passes multiple cancellation tokens
