@@ -79,7 +79,7 @@
         {
             if (created == false)
             {
-                await containerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer, null, null, cancellationToken).ConfigureAwait(false);
+                await containerClient.CreateIfNotExistsAsync(PublicAccessType.None, null, null, cancellationToken).ConfigureAwait(false);
                 created = true;
             }
         }
