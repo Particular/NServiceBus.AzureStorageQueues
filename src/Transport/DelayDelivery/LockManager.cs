@@ -33,7 +33,7 @@
                     return true;
                 }
                 catch (StorageException exception)
-                    when (exception.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict)
+                    when (exception.RequestInformation.HttpStatusCode == (int)HttpStatusCode.Conflict)
                 {
                     // someone else raced for the lease and got it
                     return false;
@@ -45,7 +45,7 @@
                 return true;
             }
             catch (StorageException exception)
-                when (exception.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict)
+                when (exception.RequestInformation.HttpStatusCode == (int)HttpStatusCode.Conflict)
             {
                 // someone else raced for the lease and got it so we have to try to re-acquire it
                 lease = null;
@@ -77,7 +77,7 @@
         {
             if (created == false)
             {
-                await container.CreateIfNotExistsAsync(BlobContainerPublicAccessType.Container, null,null, cancellationToken).ConfigureAwait(false);
+                await container.CreateIfNotExistsAsync(BlobContainerPublicAccessType.Off, null, null, cancellationToken).ConfigureAwait(false);
                 created = true;
             }
         }
