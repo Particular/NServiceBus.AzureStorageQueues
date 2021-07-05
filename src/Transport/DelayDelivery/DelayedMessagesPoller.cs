@@ -5,10 +5,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
+    using Faults;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Blobs.Specialized;
     using Logging;
     using Microsoft.Azure.Cosmos.Table;
+    using NServiceBus.AzureStorageQueues.Utils;
     using Transport;
 
     class DelayedMessagesPoller
@@ -210,13 +212,14 @@ namespace NServiceBus.Transport.AzureStorageQueues
             {
                 // if send fails for any reason
                 Logger.Warn($"Failed to send the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'", ex);
-                await dispatcher.Send(CreateOperationForErrorQueue(operation), cancellationToken).ConfigureAwait(false);
+                await dispatcher.Send(CreateOperationForErrorQueue(operation, ex), cancellationToken).ConfigureAwait(false);
             }
         }
 
-        UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
+        UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation, Exception exception)
         {
-            //TODO does this need to set the FailedQ header and the failure reason?
+            ExceptionHeaderHelper.SetExceptionHeaders(operation.Message.Headers, exception);
+            operation.Message.Headers.Add(FaultsHeaderKeys.FailedQ, operation.Destination);
             return new UnicastTransportOperation(operation.Message, errorQueueAddress, new DispatchProperties(), operation.RequiredDispatchConsistency);
         }
 
