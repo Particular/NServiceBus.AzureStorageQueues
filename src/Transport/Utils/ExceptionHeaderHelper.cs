@@ -1,5 +1,6 @@
 ﻿namespace NServiceBus.AzureStorageQueues.Utils
 {
+    using NServiceBus;
     using System;
     using System.Collections;
     using System.Collections.Generic;
@@ -19,7 +20,7 @@
             headers["NServiceBus.ExceptionInfo.Message"] = e.GetMessage().Truncate(16384);
             headers["NServiceBus.ExceptionInfo.Source"] = e.Source;
             headers["NServiceBus.ExceptionInfo.StackTrace"] = e.ToString();
-            headers["NServiceBus.TimeOfFailure"] = DateTimeOffsetHelper.ToWireFormattedString(DateTimeOffset.UtcNow);
+            headers["NServiceBus.TimeOfFailure"] = DateTimeExtensions.ToWireFormattedString(DateTime.UtcNow);
 
             foreach (DictionaryEntry entry in e.Data)
             {

@@ -218,7 +218,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             ExceptionHeaderHelper.SetExceptionHeaders(operation.Message.Headers, exception);
             operation.Message.Headers.Add(FaultsHeaderKeys.FailedQ, operation.Destination);
-            return new UnicastTransportOperation(operation.Message, errorQueueAddress, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
+            return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
         }
     }
 }
