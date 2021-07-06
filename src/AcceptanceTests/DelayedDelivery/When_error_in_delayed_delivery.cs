@@ -88,7 +88,7 @@
                 {
                     scenarioContext.Headers = context.MessageHeaders;
                     scenarioContext.IsDone = true;
-                    return TaskEx.CompletedTask;
+                    return Task.FromResult(0);
                 }
             }
         }
