@@ -4,10 +4,12 @@
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
+    using Faults;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Blobs.Specialized;
     using Logging;
     using Microsoft.Azure.Cosmos.Table;
+    using NServiceBus.AzureStorageQueues.Utils;
     using Transport;
 
     class DelayedMessagesPoller
@@ -208,12 +210,14 @@
             {
                 // if send fails for any reason
                 Logger.Warn($"Failed to send the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'", exception);
-                await dispatcher.Send(CreateOperationForErrorQueue(operation), cancellationToken).ConfigureAwait(false);
+                await dispatcher.Send(CreateOperationForErrorQueue(operation, exception), cancellationToken).ConfigureAwait(false);
             }
         }
 
-        UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation)
+        UnicastTransportOperation CreateOperationForErrorQueue(UnicastTransportOperation operation, Exception exception)
         {
+            ExceptionHeaderHelper.SetExceptionHeaders(operation.Message.Headers, exception);
+            operation.Message.Headers.Add(FaultsHeaderKeys.FailedQ, operation.Destination);
             return new UnicastTransportOperation(operation.Message, errorQueue, operation.RequiredDispatchConsistency, operation.DeliveryConstraints);
         }
     }
