@@ -1,4 +1,4 @@
-namespace NServiceBus
+namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Threading;

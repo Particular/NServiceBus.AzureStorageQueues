@@ -96,12 +96,15 @@
                 serializer.WriteObject(stream, message);
             }
 
-            public object[] Deserialize(Stream stream, IList<Type> messageTypes = null)
+            public object[] Deserialize(ReadOnlyMemory<byte> body, IList<Type> messageTypes = null)
             {
                 var serializer = new System.Runtime.Serialization.DataContractSerializer(typeof(MessageWrapper));
-
-                stream.Position = 0;
-                var message = serializer.ReadObject(stream);
+                object message;
+                using (var stream = new MemoryStream(body.ToArray()))
+                {
+                    stream.Position = 0;
+                    message = serializer.ReadObject(stream);
+                }
 
                 if (message is MessageWrapper)
                 {

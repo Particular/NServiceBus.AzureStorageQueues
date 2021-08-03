@@ -1,7 +1,6 @@
 namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
-    using System.IO;
     using System.Runtime.Serialization;
     using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Queues.Models;
@@ -17,14 +16,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public MessageWrapper Unwrap(QueueMessage rawMessage)
         {
             Logger.DebugFormat("Unwrapping native message (native ID: '{0}')", rawMessage.MessageId);
-            MessageWrapper m;
 
             var bytes = Convert.FromBase64String(rawMessage.MessageText);
-
-            using (var stream = new MemoryStream(bytes))
-            {
-                m = messageWrapperSerializer.Deserialize(stream);
-            }
+            var m = messageWrapperSerializer.Deserialize(bytes);
 
             if (m == null)
             {

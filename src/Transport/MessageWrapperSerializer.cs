@@ -26,9 +26,9 @@
             messageSerializer.Serialize(wrapper, stream);
         }
 
-        public MessageWrapper Deserialize(Stream stream)
+        public MessageWrapper Deserialize(byte[] body)
         {
-            return messageSerializer.Deserialize(stream, MessageTypes).SingleOrDefault() as MessageWrapper;
+            return messageSerializer.Deserialize(body, MessageTypes).SingleOrDefault() as MessageWrapper;
         }
 
         readonly IMessageSerializer messageSerializer;
