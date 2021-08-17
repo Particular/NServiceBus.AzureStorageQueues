@@ -54,11 +54,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 EndpointSetup<DefaultServer>(c => { c.DisableFeature<AutoSubscribe>(); });
             }
 
-            public class MyEventHandler : IHandleMessages<MyEvent>
+            public class MyHandler : IHandleMessages<MyEvent>
             {
                 readonly Context testContext;
 
-                public MyEventHandler(Context testContext) => this.testContext = testContext;
+                public MyHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyEvent @event, IMessageHandlerContext context)
                 {
@@ -67,11 +67,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 }
             }
 
-            public class MyInterfaceEventHandler : IHandleMessages<MyOtherEvent>
+            public class MyInterfaceHandler : IHandleMessages<MyOtherEvent>
             {
                 readonly Context testContext;
 
-                public MyInterfaceEventHandler(Context testContext) => this.testContext = testContext;
+                public MyInterfaceHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyOtherEvent @event, IMessageHandlerContext context)
                 {
