@@ -16,7 +16,7 @@ public class TestIndependence
     public class TestIdAppendingSerializationDefinition<TOriginalSerializationDefintion> : SerializationDefinition
         where TOriginalSerializationDefintion : SerializationDefinition, new()
     {
-        public override Func<IMessageMapper, IMessageSerializer> Configure(ReadOnlySettings settings)
+        public override Func<IMessageMapper, IMessageSerializer> Configure(IReadOnlySettings settings)
         {
             var builder = new TOriginalSerializationDefintion().Configure(settings);
             var scenarioContext = settings.GetOrDefault<ScenarioContext>();

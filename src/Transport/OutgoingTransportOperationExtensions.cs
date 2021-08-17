@@ -10,9 +10,9 @@
         /// </summary>
         /// <param name="operation">The operation.</param>
         /// <returns>The operation intent.</returns>
-        public static MessageIntentEnum GetMessageIntent(this IOutgoingTransportOperation operation)
+        public static MessageIntent GetMessageIntent(this IOutgoingTransportOperation operation)
         {
-            var messageIntent = default(MessageIntentEnum);
+            var messageIntent = default(MessageIntent);
 
             if (operation.Message.Headers.TryGetValue(Headers.MessageIntent, out var messageIntentString))
             {
