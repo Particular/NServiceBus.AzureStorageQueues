@@ -63,9 +63,7 @@
         {
             if (rawMessage.NextVisibleOn != null)
             {
-#pragma warning disable PS0023 // DateTime.UtcNow or DateTimeOffset.UtcNow should be used instead of DateTime.Now and DateTimeOffset.Now, unless the value is being used for displaying the current date-time in a user's local time zone
-                var visibleIn = rawMessage.NextVisibleOn.Value - DateTimeOffset.Now;
-#pragma warning restore PS0023 // DateTime.UtcNow or DateTimeOffset.UtcNow should be used instead of DateTime.Now and DateTimeOffset.Now, unless the value is being used for displaying the current date-time in a user's local time zone
+                var visibleIn = rawMessage.NextVisibleOn.Value - DateTimeOffset.UtcNow;
                 if (visibleIn < TimeSpan.Zero)
                 {
                     var visibilityTimeoutExceededBy = -visibleIn;
