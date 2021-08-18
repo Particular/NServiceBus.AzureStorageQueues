@@ -72,7 +72,7 @@
 
         class CustomSerializer : SerializationDefinition
         {
-            public override Func<IMessageMapper, IMessageSerializer> Configure(ReadOnlySettings settings)
+            public override Func<IMessageMapper, IMessageSerializer> Configure(IReadOnlySettings settings)
             {
                 return mapper => new MyCustomSerializer(settings.Get<ScenarioContext>());
             }

@@ -63,7 +63,7 @@
         {
             if (rawMessage.NextVisibleOn != null)
             {
-                var visibleIn = rawMessage.NextVisibleOn.Value - DateTimeOffset.Now;
+                var visibleIn = rawMessage.NextVisibleOn.Value - DateTimeOffset.UtcNow;
                 if (visibleIn < TimeSpan.Zero)
                 {
                     var visibilityTimeoutExceededBy = -visibleIn;

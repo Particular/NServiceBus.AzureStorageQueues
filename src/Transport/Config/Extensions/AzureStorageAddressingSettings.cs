@@ -48,7 +48,7 @@
         /// <summary>
         /// Maps the account name to a QueueServiceClient, throwing when no mapping found.
         /// </summary>
-        internal QueueServiceClient Map(QueueAddress address, MessageIntentEnum messageIntent)
+        internal QueueServiceClient Map(QueueAddress address, MessageIntent messageIntent)
         {
             if (registeredEndpoints.TryGetValue(address, out var accountInfo))
             {
@@ -60,7 +60,7 @@
             {
                 // If this is a reply message with a connection string use the connection string to construct a queue service client.
                 // This was a reply message coming from an older endpoint w/o aliases.
-                if (messageIntent == MessageIntentEnum.Reply && CloudStorageAccount.TryParse(address.Alias, out _))
+                if (messageIntent == MessageIntent.Reply && CloudStorageAccount.TryParse(address.Alias, out _))
                 {
                     return new QueueServiceClient(address.Alias);
                 }

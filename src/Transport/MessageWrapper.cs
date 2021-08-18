@@ -12,7 +12,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         public string Id { get; set; }
 
-        public MessageIntentEnum MessageIntent { get; set; }
+        public MessageIntent MessageIntent { get; set; }
 
         public string ReplyToAddress { get; set; }
 

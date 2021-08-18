@@ -79,7 +79,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             var destination = operation.Destination;
 
             var messageIntent = operation.GetMessageIntent();
-            var queueAddress = QueueAddress.Parse(destination, messageIntent == MessageIntentEnum.Reply);
+            var queueAddress = QueueAddress.Parse(destination, messageIntent == MessageIntent.Reply);
             var queueServiceClient = addressing.Map(queueAddress, messageIntent);
 
             var queueName = addressGenerator.GetQueueName(queueAddress.QueueName);

@@ -343,14 +343,14 @@ namespace NServiceBus
             return subscriptionTable;
         }
 
-        static MessageWrapperSerializer BuildSerializer(SerializationDefinition userWrapperSerializationDefinition, ReadOnlySettings settings)
+        static MessageWrapperSerializer BuildSerializer(SerializationDefinition userWrapperSerializationDefinition, IReadOnlySettings settings)
         {
             return userWrapperSerializationDefinition != null
                 ? new MessageWrapperSerializer(userWrapperSerializationDefinition.Configure(settings).Invoke(MessageWrapperSerializer.GetMapper()))
                 : new MessageWrapperSerializer(GetMainSerializerHack(MessageWrapperSerializer.GetMapper(), settings));
         }
 
-        internal static IMessageSerializer GetMainSerializerHack(IMessageMapper mapper, ReadOnlySettings settings)
+        internal static IMessageSerializer GetMainSerializerHack(IMessageMapper mapper, IReadOnlySettings settings)
         {
             if (!settings.TryGet<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey, out var serializerSettingsTuple))
             {

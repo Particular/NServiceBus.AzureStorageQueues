@@ -61,11 +61,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                 EndpointSetup<DefaultServer>();
             }
 
-            public class MyEventHandler : IHandleMessages<IMyEvent>
+            public class MyHandler : IHandleMessages<IMyEvent>
             {
                 readonly Context testContext;
 
-                public MyEventHandler(Context testContext) => this.testContext = testContext;
+                public MyHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(IMyEvent messageThatIsEnlisted, IMessageHandlerContext context)
                 {

@@ -159,7 +159,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public System.Collections.Generic.Dictionary<string, string> Headers { get; set; }
         public string Id { get; set; }
         public string IdForCorrelation { get; set; }
-        public NServiceBus.MessageIntentEnum MessageIntent { get; set; }
+        public NServiceBus.MessageIntent MessageIntent { get; set; }
         public bool Recoverable { get; set; }
         public string ReplyToAddress { get; set; }
         [System.Obsolete("Legacy property for backwards compatibility.", false)]
