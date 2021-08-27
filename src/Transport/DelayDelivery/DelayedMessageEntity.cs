@@ -28,7 +28,7 @@
         public void SetOperation(UnicastTransportOperation operation)
         {
             Destination = operation.Destination;
-            Body = operation.Message.Body;
+            Body = operation.Message.Body.ToArray();
             MessageId = operation.Message.MessageId;
             Headers = Serialize(operation.Message.Headers);
         }

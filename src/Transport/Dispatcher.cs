@@ -157,7 +157,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return new MessageWrapper
             {
                 Id = msg.MessageId,
-                Body = msg.Body,
+                Body = msg.Body.ToArray(),
                 CorrelationId = headers.GetValueOrDefault(Headers.CorrelationId),
                 // TODO: Will be addresses in another PR
                 // Recoverable = operation.GetDeliveryConstraint<NonDurableDelivery>() == null,

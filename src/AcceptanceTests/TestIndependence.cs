@@ -52,7 +52,7 @@ public class TestIndependence
                 serializer.Serialize(message, stream);
             }
 
-            public object[] Deserialize(Stream stream, IList<Type> messageTypes = null) => serializer.Deserialize(stream, messageTypes);
+            public object[] Deserialize(ReadOnlyMemory<byte> body, IList<Type> messageTypes = null) => serializer.Deserialize(body, messageTypes);
 
             public string ContentType => serializer.ContentType;
         }
