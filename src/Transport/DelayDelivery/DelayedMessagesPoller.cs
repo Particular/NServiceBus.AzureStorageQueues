@@ -143,7 +143,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 cancellationToken.ThrowIfCancellationRequested();
 
                 // only allocate if needed
-                stopwatch = stopwatch ?? Stopwatch.StartNew();
+                stopwatch ??= Stopwatch.StartNew();
 
                 // after half check if the lease is active
                 if (stopwatch.Elapsed > HalfOfLeaseLength)

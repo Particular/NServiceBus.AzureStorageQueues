@@ -11,20 +11,14 @@ namespace NServiceBus.Transport.AzureStorageQueues
     {
         public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken = default);
 
-        public static ReceiveStrategy BuildReceiveStrategy(OnMessage onMessage, OnError onError, TransportTransactionMode transactionMode, Action<string, Exception, CancellationToken> criticalErrorAction)
+        public static ReceiveStrategy BuildReceiveStrategy(OnMessage onMessage, OnError onError, TransportTransactionMode transactionMode, Action<string, Exception, CancellationToken> criticalErrorAction) => transactionMode switch
         {
-            switch (transactionMode)
-            {
-                case TransportTransactionMode.None:
-                    return new AtMostOnceReceiveStrategy(onMessage, onError, criticalErrorAction);
-                case TransportTransactionMode.ReceiveOnly:
-                    return new AtLeastOnceReceiveStrategy(onMessage, onError, criticalErrorAction);
-                case TransportTransactionMode.SendsAtomicWithReceive:
-                case TransportTransactionMode.TransactionScope:
-                default:
-                    throw new NotSupportedException($"The TransportTransactionMode {transactionMode} is not supported");
-            }
-        }
+            TransportTransactionMode.None => new AtMostOnceReceiveStrategy(onMessage, onError, criticalErrorAction),
+            TransportTransactionMode.ReceiveOnly => new AtLeastOnceReceiveStrategy(onMessage, onError, criticalErrorAction),
+            TransportTransactionMode.SendsAtomicWithReceive => throw new NotSupportedException($"The TransportTransactionMode {transactionMode} is not supported"),
+            TransportTransactionMode.TransactionScope => throw new NotSupportedException($"The TransportTransactionMode {transactionMode} is not supported"),
+            _ => throw new NotSupportedException($"The TransportTransactionMode {transactionMode} is not supported")
+        };
 
         protected static ErrorContext CreateErrorContext(MessageRetrieved retrieved, MessageWrapper message, Exception ex, byte[] body, ContextBag contextBag)
         {

@@ -6,7 +6,6 @@
     <AssemblyOriginatorKeyFile>$(SolutionDir)Test.snk</AssemblyOriginatorKeyFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <RootNamespace>NServiceBus.AzureStorageQueues.TransportTests</RootNamespace>
-    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
   <!-- Force latest versions -->
