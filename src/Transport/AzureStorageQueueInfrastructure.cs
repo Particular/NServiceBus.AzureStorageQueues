@@ -47,19 +47,31 @@
                 settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
             }
 
+            if (!settings.TryGet(out queueServiceClientProvider))
+            {
+                if (connectionString == null)
+                {
+                    throw new Exception("Either a connection string or a queue client has to be provided in the configuration.");
+                }
+                queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
+            }
+
             if (!settings.TryGet(out cloudTableClientProvider))
             {
+                if (connectionString == null)
+                {
+                    throw new Exception("Either a connection string or a table client has to be provided in the configuration.");
+                }
                 cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
             }
 
             if (!settings.TryGet(out blobServiceClientProvider))
             {
+                if (connectionString == null)
+                {
+                    throw new Exception("Either a connection string or a blob client has to be provided in the configuration.");
+                }
                 blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
-            }
-
-            if (!settings.TryGet(out queueServiceClientProvider))
-            {
-                queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
             }
 
             maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);

@@ -1,5 +1,6 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
+    using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
@@ -12,19 +13,18 @@
     public class When_custom_queue_client_is_provided_without_connection_string : NServiceBusAcceptanceTest
     {
         [Test]
-        public async Task Should_throw()
+        public void Should_throw()
         {
             var runSettings = new RunSettings();
             runSettings.Set("DoNotSetConnectionString", true);
 
-            var context = await Scenario.Define<Context>()
-                .WithEndpoint<Sender>(c => c
-                    .When(e => e.Send(new MyRequest())))
-                .WithEndpoint<Receiver>()
-                .Done(c => c.InvokedHandler)
-                .Run(runSettings).ConfigureAwait(false);
-
-            Assert.IsTrue(context.InvokedHandler);
+            Assert.ThrowsAsync<Exception>(async () =>
+                await Scenario.Define<Context>()
+                    .WithEndpoint<Sender>(c => c
+                        .When(e => e.Send(new MyRequest())))
+                    .WithEndpoint<Receiver>()
+                    .Done(c => c.InvokedHandler)
+                    .Run(runSettings).ConfigureAwait(false), "Either a connection string or a table client has to be provided in the configuration.");
         }
 
         class Context : ScenarioContext
