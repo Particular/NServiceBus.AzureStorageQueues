@@ -11,12 +11,14 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
 
     public Task Configure(string endpointName, EndpointConfiguration configuration, RunSettings settings, PublisherMetadata publisherMetadata)
     {
-        var connectionString = ConnectionString;
-
         var transport = configuration
             .UseTransport<AzureStorageQueueTransport>()
-            .ConnectionString(connectionString)
             .MessageInvisibleTime(TimeSpan.FromSeconds(30));
+
+        if (!settings.TryGet("DoNotSetConnectionString", out bool ignoreConnectionString) || !ignoreConnectionString)
+        {
+            transport.ConnectionString(ConnectionString);
+        }
 
         transport.SanitizeQueueNamesWith(BackwardsCompatibleQueueNameSanitizerForTests.Sanitize);
 
