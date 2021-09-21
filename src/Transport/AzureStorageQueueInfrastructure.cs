@@ -23,7 +23,7 @@
             this.settings = settings;
             this.connectionString = connectionString;
 
-            if (IsPremiumEndpoint(this.connectionString))
+            if (connectionString != null && IsPremiumEndpoint(this.connectionString))
             {
                 throw new Exception($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
             }
