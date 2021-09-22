@@ -368,7 +368,7 @@
         IProvideCloudTableClient cloudTableClientProvider;
         IProvideBlobServiceClient blobServiceClientProvider;
         IProvideQueueServiceClient queueServiceClientProvider;
-        NativeDelayDelivery nativeDelayedDelivery;
+        INativeDelayDelivery nativeDelayedDelivery;
         QueueAddressGenerator addressGenerator;
         ISubscriptionStore subscriptionStore;
         AzureStorageAddressingSettings addressing;

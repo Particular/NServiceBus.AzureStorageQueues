@@ -14,7 +14,7 @@
     using global::Azure.Storage.Blobs;
     using Logging;
 
-    class NativeDelayDelivery
+    class NativeDelayDelivery : INativeDelayDelivery
     {
         public NativeDelayDelivery(
             IProvideCloudTableClient cloudTableClientProvider,
