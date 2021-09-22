@@ -51,7 +51,7 @@
             {
                 if (connectionString == null)
                 {
-                    throw new Exception("Either a connection string or a queue client has to be provided in the configuration.");
+                    throw new Exception($"Unable to connect to queue service. Supply a queue service client (`transport.{nameof(AzureStorageTransportExtensions.UseQueueServiceClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
                 }
                 queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
             }
@@ -60,7 +60,7 @@
             {
                 if (connectionString == null)
                 {
-                    throw new Exception("Either a connection string or a table client has to be provided in the configuration.");
+                    throw new Exception($"Unable to connect to cloud table service. Supply a cloud table service client (`transport.{nameof(AzureStorageTransportExtensions.UseCloudTableClient)}(...)`) or configure a connection string (`transport.{nameof(AzureStorageTransportExtensions.UseQueueServiceClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
                 }
                 cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
             }
@@ -69,7 +69,7 @@
             {
                 if (connectionString == null)
                 {
-                    throw new Exception("Either a connection string or a blob client has to be provided in the configuration.");
+                    throw new Exception($"Unable to connect to blob service. Supply a blob service client (`transport.{nameof(AzureStorageTransportExtensions.UseBlobServiceClient)}(...)`) or configure a connection string  (`transport.{nameof(AzureStorageTransportExtensions.UseQueueServiceClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
                 }
                 blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
             }
