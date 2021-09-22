@@ -84,23 +84,22 @@
 
             var delayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled();
 
-            // This call mutates settings holder and should not be invoked more than once. This value is used for Diagnostics Section upon startup as well.
-            var delayedDeliveryTableName = GetDelayedDeliveryTableName(settings);
-
-            nativeDelayedDelivery = new NativeDelayDelivery(
-                cloudTableClientProvider,
-                blobServiceClientProvider,
-                delayedDeliveryTableName,
-                delayedDeliveryIsEnabled,
-                settings.ErrorQueueAddress(),
-                GetRequiredTransactionMode(),
-                maximumWaitTime,
-                peekInterval,
-                BuildDispatcher);
-
             object delayedDelivery;
             if (delayedDeliveryIsEnabled)
             {
+                // This call mutates settings holder and should not be invoked more than once. This value is used for Diagnostics Section upon startup as well.
+                var delayedDeliveryTableName = GetDelayedDeliveryTableName(settings);
+
+                nativeDelayedDelivery = new NativeDelayDelivery(
+                    cloudTableClientProvider,
+                    blobServiceClientProvider,
+                    delayedDeliveryTableName,
+                    settings.ErrorQueueAddress(),
+                    GetRequiredTransactionMode(),
+                    maximumWaitTime,
+                    peekInterval,
+                    BuildDispatcher);
+
                 delayedDelivery = new
                 {
                     NativeDelayedDeliveryIsEnabled = true,
@@ -110,6 +109,8 @@
             }
             else
             {
+                nativeDelayedDelivery = new DisabledNativeDelayDelivery();
+
                 delayedDelivery = new
                 {
                     NativeDelayedDeliveryIsEnabled = false,
