@@ -65,15 +65,6 @@
                 cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
             }
 
-            if (!settings.TryGet(out blobServiceClientProvider))
-            {
-                if (connectionString == null)
-                {
-                    throw new Exception($"Unable to connect to blob service. Supply a blob service client (`transport.{nameof(AzureStorageTransportExtensions.UseBlobServiceClient)}(...)`) or configure a connection string  (`transport.{nameof(AzureStorageTransportExtensions.UseQueueServiceClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
-                }
-                blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
-            }
-
             maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
             peekInterval = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverPeekInterval);
             messageInvisibleTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMessageInvisibleTime);
@@ -87,6 +78,15 @@
             object delayedDelivery;
             if (delayedDeliveryIsEnabled)
             {
+                if (!settings.TryGet(out IProvideBlobServiceClient blobServiceClientProvider))
+                {
+                    if (connectionString == null)
+                    {
+                        throw new Exception($"Unable to connect to blob service. Supply a blob service client (`transport.{nameof(AzureStorageTransportExtensions.UseBlobServiceClient)}(...)`) or configure a connection string  (`transport.{nameof(AzureStorageTransportExtensions.UseQueueServiceClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
+                    }
+                    blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
+                }
+
                 // This call mutates settings holder and should not be invoked more than once. This value is used for Diagnostics Section upon startup as well.
                 var delayedDeliveryTableName = GetDelayedDeliveryTableName(settings);
 
@@ -367,7 +367,6 @@
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
         IProvideCloudTableClient cloudTableClientProvider;
-        IProvideBlobServiceClient blobServiceClientProvider;
         IProvideQueueServiceClient queueServiceClientProvider;
         INativeDelayDelivery nativeDelayedDelivery;
         QueueAddressGenerator addressGenerator;
