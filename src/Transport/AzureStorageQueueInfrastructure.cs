@@ -56,13 +56,16 @@
                 queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
             }
 
-            if (!settings.TryGet(out cloudTableClientProvider))
+            if (PublishSubscribeIsEnabled() || NativeDelayedDeliveryIsEnabled())
             {
-                if (connectionString == null)
+                if (!settings.TryGet(out cloudTableClientProvider))
                 {
-                    throw new Exception($"Unable to connect to cloud table service. Supply a cloud table service client (`transport.{nameof(AzureStorageTransportExtensions.UseCloudTableClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
+                    if (connectionString == null)
+                    {
+                        throw new Exception($"Unable to connect to cloud table service. Supply a cloud table service client (`transport.{nameof(AzureStorageTransportExtensions.UseCloudTableClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
+                    }
+                    cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
                 }
-                cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
             }
 
             maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
@@ -282,7 +285,7 @@
                 accounts = new AccountConfigurations();
             }
 
-            var localAccountInfo = new AccountInfo(defaultAccountAlias, queueServiceClientProvider.Client, cloudTableClientProvider.Client);
+            var localAccountInfo = new AccountInfo(defaultAccountAlias, queueServiceClientProvider.Client, cloudTableClientProvider?.Client);
             var addressingSettings = new AzureStorageAddressingSettings(addressGenerator, accounts.defaultAlias ?? defaultAccountAlias, GetSubscriptionTableName(settings), accounts.mappings, localAccountInfo);
             return addressingSettings;
         }
