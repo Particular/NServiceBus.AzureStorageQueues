@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
+﻿namespace NServiceBus.Transport.AzureStorageQueues.Tests
 {
     using System;
     using System.Collections;
@@ -8,10 +8,10 @@
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
     using Microsoft.Azure.Cosmos.Table;
-    using NServiceBus.AcceptanceTests;
     using NUnit.Framework;
 
-    public class TestConfigurationScenarios : NServiceBusAcceptanceTest
+    [TestFixture]
+    public class TestConfigurationScenarios
     {
         [TestCaseSource(nameof(Scenarios))]
         public void Check_for_missing_configuration(
@@ -22,12 +22,13 @@
             bool setBlobServiceClient,
             bool setCloudTableClient)
         {
+            var connectionString = GetEnvConfiguredConnectionString();
             var endpointConfiguration = new EndpointConfiguration("AnEndpoint");
             endpointConfiguration.UseSerialization<XmlSerializer>();
             endpointConfiguration.EnableInstallers();
             endpointConfiguration.DisableFeature<TimeoutManager>();
             endpointConfiguration.DisableFeature<Sagas>();
-            endpointConfiguration.UsePersistence<TestingInMemoryPersistence>();
+            //endpointConfiguration.UsePersistence<LearningPersistence>();
             var transport = endpointConfiguration.UseTransport<AzureStorageQueueTransport>();
             // NOTE: This doesn't disable native pub-sub. Only message-driven pub-sub
             transport.DisablePublishing();
@@ -45,22 +46,22 @@
 
             if (setConnectionString)
             {
-                transport.ConnectionString(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                transport.ConnectionString(connectionString);
             }
 
             if (setQueueServiceClient)
             {
-                transport.UseQueueServiceClient(new QueueServiceClient(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString));
+                transport.UseQueueServiceClient(new QueueServiceClient(connectionString));
             }
 
             if (setBlobServiceClient)
             {
-                transport.UseBlobServiceClient(new BlobServiceClient(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString));
+                transport.UseBlobServiceClient(new BlobServiceClient(connectionString));
             }
 
             if (setCloudTableClient)
             {
-                var storageAccount = CloudStorageAccount.Parse(ConfigureEndpointAzureStorageQueueTransport.AnotherConnectionString);
+                var storageAccount = CloudStorageAccount.Parse(connectionString);
 
                 transport.UseCloudTableClient(new CloudTableClient(storageAccount.TableStorageUri, storageAccount.Credentials));
             }
@@ -105,5 +106,23 @@
                 setBlobServiceClient,
                 setCloudTableClient
             );
+
+        public static string GetEnvConfiguredConnectionString()
+        {
+            var environmentVariableName = $"{nameof(AzureStorageQueueTransport)}_ConnectionString";
+            var connectionString = GetEnvironmentVariable(environmentVariableName);
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new Exception($"Oh no! We couldn't find an environment variable '{environmentVariableName}' with Azure Storage connection string.");
+            }
+
+            return connectionString;
+        }
+
+        static string GetEnvironmentVariable(string variable)
+        {
+            var candidate = Environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.User);
+            return string.IsNullOrWhiteSpace(candidate) ? Environment.GetEnvironmentVariable(variable) : candidate;
+        }
     }
 }
