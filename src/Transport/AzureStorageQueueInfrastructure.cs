@@ -60,7 +60,7 @@
             {
                 if (connectionString == null)
                 {
-                    throw new Exception($"Unable to connect to cloud table service. Supply a cloud table service client (`transport.{nameof(AzureStorageTransportExtensions.UseCloudTableClient)}(...)`) or configure a connection string (`transport.{nameof(AzureStorageTransportExtensions.UseQueueServiceClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
+                    throw new Exception($"Unable to connect to cloud table service. Supply a cloud table service client (`transport.{nameof(AzureStorageTransportExtensions.UseCloudTableClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
                 }
                 cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
             }
@@ -82,7 +82,7 @@
                 {
                     if (connectionString == null)
                     {
-                        throw new Exception($"Unable to connect to blob service. Supply a blob service client (`transport.{nameof(AzureStorageTransportExtensions.UseBlobServiceClient)}(...)`) or configure a connection string  (`transport.{nameof(AzureStorageTransportExtensions.UseQueueServiceClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
+                        throw new Exception($"Unable to connect to blob service. Supply a blob service client (`transport.{nameof(AzureStorageTransportExtensions.UseBlobServiceClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
                     }
                     blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
                 }
