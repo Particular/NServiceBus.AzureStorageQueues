@@ -1,5 +1,6 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
+    using System;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -7,6 +8,6 @@
     {
         Task Start();
         Task Stop();
-        Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken);
+        Task ScheduleDelivery(UnicastTransportOperation operation, DateTimeOffset at, CancellationToken cancellationToken);
     }
 }

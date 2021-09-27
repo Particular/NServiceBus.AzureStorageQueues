@@ -1,14 +1,10 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using DelayedDelivery;
-    using DeliveryConstraints;
     using Features;
     using Microsoft.Azure.Cosmos.Table;
-    using Performance.TimeToBeReceived;
     using Settings;
     using Transport;
     using global::Azure.Storage.Blobs;
@@ -57,24 +53,6 @@
             return poller != null ? poller.Stop() : Task.CompletedTask;
         }
 
-        public async Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
-        {
-            var constraints = operation.DeliveryConstraints;
-            var delay = GetVisibilityDelay(constraints);
-            if (delay != null)
-            {
-                if (FirstOrDefault<DiscardIfNotReceivedBefore>(constraints) != null)
-                {
-                    throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
-                }
-
-                await ScheduleAt(operation, UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
-                return false;
-            }
-
-            return true;
-        }
-
         public static DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
         public CloudTable Table { get; private set; }
 
@@ -93,29 +71,7 @@
             return StartupCheckResult.Success;
         }
 
-        internal static TimeSpan? GetVisibilityDelay(List<DeliveryConstraint> constraints)
-        {
-            var doNotDeliverBefore = FirstOrDefault<DoNotDeliverBefore>(constraints);
-            if (doNotDeliverBefore != null)
-            {
-                return ToNullIfNegative(doNotDeliverBefore.At - UtcNow);
-            }
-
-            var delay = FirstOrDefault<DelayDeliveryWith>(constraints);
-            if (delay != null)
-            {
-                return ToNullIfNegative(delay.Delay);
-            }
-
-            return null;
-        }
-
-        static TimeSpan? ToNullIfNegative(TimeSpan value)
-        {
-            return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
-        }
-
-        Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken)
+        public Task ScheduleDelivery(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken)
         {
             var delayedMessageEntity = new DelayedMessageEntity
             {
@@ -126,27 +82,6 @@
             delayedMessageEntity.SetOperation(operation);
             return Table.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), null, null, cancellationToken);
         }
-
-        static TDeliveryConstraint FirstOrDefault<TDeliveryConstraint>(List<DeliveryConstraint> constraints)
-            where TDeliveryConstraint : DeliveryConstraint
-        {
-            if (constraints == null || constraints.Count == 0)
-            {
-                return null;
-            }
-
-            for (var i = 0; i < constraints.Count; i++)
-            {
-                if (constraints[i] is TDeliveryConstraint c)
-                {
-                    return c;
-                }
-            }
-
-            return null;
-        }
-
-
 
         static readonly ILog Logger = LogManager.GetLogger<NativeDelayDelivery>();
 

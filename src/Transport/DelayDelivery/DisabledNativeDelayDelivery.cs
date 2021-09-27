@@ -10,16 +10,7 @@
 
         public Task Stop() => Task.CompletedTask;
 
-        public Task<bool> ShouldDispatch(UnicastTransportOperation operation, CancellationToken cancellationToken)
-        {
-            var constraints = operation.DeliveryConstraints;
-            var delay = NativeDelayDelivery.GetVisibilityDelay(constraints);
-            if (delay != null)
-            {
-                throw new Exception("Cannot delay delivery of messages when delayed delivery has been disabled. Remove the 'endpointConfiguration.UseTransport<AzureStorageQueues>.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.");
-            }
-
-            return Task.FromResult(true);
-        }
+        public Task ScheduleDelivery(UnicastTransportOperation operation, DateTimeOffset at, CancellationToken cancellationToken)
+            => throw new Exception("Cannot delay delivery of messages when delayed delivery has been disabled. Remove the 'endpointConfiguration.UseTransport<AzureStorageQueues>.DelayedDelivery().DisableDelayedDelivery()' configuration to re-enable delayed delivery.");
     }
 }

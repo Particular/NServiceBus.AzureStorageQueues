@@ -273,7 +273,7 @@
 
         Dispatcher BuildDispatcher()
         {
-            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ShouldDispatch, subscriptionStore);
+            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ScheduleDelivery, subscriptionStore);
         }
 
         AzureStorageAddressingSettings GetAddressing()
