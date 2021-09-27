@@ -27,7 +27,6 @@ namespace NServiceBus
         {
             Guard.AgainstNull(nameof(alias), alias);
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
-            Guard.AgainstNull(nameof(cloudTableClient), cloudTableClient);
 
             Alias = alias;
             QueueServiceClient = queueServiceClient;

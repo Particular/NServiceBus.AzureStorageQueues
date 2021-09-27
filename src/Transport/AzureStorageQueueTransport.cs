@@ -27,7 +27,6 @@ namespace NServiceBus
         public override TransportInfrastructure Initialize(SettingsHolder settings, string connectionString)
         {
             Guard.AgainstNull(nameof(settings), settings);
-            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
             Guard.AgainstUnsetSerializerSetting(settings);
 

@@ -23,7 +23,7 @@
             this.settings = settings;
             this.connectionString = connectionString;
 
-            if (IsPremiumEndpoint(this.connectionString))
+            if (connectionString != null && IsPremiumEndpoint(this.connectionString))
             {
                 throw new Exception($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
             }
@@ -47,19 +47,25 @@
                 settings.Set(WellKnownConfigurationKeys.DelayedDelivery.EnableTimeoutManager, false);
             }
 
-            if (!settings.TryGet(out cloudTableClientProvider))
-            {
-                cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
-            }
-
-            if (!settings.TryGet(out blobServiceClientProvider))
-            {
-                blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
-            }
-
             if (!settings.TryGet(out queueServiceClientProvider))
             {
+                if (connectionString == null)
+                {
+                    throw new Exception($"Unable to connect to queue service. Supply a queue service client (`transport.{nameof(AzureStorageTransportExtensions.UseQueueServiceClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
+                }
                 queueServiceClientProvider = new QueueServiceClientProvidedByConnectionString(connectionString);
+            }
+
+            if (PublishSubscribeIsEnabled() || NativeDelayedDeliveryIsEnabled())
+            {
+                if (!settings.TryGet(out cloudTableClientProvider))
+                {
+                    if (connectionString == null)
+                    {
+                        throw new Exception($"Unable to connect to cloud table service. Supply a cloud table service client (`transport.{nameof(AzureStorageTransportExtensions.UseCloudTableClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
+                    }
+                    cloudTableClientProvider = new CloudTableClientProvidedByConnectionString(this.connectionString);
+                }
             }
 
             maximumWaitTime = settings.Get<TimeSpan>(WellKnownConfigurationKeys.ReceiverMaximumWaitTimeWhenIdle);
@@ -72,23 +78,31 @@
 
             var delayedDeliveryIsEnabled = NativeDelayedDeliveryIsEnabled();
 
-            // This call mutates settings holder and should not be invoked more than once. This value is used for Diagnostics Section upon startup as well.
-            var delayedDeliveryTableName = GetDelayedDeliveryTableName(settings);
-
-            nativeDelayedDelivery = new NativeDelayDelivery(
-                cloudTableClientProvider,
-                blobServiceClientProvider,
-                delayedDeliveryTableName,
-                delayedDeliveryIsEnabled,
-                settings.ErrorQueueAddress(),
-                GetRequiredTransactionMode(),
-                maximumWaitTime,
-                peekInterval,
-                BuildDispatcher);
-
             object delayedDelivery;
             if (delayedDeliveryIsEnabled)
             {
+                if (!settings.TryGet(out IProvideBlobServiceClient blobServiceClientProvider))
+                {
+                    if (connectionString == null)
+                    {
+                        throw new Exception($"Unable to connect to blob service. Supply a blob service client (`transport.{nameof(AzureStorageTransportExtensions.UseBlobServiceClient)}(...)`) or configure a connection string (`transport.{nameof(TransportExtensions<AzureStorageQueueTransport>.ConnectionString)}(...)`).");
+                    }
+                    blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(this.connectionString);
+                }
+
+                // This call mutates settings holder and should not be invoked more than once. This value is used for Diagnostics Section upon startup as well.
+                var delayedDeliveryTableName = GetDelayedDeliveryTableName(settings);
+
+                nativeDelayedDelivery = new NativeDelayDelivery(
+                    cloudTableClientProvider,
+                    blobServiceClientProvider,
+                    delayedDeliveryTableName,
+                    settings.ErrorQueueAddress(),
+                    GetRequiredTransactionMode(),
+                    maximumWaitTime,
+                    peekInterval,
+                    BuildDispatcher);
+
                 delayedDelivery = new
                 {
                     NativeDelayedDeliveryIsEnabled = true,
@@ -98,6 +112,8 @@
             }
             else
             {
+                nativeDelayedDelivery = new DisabledNativeDelayDelivery();
+
                 delayedDelivery = new
                 {
                     NativeDelayedDeliveryIsEnabled = false,
@@ -257,7 +273,7 @@
 
         Dispatcher BuildDispatcher()
         {
-            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ShouldDispatch, subscriptionStore);
+            return new Dispatcher(addressGenerator, addressing, serializer, nativeDelayedDelivery.ScheduleDelivery, subscriptionStore);
         }
 
         AzureStorageAddressingSettings GetAddressing()
@@ -269,7 +285,7 @@
                 accounts = new AccountConfigurations();
             }
 
-            var localAccountInfo = new AccountInfo(defaultAccountAlias, queueServiceClientProvider.Client, cloudTableClientProvider.Client);
+            var localAccountInfo = new AccountInfo(defaultAccountAlias, queueServiceClientProvider.Client, cloudTableClientProvider?.Client);
             var addressingSettings = new AzureStorageAddressingSettings(addressGenerator, accounts.defaultAlias ?? defaultAccountAlias, GetSubscriptionTableName(settings), accounts.mappings, localAccountInfo);
             return addressingSettings;
         }
@@ -354,9 +370,8 @@
         readonly string connectionString;
         readonly MessageWrapperSerializer serializer;
         IProvideCloudTableClient cloudTableClientProvider;
-        IProvideBlobServiceClient blobServiceClientProvider;
         IProvideQueueServiceClient queueServiceClientProvider;
-        NativeDelayDelivery nativeDelayedDelivery;
+        INativeDelayDelivery nativeDelayedDelivery;
         QueueAddressGenerator addressGenerator;
         ISubscriptionStore subscriptionStore;
         AzureStorageAddressingSettings addressing;
