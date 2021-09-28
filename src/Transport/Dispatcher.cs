@@ -8,21 +8,24 @@
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-    using NServiceBus.Extensibility;
+    using Azure.Transports.WindowsAzureStorageQueues;
+    using DelayedDelivery;
+    using DeliveryConstraints;
+    using Extensibility;
     using global::Azure.Storage.Queues;
-    using NServiceBus.Logging;
-    using NServiceBus.Transport;
-    using NServiceBus.Unicast.Queuing;
+    using Logging;
+    using Performance.TimeToBeReceived;
+    using Transport;
+    using Unicast.Queuing;
 
     class Dispatcher : IDispatchMessages
     {
-        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend)
+        public Dispatcher(QueueAddressGenerator addressGenerator, AzureStorageAddressingSettings addressing, MessageWrapperSerializer serializer, Func<UnicastTransportOperation, DateTimeOffset, CancellationToken, Task> scheduleMessageDelivery)
         {
             this.addressGenerator = addressGenerator;
             this.addressing = addressing;
             this.serializer = serializer;
-            this.shouldSend = shouldSend;
+            this.scheduleMessageDelivery = scheduleMessageDelivery;
         }
 
         public Task Dispatch(TransportOperations outgoingMessages, TransportTransaction transaction, ContextBag context)
@@ -43,14 +46,20 @@
 
         public async Task Send(UnicastTransportOperation operation, CancellationToken cancellationToken)
         {
-            if (logger.IsDebugEnabled)
+            if (Logger.IsDebugEnabled)
             {
-                logger.DebugFormat("Sending message (ID: '{0}') to {1}", operation.Message.MessageId, operation.Destination);
+                Logger.DebugFormat("Sending message (ID: '{0}') to {1}", operation.Message.MessageId, operation.Destination);
             }
 
-            var dispatchDecision = await shouldSend(operation, cancellationToken).ConfigureAwait(false);
-            if (dispatchDecision == false)
+            var delay = GetVisibilityDelay(operation.DeliveryConstraints);
+            if (delay != null)
             {
+                if (FirstOrDefault<DiscardIfNotReceivedBefore>(operation.DeliveryConstraints) != null)
+                {
+                    throw new Exception($"Postponed delivery of messages with TimeToBeReceived set is not supported. Remove the TimeToBeReceived attribute to postpone messages of type '{operation.Message.Headers[Headers.EnclosedMessageTypes]}'.");
+                }
+
+                await scheduleMessageDelivery(operation, DateTimeOffset.UtcNow + delay.Value, cancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -75,7 +84,7 @@
             if (timeToBeReceived != null && timeToBeReceived.Value == TimeSpan.Zero)
             {
                 var messageType = operation.Message.Headers[Headers.EnclosedMessageTypes].Split(',').First();
-                logger.WarnFormat("TimeToBeReceived is set to zero for message of type '{0}'. Cannot send operation.", messageType);
+                Logger.WarnFormat("TimeToBeReceived is set to zero for message of type '{0}'. Cannot send operation.", messageType);
                 return;
             }
 
@@ -100,6 +109,47 @@
 
             var wrapper = BuildMessageWrapper(operation, queueAddress);
             await Send(wrapper, sendQueue, timeToBeReceived ?? CloudQueueMessageMaxTimeToLive).ConfigureAwait(false);
+        }
+
+        internal static TimeSpan? GetVisibilityDelay(List<DeliveryConstraint> constraints)
+        {
+            var doNotDeliverBefore = FirstOrDefault<DoNotDeliverBefore>(constraints);
+            if (doNotDeliverBefore != null)
+            {
+                return ToNullIfNegative(doNotDeliverBefore.At - DateTimeOffset.UtcNow);
+            }
+
+            var delay = FirstOrDefault<DelayDeliveryWith>(constraints);
+            if (delay != null)
+            {
+                return ToNullIfNegative(delay.Delay);
+            }
+
+            return null;
+        }
+
+        static TDeliveryConstraint FirstOrDefault<TDeliveryConstraint>(List<DeliveryConstraint> constraints)
+            where TDeliveryConstraint : DeliveryConstraint
+        {
+            if (constraints == null || constraints.Count == 0)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < constraints.Count; i++)
+            {
+                if (constraints[i] is TDeliveryConstraint c)
+                {
+                    return c;
+                }
+            }
+
+            return null;
+        }
+
+        static TimeSpan? ToNullIfNegative(TimeSpan value)
+        {
+            return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
         }
 
         Task Send(MessageWrapper wrapper, QueueClient sendQueue, TimeSpan timeToBeReceived)
@@ -147,13 +197,14 @@
         }
 
         readonly MessageWrapperSerializer serializer;
-        readonly Func<UnicastTransportOperation, CancellationToken, Task<bool>> shouldSend;
+
+        readonly Func<UnicastTransportOperation, DateTimeOffset, CancellationToken, Task> scheduleMessageDelivery;
 
         readonly QueueAddressGenerator addressGenerator;
         readonly AzureStorageAddressingSettings addressing;
         readonly ConcurrentDictionary<string, Task<bool>> rememberExistence = new ConcurrentDictionary<string, Task<bool>>();
 
         static readonly TimeSpan CloudQueueMessageMaxTimeToLive = TimeSpan.FromDays(30);
-        static readonly ILog logger = LogManager.GetLogger<Dispatcher>();
+        static readonly ILog Logger = LogManager.GetLogger<Dispatcher>();
     }
 }
