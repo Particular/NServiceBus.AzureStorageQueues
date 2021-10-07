@@ -14,9 +14,6 @@ namespace NServiceBus
     public class AccountRoutingSettings
     {
         public string DefaultAccountAlias { get; set; }
-        [System.Obsolete("Account aliases using connection strings have been deprecated. Use the AddAccount" +
-            " overload that accepts a QueueServiceClient instance. Will be treated as an erro" +
-            "r from version 12.0.0. Will be removed in version 13.0.0.", false)]
         public NServiceBus.AccountInfo AddAccount(string alias, string connectionString) { }
         public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
     }
@@ -42,84 +39,39 @@ namespace NServiceBus
     }
     public static class AzureStorageQueueTransportApiExtensions
     {
-        [System.Obsolete("Use `EndpointConfiguration.UseTransport(TransportDefinition)` instead. Will be tr" +
-            "eated as an error from version 12.0.0. Will be removed in version 13.0.0.", false)]
-        public static NServiceBus.AzureStorageQueueTransportLegacySettings UseTransport<T>(this NServiceBus.EndpointConfiguration config)
-            where T : NServiceBus.AzureStorageQueueTransport { }
-    }
-    [System.Obsolete("Configure the transport via the AzureStorageQueueTransport properties. Will be tr" +
-        "eated as an error from version 12.0.0. Will be removed in version 13.0.0.", false)]
-    public class AzureStorageQueueTransportLegacySettings : NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport>
-    {
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport AccountRouting propert" +
-            "y. Will be treated as an error from version 12.0.0. Will be removed in version 1" +
-            "3.0.0.", false)]
-        public NServiceBus.AccountRoutingSettings AccountRouting() { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport ReceiverBatchSize prop" +
-            "erty. Will be treated as an error from version 12.0.0. Will be removed in versio" +
-            "n 13.0.0.", false)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> BatchSize(int value) { }
-        [System.Obsolete("Configure the transport connection string via the AzureStorageQueueTransport inst" +
-            "ance constructor. Will be treated as an error from version 12.0.0. Will be remov" +
-            "ed in version 13.0.0.", false)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> ConnectionString(string connectionString) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport AccountRouting.Default" +
-            "AccountAlias property. Will be treated as an error from version 12.0.0. Will be " +
-            "removed in version 13.0.0.", false)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> DefaultAccountAlias(string alias) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport DegreeOfReceiveParalle" +
-            "lism property. Will be treated as an error from version 12.0.0. Will be removed " +
-            "in version 13.0.0.", false)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> DegreeOfReceiveParallelism(int degreeOfReceiveParallelism) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport DelayedDelivery proper" +
-            "ty. Will be treated as an error from version 12.0.0. Will be removed in version " +
-            "13.0.0.", false)]
-        public NServiceBus.DelayedDeliverySettings DelayedDelivery() { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport MaximumWaitTimeWhenIdl" +
-            "e property. Will be treated as an error from version 12.0.0. Will be removed in " +
-            "version 13.0.0.", false)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(System.TimeSpan value) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport MessageInvisibleTime p" +
-            "roperty. Will be treated as an error from version 12.0.0. Will be removed in ver" +
-            "sion 13.0.0.", false)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> MessageInvisibleTime(System.TimeSpan value) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport PeekInterval property." +
-            " Will be treated as an error from version 12.0.0. Will be removed in version 13." +
-            "0.0.", false)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> PeekInterval(System.TimeSpan value) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport QueueNameSanitizer pro" +
-            "perty. Will be treated as an error from version 12.0.0. Will be removed in versi" +
-            "on 13.0.0.", false)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> SanitizeQueueNamesWith(System.Func<string, string> queueNameSanitizer) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport MessageWrapperSerializ" +
-            "ationDefinition property. Will be treated as an error from version 12.0.0. Will " +
-            "be removed in version 13.0.0.", false)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>()
+        public static NServiceBus.AccountRoutingSettings AccountRouting(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> BatchSize(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, int value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> CacheInvalidationPeriod(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, System.TimeSpan cacheInvalidationPeriod) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> ConnectionString(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, string connectionString) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DefaultAccountAlias(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, string alias) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DegreeOfReceiveParallelism(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, int degreeOfReceiveParallelism) { }
+        public static NServiceBus.DelayedDeliverySettings DelayedDelivery(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DisableCaching(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, System.TimeSpan value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> MessageInvisibleTime(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, System.TimeSpan value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> PeekInterval(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, System.TimeSpan value) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SanitizeQueueNamesWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, System.Func<string, string> queueNameSanitizer) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SerializeMessageWrapperWith<TSerializationDefinition>(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport)
             where TSerializationDefinition : NServiceBus.Serialization.SerializationDefinition, new () { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport MessageUnwrapper prope" +
-            "rty. Will be treated as an error from version 12.0.0. Will be removed in version" +
-            " 13.0.0.", false)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> UnwrapMessagesWith(System.Func<Azure.Storage.Queues.Models.QueueMessage, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> unwrapper) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport instance constructor. " +
-            "The member currently throws a NotImplementedException. Will be removed in versio" +
-            "n 12.0.0.", true)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> UseBlobServiceClient(Azure.Storage.Blobs.BlobServiceClient blobServiceClient) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport instance constructor. " +
-            "The member currently throws a NotImplementedException. Will be removed in versio" +
-            "n 12.0.0.", true)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> UseCloudTableClient(Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport instance constructor. " +
-            "The member currently throws a NotImplementedException. Will be removed in versio" +
-            "n 12.0.0.", true)]
-        public NServiceBus.TransportSettings<NServiceBus.AzureStorageQueueTransport> UseQueueServiceClient(Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport Subscription property." +
-            " Will be treated as an error from version 12.0.0. The member currently throws a " +
-            "NotImplementedException. Will be removed in version 13.0.0.", false)]
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> CacheInvalidationPeriod(System.TimeSpan cacheInvalidationPeriod) { }
-        [System.Obsolete("Configure the transport via the AzureStorageQueueTransport Subscription property." +
-            " Will be treated as an error from version 12.0.0. The member currently throws a " +
-            "NotImplementedException. Will be removed in version 13.0.0.", false)]
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> DisableCaching() { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SubscriptionTableName(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, string subscriptionTableName) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UnwrapMessagesWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, System.Func<Azure.Storage.Queues.Models.QueueMessage, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> unwrapper) { }
+        [System.Obsolete("Provide the BlobServiceClient with the UseTransport<AzureStorageQueues> configura" +
+            "tion as a parameter. The member currently throws a NotImplementedException. Will" +
+            " be removed in version 12.0.0.", true)]
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseBlobServiceClient(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, Azure.Storage.Blobs.BlobServiceClient blobServiceClient) { }
+        [System.Obsolete("Provide the CloudTableClient with the UseTransport<AzureStorageQueues> configurat" +
+            "ion as a parameter. Will be removed in version 12.0.0.", true)]
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseCloudTableClient(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
+        [System.Obsolete("Provide the QueueServiceClient with the UseTransport<AzureStorageQueues> configur" +
+            "ation as a parameter. The member currently throws a NotImplementedException. Wil" +
+            "l be removed in version 12.0.0.", true)]
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseQueueServiceClient(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> transport, Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseTransport<T>(this NServiceBus.EndpointConfiguration config)
+            where T : NServiceBus.AzureStorageQueueTransport { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseTransport<T>(this NServiceBus.EndpointConfiguration config, Azure.Storage.Queues.QueueServiceClient queueServiceClient)
+            where T : NServiceBus.AzureStorageQueueTransport { }
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseTransport<T>(this NServiceBus.EndpointConfiguration config, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient)
+            where T : NServiceBus.AzureStorageQueueTransport { }
     }
     public class DelayedDeliverySettings : NServiceBus.Configuration.AdvancedExtensibility.ExposeSettings
     {
