@@ -75,10 +75,10 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(
-            this TransportExtensions<AzureStorageQueueTransport> transport, TimeSpan value)
+            this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
-            transport.Transport.MessageInvisibleTime = value;
-            return transport;
+            config.Transport.MessageInvisibleTime = value;
+            return config;
         }
 
         /// <summary>
@@ -89,10 +89,10 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> PeekInterval(
-            this TransportExtensions<AzureStorageQueueTransport> transport, TimeSpan value)
+            this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
-            transport.Transport.PeekInterval = value;
-            return transport;
+            config.Transport.PeekInterval = value;
+            return config;
         }
 
         /// <summary>
@@ -103,10 +103,10 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(
-            this TransportExtensions<AzureStorageQueueTransport> transport, TimeSpan value)
+            this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
-            transport.Transport.MaximumWaitTimeWhenIdle = value;
-            return transport;
+            config.Transport.MaximumWaitTimeWhenIdle = value;
+            return config;
         }
 
         /// <summary>
@@ -118,11 +118,11 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> SanitizeQueueNamesWith(
-            this TransportExtensions<AzureStorageQueueTransport> transport,
+            this TransportExtensions<AzureStorageQueueTransport> config,
             Func<string, string> queueNameSanitizer)
         {
-            transport.Transport.QueueNameSanitizer = queueNameSanitizer;
-            return transport;
+            config.Transport.QueueNameSanitizer = queueNameSanitizer;
+            return config;
         }
 
         /// <summary>
@@ -133,10 +133,10 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> BatchSize(
-            this TransportExtensions<AzureStorageQueueTransport> transport, int value)
+            this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
-            transport.Transport.ReceiverBatchSize = value;
-            return transport;
+            config.Transport.ReceiverBatchSize = value;
+            return config;
         }
 
         /// <summary>
@@ -147,10 +147,10 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> DegreeOfReceiveParallelism(
-            this TransportExtensions<AzureStorageQueueTransport> transport, int degreeOfReceiveParallelism)
+            this TransportExtensions<AzureStorageQueueTransport> config, int degreeOfReceiveParallelism)
         {
-            transport.Transport.DegreeOfReceiveParallelism = degreeOfReceiveParallelism;
-            return transport;
+            config.Transport.DegreeOfReceiveParallelism = degreeOfReceiveParallelism;
+            return config;
         }
 
         /// <summary>
@@ -163,11 +163,11 @@ namespace NServiceBus
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport>
             SerializeMessageWrapperWith<TSerializationDefinition>(
-                this TransportExtensions<AzureStorageQueueTransport> transport)
+                this TransportExtensions<AzureStorageQueueTransport> config)
             where TSerializationDefinition : SerializationDefinition, new()
         {
-            transport.Transport.MessageWrapperSerializationDefinition = new TSerializationDefinition();
-            return transport;
+            config.Transport.MessageWrapperSerializationDefinition = new TSerializationDefinition();
+            return config;
         }
 
         /// <summary>
@@ -178,11 +178,11 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> UnwrapMessagesWith(
-            this TransportExtensions<AzureStorageQueueTransport> transport,
+            this TransportExtensions<AzureStorageQueueTransport> config,
             Func<QueueMessage, MessageWrapper> unwrapper)
         {
-            transport.Transport.MessageUnwrapper = unwrapper;
-            return transport;
+            config.Transport.MessageUnwrapper = unwrapper;
+            return config;
         }
 
         /// <summary>
@@ -194,7 +194,7 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
         public static TransportExtensions<AzureStorageQueueTransport> UseQueueServiceClient(
-            this TransportExtensions<AzureStorageQueueTransport> transport,
+            this TransportExtensions<AzureStorageQueueTransport> config,
             QueueServiceClient queueServiceClient)
         {
             throw new NotImplementedException();
@@ -209,7 +209,7 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
         public static TransportExtensions<AzureStorageQueueTransport> UseBlobServiceClient(
-            this TransportExtensions<AzureStorageQueueTransport> transport, BlobServiceClient blobServiceClient)
+            this TransportExtensions<AzureStorageQueueTransport> config, BlobServiceClient blobServiceClient)
         {
             throw new NotImplementedException();
         }
@@ -223,7 +223,7 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
         public static TransportExtensions<AzureStorageQueueTransport> UseCloudTableClient(
-            this TransportExtensions<AzureStorageQueueTransport> transport, CloudTableClient cloudTableClient)
+            this TransportExtensions<AzureStorageQueueTransport> config, CloudTableClient cloudTableClient)
         {
             throw new Exception();
         }
@@ -236,11 +236,11 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> DisableCaching(
-            this TransportExtensions<AzureStorageQueueTransport> transport)
+            this TransportExtensions<AzureStorageQueueTransport> config)
         {
-            transport.Transport.Subscriptions.DisableCaching = true;
+            config.Transport.Subscriptions.DisableCaching = true;
 
-            return transport;
+            return config;
         }
 
         /// <summary>
@@ -251,12 +251,12 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> CacheInvalidationPeriod(
-            this TransportExtensions<AzureStorageQueueTransport> transport,
+            this TransportExtensions<AzureStorageQueueTransport> config,
             TimeSpan cacheInvalidationPeriod)
         {
-            transport.Transport.Subscriptions.CacheInvalidationPeriod = cacheInvalidationPeriod;
+            config.Transport.Subscriptions.CacheInvalidationPeriod = cacheInvalidationPeriod;
 
-            return transport;
+            return config;
         }
 
         /// <summary>
@@ -268,11 +268,11 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> ConnectionString(
-            this TransportExtensions<AzureStorageQueueTransport> transport, string connectionString)
+            this TransportExtensions<AzureStorageQueueTransport> config, string connectionString)
         {
-            transport.Transport.LegacyAPIShimSetConnectionString(connectionString);
+            config.Transport.LegacyAPIShimSetConnectionString(connectionString);
 
-            return transport;
+            return config;
         }
 
         /// <summary>
@@ -283,8 +283,8 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static DelayedDeliverySettings DelayedDelivery(
-            this TransportExtensions<AzureStorageQueueTransport> transport) =>
-            new DelayedDeliverySettings(transport.Transport.DelayedDelivery);
+            this TransportExtensions<AzureStorageQueueTransport> config) =>
+            new DelayedDeliverySettings(config.Transport.DelayedDelivery);
 
         /// <summary>
         /// Provides access to configure cross account routing.
@@ -294,7 +294,7 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static AccountRoutingSettings AccountRouting(
-            this TransportExtensions<AzureStorageQueueTransport> transport) => transport.Transport.AccountRouting;
+            this TransportExtensions<AzureStorageQueueTransport> config) => config.Transport.AccountRouting;
 
         /// <summary>
         /// Set default account alias.
@@ -305,11 +305,11 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> DefaultAccountAlias(
-            this TransportExtensions<AzureStorageQueueTransport> transport, string alias)
+            this TransportExtensions<AzureStorageQueueTransport> config, string alias)
         {
-            transport.Transport.AccountRouting.DefaultAccountAlias = alias;
+            config.Transport.AccountRouting.DefaultAccountAlias = alias;
 
-            return transport;
+            return config;
         }
 
         /// <summary>
@@ -321,11 +321,11 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0")]
         public static TransportExtensions<AzureStorageQueueTransport> SubscriptionTableName(
-            this TransportExtensions<AzureStorageQueueTransport> transport, string subscriptionTableName)
+            this TransportExtensions<AzureStorageQueueTransport> config, string subscriptionTableName)
         {
-            transport.Transport.Subscriptions.SubscriptionTableName = subscriptionTableName;
+            config.Transport.Subscriptions.SubscriptionTableName = subscriptionTableName;
 
-            return transport;
+            return config;
         }
     }
 }
