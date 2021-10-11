@@ -11,7 +11,7 @@ namespace NServiceBus
     /// <summary>
     /// Adds extensions methods to <see cref="TransportExtensions{T}" /> for configuration purposes.
     /// </summary>
-    public static class AzureStorageQueueTransportApiExtensions
+    public static class AzureStorageTransportExtensions
     {
         /// <summary>
         /// Configures NServiceBus to use the given transport.
