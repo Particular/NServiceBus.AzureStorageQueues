@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net472;netcoreapp3.1;net5.0</TargetFrameworks>
@@ -15,7 +15,7 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
     <PackageReference Include="Particular.Approvals" Version="0.3.0" />
-    <PackageReference Include="NServiceBus" Version="8.0.0-alpha.1897" />
+    <PackageReference Include="NServiceBus" Version="8.0.0-alpha.1901, 9.0.0)" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.0.0" />
     <PackageReference Include="NUnit" Version="3.13.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />

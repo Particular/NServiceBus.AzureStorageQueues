@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
@@ -18,7 +18,7 @@
     <PackageReference Include="Azure.Storage.Queues" Version="[12.5.0, 13.0.0]" />
     <PackageReference Include="Azure.Storage.Blobs" Version="[12.7.0, 13.0.0]" />
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="[1.0.8, 2.0.0]" />
-    <PackageReference Include="NServiceBus" Version="[8.0.0-alpha.1897, 9.0.0)" />
+    <PackageReference Include="NServiceBus" Version="8.0.0-alpha.1901, 9.0.0)" />
     <PackageReference Include="Fody" Version="6.5.3" PrivateAssets="All" />
     <PackageReference Include="Janitor.Fody" Version="1.8.0" PrivateAssets="All" />
     <PackageReference Include="Obsolete.Fody" Version="5.2.1" PrivateAssets="All" />
