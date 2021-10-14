@@ -276,6 +276,22 @@ namespace NServiceBus
         }
 
         /// <summary>
+        /// Sets the connection string to be use to connect to the Azure Storage Queue service.
+        /// </summary>
+        [PreObsolete(
+            Message =
+                "Configure the transport connection string via the AzureStorageQueueTransport instance constructor",
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
+        public static TransportExtensions<AzureStorageQueueTransport> ConnectionString(
+            this TransportExtensions<AzureStorageQueueTransport> config, Func<string> connectionString)
+        {
+            config.Transport.LegacyAPIShimSetConnectionString(connectionString());
+
+            return config;
+        }
+
+        /// <summary>
         /// Configures delayed delivery features of this transport.
         /// </summary>
         [PreObsolete(
