@@ -343,5 +343,16 @@ namespace NServiceBus
 
             return config;
         }
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
+        [ObsoleteEx(
+            Message = "Native publish/subscribe is always enabled in version 11. All endpoints must be updated to use native publish/subscribe before updating to this version.",
+            TreatAsErrorFromVersion = "11",
+            RemoveInVersion = "12")]
+        public static SubscriptionMigrationModeSettings EnableMessageDrivenPubSubCompatibilityMode(this TransportExtensions<AzureStorageQueueTransport> transportExtensions)
+            => throw new NotImplementedException();
+
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
