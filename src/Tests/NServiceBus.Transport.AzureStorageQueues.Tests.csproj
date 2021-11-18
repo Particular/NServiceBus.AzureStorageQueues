@@ -4,7 +4,8 @@
     <TargetFrameworks>net472;netcoreapp3.1;net6.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)Test.snk</AssemblyOriginatorKeyFile>
-    <Optimize>false</Optimize>    
+    <Optimize>false</Optimize>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <!-- Force latest versions -->
