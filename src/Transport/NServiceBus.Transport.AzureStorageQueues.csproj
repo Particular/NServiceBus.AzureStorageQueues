@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
@@ -21,6 +21,12 @@
     <PackageReference Include="Janitor.Fody" Version="1.8.0" PrivateAssets="All" />
     <PackageReference Include="Obsolete.Fody" Version="5.2.1" PrivateAssets="All" />
     <PackageReference Include="Particular.Packaging" Version="1.3.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="NServiceBus.Transport.AzureStorageQueues.AcceptanceTests" Key="$(NServiceBusTestsKey)" />
+    <InternalsVisibleTo Include="NServiceBus.Transport.AzureStorageQueues.Tests" Key="$(NServiceBusTestsKey)" />
+    <InternalsVisibleTo Include="NServiceBus.Transport.AzureStorageQueues.TransportTests" Key="$(NServiceBusTestsKey)" />
   </ItemGroup>
 
 </Project>
