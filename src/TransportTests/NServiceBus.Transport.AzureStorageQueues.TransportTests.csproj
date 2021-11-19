@@ -4,12 +4,13 @@
     <TargetFrameworks>net472;netcoreapp3.1;net6.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)Test.snk</AssemblyOriginatorKeyFile>
-    <RootNamespace>NServiceBus.AzureStorageQueues.TransportTests</RootNamespace>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
-  <!-- Force latest versions -->
   <ItemGroup>
+    <ProjectReference Include="..\Transport\NServiceBus.Transport.AzureStorageQueues.csproj" />
+  </ItemGroup>
+
+    <ItemGroup>
     <PackageReference Include="GitHubActionsTestLogger" Version="1.2.0" />
     <PackageReference Include="Azure.Storage.Queues" Version="12.8.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.1.0" />
@@ -19,12 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\AcceptanceTests\BackwardsCompatibleQueueNameSanitizerForTests.cs" Link="BackwardsCompatibleQueueNameSanitizerForTests.cs" />
+    <Compile Include="..\AcceptanceTests\BackwardsCompatibleQueueNameSanitizerForTests.cs" />
     <Compile Remove="$(PkgNServiceBus_TransportTests_Sources)\**\ExceptionExtensions.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Transport\NServiceBus.Transport.AzureStorageQueues.csproj" />
   </ItemGroup>
 
 </Project>

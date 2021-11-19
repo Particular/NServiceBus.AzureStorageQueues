@@ -2,10 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
-    <AssemblyName>NServiceBus.Transport.AzureStorageQueues</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>
-    <RootNamespace>NServiceBus.AzureStorageQueues</RootNamespace>
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
