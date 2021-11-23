@@ -68,43 +68,15 @@ jobs:
         uses: azure/login@v1.4.0
         with:
           creds: ${{ secrets.AZURE_ACI_CREDENTIALS }}
-      - name: Setup storage accounts
-        id: infra
-        shell: pwsh
-        run: |
-          $rand = Get-Random
-          $accountname1 = "pswasq$($rand)a"
-          $accountname2 = "pswasq$($rand)b"
-          echo "::set-output name=accountname1::$accountname1"
-          echo "::set-output name=accountname2::$accountname2"
-          echo "Creating storage account #1"
-          $details1 = az storage account create --name $accountname1 --resource-group GitHubActions-RG --sku Standard_LRS | ConvertFrom-Json
-          echo "Creating storage account #2"
-          $details2 = az storage account create --name $accountname2 --resource-group GitHubActions-RG --sku Standard_LRS | ConvertFrom-Json
-
-          echo "Getting account access keys"
-          $keys1 = az storage account keys list --account-name $accountname1 --resource-group GitHubActions-RG | ConvertFrom-Json
-          $keys2 = az storage account keys list --account-name $accountname2 --resource-group GitHubActions-RG | ConvertFrom-Json
-          $key1 = $keys1[0].value
-          $key2 = $keys2[0].value
-          echo "::add-mask::$key1"
-          echo "::add-mask::$key2"
-
-          echo "Tagging storage accounts"
-          $dateTag = "Created=$(Get-Date -Format "yyyy-MM-dd")"
-          $ignore = az tag create --resource-id $details1.id --tags Package=ASQTransport RunnerOS=${{ runner.os }} $dateTag
-          $ignore = az tag create --resource-id $details2.id --tags Package=ASQTransport RunnerOS=${{ runner.os }} $dateTag
-
-          $connectString1 = "DefaultEndpointsProtocol=https;AccountName=$accountname1;AccountKey=$key1"
-          $connectString2 = "DefaultEndpointsProtocol=https;AccountName=$accountname2;AccountKey=$key2"
-
-          echo "AzureStorageQueueTransport_ConnectionString=$connectString1" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
-          echo "AzureStorageQueueTransport_ConnectionString_2=$connectString2" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+      - name: Setup Azure Storage Account 1
+        uses: Particular/setup-azurestorage-action@v1.0.0
+        with:
+          connection-string-name: AzureStorageQueueTransport_ConnectionString
+          tag: ASQTransport
+      - name: Setup Azure Storage Account 2
+        uses: Particular/setup-azurestorage-action@v1.0.0
+        with:
+          connection-string-name: AzureStorageQueueTransport_ConnectionString_2
+          tag: ASQTransport
       - name: Run tests
         uses: Particular/run-tests-action@v1.0.0
-      - name: Teardown storage accounts
-        if: ${{ always() }}
-        shell: pwsh
-        run: |
-          $ignore = az storage account delete --resource-group GitHubActions-RG --name ${{ steps.infra.outputs.accountname1 }} --yes
-          $ignore = az storage account delete --resource-group GitHubActions-RG --name ${{ steps.infra.outputs.accountname2 }} --yes
