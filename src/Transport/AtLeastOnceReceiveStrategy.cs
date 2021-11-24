@@ -18,14 +18,14 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.criticalErrorAction = criticalErrorAction;
         }
 
-        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken = default)
+        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, string receiveAddress, CancellationToken cancellationToken = default)
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             var body = message.Body ?? new byte[0];
             var contextBag = new ContextBag();
             try
             {
-                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), contextBag);
+                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), receiveAddress, contextBag);
                 await onMessage(pushContext, cancellationToken).ConfigureAwait(false);
 
                 await retrieved.Ack(cancellationToken).ConfigureAwait(false);
@@ -38,7 +38,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
-                var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
+                var context = CreateErrorContext(retrieved, message, ex, body, receiveAddress, contextBag);
 
                 try
                 {

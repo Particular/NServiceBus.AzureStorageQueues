@@ -22,7 +22,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.criticalError = criticalError;
         }
 
-        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken = default)
+        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, string receiveAddress, CancellationToken cancellationToken = default)
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             await retrieved.Ack(cancellationToken).ConfigureAwait(false);
@@ -30,7 +30,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             var contextBag = new ContextBag();
             try
             {
-                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), contextBag);
+                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), receiveAddress, contextBag);
                 await onMessage(pushContext, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
@@ -39,7 +39,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 try
                 {
-                    var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
+                    var context = CreateErrorContext(retrieved, message, ex, body, receiveAddress, contextBag);
                     // Since this is TransportTransactionMode.None, we really don't care what the result is,
                     // we only need to know whether to call criticalErrorAction or not
                     _ = await onError(context, cancellationToken).ConfigureAwait(false);

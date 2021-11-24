@@ -7,10 +7,11 @@
 
     class AzureStorageQueueInfrastructure : TransportInfrastructure
     {
-        public AzureStorageQueueInfrastructure(Dispatcher dispatcher, ReadOnlyDictionary<string, IMessageReceiver> receivers, NativeDelayedDeliveryProcessor nativeDelayedDeliveryProcessor)
+        public AzureStorageQueueInfrastructure(AzureStorageQueueTransport transport, Dispatcher dispatcher, ReadOnlyDictionary<string, IMessageReceiver> receivers, NativeDelayedDeliveryProcessor nativeDelayedDeliveryProcessor)
         {
             Dispatcher = dispatcher;
             Receivers = receivers;
+            this.transport = transport;
             this.nativeDelayedDeliveryProcessor = nativeDelayedDeliveryProcessor;
         }
 
@@ -19,6 +20,11 @@
             return nativeDelayedDeliveryProcessor.Stop(cancellationToken);
         }
 
+#pragma warning disable CS0618 // Type or member is obsolete
+        public override string ToTransportAddress(Transport.QueueAddress address) => transport.ToTransportAddress(address);
+#pragma warning restore CS0618 // Type or member is obsolete
+
+        readonly AzureStorageQueueTransport transport;
         readonly NativeDelayedDeliveryProcessor nativeDelayedDeliveryProcessor;
     }
 }

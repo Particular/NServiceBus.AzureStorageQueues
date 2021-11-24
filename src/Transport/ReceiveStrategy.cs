@@ -9,7 +9,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     abstract class ReceiveStrategy
     {
-        public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken = default);
+        public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message, string receiveAddress, CancellationToken cancellationToken = default);
 
         public static ReceiveStrategy BuildReceiveStrategy(OnMessage onMessage, OnError onError, TransportTransactionMode transactionMode, Action<string, Exception, CancellationToken> criticalErrorAction) => transactionMode switch
         {
@@ -20,9 +20,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             _ => throw new NotSupportedException($"The TransportTransactionMode {transactionMode} is not supported")
         };
 
-        protected static ErrorContext CreateErrorContext(MessageRetrieved retrieved, MessageWrapper message, Exception ex, byte[] body, ContextBag contextBag)
+        protected static ErrorContext CreateErrorContext(MessageRetrieved retrieved, MessageWrapper message, Exception ex, byte[] body, string receiveAddress, ContextBag contextBag)
         {
-            var context = new ErrorContext(ex, message.Headers, message.Id, body, new TransportTransaction(), Convert.ToInt32(retrieved.DequeueCount), contextBag);
+            var context = new ErrorContext(ex, message.Headers, message.Id, body, new TransportTransaction(), Convert.ToInt32(retrieved.DequeueCount), receiveAddress, contextBag);
             return context;
         }
     }
