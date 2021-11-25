@@ -33,7 +33,6 @@ namespace NServiceBus
         {
 
         }
-
         internal void LegacyAPIShimSetConnectionString(string connectionString)
         {
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
@@ -248,15 +247,15 @@ namespace NServiceBus
                 };
             }
 
-            var messageReceivers = receiversSettings.Select(settings => BuildReceiver(hostSettings, settings,
-                    serializer,
-                    hostSettings.CriticalErrorAction,
-                    subscriptionStore))
-                .ToDictionary(receiver => receiver.Id, receiver => receiver.Receiver);
+            var infrastructure = new AzureStorageQueueInfrastructure(
+                this,
+                dispatcher,
+                nativeDelayedDeliveryProcessor);
+            infrastructure.BuildReceivers(receiversSettings, hostSettings, serializer, subscriptionStore, queueServiceClientProvider, GetQueueAddressGenerator());
 
             if (hostSettings.SetupInfrastructure)
             {
-                var queuesToCreate = messageReceivers.Select(settings => settings.Value.ReceiveAddress).Union(sendingAddresses).ToList();
+                var queuesToCreate = infrastructure.Receivers.Select(settings => settings.Value.ReceiveAddress).Union(sendingAddresses).ToList();
                 if (SupportsDelayedDelivery && !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue))
                 {
                     queuesToCreate.Add(DelayedDelivery.DelayedDeliveryPoisonQueue);
@@ -266,12 +265,6 @@ namespace NServiceBus
                 await queueCreator.CreateQueueIfNecessary(queuesToCreate, cancellationToken)
                     .ConfigureAwait(false);
             }
-
-            var infrastructure = new AzureStorageQueueInfrastructure(
-                this,
-                dispatcher,
-                new ReadOnlyDictionary<string, IMessageReceiver>(messageReceivers),
-                nativeDelayedDeliveryProcessor);
 
             hostSettings.StartupDiagnostic.Add("NServiceBus.Transport.AzureStorageQueues", new
             {
@@ -370,8 +363,7 @@ namespace NServiceBus
         }
 
         (string Id, IMessageReceiver Receiver) BuildReceiver(HostSettings hostSettings, ReceiveSettings receiveSettings,
-            MessageWrapperSerializer serializer,
-            Action<string, Exception, CancellationToken> criticalErrorAction, ISubscriptionStore subscriptionStore)
+            MessageWrapperSerializer serializer, ISubscriptionStore subscriptionStore)
         {
             var unwrapper = MessageUnwrapper != null
                 ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
@@ -392,7 +384,7 @@ namespace NServiceBus
                 subscriptionManager,
                 receiveAddress,
                 receiveSettings.ErrorQueue,
-                criticalErrorAction,
+                hostSettings.CriticalErrorAction,
                 DegreeOfReceiveParallelism,
                 ReceiverBatchSize,
                 MaximumWaitTimeWhenIdle,
