@@ -2,7 +2,6 @@ namespace NServiceBus
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Globalization;
     using System.Linq;
     using System.Reflection;
@@ -360,35 +359,6 @@ namespace NServiceBus
             var serializerFactory = definition.Configure(settings);
             var serializer = serializerFactory(mapper);
             return serializer;
-        }
-
-        (string Id, IMessageReceiver Receiver) BuildReceiver(HostSettings hostSettings, ReceiveSettings receiveSettings,
-            MessageWrapperSerializer serializer, ISubscriptionStore subscriptionStore)
-        {
-            var unwrapper = MessageUnwrapper != null
-                ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
-                : new DefaultMessageEnvelopeUnwrapper(serializer);
-
-#pragma warning disable CS0618 // Type or member is obsolete
-            var receiveAddress = ToTransportAddress(receiveSettings.ReceiveAddress);
-#pragma warning restore CS0618 // Type or member is obsolete
-
-            var subscriptionManager = new SubscriptionManager(subscriptionStore, hostSettings.Name, receiveAddress);
-
-            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, GetQueueAddressGenerator(), receiveSettings.PurgeOnStartup, MessageInvisibleTime);
-
-            return (receiveSettings.Id, new MessageReceiver(
-                receiveSettings.Id,
-                TransportTransactionMode,
-                receiver,
-                subscriptionManager,
-                receiveAddress,
-                receiveSettings.ErrorQueue,
-                hostSettings.CriticalErrorAction,
-                DegreeOfReceiveParallelism,
-                ReceiverBatchSize,
-                MaximumWaitTimeWhenIdle,
-                PeekInterval));
         }
 
         QueueAddressGenerator GetQueueAddressGenerator()
