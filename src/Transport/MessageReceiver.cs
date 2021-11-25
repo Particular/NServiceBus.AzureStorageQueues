@@ -30,13 +30,15 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.peekInterval = peekInterval;
             this.azureMessageQueueReceiver = azureMessageQueueReceiver;
             Subscriptions = subscriptionManager;
-            this.receiveAddress = receiveAddress;
+            ReceiveAddress = receiveAddress;
             this.errorQueue = errorQueue;
             this.criticalErrorAction = criticalErrorAction;
         }
 
         public ISubscriptionManager Subscriptions { get; }
         public string Id { get; }
+
+        public string ReceiveAddress { get; }
 
         public Task Initialize(PushRuntimeSettings limitations, OnMessage onMessage, OnError onError, CancellationToken cancellationToken = default)
         {
@@ -46,7 +48,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             receiveStrategy = ReceiveStrategy.BuildReceiveStrategy(onMessage, onError, requiredTransactionMode, criticalErrorAction);
 
-            return azureMessageQueueReceiver.Init(receiveAddress, errorQueue, cancellationToken);
+            return azureMessageQueueReceiver.Init(ReceiveAddress, errorQueue, cancellationToken);
         }
 
         public Task StartReceive(CancellationToken cancellationToken = default)
@@ -188,7 +190,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     Logger.DebugFormat("Unwrapped message ID: '{0}'", message.Id);
                 }
 
-                await receiveStrategy.Receive(retrieved, message, processingCancellationToken).ConfigureAwait(false);
+                await receiveStrategy.Receive(retrieved, message, ReceiveAddress, processingCancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex.IsCausedBy(processingCancellationToken))
             {
@@ -224,7 +226,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly TimeSpan maximumWaitTime;
         readonly TimeSpan peekInterval;
         readonly AzureMessageQueueReceiver azureMessageQueueReceiver;
-        readonly string receiveAddress;
         readonly string errorQueue;
         readonly Action<string, Exception, CancellationToken> criticalErrorAction;
         readonly int? degreeOfReceiveParallelism;

@@ -145,19 +145,6 @@ namespace NServiceBus
 
             ValidateReceiversSettings(receiversSettings);
 
-            if (hostSettings.SetupInfrastructure)
-            {
-                var queuesToCreate = receiversSettings.Select(settings => settings.ReceiveAddress).Union(sendingAddresses).ToList();
-                if (SupportsDelayedDelivery && !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue))
-                {
-                    queuesToCreate.Add(DelayedDelivery.DelayedDeliveryPoisonQueue);
-                }
-
-                var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, GetQueueAddressGenerator());
-                await queueCreator.CreateQueueIfNecessary(queuesToCreate, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
             var localAccountInfo = new AccountInfo("", queueServiceClientProvider.Client, cloudTableClientProvider.Client);
 
             var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator(),
@@ -267,7 +254,21 @@ namespace NServiceBus
                     subscriptionStore))
                 .ToDictionary(receiver => receiver.Id, receiver => receiver.Receiver);
 
+            if (hostSettings.SetupInfrastructure)
+            {
+                var queuesToCreate = messageReceivers.Select(settings => settings.Value.ReceiveAddress).Union(sendingAddresses).ToList();
+                if (SupportsDelayedDelivery && !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue))
+                {
+                    queuesToCreate.Add(DelayedDelivery.DelayedDeliveryPoisonQueue);
+                }
+
+                var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, GetQueueAddressGenerator());
+                await queueCreator.CreateQueueIfNecessary(queuesToCreate, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             var infrastructure = new AzureStorageQueueInfrastructure(
+                this,
                 dispatcher,
                 new ReadOnlyDictionary<string, IMessageReceiver>(messageReceivers),
                 nativeDelayedDeliveryProcessor);
@@ -376,7 +377,11 @@ namespace NServiceBus
                 ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
                 : new DefaultMessageEnvelopeUnwrapper(serializer);
 
-            var subscriptionManager = new SubscriptionManager(subscriptionStore, hostSettings.Name, receiveSettings.ReceiveAddress);
+#pragma warning disable CS0618 // Type or member is obsolete
+            var receiveAddress = ToTransportAddress(receiveSettings.ReceiveAddress);
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            var subscriptionManager = new SubscriptionManager(subscriptionStore, hostSettings.Name, receiveAddress);
 
             var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, GetQueueAddressGenerator(), receiveSettings.PurgeOnStartup, MessageInvisibleTime);
 
@@ -385,7 +390,7 @@ namespace NServiceBus
                 TransportTransactionMode,
                 receiver,
                 subscriptionManager,
-                receiveSettings.ReceiveAddress,
+                receiveAddress,
                 receiveSettings.ErrorQueue,
                 criticalErrorAction,
                 DegreeOfReceiveParallelism,
@@ -405,7 +410,12 @@ namespace NServiceBus
         }
 
         /// <inheritdoc cref="ToTransportAddress"/>
+        [ObsoleteEx(Message = "Inject the ITransportAddressResolver type to access the address translation mechanism at runtime. See the NServiceBus version 8 upgrade guide for further details.",
+            TreatAsErrorFromVersion = "12",
+            RemoveInVersion = "13")]
+#pragma warning disable CS0672 // Member overrides obsolete member
         public override string ToTransportAddress(Transport.QueueAddress address)
+#pragma warning restore CS0672 // Member overrides obsolete member
         {
             var queue = new StringBuilder(address.BaseAddress);
 
