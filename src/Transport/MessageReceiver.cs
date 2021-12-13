@@ -78,6 +78,29 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return Task.CompletedTask;
         }
 
+        public async Task ChangeConcurrency(PushRuntimeSettings newLimitations, CancellationToken cancellationToken = new CancellationToken())
+        {
+            var oldLimiter = concurrencyLimiter;
+            var oldMaxConcurrency = maximumConcurrency;
+            concurrencyLimiter = new SemaphoreSlim(newLimitations.MaxConcurrency);
+            limitations = newLimitations;
+            maximumConcurrency = limitations.MaxConcurrency;
+
+            try
+            {
+                //Drain and dispose of the old semaphore
+                while (oldLimiter.CurrentCount != oldMaxConcurrency)
+                {
+                    await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+                }
+                oldLimiter.Dispose();
+            }
+            catch (Exception ex) when (ex.IsCausedBy(cancellationToken))
+            {
+                //Ignore, we are stopping anyway
+            }
+        }
+
         public async Task StopReceive(CancellationToken cancellationToken = default)
         {
             Logger.Debug($"Stopping MessageReceiver {Id}");
@@ -162,10 +185,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                     foreach (var message in receivedMessages)
                     {
-                        await concurrencyLimiter.WaitAsync(pumpCancellationToken).ConfigureAwait(false);
+                        var localConcurrencyLimiter = concurrencyLimiter;
+
+                        await localConcurrencyLimiter.WaitAsync(pumpCancellationToken).ConfigureAwait(false);
 
                         // no Task.Run() here to avoid a closure
-                        _ = ProcessMessageSwallowExceptionsAndReleaseConcurrencyLimiter(message, messageProcessingCancellationTokenSource.Token);
+                        _ = ProcessMessageSwallowExceptionsAndReleaseConcurrencyLimiter(message, localConcurrencyLimiter, messageProcessingCancellationTokenSource.Token);
                     }
                 }
                 catch (Exception ex) when (!ex.IsCausedBy(pumpCancellationToken))
@@ -180,7 +205,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        async Task ProcessMessageSwallowExceptionsAndReleaseConcurrencyLimiter(MessageRetrieved retrieved, CancellationToken processingCancellationToken)
+        async Task ProcessMessageSwallowExceptionsAndReleaseConcurrencyLimiter(MessageRetrieved retrieved, SemaphoreSlim localConcurrencyLimiter, CancellationToken processingCancellationToken)
         {
             try
             {
@@ -210,7 +235,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             finally
             {
-                concurrencyLimiter.Release();
+                localConcurrencyLimiter.Release();
             }
         }
 
