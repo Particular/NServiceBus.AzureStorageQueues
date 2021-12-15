@@ -78,27 +78,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return Task.CompletedTask;
         }
 
-        public async Task ChangeConcurrency(PushRuntimeSettings newLimitations, CancellationToken cancellationToken = new CancellationToken())
+        public async Task ChangeConcurrency(PushRuntimeSettings newLimitations, CancellationToken cancellationToken = default)
         {
-            var oldLimiter = concurrencyLimiter;
-            var oldMaxConcurrency = maximumConcurrency;
-            concurrencyLimiter = new SemaphoreSlim(newLimitations.MaxConcurrency);
+            await StopReceive(cancellationToken).ConfigureAwait(false);
             limitations = newLimitations;
-            maximumConcurrency = limitations.MaxConcurrency;
-
-            try
-            {
-                //Drain and dispose of the old semaphore
-                while (oldLimiter.CurrentCount != oldMaxConcurrency)
-                {
-                    await Task.Delay(50, cancellationToken).ConfigureAwait(false);
-                }
-                oldLimiter.Dispose();
-            }
-            catch (Exception ex) when (ex.IsCausedBy(cancellationToken))
-            {
-                //Ignore, we are stopping anyway
-            }
+            await StartReceive(cancellationToken).ConfigureAwait(false);
         }
 
         public async Task StopReceive(CancellationToken cancellationToken = default)
@@ -133,6 +117,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             messageProcessingCancellationTokenSource?.Dispose();
             messagePumpCancellationTokenSource?.Dispose();
+            messagePumpTasks = null;
         }
 
         [DebuggerNonUserCode]
