@@ -170,12 +170,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                     foreach (var message in receivedMessages)
                     {
-                        var localConcurrencyLimiter = concurrencyLimiter;
-
-                        await localConcurrencyLimiter.WaitAsync(pumpCancellationToken).ConfigureAwait(false);
+                        await concurrencyLimiter.WaitAsync(pumpCancellationToken).ConfigureAwait(false);
 
                         // no Task.Run() here to avoid a closure
-                        _ = ProcessMessageSwallowExceptionsAndReleaseConcurrencyLimiter(message, localConcurrencyLimiter, messageProcessingCancellationTokenSource.Token);
+                        _ = ProcessMessageSwallowExceptionsAndReleaseConcurrencyLimiter(message, messageProcessingCancellationTokenSource.Token);
                     }
                 }
                 catch (Exception ex) when (!ex.IsCausedBy(pumpCancellationToken))
@@ -190,7 +188,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        async Task ProcessMessageSwallowExceptionsAndReleaseConcurrencyLimiter(MessageRetrieved retrieved, SemaphoreSlim localConcurrencyLimiter, CancellationToken processingCancellationToken)
+        async Task ProcessMessageSwallowExceptionsAndReleaseConcurrencyLimiter(MessageRetrieved retrieved, CancellationToken processingCancellationToken)
         {
             try
             {
@@ -220,7 +218,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             finally
             {
-                localConcurrencyLimiter.Release();
+                concurrencyLimiter.Release();
             }
         }
 
