@@ -226,7 +226,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         CancellationTokenSource messagePumpCancellationTokenSource;
         CancellationTokenSource messageProcessingCancellationTokenSource;
         RepeatedFailuresOverTimeCircuitBreaker circuitBreaker;
-        volatile SemaphoreSlim concurrencyLimiter;
+        SemaphoreSlim concurrencyLimiter;
         Task[] messagePumpTasks;
         int maximumConcurrency;
         PushRuntimeSettings limitations;
