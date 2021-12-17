@@ -78,6 +78,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return Task.CompletedTask;
         }
 
+        public async Task ChangeConcurrency(PushRuntimeSettings newLimitations, CancellationToken cancellationToken = default)
+        {
+            await StopReceive(cancellationToken).ConfigureAwait(false);
+            limitations = newLimitations;
+            await StartReceive(cancellationToken).ConfigureAwait(false);
+        }
+
         public async Task StopReceive(CancellationToken cancellationToken = default)
         {
             Logger.Debug($"Stopping MessageReceiver {Id}");
@@ -110,6 +117,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             messageProcessingCancellationTokenSource?.Dispose();
             messagePumpCancellationTokenSource?.Dispose();
+            messagePumpTasks = null;
         }
 
         [DebuggerNonUserCode]

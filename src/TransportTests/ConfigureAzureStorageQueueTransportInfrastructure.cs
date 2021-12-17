@@ -27,6 +27,7 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
             QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize,
             Subscriptions = { DisableCaching = true }
         };
+        transport.DelayedDelivery.DelayedDeliveryPoisonQueue = "error";
 
         return transport;
     }
