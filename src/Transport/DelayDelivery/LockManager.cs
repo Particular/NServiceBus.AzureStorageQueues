@@ -8,6 +8,7 @@
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Blobs.Models;
     using global::Azure.Storage.Blobs.Specialized;
+    using NServiceBus.Logging;
 
     // Provides a container lease based lock manager.
     class LockManager
@@ -18,6 +19,11 @@
         bool created;
         BlobLease lease;
 
+        // For temporary telemetry purposes
+        static ILog log = LogManager.GetLogger<LockManager>();
+        static Guid instanceId = Guid.NewGuid();
+
+
         public LockManager(BlobContainerClient containerClient, BlobLeaseClient blobLeaseClient, TimeSpan span)
         {
             this.containerClient = containerClient;
@@ -27,6 +33,8 @@
 
         public async Task<bool> TryLockOrRenew(CancellationToken cancellationToken)
         {
+            log.InfoFormat("LockManager.TryLockOrRenew() InstanceId={0}, Server={1}, WorkingDir={2}", instanceId, Environment.MachineName, Environment.CurrentDirectory);
+
             await EnsureContainerExists(cancellationToken).ConfigureAwait(false);
 
             if (lease == null)
@@ -57,6 +65,8 @@
 
         public async Task TryRelease(CancellationToken cancellationToken)
         {
+            log.InfoFormat("LockManager.TryRelease() InstanceId={0}, Server={1}, WorkingDir={2}", instanceId, Environment.MachineName, Environment.CurrentDirectory);
+
             await EnsureContainerExists(cancellationToken).ConfigureAwait(false);
 
             if (lease != null)
@@ -77,8 +87,12 @@
 
         async Task EnsureContainerExists(CancellationToken cancellationToken)
         {
+            log.InfoFormat("LockManager.EnsureContainerExists() InstanceId={0}, Server={1}, WorkingDir={2}", instanceId, Environment.MachineName, Environment.CurrentDirectory);
             if (created == false)
             {
+                log.InfoFormat("LockManager: containerClient.CreateIfNotExistsAsync() InstanceId={0}, Server={1}, WorkingDir={2}, ContainerName={3}",
+                    instanceId, Environment.MachineName, Environment.CurrentDirectory, containerClient.Name);
+
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.None, null, null, cancellationToken).ConfigureAwait(false);
                 created = true;
             }
