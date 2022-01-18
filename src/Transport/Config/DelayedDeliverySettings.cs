@@ -1,6 +1,5 @@
 namespace NServiceBus
 {
-    using System;
     using Configuration.AdvancedExtensibility;
     using Settings;
 
@@ -24,24 +23,5 @@ namespace NServiceBus
         {
             transportDelayedDelivery.DelayedDeliveryTableName = delayedMessagesTableName;
         }
-
-        /// <summary>
-        /// Disable delayed delivery.
-        /// <remarks>
-        /// Disabling delayed delivery reduces costs associated with polling Azure Storage service for delayed messages that need
-        /// to be dispatched.
-        /// Do not use this setting if your endpoint requires delayed messages, timeouts, or delayed retries.
-        /// </remarks>
-        /// </summary>
-        [ObsoleteEx(
-            Message = "Configure delayed delivery support via the AzureStorageQueueTransport constructor.",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
-        public void DisableDelayedDelivery()
-        {
-            throw new NotImplementedException();
-        }
     }
 }
-
-#pragma warning restore CS0618 // Type or member is obsolete
