@@ -21,6 +21,7 @@ namespace NServiceBus
     public partial class DelayedDeliverySettings
     {
         [ObsoleteEx(
+            Message = "The TimeoutManager has been deprecated.",
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
         public void DisableTimeoutManager()

@@ -92,8 +92,8 @@ namespace NServiceBus
             ". The member currently throws a NotImplementedException. Will be removed in vers" +
             "ion 12.0.0.", true)]
         public void DisableDelayedDelivery() { }
-        [System.Obsolete("The member currently throws a NotImplementedException. Will be removed in version" +
-            " 12.0.0.", true)]
+        [System.Obsolete("The TimeoutManager has been deprecated. The member currently throws a NotImplemen" +
+            "tedException. Will be removed in version 12.0.0.", true)]
         public void DisableTimeoutManager() { }
         [System.Obsolete("Configure the transport via the AzureStorageQueueTransport DelayedDelivery.Delaye" +
             "dDeliveryTableName property. Will be treated as an error from version 12.0.0. Wi" +
