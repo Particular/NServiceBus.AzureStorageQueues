@@ -61,7 +61,7 @@
 
         static TimeSpan? ToNullIfNegative(TimeSpan value)
         {
-            return value <= TimeSpan.Zero ? (TimeSpan?)null : value;
+            return value <= TimeSpan.Zero ? null : value;
         }
 
         public Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken = default)
