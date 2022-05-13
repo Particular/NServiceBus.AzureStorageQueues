@@ -117,7 +117,7 @@ namespace NServiceBus
         static string GenerateDelayedDeliveryTableName(string endpointName)
         {
             byte[] hashedName;
-            using (var sha1 = new SHA1Managed())
+            using (var sha1 = SHA1.Create())
             {
                 sha1.Initialize();
                 hashedName = sha1.ComputeHash(Encoding.UTF8.GetBytes(endpointName));
@@ -519,7 +519,7 @@ namespace NServiceBus
             get => receiverBatchSize;
             set
             {
-                if (value < 1 || value > 32)
+                if (value is < 1 or > 32)
                 {
                     throw new ArgumentOutOfRangeException(nameof(ReceiverBatchSize), value, "Batch size must be between 1 and 32 messages.");
                 }
@@ -537,7 +537,7 @@ namespace NServiceBus
             {
                 const int maxDegreeOfReceiveParallelism = 32;
 
-                if (degreeOfReceiveParallelism < 1 || degreeOfReceiveParallelism > maxDegreeOfReceiveParallelism)
+                if (degreeOfReceiveParallelism is < 1 or > maxDegreeOfReceiveParallelism)
                 {
                     throw new ArgumentOutOfRangeException(nameof(DegreeOfReceiveParallelism), value, $"DegreeOfParallelism must be between 1 and {maxDegreeOfReceiveParallelism}.");
                 }
