@@ -401,10 +401,7 @@ namespace NServiceBus
 
         QueueAddressGenerator GetQueueAddressGenerator()
         {
-            if (queueAddressGenerator == null)
-            {
-                queueAddressGenerator = new QueueAddressGenerator(QueueNameSanitizer);
-            }
+            queueAddressGenerator ??= new QueueAddressGenerator(QueueNameSanitizer);
 
             return queueAddressGenerator;
         }
