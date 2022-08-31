@@ -44,7 +44,7 @@
         public static AzureStorageQueueTransport SetTransportDefaultTestsConfiguration(AzureStorageQueueTransport transport, string delayedDeliveryPoisonQueue = null)
         {
             transport.MessageInvisibleTime = TimeSpan.FromSeconds(30);
-            transport.MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>();
+            transport.MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftJsonSerializer>();
             transport.QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize;
 
             if (delayedDeliveryPoisonQueue != null)

@@ -25,7 +25,11 @@
                 {
                     b.CustomConfig((cfg, context) =>
                     {
-                        cfg.UseSerialization<NewtonsoftSerializer>();
+                        cfg.UseSerialization<NewtonsoftJsonSerializer>().Settings(
+                            new JsonSerializerSettings()
+                            {
+                                TypeNameHandling = TypeNameHandling.Auto
+                            });
                         var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                         transport.MessageUnwrapper = message => MyCustomUnwrapper(message, context.TestRunId);
                     });

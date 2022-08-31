@@ -149,7 +149,7 @@
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
                     transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
 
-                    cfg.UseSerialization<NewtonsoftSerializer>();
+                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
                 });
                 CustomEndpointName(SenderName);
             }
@@ -162,7 +162,7 @@
                 var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2(), useNativeDelayedDeliveries: false);
                 EndpointSetup(new CustomizedServer(transport), (cfg, runDescriptor) =>
                 {
-                    cfg.UseSerialization<NewtonsoftSerializer>();
+                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
                     cfg.AuditProcessedMessagesTo(AuditName);
 
                     transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
@@ -178,7 +178,7 @@
             {
                 EndpointSetup<DefaultPublisher>(cfg =>
                 {
-                    cfg.UseSerialization<NewtonsoftSerializer>();
+                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
                     cfg.AuditProcessedMessagesTo(AuditName);
 
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();

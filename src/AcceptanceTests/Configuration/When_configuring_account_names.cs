@@ -49,7 +49,7 @@
                 {
                     cfg.CustomConfig(c =>
                     {
-                        c.UseSerialization<NewtonsoftSerializer>();
+                        c.UseSerialization<NewtonsoftJsonSerializer>();
 
                         var transport = c.ConfigureTransport<AzureStorageQueueTransport>();
                         customizeTransport(transport);
@@ -92,7 +92,7 @@
             {
                 EndpointSetup<DefaultServer>(c =>
                 {
-                    c.UseSerialization<NewtonsoftSerializer>();
+                    c.UseSerialization<NewtonsoftJsonSerializer>();
                 });
             }
 
