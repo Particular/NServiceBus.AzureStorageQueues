@@ -1,6 +1,12 @@
 ﻿namespace Testing
 {
     using System;
+    using System.Configuration;
+    using Azure.Core;
+    using Azure.Core.Pipeline;
+    using Azure.Data.Tables;
+    using Azure.Storage.Blobs;
+    using Azure.Storage.Queues;
     using NServiceBus;
 
     public static class Utilities
@@ -9,24 +15,20 @@
         {
             var environmentVariableName = $"{nameof(AzureStorageQueueTransport)}_ConnectionString";
             var connectionString = GetEnvironmentVariable(environmentVariableName);
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new Exception($"Couldn't find an environment variable '{environmentVariableName}' with Azure Storage connection string.");
-            }
 
-            return connectionString;
+            return string.IsNullOrEmpty(connectionString)
+                ? "UseDevelopmentStorage=true"
+                : connectionString;
         }
 
         public static string GetEnvConfiguredConnectionString2()
         {
             var environmentVariableName = $"{nameof(AzureStorageQueueTransport)}_ConnectionString_2";
             var connectionString = GetEnvironmentVariable(environmentVariableName);
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new Exception($"Couldn't find an environment variable '{environmentVariableName}' with Azure Storage connection string.");
-            }
 
-            return connectionString;
+            return string.IsNullOrEmpty(connectionString)
+                ? "UseDevelopmentStorage=true"
+                : connectionString;
         }
 
         static string GetEnvironmentVariable(string variable)
@@ -35,10 +37,39 @@
             return string.IsNullOrWhiteSpace(candidate) ? Environment.GetEnvironmentVariable(variable) : candidate;
         }
 
-        public static AzureStorageQueueTransport CreateTransportWithDefaultTestsConfiguration(string connectionString, string delayedDeliveryPoisonQueue = null)
+        public static AzureStorageQueueTransport CreateTransportWithDefaultTestsConfiguration(
+            string connectionString,
+            string delayedDeliveryPoisonQueue = null,
+            HttpPipelinePolicy tableServiceClientPipelinePolicy = null)
         {
-            var transport = new AzureStorageQueueTransport(connectionString);
+            ThrowIfPremiumEndpointConnectionString(connectionString);
+
+            AzureStorageQueueTransport transport;
+
+            var tableClientOptions = new TableClientOptions();
+            if (tableServiceClientPipelinePolicy != null)
+            {
+                tableClientOptions.AddPolicy(tableServiceClientPipelinePolicy, HttpPipelinePosition.PerCall);
+            }
+
+            transport = new AzureStorageQueueTransport(
+                new QueueServiceClient(connectionString),
+                new BlobServiceClient(connectionString),
+                new TableServiceClient(connectionString, tableClientOptions));
+
             return SetTransportDefaultTestsConfiguration(transport, delayedDeliveryPoisonQueue);
+        }
+
+        static void ThrowIfPremiumEndpointConnectionString(string connectionString)
+        {
+            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+
+            if (connectionString.IndexOf("https://localhost") >= 0 ||
+                connectionString.IndexOf(".table.cosmosdb.") >= 0 ||
+                connectionString.IndexOf(".table.cosmos.") >= 0)
+            {
+                throw new ConfigurationErrorsException($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
+            }
         }
 
         public static AzureStorageQueueTransport SetTransportDefaultTestsConfiguration(AzureStorageQueueTransport transport, string delayedDeliveryPoisonQueue = null)
@@ -54,5 +85,7 @@
 
             return transport;
         }
+
+        public static bool Contains(this string source, string subString, StringComparison comparison) => source.IndexOf(subString, comparison) >= 0;
     }
 }

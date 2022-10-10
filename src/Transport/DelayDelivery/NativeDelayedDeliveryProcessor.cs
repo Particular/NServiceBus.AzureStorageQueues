@@ -2,25 +2,19 @@
 {
     using System.Threading;
     using System.Threading.Tasks;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Blobs;
     using Logging;
-    using Microsoft.Azure.Cosmos.Table;
 
     class NativeDelayedDeliveryProcessor
     {
-        public static NativeDelayedDeliveryProcessor Disabled()
-        {
-            return new NativeDelayedDeliveryProcessor();
-        }
+        public static NativeDelayedDeliveryProcessor Disabled() => new();
 
-        NativeDelayedDeliveryProcessor()
-        {
-            enabled = false;
-        }
+        NativeDelayedDeliveryProcessor() => enabled = false;
 
         public NativeDelayedDeliveryProcessor(
             Dispatcher dispatcher,
-            CloudTable delayedMessageStorageTable,
+            TableClient delayedMessageStorageTableClient,
             BlobServiceClient blobServiceClient,
             string errorQueueAddress,
             TransportTransactionMode transportTransactionMode,
@@ -28,7 +22,7 @@
         {
             enabled = true;
             this.dispatcher = dispatcher;
-            this.delayedMessageStorageTable = delayedMessageStorageTable;
+            this.delayedMessageStorageTableClient = delayedMessageStorageTableClient;
             this.blobServiceClient = blobServiceClient;
             this.errorQueueAddress = errorQueueAddress;
             this.transportTransactionMode = transportTransactionMode;
@@ -46,7 +40,7 @@
 
             var isAtMostOnce = transportTransactionMode == TransportTransactionMode.None;
             poller = new DelayedMessagesPoller(
-                delayedMessageStorageTable,
+                delayedMessageStorageTableClient,
                 blobServiceClient,
                 errorQueueAddress,
                 isAtMostOnce,
@@ -64,12 +58,12 @@
         }
 
         readonly Dispatcher dispatcher;
-        CloudTable delayedMessageStorageTable;
+        readonly TableClient delayedMessageStorageTableClient;
         readonly BlobServiceClient blobServiceClient;
         readonly string errorQueueAddress;
         readonly TransportTransactionMode transportTransactionMode;
         readonly BackoffStrategy backoffStrategy;
-        bool enabled;
+        readonly bool enabled;
 
         static readonly ILog Logger = LogManager.GetLogger<NativeDelayedDeliveryProcessor>();
         DelayedMessagesPoller poller;

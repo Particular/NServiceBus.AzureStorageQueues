@@ -1,13 +1,13 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
-    using Microsoft.Azure.Cosmos.Table;
+    using NServiceBus.Transport.AzureStorageQueues.Utils;
 
     readonly struct QueueAddress : IEquatable<QueueAddress>
     {
         public QueueAddress(string queueName, string alias)
         {
-            if (IsQueueNameValid(queueName) == false)
+            if (string.IsNullOrWhiteSpace(queueName))
             {
                 throw new ArgumentException("Queue name cannot be null nor empty", nameof(queueName));
             }
@@ -20,30 +20,23 @@
         public readonly string QueueName;
         public readonly string Alias;
 
-        public bool Equals(QueueAddress other)
-        {
-            return string.Equals(QueueName, other.QueueName, StringComparison.OrdinalIgnoreCase) && string.Equals(Alias, other.Alias, StringComparison.OrdinalIgnoreCase);
-        }
+        public bool Equals(QueueAddress other) =>
+            string.Equals(QueueName, other.QueueName, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(Alias, other.Alias, StringComparison.OrdinalIgnoreCase);
 
-        static bool IsQueueNameValid(string queueName)
-        {
-            return string.IsNullOrWhiteSpace(queueName) == false;
-        }
+        public static QueueAddress Parse(string inputQueue, bool allowConnectionStringForBackwardCompatibility = false) =>
+            TryParseInternal(inputQueue, allowConnectionStringForBackwardCompatibility, out var q, error => throw new FormatException(error))
+                ? q.Value
+                : throw new FormatException($"Can not parse '{inputQueue}' as an address");
 
-        public static QueueAddress Parse(string value, bool allowConnectionStringForBackwardCompatibility = false)
-        {
-            if (TryParse(value, allowConnectionStringForBackwardCompatibility, out var q) == false)
-            {
-                throw new ArgumentException("Value cannot be parsed", nameof(value));
-            }
+        public static bool TryParse(string inputQueue, bool allowConnectionStringForBackwardCompatibility, out QueueAddress? queue) =>
+            TryParseInternal(inputQueue, allowConnectionStringForBackwardCompatibility, out queue);
 
-            return q.Value;
-        }
-
-        public static bool TryParse(string inputQueue, bool allowConnectionStringForBackwardCompatibility, out QueueAddress? queue)
+        static bool TryParseInternal(string inputQueue, bool allowConnectionStringForBackwardCompatibility, out QueueAddress? queue, Action<string> onError = null)
         {
             if (inputQueue == null)
             {
+                onError?.Invoke("inputQueue cannot be null");
                 queue = null;
                 return false;
             }
@@ -51,8 +44,9 @@
             var index = inputQueue.IndexOf(Separator, StringComparison.Ordinal);
             if (index < 0)
             {
-                if (IsQueueNameValid(inputQueue) == false)
+                if (string.IsNullOrWhiteSpace(inputQueue))
                 {
+                    onError?.Invoke("inputQueue cannot be empty");
                     queue = null;
                     return false;
                 }
@@ -63,20 +57,21 @@
 
             var queueName = inputQueue.Substring(0, index);
 
-            if (IsQueueNameValid(queueName) == false)
+            if (string.IsNullOrWhiteSpace(queueName))
             {
+                onError?.Invoke("Queue name cannot be empty");
                 queue = null;
                 return false;
             }
 
             var connectionStringOrAlias = inputQueue.Substring(index + 1);
 
-            if (CloudStorageAccount.TryParse(connectionStringOrAlias, out _) && allowConnectionStringForBackwardCompatibility == false)
+            if (connectionStringOrAlias.IsValidAzureConnectionString() && allowConnectionStringForBackwardCompatibility == false)
             {
-                const string message =
-                    "An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected."
-                    + " Only aliases are allowed. Provide an alias for the storage account.";
-                throw new Exception(message);
+                onError?.Invoke("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected." +
+                               " Only aliases are allowed. Provide an alias for the storage account.");
+                queue = null;
+                return false;
             }
 
             queue = new QueueAddress(queueName, connectionStringOrAlias);
@@ -100,10 +95,7 @@
             }
         }
 
-        public override string ToString()
-        {
-            return HasNoAlias ? QueueName : $"{QueueName}@{Alias}";
-        }
+        public override string ToString() => HasNoAlias ? QueueName : $"{QueueName}{Separator}{Alias}";
 
         public bool HasNoAlias => Alias == string.Empty;
 

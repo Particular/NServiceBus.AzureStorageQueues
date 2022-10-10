@@ -6,16 +6,15 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.Azure.Cosmos.Table;
+    using global::Azure;
+    using global::Azure.Data.Tables;
 
     class SubscriptionStore : ISubscriptionStore
     {
         readonly AzureStorageAddressingSettings storageAddressingSettings;
 
-        public SubscriptionStore(AzureStorageAddressingSettings storageAddressingSettings)
-        {
+        public SubscriptionStore(AzureStorageAddressingSettings storageAddressingSettings) =>
             this.storageAddressingSettings = storageAddressingSettings;
-        }
 
         public async Task<IEnumerable<string>> GetSubscribers(Type eventType, CancellationToken cancellationToken = default)
         {
@@ -26,59 +25,53 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 return Enumerable.Empty<string>();
             }
 
-            var retrieveTasks = new List<Task<IEnumerable<SubscriptionEntity>>>(topics.Length);
+            var retrieveTasks = new List<Task<IEnumerable<string>>>(topics.Length);
             var addresses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            (_, CloudTable table) = storageAddressingSettings.GetSubscriptionTable(eventType);
+            (_, TableClient tableClient) = storageAddressingSettings.GetSubscriptionTable(eventType);
 
             foreach (var topic in topics)
             {
-                retrieveTasks.Add(Retrieve(topic, table, cancellationToken));
+                retrieveTasks.Add(RetrieveAddresses(topic, tableClient, cancellationToken));
             }
 
-            await Task.WhenAll(retrieveTasks).ConfigureAwait(false);
-
-            foreach (var retrieveTask in retrieveTasks)
+            var addressResults = await Task.WhenAll(retrieveTasks).ConfigureAwait(false);
+            foreach (var address in addressResults.SelectMany(a => a))
             {
-                var subscriptionEntities = retrieveTask.GetAwaiter().GetResult();
-                foreach (var subscriptionEntity in subscriptionEntities)
-                {
-                    addresses.Add(subscriptionEntity.Address);
-                }
+                addresses.Add(address);
             }
+
             return addresses;
         }
 
-        static async Task<IEnumerable<SubscriptionEntity>> Retrieve(string topic, CloudTable table, CancellationToken cancellationToken)
-        {
-            var query = new TableQuery<SubscriptionEntity>().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, topic));
-            return await table.QueryAll(query, cancellationToken).ConfigureAwait(false);
-        }
+        static async Task<IEnumerable<string>> RetrieveAddresses(string topic, TableClient tableClient, CancellationToken cancellationToken) =>
+            await tableClient
+                .QueryAsync<SubscriptionEntity>(e => e.Topic == topic, cancellationToken: cancellationToken)
+                .Select(e => e.Address)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
 
         public Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken = default)
         {
-            (string alias, CloudTable table) = storageAddressingSettings.GetSubscriptionTable(eventType);
+            (string alias, TableClient tableClient) = storageAddressingSettings.GetSubscriptionTable(eventType);
             var address = new QueueAddress(endpointAddress, alias);
-
-            var operation = TableOperation.InsertOrReplace(new SubscriptionEntity
+            var entity = new SubscriptionEntity
             {
                 Topic = TopicName.From(eventType),
                 Endpoint = endpointName,
                 Address = address.ToString()
-            });
-            return table.ExecuteAsync(operation, cancellationToken);
+            };
+
+            return tableClient.UpsertEntityAsync(entity, TableUpdateMode.Merge, cancellationToken: cancellationToken);
         }
 
         public Task Unsubscribe(string endpointName, Type eventType, CancellationToken cancellationToken = default)
         {
-            (_, CloudTable table) = storageAddressingSettings.GetSubscriptionTable(eventType);
-            var operation = TableOperation.Delete(new SubscriptionEntity
-            {
-                Topic = TopicName.From(eventType),
-                Endpoint = endpointName,
-                ETag = "*"
-            });
-
-            return table.ExecuteAsync(operation, cancellationToken);
+            (_, TableClient tableClient) = storageAddressingSettings.GetSubscriptionTable(eventType);
+            return tableClient.DeleteEntityAsync(
+                TopicName.From(eventType),
+                endpointName,
+                new ETag("*"),
+                cancellationToken);
         }
 
         string[] GetTopics(Type messageType) => eventTypeToTopicListMap.GetOrAdd(messageType, GenerateTopics);
@@ -110,6 +103,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
-        ConcurrentDictionary<Type, string[]> eventTypeToTopicListMap = new ConcurrentDictionary<Type, string[]>();
+        readonly ConcurrentDictionary<Type, string[]> eventTypeToTopicListMap = new();
     }
 }

@@ -2,8 +2,9 @@
 {
     using System;
     using System.Collections.Generic;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using Microsoft.Azure.Cosmos.Table;
+    using NServiceBus.Transport.AzureStorageQueues.Utils;
 
     class AzureStorageAddressingSettings
     {
@@ -60,7 +61,7 @@
             {
                 // If this is a reply message with a connection string use the connection string to construct a queue service client.
                 // This was a reply message coming from an older endpoint w/o aliases.
-                if (messageIntent == MessageIntent.Reply && CloudStorageAccount.TryParse(address.Alias, out _))
+                if (messageIntent == MessageIntent.Reply && address.Alias.IsValidAzureConnectionString())
                 {
                     return new QueueServiceClient(address.Alias);
                 }
@@ -111,30 +112,30 @@
             }
         }
 
-        internal (string alias, CloudTable cloudTable) GetSubscriptionTable(Type eventType)
+        internal (string alias, TableClient tableClient) GetSubscriptionTable(Type eventType)
         {
-            CloudTable subscriptionTable;
+            TableClient subscriptionTableClient;
             if (typeToSubscriptionInformation.TryGetValue(eventType, out (AccountInfo accountInfo, string tableName) found))
             {
-                subscriptionTable = found.accountInfo.CloudTableClient.GetTableReference(found.tableName);
-                return (defaultConnectionStringAlias, subscriptionTable);
+                subscriptionTableClient = found.accountInfo.TableServiceClient.GetTableClient(found.tableName);
+                return (defaultConnectionStringAlias, subscriptionTableClient);
             }
 
             (AccountInfo accountInfo, string tableName) = typeToSubscriptionInformation[typeof(DefaultLocalEventTypeMatch)];
-            subscriptionTable = accountInfo.CloudTableClient.GetTableReference(tableName);
-            return (accountInfo.Alias, subscriptionTable);
+            subscriptionTableClient = accountInfo.TableServiceClient.GetTableClient(tableName);
+            return (accountInfo.Alias, subscriptionTableClient);
         }
 
-        QueueAddressGenerator addressGenerator;
-        Dictionary<string, AccountInfo> aliasToAccountInfoMap = new Dictionary<string, AccountInfo>();
-        Dictionary<QueueAddress, AccountInfo> registeredEndpoints = new Dictionary<QueueAddress, AccountInfo>();
-        Dictionary<Type, (AccountInfo, string)> typeToSubscriptionInformation = new Dictionary<Type, (AccountInfo, string)>();
+        readonly QueueAddressGenerator addressGenerator;
+        readonly Dictionary<string, AccountInfo> aliasToAccountInfoMap = new();
+        readonly Dictionary<QueueAddress, AccountInfo> registeredEndpoints = new();
+        readonly Dictionary<Type, (AccountInfo, string)> typeToSubscriptionInformation = new();
 
         // kind of a wildcard for the local account info
         sealed class DefaultLocalEventTypeMatch
         {
         }
 
-        string defaultConnectionStringAlias;
+        readonly string defaultConnectionStringAlias;
     }
 }

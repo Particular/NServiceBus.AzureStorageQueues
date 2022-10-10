@@ -3,10 +3,10 @@
     using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using Features;
-    using global::Azure.Storage.Queues;
     using AcceptanceTesting.Customization;
-    using Microsoft.Azure.Cosmos.Table;
+    using Features;
+    using global::Azure.Data.Tables;
+    using global::Azure.Storage.Queues;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -18,10 +18,7 @@
         public async Task Account_mapped_should_be_respected()
         {
             var context = await Scenario.Define<Context>()
-                 .WithEndpoint<Publisher>(b =>
-                {
-                    b.When(c => c.Subscribed, session => session.Publish<MyEvent>());
-                })
+                 .WithEndpoint<Publisher>(b => b.When(c => c.Subscribed, session => session.Publish<MyEvent>()))
                  .WithEndpoint<Subscriber>(b => b.When(async (session, c) =>
                  {
                      await session.Subscribe<MyEvent>();
@@ -44,9 +41,8 @@
 
         class Publisher : EndpointConfigurationBuilder
         {
-            public Publisher()
-            {
-                EndpointSetup<DefaultPublisher>(configuration =>
+            public Publisher() => EndpointSetup<DefaultPublisher>(
+                configuration =>
                 {
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
 
@@ -54,10 +50,9 @@
 
                     var anotherAccount = transport.AccountRouting.AddAccount(SubscriberAccount,
                         new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
-                        CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
+                        new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                     anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Subscriber)));
                 });
-            }
         }
 
         public class Subscriber : EndpointConfigurationBuilder
@@ -70,25 +65,19 @@
 
                 var anotherAccount = transport.AccountRouting.AddAccount(PublisherAccount,
                     new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()),
-                    CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient());
+                    new TableServiceClient(Utilities.GetEnvConfiguredConnectionString()));
                 anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Publisher)), new[] { typeof(MyEvent) });
 
                 EndpointSetup(
                     endpointTemplate: new CustomizedServer(transport),
-                    configurationBuilderCustomization: (config, rd) =>
-                    {
-                        config.DisableFeature<AutoSubscribe>();
-                    });
+                    configurationBuilderCustomization: (config, rd) => config.DisableFeature<AutoSubscribe>());
             }
 
             public class MyMessageHandler : IHandleMessages<MyEvent>
             {
-                Context testContext;
+                readonly Context testContext;
 
-                public MyMessageHandler(Context testContext)
-                {
-                    this.testContext = testContext;
-                }
+                public MyMessageHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyEvent message, IMessageHandlerContext context)
                 {

@@ -17,8 +17,7 @@ public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTrans
         var connectionString = Environment.GetEnvironmentVariable(connectionStringEnvVarName);
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw new Exception(
-                $"Connection string is required for Acceptance tests. Set it in an environment variable named '{connectionStringEnvVarName}'");
+            connectionString = "UseDevelopmentStorage=true";
         }
 
         var transport = new AzureStorageQueueTransport(connectionString)

@@ -2,10 +2,10 @@ namespace NServiceBus
 {
     using System;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
-    using Microsoft.Azure.Cosmos.Table;
     using Serialization;
 
     /// <summary>
@@ -57,10 +57,10 @@ namespace NServiceBus
             ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)")]
         public static TransportExtensions<AzureStorageQueueTransport> UseTransport<T>(this EndpointConfiguration config,
             QueueServiceClient queueServiceClient, BlobServiceClient blobServiceClient,
-            CloudTableClient cloudTableClient)
+            TableServiceClient tableServiceClient)
             where T : AzureStorageQueueTransport
         {
-            var transport = new AzureStorageQueueTransport(queueServiceClient, blobServiceClient, cloudTableClient);
+            var transport = new AzureStorageQueueTransport(queueServiceClient, blobServiceClient, tableServiceClient);
             var routing = config.UseTransport(transport);
             var settings = new TransportExtensions<AzureStorageQueueTransport>(transport, routing);
 
@@ -195,10 +195,8 @@ namespace NServiceBus
             RemoveInVersion = "12.0")]
         public static TransportExtensions<AzureStorageQueueTransport> UseQueueServiceClient(
             this TransportExtensions<AzureStorageQueueTransport> config,
-            QueueServiceClient queueServiceClient)
-        {
+            QueueServiceClient queueServiceClient) =>
             throw new NotImplementedException();
-        }
 
         /// <summary>
         /// Sets <see cref="QueueServiceClient"/> to be used for delayed delivery feature.
@@ -209,24 +207,8 @@ namespace NServiceBus
             TreatAsErrorFromVersion = "11.0",
             RemoveInVersion = "12.0")]
         public static TransportExtensions<AzureStorageQueueTransport> UseBlobServiceClient(
-            this TransportExtensions<AzureStorageQueueTransport> config, BlobServiceClient blobServiceClient)
-        {
+            this TransportExtensions<AzureStorageQueueTransport> config, BlobServiceClient blobServiceClient) =>
             throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Sets <see cref="CloudTableClient"/> to be used for delayed delivery feature.
-        /// </summary>
-        [ObsoleteEx(
-            Message =
-                "Provide the CloudTableClient with the UseTransport<AzureStorageQueues> configuration as a parameter.",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
-        public static TransportExtensions<AzureStorageQueueTransport> UseCloudTableClient(
-            this TransportExtensions<AzureStorageQueueTransport> config, CloudTableClient cloudTableClient)
-        {
-            throw new Exception();
-        }
 
         /// <summary>
         /// Sets the flag to disable or enable subscriptions caching.
@@ -300,7 +282,7 @@ namespace NServiceBus
             RemoveInVersion = "13.0")]
         public static DelayedDeliverySettings DelayedDelivery(
             this TransportExtensions<AzureStorageQueueTransport> config) =>
-            new DelayedDeliverySettings(config.Transport.DelayedDelivery);
+            new(config.Transport.DelayedDelivery);
 
         /// <summary>
         /// Provides access to configure cross account routing.
