@@ -6,7 +6,7 @@ namespace NServiceBus
     public class AccountInfo
     {
         public AccountInfo(string alias, string connectionString) { }
-        public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
+        public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient) { }
         public string Alias { get; }
         public string ConnectionString { get; }
         public NServiceBus.AccountInfo AddEndpoint(string endpointName, System.Collections.Generic.IEnumerable<System.Type> publishedEvents = null, string subscriptionTableName = null) { }
@@ -18,13 +18,13 @@ namespace NServiceBus
             " overload that accepts a QueueServiceClient instance. Will be treated as an erro" +
             "r from version 12.0.0. Will be removed in version 13.0.0.", false)]
         public NServiceBus.AccountInfo AddAccount(string alias, string connectionString) { }
-        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
+        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient) { }
     }
     public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition, NServiceBus.Routing.IMessageDrivenSubscriptionTransport
     {
         public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
         public AzureStorageQueueTransport(string connectionString, bool useNativeDelayedDeliveries = true) { }
-        public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
+        public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient) { }
         public NServiceBus.AccountRoutingSettings AccountRouting { get; }
         public int? DegreeOfReceiveParallelism { get; set; }
         public NServiceBus.NativeDelayedDeliverySettings DelayedDelivery { get; }
@@ -72,9 +72,6 @@ namespace NServiceBus
             "tion as a parameter. The member currently throws a NotImplementedException. Will" +
             " be removed in version 12.0.0.", true)]
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseBlobServiceClient(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, Azure.Storage.Blobs.BlobServiceClient blobServiceClient) { }
-        [System.Obsolete("Provide the CloudTableClient with the UseTransport<AzureStorageQueues> configurat" +
-            "ion as a parameter. Will be removed in version 12.0.0.", true)]
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseCloudTableClient(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient) { }
         [System.Obsolete("Provide the QueueServiceClient with the UseTransport<AzureStorageQueues> configur" +
             "ation as a parameter. The member currently throws a NotImplementedException. Wil" +
             "l be removed in version 12.0.0.", true)]
@@ -83,7 +80,7 @@ namespace NServiceBus
             where T : NServiceBus.AzureStorageQueueTransport { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseTransport<T>(this NServiceBus.EndpointConfiguration config, Azure.Storage.Queues.QueueServiceClient queueServiceClient)
             where T : NServiceBus.AzureStorageQueueTransport { }
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseTransport<T>(this NServiceBus.EndpointConfiguration config, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, Microsoft.Azure.Cosmos.Table.CloudTableClient cloudTableClient)
+        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseTransport<T>(this NServiceBus.EndpointConfiguration config, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient)
             where T : NServiceBus.AzureStorageQueueTransport { }
     }
     public class DelayedDeliverySettings : NServiceBus.Configuration.AdvancedExtensibility.ExposeSettings

@@ -4,8 +4,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using Microsoft.Azure.Cosmos.Table;
     using NUnit.Framework;
     using Testing;
 
@@ -16,34 +16,35 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         public void OneTimeSetUp()
         {
             queueServiceClient = new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString());
-
-            var account = CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString());
-            cloudTableClient = account.CreateCloudTableClient();
+            tableServiceClient = new TableServiceClient(Utilities.GetEnvConfiguredConnectionString());
         }
 
         [SetUp]
         public void SetUp()
         {
-            table = cloudTableClient.GetTableReference($"atable{Guid.NewGuid():N}");
-            table.CreateIfNotExists();
+            tableClient = tableServiceClient.GetTableClient($"atable{Guid.NewGuid():N}");
+            tableClient.CreateIfNotExists();
         }
 
         [TearDown]
-        public void TearDown() => table.Delete();
+        public void TearDown() => tableClient.Delete();
 
 
         [Test]
         public async Task Subscribe_should_create_topics()
         {
-            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", table.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, cloudTableClient));
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var subscriptionStore = new SubscriptionStore(settings);
 
             await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherEvent));
             await subscriptionStore.Subscribe("endpointName", "localaddress", typeof(MyOtherUnrelatedEvent));
 
-            var query = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "endpointName"));
-            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100)).ToArray();
+
+            var entities = await tableClient.QueryAsync<TableEntity>(e => e.RowKey.Equals("endpointName"))
+                .Take(100)
+                .ToListAsync()
+                .ConfigureAwait(false);
             var topics = entities.Select(x => x.PartitionKey).ToList();
 
             CollectionAssert.AreEqual(new[]
@@ -53,18 +54,18 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
             }, topics);
 
             Assert.True(entities.All(e => e.RowKey == "endpointName"), "The row key must match the endpoint name");
-            Assert.True(entities.All(e => e["Address"].StringValue == "localaddress"), "The address must match the local address");
+            Assert.True(entities.All(e => e["Address"].ToString() == "localaddress"), "The address must match the local address");
         }
 
         [Test]
         public async Task Subscribe_with_mapped_events_should_create_topics()
         {
             var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "subscriber",
-                table.Name, new Dictionary<string, AccountInfo>(),
-                new AccountInfo("", queueServiceClient, cloudTableClient));
+                tableClient.Name, new Dictionary<string, AccountInfo>(),
+                new AccountInfo("", queueServiceClient, tableServiceClient));
 
-            var publisherAccount = new AccountInfo("publisher", queueServiceClient, cloudTableClient);
-            publisherAccount.AddEndpoint("publisherEndpoint", new[] { typeof(MyEventPublishedOnAnotherAccount) }, subscriptionTableName: table.Name);
+            var publisherAccount = new AccountInfo("publisher", queueServiceClient, tableServiceClient);
+            publisherAccount.AddEndpoint("publisherEndpoint", new[] { typeof(MyEventPublishedOnAnotherAccount) }, subscriptionTableName: tableClient.Name);
             settings.Add(publisherAccount);
 
             var subscriptionStore = new SubscriptionStore(settings);
@@ -73,8 +74,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
             await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyOtherUnrelatedEvent));
             await subscriptionStore.Subscribe("subscriberEndpoint", "subscriberAddress", typeof(MyEventPublishedOnAnotherAccount));
 
-            var query = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "subscriberEndpoint"));
-            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100)).ToArray();
+            var entities = await tableClient.QueryAsync<TableEntity>(e => e.RowKey.Equals("subscriberEndpoint"))
+                .Take(100)
+                .ToListAsync()
+                .ConfigureAwait(false);
 
             CollectionAssert.AreEqual(new[]
             {
@@ -88,13 +91,13 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
                 "subscriberAddress@subscriber",
                 "subscriberAddress",
                 "subscriberAddress"
-            }, entities.Select(x => x["Address"].StringValue).ToList());
+            }, entities.Select(x => x["Address"].ToString()).ToList());
         }
 
         [Test]
         public async Task Unsubscribe_should_delete_topics()
         {
-            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", table.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, cloudTableClient));
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var subscriptionStore = new SubscriptionStore(settings);
 
@@ -103,25 +106,24 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             await subscriptionStore.Unsubscribe("endpointName", typeof(MyOtherEvent));
 
-            var query = new TableQuery<TableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "endpointName"));
-            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100)).ToArray();
-            var topics = entities.Select(x => x.PartitionKey).ToList();
+            var topics = await tableClient.QueryAsync<TableEntity>(e => e.RowKey.Equals("endpointName"))
+                .Take(100)
+                .Select(x => x.PartitionKey)
+                .ToListAsync()
+                .ConfigureAwait(false);
 
-            CollectionAssert.AreEqual(new[]
-            {
-                typeof(MyOtherUnrelatedEvent).FullName
-            }, topics);
+            CollectionAssert.AreEqual(new[] { typeof(MyOtherUnrelatedEvent).FullName }, topics);
         }
 
         [Test]
         public async Task Unsubscribe_with_mapped_events_should_delete_topics()
         {
             var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "subscriber",
-                table.Name, new Dictionary<string, AccountInfo>(),
-                new AccountInfo("", queueServiceClient, cloudTableClient));
+                tableClient.Name, new Dictionary<string, AccountInfo>(),
+                new AccountInfo("", queueServiceClient, tableServiceClient));
 
-            var publisherAccount = new AccountInfo("publisher", queueServiceClient, cloudTableClient);
-            publisherAccount.AddEndpoint("publisherEndpoint", new[] { typeof(MyEventPublishedOnAnotherAccount) }, subscriptionTableName: table.Name);
+            var publisherAccount = new AccountInfo("publisher", queueServiceClient, tableServiceClient);
+            publisherAccount.AddEndpoint("publisherEndpoint", new[] { typeof(MyEventPublishedOnAnotherAccount) }, subscriptionTableName: tableClient.Name);
             settings.Add(publisherAccount);
 
             var subscriptionStore = new SubscriptionStore(settings);
@@ -132,8 +134,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 
             await subscriptionStore.Unsubscribe("subscriberEndpoint", typeof(MyEventPublishedOnAnotherAccount));
 
-            var query = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, "subscriberEndpoint"));
-            var entities = (await table.QueryUpTo(query, maxItemsToReturn: 100)).ToArray();
+            var entities = await tableClient.QueryAsync<TableEntity>(e => e.RowKey.Equals("subscriberEndpoint"))
+                .Take(100)
+                .ToListAsync()
+                .ConfigureAwait(false);
 
             CollectionAssert.AreEqual(new[]
             {
@@ -145,13 +149,13 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
             {
                 "subscriberAddress",
                 "subscriberAddress"
-            }, entities.Select(x => x["Address"].StringValue).ToList());
+            }, entities.Select(x => x["Address"].ToString()).ToList());
         }
 
         [Test]
         public async Task GetSubscribers()
         {
-            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", table.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, cloudTableClient));
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var subscriptionStore = new SubscriptionStore(settings);
 
@@ -167,7 +171,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         [Test]
         public async Task GetSubscribers_supports_polymorphism()
         {
-            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", table.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, cloudTableClient));
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var subscriptionStore = new SubscriptionStore(settings);
 
@@ -183,11 +187,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         public async Task GetSubscribers_with_mapped_events()
         {
             var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "subscriber",
-                table.Name, new Dictionary<string, AccountInfo>(),
-                new AccountInfo("", queueServiceClient, cloudTableClient));
+                tableClient.Name, new Dictionary<string, AccountInfo>(),
+                new AccountInfo("", queueServiceClient, tableServiceClient));
 
-            var publisherAccount = new AccountInfo("publisher", queueServiceClient, cloudTableClient);
-            publisherAccount.AddEndpoint("publisherEndpoint", new[] { typeof(MyEventPublishedOnAnotherAccount) }, subscriptionTableName: table.Name);
+            var publisherAccount = new AccountInfo("publisher", queueServiceClient, tableServiceClient);
+            publisherAccount.AddEndpoint("publisherEndpoint", new[] { typeof(MyEventPublishedOnAnotherAccount) }, subscriptionTableName: tableClient.Name);
             settings.Add(publisherAccount);
 
             var subscriptionStore = new SubscriptionStore(settings);
@@ -206,11 +210,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         public async Task GetSubscribers_with_mapped_events_supports_polymorphism()
         {
             var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "subscriber",
-                table.Name, new Dictionary<string, AccountInfo>(),
-                new AccountInfo("", queueServiceClient, cloudTableClient));
+                tableClient.Name, new Dictionary<string, AccountInfo>(),
+                new AccountInfo("", queueServiceClient, tableServiceClient));
 
-            var publisherAccount = new AccountInfo("publisher", queueServiceClient, cloudTableClient);
-            publisherAccount.AddEndpoint("publisherEndpoint", new[] { typeof(MyEvent) }, subscriptionTableName: table.Name);
+            var publisherAccount = new AccountInfo("publisher", queueServiceClient, tableServiceClient);
+            publisherAccount.AddEndpoint("publisherEndpoint", new[] { typeof(MyEvent) }, subscriptionTableName: tableClient.Name);
             settings.Add(publisherAccount);
 
             var subscriptionStore = new SubscriptionStore(settings);
@@ -232,8 +236,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         }
 
         QueueServiceClient queueServiceClient;
-        CloudTableClient cloudTableClient;
-        CloudTable table;
+        TableServiceClient tableServiceClient;
+        TableClient tableClient;
 
         class MyEvent : IEvent
         {

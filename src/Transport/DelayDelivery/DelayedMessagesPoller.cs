@@ -3,23 +3,24 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Faults;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Blobs.Specialized;
     using Logging;
-    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AzureStorageQueues.Utils;
     using Transport;
 
     class DelayedMessagesPoller
     {
-        public DelayedMessagesPoller(CloudTable delayedDeliveryTable, BlobServiceClient blobServiceClient, string errorQueueAddress, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
+        public DelayedMessagesPoller(TableClient delayedDeliveryTableClient, BlobServiceClient blobServiceClient, string errorQueueAddress, bool isAtMostOnce, Dispatcher dispatcher, BackoffStrategy backoffStrategy)
         {
             this.errorQueueAddress = errorQueueAddress;
             this.isAtMostOnce = isAtMostOnce;
-            this.delayedDeliveryTable = delayedDeliveryTable;
+            this.delayedDeliveryTableClient = delayedDeliveryTableClient;
             this.blobServiceClient = blobServiceClient;
             this.dispatcher = dispatcher;
             this.backoffStrategy = backoffStrategy;
@@ -29,7 +30,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             Logger.Debug("Starting delayed message poller");
 
-            var containerClient = blobServiceClient.GetBlobContainerClient(delayedDeliveryTable.Name);
+            var containerClient = blobServiceClient.GetBlobContainerClient(delayedDeliveryTableClient.Name);
             var leaseClient = new BlobLeaseClient(containerClient);
             lockManager = new LockManager(containerClient, leaseClient, LeaseLength);
 
@@ -121,13 +122,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             Logger.Debug($"Polling for delayed messages at {now}.");
 
-            var query = new TableQuery<DelayedMessageEntity>
-            {
-                FilterString = $"(PartitionKey le '{DelayedMessageEntity.GetPartitionKey(now)}') and (RowKey le '{DelayedMessageEntity.GetRawRowKeyPrefix(now)}')",
-                TakeCount = DelayedMessagesProcessedAtOnce // max batch size
-            };
+            var filter = $"(PartitionKey le '{DelayedMessageEntity.GetPartitionKey(now)}') and (RowKey le '{DelayedMessageEntity.GetRawRowKeyPrefix(now)}')";
 
-            var delayedMessages = await delayedDeliveryTable.QueryUpTo(query, DelayedMessagesProcessedAtOnce, cancellationToken)
+            var delayedMessages = await delayedDeliveryTableClient
+                .QueryAsync<DelayedMessageEntity>(filter, DelayedMessagesProcessedAtOnce, cancellationToken: cancellationToken)
+                .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             if (await lockManager.TryLockOrRenew(cancellationToken).ConfigureAwait(false) == false)
@@ -171,19 +170,19 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             try
             {
-                var delete = TableOperation.Delete(delayedMessage);
-
                 if (isAtMostOnce)
                 {
                     // delete first, then dispatch
-                    await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
-                    await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
+                    if (await TryDeleteDelayedMessage(delayedMessage, cancellationToken).ConfigureAwait(false))
+                    {
+                        await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
+                    }
                 }
                 else
                 {
                     // dispatch first, then delete
                     await SafeDispatch(delayedMessage, cancellationToken).ConfigureAwait(false);
-                    await delayedDeliveryTable.ExecuteAsync(delete, cancellationToken).ConfigureAwait(false);
+                    await TryDeleteDelayedMessage(delayedMessage, cancellationToken).ConfigureAwait(false);
                 }
             }
             catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
@@ -193,6 +192,18 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     $"Failed at dispatching the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'",
                     ex);
             }
+        }
+
+        /// <returns>true if delete succeeded, false otherwise</returns>
+        async Task<bool> TryDeleteDelayedMessage(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
+        {
+            var response = await delayedDeliveryTableClient.DeleteEntityAsync(delayedMessage.PartitionKey, delayedMessage.RowKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (response.IsError)
+            {
+                Logger.Warn($"Failed to delete the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'");
+            }
+
+            return !response.IsError;
         }
 
         async Task SafeDispatch(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
@@ -234,7 +245,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly BackoffStrategy backoffStrategy;
         readonly bool isAtMostOnce;
         readonly string errorQueueAddress;
-        readonly CloudTable delayedDeliveryTable;
+        readonly TableClient delayedDeliveryTableClient;
 
         LockManager lockManager;
         Task delayedMessagesPollerTask;

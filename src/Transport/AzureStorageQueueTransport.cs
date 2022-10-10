@@ -11,11 +11,11 @@ namespace NServiceBus
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using MessageInterfaces;
-    using Microsoft.Azure.Cosmos.Table;
     using Routing;
     using Serialization;
     using Settings;
@@ -42,7 +42,7 @@ namespace NServiceBus
             if (SupportsDelayedDelivery)
             {
                 blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(connectionString);
-                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
+                tableServiceClientProvider = new TableServiceClientByConnectionString(connectionString);
             }
         }
 
@@ -58,7 +58,7 @@ namespace NServiceBus
 
             if (SupportsDelayedDelivery || SupportsPublishSubscribe)
             {
-                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
+                tableServiceClientProvider = new TableServiceClientByConnectionString(connectionString);
             }
 
             if (SupportsDelayedDelivery)
@@ -81,16 +81,16 @@ namespace NServiceBus
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue with native delayed deliveries support
         /// </summary>
-        public AzureStorageQueueTransport(QueueServiceClient queueServiceClient, BlobServiceClient blobServiceClient, CloudTableClient cloudTableClient)
+        public AzureStorageQueueTransport(QueueServiceClient queueServiceClient, BlobServiceClient blobServiceClient, TableServiceClient tableServiceClient)
             : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: true, supportsPublishSubscribe: true, supportsTTBR: true)
         {
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
             Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
-            Guard.AgainstNull(nameof(cloudTableClient), cloudTableClient);
+            Guard.AgainstNull(nameof(tableServiceClient), tableServiceClient);
 
             queueServiceClientProvider = new QueueServiceClientProvidedByUser(queueServiceClient);
             blobServiceClientProvider = new BlobServiceClientProvidedByUser(blobServiceClient);
-            cloudTableClientProvider = new CloudTableClientProvidedByUser(cloudTableClient);
+            tableServiceClientProvider = new TableServiceClientProvidedByUser(tableServiceClient);
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace NServiceBus
 
             if (SupportsDelayedDelivery || SupportsPublishSubscribe)
             {
-                cloudTableClientProvider = new CloudTableClientByConnectionString(connectionString);
+                tableServiceClientProvider = new TableServiceClientByConnectionString(connectionString);
             }
 
             if (SupportsDelayedDelivery)
@@ -145,7 +145,7 @@ namespace NServiceBus
 
             ValidateReceiversSettings(receiversSettings);
 
-            var localAccountInfo = new AccountInfo("", queueServiceClientProvider.Client, cloudTableClientProvider.Client);
+            var localAccountInfo = new AccountInfo("", queueServiceClientProvider.Client, tableServiceClientProvider.Client);
 
             var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator(),
                 AccountRouting.DefaultAccountAlias,
@@ -154,22 +154,22 @@ namespace NServiceBus
                 localAccountInfo);
 
             object delayedDeliveryPersistenceDiagnosticSection = new { };
-            CloudTable delayedMessagesStorageTable = null;
+            TableClient delayedMessagesStorageTableClient = null;
             var nativeDelayedDeliveryPersistence = NativeDelayDeliveryPersistence.Disabled();
             if (SupportsDelayedDelivery)
             {
-                delayedMessagesStorageTable = await EnsureNativeDelayedDeliveryTable(
+                delayedMessagesStorageTableClient = await EnsureNativeDelayedDeliveryTable(
                     hostSettings.Name,
                     DelayedDelivery.DelayedDeliveryTableName,
-                    cloudTableClientProvider.Client,
+                    tableServiceClientProvider.Client,
                     hostSettings.SetupInfrastructure,
                     cancellationToken).ConfigureAwait(false);
 
-                nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTable);
+                nativeDelayedDeliveryPersistence = new NativeDelayDeliveryPersistence(delayedMessagesStorageTableClient);
 
                 delayedDeliveryPersistenceDiagnosticSection = new
                 {
-                    DelayedDeliveryTableName = delayedMessagesStorageTable.Name,
+                    DelayedDeliveryTableName = delayedMessagesStorageTableClient.Name,
                     UserDefinedDelayedDeliveryTableName = !string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryTableName)
                 };
             }
@@ -196,7 +196,7 @@ namespace NServiceBus
             ISubscriptionStore subscriptionStore = new NoOpSubscriptionStore();
             if (SupportsPublishSubscribe)
             {
-                var subscriptionTable = await EnsureSubscriptionTableExists(cloudTableClientProvider.Client, Subscriptions.SubscriptionTableName, hostSettings.SetupInfrastructure, cancellationToken)
+                var subscriptionTable = await EnsureSubscriptionTableExists(tableServiceClientProvider.Client, Subscriptions.SubscriptionTableName, hostSettings.SetupInfrastructure, cancellationToken)
                     .ConfigureAwait(false);
 
                 object subscriptionPersistenceCachingSection = new { IsEnabled = false };
@@ -234,7 +234,7 @@ namespace NServiceBus
 
                 nativeDelayedDeliveryProcessor = new NativeDelayedDeliveryProcessor(
                         dispatcher,
-                        delayedMessagesStorageTable,
+                        delayedMessagesStorageTableClient,
                         blobServiceClientProvider.Client,
                         nativeDelayedDeliveryErrorQueue,
                         TransportTransactionMode,
@@ -278,7 +278,7 @@ namespace NServiceBus
                 ConnectionMechanism = new
                 {
                     Queue = queueServiceClientProvider is QueueServiceClientByConnectionString ? "ConnectionString" : "QueueServiceClient",
-                    Table = cloudTableClientProvider is CloudTableClientByConnectionString ? "ConnectionString" : "CloudTableClient",
+                    Table = tableServiceClientProvider is TableServiceClientByConnectionString ? "ConnectionString" : "TableServiceClient",
                     Blob = blobServiceClientProvider is BlobServiceClientProvidedByConnectionString ? "ConnectionString" : "BlobServiceClient",
                 },
                 MessageWrapperSerializer = MessageWrapperSerializationDefinition == null ? "Default" : "Custom",
@@ -317,39 +317,37 @@ namespace NServiceBus
             }
         }
 
-        static async Task<CloudTable> EnsureNativeDelayedDeliveryTable(string endpointName, string delayedDeliveryTableName, CloudTableClient cloudTableClient, bool setupInfrastructure, CancellationToken cancellationToken)
+        static async Task<TableClient> EnsureNativeDelayedDeliveryTable(string endpointName, string delayedDeliveryTableName, TableServiceClient tableServiceClient, bool setupInfrastructure, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(delayedDeliveryTableName))
             {
                 delayedDeliveryTableName = GenerateDelayedDeliveryTableName(endpointName);
             }
 
-            var delayedMessagesStorageTable = cloudTableClient.GetTableReference(delayedDeliveryTableName);
+            var delayedMessagesStorageTableClient = tableServiceClient.GetTableClient(delayedDeliveryTableName);
             if (setupInfrastructure)
             {
-                await delayedMessagesStorageTable.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+                await delayedMessagesStorageTableClient.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            return delayedMessagesStorageTable;
+            return delayedMessagesStorageTableClient;
         }
 
-        static async Task<CloudTable> EnsureSubscriptionTableExists(CloudTableClient cloudTableClient, string subscriptionTableName, bool setupInfrastructure, CancellationToken cancellationToken)
+        static async Task<TableClient> EnsureSubscriptionTableExists(TableServiceClient tableServiceClient, string subscriptionTableName, bool setupInfrastructure, CancellationToken cancellationToken)
         {
-            var subscriptionTable = cloudTableClient.GetTableReference(subscriptionTableName);
+            var subscriptionTableClient = tableServiceClient.GetTableClient(subscriptionTableName);
             if (setupInfrastructure)
             {
-                await subscriptionTable.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+                await subscriptionTableClient.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            return subscriptionTable;
+            return subscriptionTableClient;
         }
 
-        static MessageWrapperSerializer BuildSerializer(SerializationDefinition userWrapperSerializationDefinition, IReadOnlySettings settings)
-        {
-            return userWrapperSerializationDefinition != null
+        static MessageWrapperSerializer BuildSerializer(SerializationDefinition userWrapperSerializationDefinition, IReadOnlySettings settings) =>
+            userWrapperSerializationDefinition != null
                 ? new MessageWrapperSerializer(userWrapperSerializationDefinition.Configure(settings).Invoke(MessageWrapperSerializer.GetMapper()))
                 : new MessageWrapperSerializer(GetMainSerializerHack(MessageWrapperSerializer.GetMapper(), settings));
-        }
 
         internal static IMessageSerializer GetMainSerializerHack(IMessageMapper mapper, IReadOnlySettings settings)
         {
@@ -430,10 +428,7 @@ namespace NServiceBus
         }
 
         /// <inheritdoc cref="GetSupportedTransactionModes"/>
-        public override IReadOnlyCollection<TransportTransactionMode> GetSupportedTransactionModes()
-        {
-            return supportedTransactionModes;
-        }
+        public override IReadOnlyCollection<TransportTransactionMode> GetSupportedTransactionModes() => supportedTransactionModes;
 
         /// <summary>
         /// Controls how long messages should be invisible to other callers when receiving messages from the queue
@@ -492,7 +487,7 @@ namespace NServiceBus
             {
                 Guard.AgainstNull(nameof(QueueNameSanitizer), value);
 
-                Func<string, string> queueNameSanitizerWrapper = entityName =>
+                string queueNameSanitizerWrapper(string entityName)
                 {
                     try
                     {
@@ -502,7 +497,7 @@ namespace NServiceBus
                     {
                         throw new Exception("Registered queue name sanitizer threw an exception.", ex);
                     }
-                };
+                }
 
                 queueNameSanitizer = queueNameSanitizerWrapper;
             }
@@ -586,7 +581,7 @@ namespace NServiceBus
         QueueAddressGenerator queueAddressGenerator;
         IQueueServiceClientProvider queueServiceClientProvider;
         IBlobServiceClientProvider blobServiceClientProvider;
-        ICloudTableClientProvider cloudTableClientProvider;
+        ITableServiceClientProvider tableServiceClientProvider;
         int? receiverBatchSize;
         int? degreeOfReceiveParallelism;
         Func<QueueMessage, MessageWrapper> messageUnwrapper;

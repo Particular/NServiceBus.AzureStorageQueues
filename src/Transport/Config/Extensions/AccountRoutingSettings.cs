@@ -2,8 +2,8 @@
 {
     using System;
     using System.Collections.Generic;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using Microsoft.Azure.Cosmos.Table;
 
     /// <summary>
     /// Provides methods to define routing between Azure Storage accounts and map them to a logical alias instead of using bare
@@ -35,20 +35,20 @@
         /// <summary>
         /// Adds the mapping between the <paramref alias="alias" /> its <paramref alias="QueueServiceClient" /> and <paramref alias="CloudTableClient" />.
         /// </summary>
-        public AccountInfo AddAccount(string alias, QueueServiceClient queueServiceClient, CloudTableClient cloudTableClient)
+        public AccountInfo AddAccount(string alias, QueueServiceClient queueServiceClient, TableServiceClient tableServiceClient)
         {
             if (Mappings.TryGetValue(alias, out var accountInfo))
             {
                 return accountInfo;
             }
 
-            accountInfo = new AccountInfo(alias, queueServiceClient, cloudTableClient);
+            accountInfo = new AccountInfo(alias, queueServiceClient, tableServiceClient);
             Mappings.Add(alias, accountInfo);
 
             return accountInfo;
         }
 
-        internal Dictionary<string, AccountInfo> Mappings = new Dictionary<string, AccountInfo>();
+        internal Dictionary<string, AccountInfo> Mappings = new();
         string defaultAccountAlias = string.Empty;
     }
 }

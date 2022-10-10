@@ -4,8 +4,8 @@
     using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -14,37 +14,33 @@
     public class When_configuring_account_names : NServiceBusAcceptanceTest
     {
         [Test]
-        public Task Should_accept_no_mappings_at_all()
-        {
-            return Configure(_ => { });
-        }
+        public Task Should_accept_no_mappings_at_all() => Configure(_ => { });
 
         [Test]
         public void Should_not_accept_mappings_without_default()
         {
-            var exception = Assert.CatchAsync(() =>
-            {
-                return Configure(transport =>
-                {
-                    transport.AccountRouting.AddAccount(Another, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
-                });
-            });
+            var exception = Assert.CatchAsync(
+                () => Configure(transport => transport.AccountRouting.AddAccount(
+                    Another,
+                    new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                    new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()))));
+
             Assert.IsTrue(exception.Message.Contains("The mapping of storage accounts connection strings to aliases is enforced but the the alias for the default connection string isn't provided"), "Exception message is missing or incorrect");
         }
 
         [Test]
-        public Task Should_accept_mappings_with_default()
-        {
-            return Configure(transport =>
+        public Task Should_accept_mappings_with_default() =>
+            Configure(transport =>
             {
                 transport.AccountRouting.DefaultAccountAlias = Default;
-                transport.AccountRouting.AddAccount(Another, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
+                transport.AccountRouting.AddAccount(
+                    Another,
+                    new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                    new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
             });
-        }
 
-        Task Configure(Action<AzureStorageQueueTransport> customizeTransport, CancellationToken cancellationToken = default)
-        {
-            return Scenario.Define<Context>()
+        static Task Configure(Action<AzureStorageQueueTransport> customizeTransport, CancellationToken cancellationToken = default) =>
+            Scenario.Define<Context>()
                 .WithEndpoint<SendOnlyEndpoint>(cfg =>
                 {
                     cfg.CustomConfig(c =>
@@ -65,7 +61,6 @@
                 .WithEndpoint<Receiver>()
                 .Done(c => c.WasCalled)
                 .Run();
-        }
 
         const string Default = "default";
         const string Another = "another";
@@ -77,33 +72,18 @@
 
         class SendOnlyEndpoint : EndpointConfigurationBuilder
         {
-            public SendOnlyEndpoint()
-            {
-                EndpointSetup<DefaultServer>(endpointConfiguration =>
-                {
-                    endpointConfiguration.SendOnly();
-                });
-            }
+            public SendOnlyEndpoint() => EndpointSetup<DefaultServer>(endpointConfiguration => endpointConfiguration.SendOnly());
         }
 
         class Receiver : EndpointConfigurationBuilder
         {
-            public Receiver()
-            {
-                EndpointSetup<DefaultServer>(c =>
-                {
-                    c.UseSerialization<NewtonsoftJsonSerializer>();
-                });
-            }
+            public Receiver() => EndpointSetup<DefaultServer>(c => c.UseSerialization<NewtonsoftJsonSerializer>());
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                Context testContext;
+                readonly Context testContext;
 
-                public MyMessageHandler(Context testContext)
-                {
-                    this.testContext = testContext;
-                }
+                public MyMessageHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {

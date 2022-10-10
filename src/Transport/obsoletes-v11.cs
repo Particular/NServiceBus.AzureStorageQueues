@@ -3,8 +3,8 @@
 namespace NServiceBus
 {
     using System;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using Microsoft.Azure.Cosmos.Table;
 
     partial class AccountRoutingSettings
     {
@@ -15,7 +15,7 @@ namespace NServiceBus
             RemoveInVersion = "13.0")]
         public AccountInfo AddAccount(string alias, string connectionString) => AddAccount(alias,
             new QueueServiceClient(connectionString),
-            CloudStorageAccount.Parse(connectionString).CreateCloudTableClient());
+            new TableServiceClient(connectionString));
     }
 
     public partial class DelayedDeliverySettings

@@ -7,11 +7,11 @@
     using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using global::Newtonsoft.Json;
     using global::Newtonsoft.Json.Linq;
-    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -64,7 +64,7 @@
             }
         }
 
-        async Task<Context> SendMessage<TReceiver>(string destination, string destinationConnectionString, CancellationToken cancellationToken = default)
+        static async Task<Context> SendMessage<TReceiver>(string destination, string destinationConnectionString, CancellationToken cancellationToken = default)
             where TReceiver : EndpointConfigurationBuilder
         {
             var ctx = await Scenario.Define<Context>()
@@ -93,7 +93,10 @@
                     Assert.Fail("No message in the audit queue to pick up.");
                 }
                 var rawMessage = rawMessages[0];
-                await receiverAuditQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken).ConfigureAwait(false);
+
+                var response = await receiverAuditQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken).ConfigureAwait(false);
+                Assert.That(response, Is.Not.Null);
+                Assert.That(response.IsError, Is.False);
 
                 JToken message;
                 var bytes = Convert.FromBase64String(rawMessage.MessageText);
@@ -121,10 +124,8 @@
             return ctx;
         }
 
-        static bool IsSimpleProperty(JProperty p)
-        {
-            return p.Value is JValue jValue && jValue.Type != JTokenType.Null;
-        }
+        static bool IsSimpleProperty(JProperty p) =>
+            p.Value is JValue jValue && jValue.Type != JTokenType.Null;
 
         const string SenderName = "mapping-names-sender";
         const string ReceiverName = "mapping-names-receiver";
@@ -147,7 +148,10 @@
                 {
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
+                    transport.AccountRouting.AddAccount(
+                        AnotherConnectionStringName,
+                        new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                        new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
 
                     cfg.UseSerialization<NewtonsoftJsonSerializer>();
                 });
@@ -166,7 +170,10 @@
                     cfg.AuditProcessedMessagesTo(AuditName);
 
                     transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
-                    transport.AccountRouting.AddAccount(DefaultConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient());
+                    transport.AccountRouting.AddAccount(
+                        DefaultConnectionStringName,
+                        new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()),
+                        new TableServiceClient(Utilities.GetEnvConfiguredConnectionString()));
                 });
 
                 CustomEndpointName(ReceiverName);
@@ -183,7 +190,10 @@
 
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
+                    transport.AccountRouting.AddAccount(
+                        AnotherConnectionStringName,
+                        new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                        new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                 });
                 CustomEndpointName(ReceiverName);
             }
@@ -191,10 +201,7 @@
 
         class Handler : IHandleMessages<MyCommand>
         {
-            public Handler(Context testContext)
-            {
-                this.testContext = testContext;
-            }
+            public Handler(Context testContext) => this.testContext = testContext;
 
             public Task Handle(MyCommand message, IMessageHandlerContext context)
             {
@@ -202,7 +209,7 @@
                 return Task.FromResult(0);
             }
 
-            Context testContext;
+            readonly Context testContext;
         }
 
         public class MyCommand : ICommand
