@@ -18,20 +18,21 @@
 
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
     {
-        TableClient delayedMessagesTable;
+        TableClient delayedMessagesTableClient;
 
         [SetUp]
         public async Task SetUpLocal()
         {
             var tableServiceClient = new TableServiceClient(Utilities.GetEnvConfiguredConnectionString());
-            delayedMessagesTable = tableServiceClient.GetTableClient(SenderDelayedMessagesTable);
+            delayedMessagesTableClient = tableServiceClient.GetTableClient(SenderDelayedMessagesTable);
 
+            // There is no explicit Exists method in Azure.Data.Tables, see https://github.com/Azure/azure-sdk-for-net/issues/28392
             var table = await tableServiceClient.QueryAsync(t => t.Name.Equals(SenderDelayedMessagesTable), 1).FirstOrDefaultAsync().ConfigureAwait(false);
             if (table != null)
             {
-                await foreach (var dte in delayedMessagesTable.QueryAsync<TableEntity>())
+                await foreach (var dte in delayedMessagesTableClient.QueryAsync<TableEntity>())
                 {
-                    var result = await delayedMessagesTable.DeleteEntityAsync(dte.PartitionKey, dte.RowKey).ConfigureAwait(false);
+                    var result = await delayedMessagesTableClient.DeleteEntityAsync(dte.PartitionKey, dte.RowKey).ConfigureAwait(false);
                     Assert.That(result.IsError, Is.False, "Error {0}:{1} trying to delete {2}:{3} from {4} table", result.Status, result.ReasonPhrase, dte.PartitionKey, dte.RowKey, SenderDelayedMessagesTable);
                 }
             }
@@ -47,7 +48,6 @@
                 .Done(c => delay.IsCompleted)
                 .Run()
                 .ConfigureAwait(false);
-
 
             var requestCount = context.CapturedTableServiceRequests
                 .Where(request => request.Contains(SenderDelayedMessagesTable, StringComparison.OrdinalIgnoreCase) &&
@@ -79,7 +79,7 @@
                     sendOptions.SetDestination("thisisnonexistingqueuename");
                     await session.Send(new MyMessage { Id = c.TestRunId }, sendOptions).ConfigureAwait(false);
 
-                    var delayedMessage = await delayedMessagesTable.QueryAsync<TableEntity>().FirstAsync().ConfigureAwait(false);
+                    var delayedMessage = await delayedMessagesTableClient.QueryAsync<TableEntity>().FirstAsync().ConfigureAwait(false);
 
                     await MoveBeforeNow(delayedMessage).ConfigureAwait(false);
                 }))
@@ -100,10 +100,10 @@
                 RowKey = earlier.ToString("yyyyMMddHHmmss")
             };
 
-            var response = await delayedMessagesTable.DeleteEntityAsync(original.PartitionKey, original.RowKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var response = await delayedMessagesTableClient.DeleteEntityAsync(original.PartitionKey, original.RowKey, cancellationToken: cancellationToken).ConfigureAwait(false);
             Assert.That(response.IsError, Is.False);
 
-            response = await delayedMessagesTable.UpsertEntityAsync(updated, cancellationToken: cancellationToken).ConfigureAwait(false);
+            response = await delayedMessagesTableClient.UpsertEntityAsync(updated, cancellationToken: cancellationToken).ConfigureAwait(false);
             Assert.That(response.IsError, Is.False);
         }
 
@@ -190,6 +190,10 @@
             public Guid Id { get; set; }
         }
 
+        /// <summary>
+        /// This policy captures the URI of any request sent using the <see cref="TableServiceClient"/>.  
+        /// Tests that use the <see cref="SlowlyPeekingSender"/> can access the captured requests via the test <see cref="Context"/>.
+        /// </summary>
         class CaptureSendingRequestsPolicy : HttpPipelinePolicy
         {
             public ConcurrentQueue<string> Requests { get; } = new();

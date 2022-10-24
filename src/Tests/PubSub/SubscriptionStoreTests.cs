@@ -20,15 +20,19 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         }
 
         [SetUp]
-        public void SetUp()
+        public async Task SetUp()
         {
             tableClient = tableServiceClient.GetTableClient($"atable{Guid.NewGuid():N}");
-            tableClient.CreateIfNotExists();
+            var response = await tableClient.CreateIfNotExistsAsync();
+            Assert.That(response.Value, Is.Not.Null);
         }
 
         [TearDown]
-        public void TearDown() => tableClient.Delete();
-
+        public async Task TearDown()
+        {
+            var response = await tableClient.DeleteAsync();
+            Assert.That(response.IsError, Is.False);
+        }
 
         [Test]
         public async Task Subscribe_should_create_topics()

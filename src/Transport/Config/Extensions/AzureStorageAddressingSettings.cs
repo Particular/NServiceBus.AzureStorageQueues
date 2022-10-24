@@ -112,7 +112,7 @@
             }
         }
 
-        internal (string alias, TableClient tableClient) GetSubscriptionTable(Type eventType)
+        internal (string alias, TableClient tableClient) GetSubscriptionTableClient(Type eventType)
         {
             TableClient subscriptionTableClient;
             if (typeToSubscriptionInformation.TryGetValue(eventType, out (AccountInfo accountInfo, string tableName) found))
@@ -130,12 +130,11 @@
         readonly Dictionary<string, AccountInfo> aliasToAccountInfoMap = new();
         readonly Dictionary<QueueAddress, AccountInfo> registeredEndpoints = new();
         readonly Dictionary<Type, (AccountInfo, string)> typeToSubscriptionInformation = new();
+        readonly string defaultConnectionStringAlias;
 
         // kind of a wildcard for the local account info
         sealed class DefaultLocalEventTypeMatch
         {
         }
-
-        readonly string defaultConnectionStringAlias;
     }
 }

@@ -27,7 +27,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             var retrieveTasks = new List<Task<IEnumerable<string>>>(topics.Length);
             var addresses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            (_, TableClient tableClient) = storageAddressingSettings.GetSubscriptionTable(eventType);
+            (_, TableClient tableClient) = storageAddressingSettings.GetSubscriptionTableClient(eventType);
 
             foreach (var topic in topics)
             {
@@ -52,7 +52,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken = default)
         {
-            (string alias, TableClient tableClient) = storageAddressingSettings.GetSubscriptionTable(eventType);
+            (string alias, TableClient tableClient) = storageAddressingSettings.GetSubscriptionTableClient(eventType);
             var address = new QueueAddress(endpointAddress, alias);
             var entity = new SubscriptionEntity
             {
@@ -61,12 +61,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 Address = address.ToString()
             };
 
-            return tableClient.UpsertEntityAsync(entity, TableUpdateMode.Merge, cancellationToken: cancellationToken);
+            return tableClient.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken: cancellationToken);
         }
 
         public Task Unsubscribe(string endpointName, Type eventType, CancellationToken cancellationToken = default)
         {
-            (_, TableClient tableClient) = storageAddressingSettings.GetSubscriptionTable(eventType);
+            (_, TableClient tableClient) = storageAddressingSettings.GetSubscriptionTableClient(eventType);
             return tableClient.DeleteEntityAsync(
                 TopicName.From(eventType),
                 endpointName,
