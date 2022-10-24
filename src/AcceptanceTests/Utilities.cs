@@ -1,7 +1,6 @@
 ﻿namespace Testing
 {
     using System;
-    using System.Configuration;
     using Azure.Core;
     using Azure.Core.Pipeline;
     using Azure.Data.Tables;

@@ -26,7 +26,7 @@ namespace NServiceBus
     /// <summary>
     /// Transport definition for AzureStorageQueue
     /// </summary>
-    public class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
+    public partial class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
     {
         internal AzureStorageQueueTransport()
             : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: true, supportsPublishSubscribe: false, supportsTTBR: true)
