@@ -22,17 +22,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.Utils
     using System.Globalization;
     using System.Linq;
 
-#if WINDOWS_RT
-    using Windows.Foundation.Metadata;
-#endif
-
     /// <summary>
     /// Contains the URIs for both the primary and secondary locations of a Microsoft Azure Storage resource.
+    /// Adapted from https://github.com/Azure/azure-storage-net/blob/b0d47bfd4c1c0dcbe60eaf373e2977cd7405aa5f/Lib/Common/StorageUri.cs
     /// </summary>
-    sealed class StorageUri
-#if !WINDOWS_RT
-        : IEquatable<StorageUri>
-#endif
+    sealed class StorageUri : IEquatable<StorageUri>
     {
         Uri primaryUri;
         Uri secondaryUri;
@@ -180,9 +174,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.Utils
             return hash1 ^ hash2;
         }
 
-#if WINDOWS_RT
-        [DefaultOverload]
-#endif
         /// <summary>
         /// Determines whether the specified <see cref="object"/> is equal to this instance.
         /// </summary>

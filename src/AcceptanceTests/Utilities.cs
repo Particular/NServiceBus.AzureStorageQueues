@@ -64,11 +64,11 @@
         {
             Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
 
-            if (connectionString.IndexOf("https://localhost") >= 0 ||
-                connectionString.IndexOf(".table.cosmosdb.") >= 0 ||
-                connectionString.IndexOf(".table.cosmos.") >= 0)
+            if (connectionString.Contains("https://localhost") ||
+                connectionString.Contains(".table.cosmosdb.") ||
+                connectionString.Contains(".table.cosmos."))
             {
-                throw new ConfigurationErrorsException($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
+                throw new Exception($"When configuring {nameof(AzureStorageQueueTransport)} with a single connection string, only Azure Storage connection can be used. See documentation for alternative options to configure the transport.");
             }
         }
 
@@ -85,7 +85,5 @@
 
             return transport;
         }
-
-        public static bool Contains(this string source, string subString, StringComparison comparison) => source.IndexOf(subString, comparison) >= 0;
     }
 }

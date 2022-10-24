@@ -62,6 +62,9 @@
         {
         }
 
+        /// <summary>
+        /// This policy will intercept actual HTTP calls to simulate SDK failures
+        /// </summary>
         class FailSendingRequestsPolicy : HttpPipelinePolicy
         {
             public override void Process(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline) => throw new Exception("Fail on proxy");

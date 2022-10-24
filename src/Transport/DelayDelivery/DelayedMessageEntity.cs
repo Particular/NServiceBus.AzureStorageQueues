@@ -42,8 +42,8 @@
         const string PartitionKeyScope = "yyyyMMddHH";
         const string RowKeyScope = "yyyyMMddHHmmss";
 
-        public static string GetPartitionKey(DateTimeOffset dto) => dto.ToString(PartitionKeyScope);
+        public static string GetPartitionKey(DateTimeOffset dateTimeOffset) => dateTimeOffset.ToString(PartitionKeyScope);
 
-        public static string GetRawRowKeyPrefix(DateTimeOffset dto) => dto.ToString(RowKeyScope);
+        public static string GetRawRowKeyPrefix(DateTimeOffset dateTimeOffset) => dateTimeOffset.ToString(RowKeyScope);
     }
 }

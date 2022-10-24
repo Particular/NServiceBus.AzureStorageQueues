@@ -68,7 +68,7 @@
             };
 
             delayedMessageEntity.SetOperation(operation);
-            return delayedMessageStorageTableClient.UpsertEntityAsync(delayedMessageEntity, cancellationToken: cancellationToken);
+            return delayedMessageStorageTableClient.AddEntityAsync(delayedMessageEntity, cancellationToken: cancellationToken);
         }
 
         readonly TableClient delayedMessageStorageTableClient;

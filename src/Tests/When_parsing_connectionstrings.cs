@@ -5,7 +5,6 @@
     using NUnit.Framework;
 
     [TestFixture]
-    [Category("Azure")]
     public class When_parsing_queueaddress
     {
         [Test]

@@ -18,14 +18,15 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         public async Task SetUpLocal()
         {
             var tableServiceClient = new TableServiceClient(Utilities.GetEnvConfiguredConnectionString());
-            delayedMessagesTable = tableServiceClient.GetTableClient(SenderDelayedMessagesTable);
+            delayedMessagesTableClient = tableServiceClient.GetTableClient(SenderDelayedMessagesTable);
 
+            // There is no explicit Exists method in Azure.Data.Tables SDK, see https://github.com/Azure/azure-sdk-for-net/issues/28392
             var table = await tableServiceClient.QueryAsync(t => t.Name.Equals(SenderDelayedMessagesTable), 1).FirstOrDefaultAsync().ConfigureAwait(false);
             if (table != null)
             {
-                await foreach (var dte in delayedMessagesTable.QueryAsync<TableEntity>())
+                await foreach (var dte in delayedMessagesTableClient.QueryAsync<TableEntity>())
                 {
-                    var result = await delayedMessagesTable.DeleteEntityAsync(dte.PartitionKey, dte.RowKey).ConfigureAwait(false);
+                    var result = await delayedMessagesTableClient.DeleteEntityAsync(dte.PartitionKey, dte.RowKey).ConfigureAwait(false);
                     Assert.That(result.IsError, Is.False, "Error {0}:{1} trying to delete {2}:{3} from {4} table", result.Status, result.ReasonPhrase, dte.PartitionKey, dte.RowKey, SenderDelayedMessagesTable);
                 }
             }
@@ -47,7 +48,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         Id = c.TestRunId
                     }, sendOptions).ConfigureAwait(false);
 
-                    var delayedMessage = await delayedMessagesTable.QueryAsync<TableEntity>().FirstAsync().ConfigureAwait(false);
+                    var delayedMessage = await delayedMessagesTableClient.QueryAsync<TableEntity>().FirstAsync().ConfigureAwait(false);
 
                     await MoveBeforeNow(delayedMessage).ConfigureAwait(false);
                 }))
@@ -68,14 +69,14 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 RowKey = earlier.ToString("yyyyMMddHHmmss")
             };
 
-            var response = await delayedMessagesTable.DeleteEntityAsync(original.PartitionKey, original.RowKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var response = await delayedMessagesTableClient.DeleteEntityAsync(original.PartitionKey, original.RowKey, cancellationToken: cancellationToken).ConfigureAwait(false);
             Assert.That(response.IsError, Is.False);
 
-            response = await delayedMessagesTable.UpsertEntityAsync(updated, cancellationToken: cancellationToken).ConfigureAwait(false);
+            response = await delayedMessagesTableClient.UpsertEntityAsync(updated, cancellationToken: cancellationToken).ConfigureAwait(false);
             Assert.That(response.IsError, Is.False);
         }
 
-        TableClient delayedMessagesTable;
+        TableClient delayedMessagesTableClient;
 
         const string SenderDelayedMessagesTable = "NativeDelayedMessagesForSenderSendOnly";
 

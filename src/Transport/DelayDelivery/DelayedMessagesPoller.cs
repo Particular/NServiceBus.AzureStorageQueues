@@ -124,9 +124,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             var filter = $"(PartitionKey le '{DelayedMessageEntity.GetPartitionKey(now)}') and (RowKey le '{DelayedMessageEntity.GetRawRowKeyPrefix(now)}')";
 
-            var delayedMessages = await delayedDeliveryTableClient
+            var delayedMessagesPage = await delayedDeliveryTableClient
                 .QueryAsync<DelayedMessageEntity>(filter, DelayedMessagesProcessedAtOnce, cancellationToken: cancellationToken)
-                .ToListAsync(cancellationToken)
+                .AsPages()
+                .FirstAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             if (await lockManager.TryLockOrRenew(cancellationToken).ConfigureAwait(false) == false)
@@ -135,9 +136,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
 
             Stopwatch stopwatch = null;
-            var delayedMessagesCount = delayedMessages.Count;
+            var delayedMessagesCount = delayedMessagesPage.Values.Count;
             var dispatchOperations = new List<Task>(delayedMessagesCount);
-            foreach (var delayedMessage in delayedMessages)
+            foreach (var delayedMessage in delayedMessagesPage.Values)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -197,7 +198,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         /// <returns>true if delete succeeded, false otherwise</returns>
         async Task<bool> TryDeleteDelayedMessage(DelayedMessageEntity delayedMessage, CancellationToken cancellationToken)
         {
-            var response = await delayedDeliveryTableClient.DeleteEntityAsync(delayedMessage.PartitionKey, delayedMessage.RowKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var response = await delayedDeliveryTableClient.DeleteEntityAsync(delayedMessage.PartitionKey, delayedMessage.RowKey, delayedMessage.ETag, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.IsError)
             {
                 Logger.Warn($"Failed to delete the delayed message with PartitionKey:'{delayedMessage.PartitionKey}' RowKey: '{delayedMessage.RowKey}' message ID: '{delayedMessage.MessageId}'");

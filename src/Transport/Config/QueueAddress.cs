@@ -25,18 +25,20 @@
             string.Equals(Alias, other.Alias, StringComparison.OrdinalIgnoreCase);
 
         public static QueueAddress Parse(string inputQueue, bool allowConnectionStringForBackwardCompatibility = false) =>
-            TryParseInternal(inputQueue, allowConnectionStringForBackwardCompatibility, out var q, error => throw new FormatException(error))
+            TryParseInternal(inputQueue, allowConnectionStringForBackwardCompatibility, out var q, static error => throw new FormatException(error))
                 ? q.Value
-                : throw new FormatException($"Can not parse '{inputQueue}' as an address");
+                : throw new FormatException($"Cannot parse '{inputQueue}' as an address");
 
         public static bool TryParse(string inputQueue, bool allowConnectionStringForBackwardCompatibility, out QueueAddress? queue) =>
             TryParseInternal(inputQueue, allowConnectionStringForBackwardCompatibility, out queue);
 
         static bool TryParseInternal(string inputQueue, bool allowConnectionStringForBackwardCompatibility, out QueueAddress? queue, Action<string> onError = null)
         {
+            onError ??= static error => { };
+
             if (inputQueue == null)
             {
-                onError?.Invoke("inputQueue cannot be null");
+                onError("inputQueue cannot be null");
                 queue = null;
                 return false;
             }
@@ -46,7 +48,7 @@
             {
                 if (string.IsNullOrWhiteSpace(inputQueue))
                 {
-                    onError?.Invoke("inputQueue cannot be empty");
+                    onError("inputQueue cannot be empty");
                     queue = null;
                     return false;
                 }
@@ -59,7 +61,7 @@
 
             if (string.IsNullOrWhiteSpace(queueName))
             {
-                onError?.Invoke("Queue name cannot be empty");
+                onError("Queue name cannot be empty");
                 queue = null;
                 return false;
             }
@@ -68,8 +70,8 @@
 
             if (connectionStringOrAlias.IsValidAzureConnectionString() && allowConnectionStringForBackwardCompatibility == false)
             {
-                onError?.Invoke("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected." +
-                               " Only aliases are allowed. Provide an alias for the storage account.");
+                onError("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected." +
+                        " Only aliases are allowed. Provide an alias for the storage account.");
                 queue = null;
                 return false;
             }

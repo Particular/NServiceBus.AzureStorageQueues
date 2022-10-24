@@ -24,6 +24,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.Utils
     using AccountSetting = System.Collections.Generic.KeyValuePair<string, System.Func<string, bool>>;
     using ConnectionStringFilter = System.Func<System.Collections.Generic.IDictionary<string, string>, System.Collections.Generic.IDictionary<string, string>>;
 
+    /// <summary>
+    /// Adapted from https://github.com/Azure/azure-storage-net/blob/master/Lib/Common/CloudStorageAccount.cs
+    /// </summary>
     static class ConnectionStringParser
     {
         public const string StorageUriMustMatch = "Primary and secondary location URIs in a StorageUri must point to the same resource.";
