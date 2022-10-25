@@ -7,7 +7,10 @@ namespace NServiceBus
     {
         public AccountInfo(string alias, string connectionString) { }
         public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient) { }
-        [System.Obsolete(@"The Microsoft.Azure.Cosmos.Table package has been deprecated. Use the constructor overload that accepts an Azure.Data.Tables.TableServiceClient instance. Will be treated as an error from version 12.0.0. The member currently throws a NotImplementedException. Will be removed in version 13.0.0.", false)]
+        [System.Obsolete("The Microsoft.Azure.Cosmos.Table package has been deprecated. Use the constructor" +
+            " overload that accepts an Azure.Data.Tables.TableServiceClient instance. The mem" +
+            "ber currently throws a NotImplementedException. Will be removed in version 13.0." +
+            "0.", true)]
         public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, object cloudTableClient) { }
         public string Alias { get; }
         public string ConnectionString { get; }
@@ -17,11 +20,14 @@ namespace NServiceBus
     {
         public string DefaultAccountAlias { get; set; }
         [System.Obsolete("Account aliases using connection strings have been deprecated. Use the AddAccount" +
-            " overload that accepts a QueueServiceClient instance. Will be treated as an erro" +
-            "r from version 12.0.0. Will be removed in version 13.0.0.", false)]
+            " overload that accepts a QueueServiceClient instance. The member currently throw" +
+            "s a NotImplementedException. Will be removed in version 13.0.0.", true)]
         public NServiceBus.AccountInfo AddAccount(string alias, string connectionString) { }
         public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient) { }
-        [System.Obsolete(@"The Microsoft.Azure.Cosmos.Table package has been deprecated. Use the AddAccount overload that accepts an Azure.Data.Tables.TableServiceClient instance. Will be treated as an error from version 12.0.0. The member currently throws a NotImplementedException. Will be removed in version 13.0.0.", false)]
+        [System.Obsolete("The Microsoft.Azure.Cosmos.Table package has been deprecated. Use the AddAccount " +
+            "overload that accepts an Azure.Data.Tables.TableServiceClient instance. The memb" +
+            "er currently throws a NotImplementedException. Will be removed in version 13.0.0" +
+            ".", true)]
         public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, object cloudTableClient) { }
     }
     public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition, NServiceBus.Routing.IMessageDrivenSubscriptionTransport
@@ -29,7 +35,10 @@ namespace NServiceBus
         public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
         public AzureStorageQueueTransport(string connectionString, bool useNativeDelayedDeliveries = true) { }
         public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient) { }
-        [System.Obsolete(@"The Microsoft.Azure.Cosmos.Table package has been deprecated. Use the constructor overload that accepts an Azure.Data.Tables.TableServiceClient instance. Will be treated as an error from version 12.0.0. The member currently throws a NotImplementedException. Will be removed in version 13.0.0.", false)]
+        [System.Obsolete("The Microsoft.Azure.Cosmos.Table package has been deprecated. Use the constructor" +
+            " overload that accepts an Azure.Data.Tables.TableServiceClient instance. The mem" +
+            "ber currently throws a NotImplementedException. Will be removed in version 13.0." +
+            "0.", true)]
         public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, object cloudTableClient) { }
         public NServiceBus.AccountRoutingSettings AccountRouting { get; }
         public int? DegreeOfReceiveParallelism { get; set; }
@@ -46,8 +55,7 @@ namespace NServiceBus
         public override System.Threading.Tasks.Task<NServiceBus.Transport.TransportInfrastructure> Initialize(NServiceBus.Transport.HostSettings hostSettings, NServiceBus.Transport.ReceiveSettings[] receiversSettings, string[] sendingAddresses, System.Threading.CancellationToken cancellationToken = default) { }
         [System.Obsolete("Inject the ITransportAddressResolver type to access the address translation mecha" +
             "nism at runtime. See the NServiceBus version 8 upgrade guide for further details" +
-            ". Will be treated as an error from version 12.0.0. Will be removed in version 13" +
-            ".0.0.", false)]
+            ". Will be removed in version 13.0.0.", true)]
         public override string ToTransportAddress(NServiceBus.Transport.QueueAddress address) { }
     }
     public static class AzureStorageTransportExtensions
@@ -135,8 +143,8 @@ namespace NServiceBus
     public class DelayedDeliverySettings : NServiceBus.Configuration.AdvancedExtensibility.ExposeSettings
     {
         [System.Obsolete("Configure the transport via the AzureStorageQueueTransport DelayedDelivery.Delaye" +
-            "dDeliveryTableName property. Will be treated as an error from version 12.0.0. Wi" +
-            "ll be removed in version 13.0.0.", false)]
+            "dDeliveryTableName property. The member currently throws a NotImplementedExcepti" +
+            "on. Will be removed in version 13.0.0.", true)]
         public void UseTableName(string delayedMessagesTableName) { }
     }
     public static class MessageDrivenPubSubCompatibilityModeConfiguration
