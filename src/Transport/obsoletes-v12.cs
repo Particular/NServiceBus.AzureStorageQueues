@@ -5,11 +5,13 @@ namespace NServiceBus
 {
     using System;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using Configuration.AdvancedExtensibility;
     using global::Azure.Data.Tables;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using Serialization;
+    using Settings;
 
     partial class AccountInfo
     {
@@ -222,6 +224,20 @@ namespace NServiceBus
 
             this TransportExtensions<AzureStorageQueueTransport> config, string subscriptionTableName) =>
             throw new NotImplementedException();
+    }
+
+    public class DelayedDeliverySettings : ExposeSettings
+    {
+        internal DelayedDeliverySettings(NativeDelayedDeliverySettings transportDelayedDelivery) : base(new SettingsHolder())
+            => throw new NotImplementedException();
+
+        [ObsoleteEx(
+            Message =
+                "Configure the transport via the AzureStorageQueueTransport DelayedDelivery.DelayedDeliveryTableName property",
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0")]
+        public void UseTableName(string delayedMessagesTableName)
+            => throw new NotImplementedException();
     }
 }
 
