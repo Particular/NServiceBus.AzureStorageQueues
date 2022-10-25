@@ -22,6 +22,7 @@ namespace NServiceBus
     using Transport;
     using Transport.AzureStorageQueues;
     using Unicast.Messages;
+    using QueueAddress = Transport.QueueAddress;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
@@ -135,7 +136,7 @@ namespace NServiceBus
 
             var localAccountInfo = new AccountInfo("", queueServiceClientProvider.Client, tableServiceClientProvider.Client);
 
-            var azureStorageAddressing = new AzureStorageAddressingSettings(GetQueueAddressGenerator(),
+            var azureStorageAddressing = new AzureStorageAddressingSettings(QueueAddressGenerator,
                 AccountRouting.DefaultAccountAlias,
                 Subscriptions.SubscriptionTableName,
                 AccountRouting.Mappings,
@@ -210,7 +211,7 @@ namespace NServiceBus
                 };
             }
 
-            var dispatcher = new Dispatcher(GetQueueAddressGenerator(), azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence, subscriptionStore);
+            var dispatcher = new Dispatcher(QueueAddressGenerator, azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence, subscriptionStore);
 
             object delayedDeliveryProcessorDiagnosticSection = new { };
             var nativeDelayedDeliveryProcessor = NativeDelayedDeliveryProcessor.Disabled();
@@ -250,7 +251,7 @@ namespace NServiceBus
                     queuesToCreate.Add(DelayedDelivery.DelayedDeliveryPoisonQueue);
                 }
 
-                var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, GetQueueAddressGenerator());
+                var queueCreator = new AzureMessageQueueCreator(queueServiceClientProvider, QueueAddressGenerator);
                 await queueCreator.CreateQueueIfNecessary(queuesToCreate, cancellationToken)
                     .ConfigureAwait(false);
             }
@@ -292,6 +293,14 @@ namespace NServiceBus
 
             return infrastructure;
         }
+
+        /// <inheritdoc />
+        [ObsoleteEx(Message = "Inject the ITransportAddressResolver type to access the address translation mechanism at runtime. See the NServiceBus version 8 upgrade guide for further details.",
+            TreatAsErrorFromVersion = "12",
+            RemoveInVersion = "13")]
+#pragma warning disable CS0672 // Member overrides obsolete member
+        public override string ToTransportAddress(QueueAddress address) => throw new NotImplementedException();
+#pragma warning restore CS0672 // Member overrides obsolete member
 
         void ValidateReceiversSettings(ReceiveSettings[] receivers)
         {
@@ -363,13 +372,11 @@ namespace NServiceBus
                 ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
                 : new DefaultMessageEnvelopeUnwrapper(serializer);
 
-#pragma warning disable CS0618 // Type or member is obsolete
-            var receiveAddress = ToTransportAddress(receiveSettings.ReceiveAddress);
-#pragma warning restore CS0618 // Type or member is obsolete
+            var receiveAddress = AzureStorageQueueInfrastructure.TranslateAddress(receiveSettings.ReceiveAddress, QueueAddressGenerator);
 
             var subscriptionManager = new SubscriptionManager(subscriptionStore, hostSettings.Name, receiveAddress);
 
-            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, GetQueueAddressGenerator(), receiveSettings.PurgeOnStartup, MessageInvisibleTime);
+            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, QueueAddressGenerator, receiveSettings.PurgeOnStartup, MessageInvisibleTime);
 
             return (receiveSettings.Id, new MessageReceiver(
                 receiveSettings.Id,
@@ -383,36 +390,6 @@ namespace NServiceBus
                 ReceiverBatchSize,
                 MaximumWaitTimeWhenIdle,
                 PeekInterval));
-        }
-
-        QueueAddressGenerator GetQueueAddressGenerator()
-        {
-            queueAddressGenerator ??= new QueueAddressGenerator(QueueNameSanitizer);
-
-            return queueAddressGenerator;
-        }
-
-        /// <inheritdoc cref="ToTransportAddress"/>
-        [ObsoleteEx(Message = "Inject the ITransportAddressResolver type to access the address translation mechanism at runtime. See the NServiceBus version 8 upgrade guide for further details.",
-            TreatAsErrorFromVersion = "12",
-            RemoveInVersion = "13")]
-#pragma warning disable CS0672 // Member overrides obsolete member
-        public override string ToTransportAddress(Transport.QueueAddress address)
-#pragma warning restore CS0672 // Member overrides obsolete member
-        {
-            var queue = new StringBuilder(address.BaseAddress);
-
-            if (address.Discriminator != null)
-            {
-                queue.Append("-" + address.Discriminator);
-            }
-
-            if (address.Qualifier != null)
-            {
-                queue.Append("-" + address.Qualifier);
-            }
-
-            return GetQueueAddressGenerator().GetQueueName(queue.ToString());
         }
 
         /// <inheritdoc cref="GetSupportedTransactionModes"/>
@@ -559,6 +536,15 @@ namespace NServiceBus
         /// connection strings.
         /// </summary>
         public AccountRoutingSettings AccountRouting { get; } = new AccountRoutingSettings();
+
+        internal QueueAddressGenerator QueueAddressGenerator
+        {
+            get
+            {
+                queueAddressGenerator ??= new QueueAddressGenerator(QueueNameSanitizer);
+                return queueAddressGenerator;
+            }
+        }
 
         internal const string SerializerSettingsKey = "MainSerializer";
         readonly TransportTransactionMode[] supportedTransactionModes = new[] { TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly };
