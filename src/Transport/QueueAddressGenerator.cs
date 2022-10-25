@@ -11,7 +11,7 @@
         {
             var queueName = address.ToLowerInvariant();
 
-            return sanitizedQueueNames.GetOrAdd(queueName, name => sanitizer(name));
+            return sanitizedQueueNames.GetOrAdd(queueName, static (name, sanitizer) => sanitizer(name), sanitizer);
         }
 
         Func<string, string> sanitizer;
