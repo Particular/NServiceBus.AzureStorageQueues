@@ -34,18 +34,6 @@ namespace NServiceBus
 
         }
 
-        internal void LegacyAPIShimSetConnectionString(string connectionString)
-        {
-            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
-
-            queueServiceClientProvider = new QueueServiceClientByConnectionString(connectionString);
-            if (SupportsDelayedDelivery)
-            {
-                blobServiceClientProvider = new BlobServiceClientProvidedByConnectionString(connectionString);
-                tableServiceClientProvider = new TableServiceClientByConnectionString(connectionString);
-            }
-        }
-
         /// <summary>
         /// Initialize a new transport definition for AzureStorageQueue
         /// </summary>
