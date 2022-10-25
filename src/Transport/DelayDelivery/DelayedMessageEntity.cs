@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Text.Json;
     using global::Azure;
     using global::Azure.Data.Tables;
     using Transport;
@@ -16,9 +17,9 @@
         public string MessageId { get; set; }
         public string Headers { get; set; }
 
-        static string Serialize<T>(T value) => SimpleJson.SimpleJson.SerializeObject(value);
+        static string Serialize<T>(T value) => JsonSerializer.Serialize(value);
 
-        static T Deserialize<T>(string value) => SimpleJson.SimpleJson.DeserializeObject<T>(value);
+        static T Deserialize<T>(string value) => JsonSerializer.Deserialize<T>(value);
 
         public void SetOperation(UnicastTransportOperation operation)
         {
