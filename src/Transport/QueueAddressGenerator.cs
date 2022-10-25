@@ -5,10 +5,7 @@
 
     class QueueAddressGenerator
     {
-        public QueueAddressGenerator(Func<string, string> sanitizer)
-        {
-            this.sanitizer = sanitizer;
-        }
+        public QueueAddressGenerator(Func<string, string> sanitizer) => this.sanitizer = sanitizer;
 
         public string GetQueueName(string address)
         {
