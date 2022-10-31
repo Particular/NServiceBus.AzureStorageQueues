@@ -11,7 +11,7 @@ namespace NServiceBus
     /// <summary>
     /// Adds extensions methods to <see cref="TransportExtensions{T}" /> for configuration purposes.
     /// </summary>
-    public static class AzureStorageTransportExtensions
+    public static partial class AzureStorageTransportExtensions
     {
         internal const string Note = "As long as the persistence configuration API has not been adjusted to match the transport configuration API keep bumping the versions when working on a new major";
 
