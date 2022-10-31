@@ -9,7 +9,7 @@ namespace NServiceBus
     /// <summary>
     /// An account info instance unifies an alias with a connection string and potentially registered endpoint instances.
     /// </summary>
-    public class AccountInfo
+    public partial class AccountInfo
     {
         /// <summary>
         /// Creates a new instance of an AccountInfo.
