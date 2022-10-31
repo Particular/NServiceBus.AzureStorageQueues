@@ -13,7 +13,7 @@ namespace NServiceBus
     /// </summary>
     public static class AzureStorageTransportExtensions
     {
-        const string Note = "As long as the persistence configuration API has not been adjusted to match the transport configuration API keep bumping the versions when working on a new major";
+        internal const string Note = "As long as the persistence configuration API has not been adjusted to match the transport configuration API keep bumping the versions when working on a new major";
 
         /// <summary>
         /// Configures NServiceBus to use the given transport.
