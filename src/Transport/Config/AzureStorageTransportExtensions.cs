@@ -199,31 +199,6 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Sets <see cref="QueueServiceClient"/> to be used for messaging operations.
-        /// </summary>
-        [ObsoleteEx(
-            Message =
-                "Provide the QueueServiceClient with the UseTransport<AzureStorageQueues> configuration as a parameter.",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
-        public static TransportExtensions<AzureStorageQueueTransport> UseQueueServiceClient(
-            this TransportExtensions<AzureStorageQueueTransport> config,
-            QueueServiceClient queueServiceClient) =>
-            throw new NotImplementedException();
-
-        /// <summary>
-        /// Sets <see cref="QueueServiceClient"/> to be used for delayed delivery feature.
-        /// </summary>
-        [ObsoleteEx(
-            Message =
-                "Provide the BlobServiceClient with the UseTransport<AzureStorageQueues> configuration as a parameter.",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
-        public static TransportExtensions<AzureStorageQueueTransport> UseBlobServiceClient(
-            this TransportExtensions<AzureStorageQueueTransport> config, BlobServiceClient blobServiceClient) =>
-            throw new NotImplementedException();
-
-        /// <summary>
         /// Sets the flag to disable or enable subscriptions caching.
         /// </summary>
         [PreObsolete(
@@ -346,16 +321,5 @@ namespace NServiceBus
 
             return config;
         }
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-
-        [ObsoleteEx(
-            Message = "Native publish/subscribe is always enabled in version 11. All endpoints must be updated to use native publish/subscribe before updating to this version.",
-            TreatAsErrorFromVersion = "11",
-            RemoveInVersion = "12")]
-        public static SubscriptionMigrationModeSettings EnableMessageDrivenPubSubCompatibilityMode(this TransportExtensions<AzureStorageQueueTransport> transportExtensions)
-            => throw new NotImplementedException();
-
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
