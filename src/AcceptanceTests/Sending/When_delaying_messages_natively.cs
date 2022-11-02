@@ -50,9 +50,8 @@
                 .ConfigureAwait(false);
 
             var requestCount = context.CapturedTableServiceRequests
-                .Where(request => request.Contains(SenderDelayedMessagesTable, StringComparison.OrdinalIgnoreCase) &&
-                                  request.Contains("$filter", StringComparison.OrdinalIgnoreCase))
-                .Count();
+                .Count(request => request.Contains(SenderDelayedMessagesTable, StringComparison.OrdinalIgnoreCase) &&
+                                  request.Contains("$filter", StringComparison.OrdinalIgnoreCase));
 
             // the wait times for next peeks for SlowlyPeekingSender
             // peek number  |wait (seconds)| cumulative wait (seconds)
