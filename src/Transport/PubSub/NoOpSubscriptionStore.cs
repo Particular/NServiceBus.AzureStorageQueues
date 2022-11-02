@@ -8,7 +8,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class NoOpSubscriptionStore : ISubscriptionStore
     {
-        public Task<IEnumerable<string>> GetSubscribers(Type eventType, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<string>());
+        static readonly Task<IEnumerable<string>> EmptySubscribers = Task.FromResult(Enumerable.Empty<string>());
+
+        public Task<IEnumerable<string>> GetSubscribers(Type eventType, CancellationToken cancellationToken = default) => EmptySubscribers;
         public Task Subscribe(string endpointName, string endpointAddress, Type eventType, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task Unsubscribe(string endpointName, Type eventType, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }

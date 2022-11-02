@@ -1,7 +1,7 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
-    using NServiceBus.Transport.AzureStorageQueues.Utils;
+    using Utils;
 
     readonly struct QueueAddress : IEquatable<QueueAddress>
     {
@@ -101,6 +101,6 @@
 
         public bool HasNoAlias => Alias == string.Empty;
 
-        public const string Separator = "@";
+        const string Separator = "@";
     }
 }

@@ -4,7 +4,7 @@
     using System.Collections.Generic;
     using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using NServiceBus.Transport.AzureStorageQueues.Utils;
+    using Utils;
 
     class AzureStorageAddressingSettings
     {
