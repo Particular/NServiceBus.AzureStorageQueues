@@ -55,7 +55,7 @@
                     {
                         var options = new SendOptions();
                         options.SetDestination("ConfiguringAccountNames.Receiver");
-                        return bus.Send(new MyMessage(), options);
+                        return bus.Send(new MyMessage(), options, cancellationToken);
                     });
                 })
                 .WithEndpoint<Receiver>()

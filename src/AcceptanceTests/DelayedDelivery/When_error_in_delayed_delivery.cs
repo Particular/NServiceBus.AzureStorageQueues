@@ -43,7 +43,7 @@
                     var sendOptions = new SendOptions();
                     sendOptions.SetDestination("notexist");
                     sendOptions.DelayDeliveryWith(TimeSpan.FromSeconds(2));
-                    return session.Send(new MyMessage(), sendOptions);
+                    return session.Send(new MyMessage(), sendOptions, cancellationToken);
                 })
             )
             .WithEndpoint<ErrorQueueSpy>()

@@ -72,7 +72,7 @@
                 {
                     var options = new SendOptions();
                     options.SetDestination(destination);
-                    return s.Send(new MyCommand(), options);
+                    return s.Send(new MyCommand(), options, cancellationToken);
                 }))
                 .WithEndpoint<TReceiver>()
                 .Done(c => c.Received)
@@ -102,7 +102,7 @@
                 var bytes = Convert.FromBase64String(rawMessage.MessageText);
                 using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(bytes))))
                 {
-                    message = JToken.ReadFrom(reader);
+                    message = await JToken.ReadFromAsync(reader, cancellationToken);
                 }
 
                 propertiesFlattened = message.FindProperties(IsSimpleProperty)
