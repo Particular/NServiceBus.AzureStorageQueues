@@ -4,6 +4,8 @@
 
     static class StringExtensions
     {
+#if NETFRAMEWORK
         public static bool Contains(this string source, string subString, StringComparison comparison) => source.IndexOf(subString, comparison) >= 0;
+#endif
     }
 }
