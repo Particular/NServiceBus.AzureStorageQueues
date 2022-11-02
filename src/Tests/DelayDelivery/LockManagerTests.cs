@@ -12,10 +12,7 @@
         BlobServiceClient blobService;
 
         [OneTimeSetUp]
-        public void SetUp()
-        {
-            blobService = new BlobServiceClient(Testing.Utilities.GetEnvConfiguredConnectionString());
-        }
+        public void SetUp() => blobService = new BlobServiceClient(Testing.Utilities.GetEnvConfiguredConnectionString());
 
         [Test]
         public async Task WhenLeaseTaken_ThenItCanBeRenewedManyTimes()

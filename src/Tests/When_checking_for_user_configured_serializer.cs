@@ -9,7 +9,7 @@
     using Unicast.Messages;
 
     [TestFixture]
-    class When_checking_for_user_configured_serializer
+    public class When_checking_for_user_configured_serializer
     {
         [Test]
         public void Should_throw_exception_when_no_serializer_was_set()
@@ -22,7 +22,7 @@
                 AzureStorageQueueTransport.GetMainSerializerHack(messageMapper, settings);
             });
 
-            Assert.IsTrue(exception.Message.StartsWith("No serializer defined. If the transport is used in combination with NServiceBus, use 'endpointConfiguration.UseSerialization<T>();' to select a serializer."), $"Incorrect exception message: {exception.Message}");
+            Assert.That(exception?.Message, Does.StartWith("No serializer defined. If the transport is used in combination with NServiceBus, use 'endpointConfiguration.UseSerialization<T>();' to select a serializer."));
         }
 
         [Test]

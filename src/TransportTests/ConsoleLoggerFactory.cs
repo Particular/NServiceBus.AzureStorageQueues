@@ -5,15 +5,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.TransportTests
 
     class ConsoleLoggerFactory : ILoggerFactory
     {
-        public ILog GetLogger(string name)
-        {
-            return new ConsoleLog(name);
-        }
+        public ILog GetLogger(string name) => new ConsoleLog(name);
 
-        public ILog GetLogger(Type type)
-        {
-            return new ConsoleLog(type.FullName);
-        }
+        public ILog GetLogger(Type type) => new ConsoleLog(type.FullName);
 
         class ConsoleLog : ILog
         {
@@ -33,80 +27,35 @@ namespace NServiceBus.Transport.AzureStorageQueues.TransportTests
 
             public bool IsFatalEnabled => level <= LogLevel.Fatal;
 
-            public void Debug(string message)
-            {
-                Log(message, LogLevel.Debug);
-            }
+            public void Debug(string message) => Log(message, LogLevel.Debug);
 
-            public void Debug(string message, Exception exception)
-            {
-                Log(message, LogLevel.Debug);
-            }
+            public void Debug(string message, Exception exception) => Log(message, LogLevel.Debug);
 
-            public void DebugFormat(string format, params object[] args)
-            {
-                Log(string.Format(format, args), LogLevel.Debug);
-            }
+            public void DebugFormat(string format, params object[] args) => Log(string.Format(format, args), LogLevel.Debug);
 
-            public void Info(string message)
-            {
-                Log(message, LogLevel.Info);
-            }
+            public void Info(string message) => Log(message, LogLevel.Info);
 
-            public void Info(string message, Exception exception)
-            {
-                Log($"{message} {exception}", LogLevel.Info);
-            }
+            public void Info(string message, Exception exception) => Log($"{message} {exception}", LogLevel.Info);
 
-            public void InfoFormat(string format, params object[] args)
-            {
-                Log(string.Format(format, args), LogLevel.Info);
-            }
+            public void InfoFormat(string format, params object[] args) => Log(string.Format(format, args), LogLevel.Info);
 
-            public void Warn(string message)
-            {
-                Log(message, LogLevel.Warn);
-            }
+            public void Warn(string message) => Log(message, LogLevel.Warn);
 
-            public void Warn(string message, Exception exception)
-            {
-                Log($"{message} {exception}", LogLevel.Warn);
-            }
+            public void Warn(string message, Exception exception) => Log($"{message} {exception}", LogLevel.Warn);
 
-            public void WarnFormat(string format, params object[] args)
-            {
-                Log(string.Format(format, args), LogLevel.Warn);
-            }
+            public void WarnFormat(string format, params object[] args) => Log(string.Format(format, args), LogLevel.Warn);
 
-            public void Error(string message)
-            {
-                Log(message, LogLevel.Error);
-            }
+            public void Error(string message) => Log(message, LogLevel.Error);
 
-            public void Error(string message, Exception exception)
-            {
-                Log($"{message} {exception}", LogLevel.Error);
-            }
+            public void Error(string message, Exception exception) => Log($"{message} {exception}", LogLevel.Error);
 
-            public void ErrorFormat(string format, params object[] args)
-            {
-                Log(string.Format(format, args), LogLevel.Error);
-            }
+            public void ErrorFormat(string format, params object[] args) => Log(string.Format(format, args), LogLevel.Error);
 
-            public void Fatal(string message)
-            {
-                Log(message, LogLevel.Fatal);
-            }
+            public void Fatal(string message) => Log(message, LogLevel.Fatal);
 
-            public void Fatal(string message, Exception exception)
-            {
-                Log($"{message} {exception}", LogLevel.Fatal);
-            }
+            public void Fatal(string message, Exception exception) => Log($"{message} {exception}", LogLevel.Fatal);
 
-            public void FatalFormat(string format, params object[] args)
-            {
-                Log(string.Format(format, args), LogLevel.Fatal);
-            }
+            public void FatalFormat(string format, params object[] args) => Log(string.Format(format, args), LogLevel.Fatal);
 
             void Log(string message, LogLevel messageSeverity)
             {
