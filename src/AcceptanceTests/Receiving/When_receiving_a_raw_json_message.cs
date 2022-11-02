@@ -66,10 +66,7 @@
 
         class Receiver : EndpointConfigurationBuilder
         {
-            public Receiver()
-            {
-                EndpointSetup<DefaultServer>();
-            }
+            public Receiver() => EndpointSetup<DefaultServer>();
         }
 
         static MessageWrapper MyCustomUnwrapper(QueueMessage rawMessage, Guid contextTestRunId)
@@ -107,20 +104,17 @@
 
         class MyMessageHandler : IHandleMessages<MyMessage>
         {
-            public MyMessageHandler(Context ctx)
-            {
-                this.ctx = ctx;
-            }
+            public MyMessageHandler(Context testContext) => this.testContext = testContext;
 
             public Task Handle(MyMessage message, IMessageHandlerContext context)
             {
-                ctx.MessageReceived = message;
-                ctx.GotMessage = true;
+                testContext.MessageReceived = message;
+                testContext.GotMessage = true;
 
                 return Task.CompletedTask;
             }
 
-            Context ctx;
+            Context testContext;
         }
     }
 }

@@ -33,10 +33,7 @@
 
         public class ReceiverEndPoint : EndpointConfigurationBuilder
         {
-            public ReceiverEndPoint()
-            {
-                EndpointSetup<DefaultServer>();
-            }
+            public ReceiverEndPoint() => EndpointSetup<DefaultServer>();
         }
 
         [TimeToBeReceived("31.00:00:01")]

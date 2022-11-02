@@ -143,31 +143,27 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
         public class Publisher : EndpointConfigurationBuilder
         {
-            public Publisher(bool supportsPublishSubscribe)
-            {
+            public Publisher(bool supportsPublishSubscribe) =>
                 EndpointSetup(new CustomizedServer(supportsNativeDelayedDelivery: true, supportsPublishSubscribe), (c, rd) =>
-               {
-                   c.OnEndpointSubscribed<Context>((s, context) =>
-                   {
-                       if (s.SubscriberEndpoint.Contains(Conventions.EndpointNamingConvention(typeof(Subscriber))))
-                       {
-                           context.SubscribedMessageDriven = true;
-                       }
-                   });
-               }).IncludeType<TestingInMemorySubscriptionPersistence>();
-            }
+                {
+                    c.OnEndpointSubscribed<Context>((s, context) =>
+                    {
+                        if (s.SubscriberEndpoint.Contains(Conventions.EndpointNamingConvention(typeof(Subscriber))))
+                        {
+                            context.SubscribedMessageDriven = true;
+                        }
+                    });
+                }).IncludeType<TestingInMemorySubscriptionPersistence>();
         }
 
         public class Subscriber : EndpointConfigurationBuilder
         {
-            public Subscriber(bool supportsPublishSubscribe)
-            {
+            public Subscriber(bool supportsPublishSubscribe) =>
                 EndpointSetup(new CustomizedServer(supportsNativeDelayedDelivery: true, supportsPublishSubscribe), (c, rd) =>
-                   {
-                       c.DisableFeature<AutoSubscribe>();
-                   },
+                    {
+                        c.DisableFeature<AutoSubscribe>();
+                    },
                     metadata => metadata.RegisterPublisherFor<MyEvent>(typeof(Publisher)));
-            }
 
             public class MyHandler : IHandleMessages<MyEvent>
             {

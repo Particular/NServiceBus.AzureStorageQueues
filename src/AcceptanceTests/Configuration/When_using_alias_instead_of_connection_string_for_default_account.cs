@@ -25,10 +25,7 @@
         }
 
         [OneTimeSetUp]
-        public Task OneTimeSetup()
-        {
-            return destinationQueue.CreateIfNotExistsAsync();
-        }
+        public Task OneTimeSetup() => destinationQueue.CreateIfNotExistsAsync();
 
         [Test]
         public async Task Should_send_messages_without_exposing_connection_string()
@@ -66,15 +63,13 @@
 
         public class SenderEndpoint : EndpointConfigurationBuilder
         {
-            public SenderEndpoint()
-            {
+            public SenderEndpoint() =>
                 EndpointSetup<DefaultServer>(endpointConfiguration =>
                 {
                     endpointConfiguration.UseSerialization<NewtonsoftJsonSerializer>();
                     var transport = endpointConfiguration.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = "defaultAlias";
                 });
-            }
         }
     }
 }

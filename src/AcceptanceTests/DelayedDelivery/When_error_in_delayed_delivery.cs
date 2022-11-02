@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
@@ -53,8 +52,7 @@
 
         class SampleEndpoint : EndpointConfigurationBuilder
         {
-            public SampleEndpoint()
-            {
+            public SampleEndpoint() =>
                 EndpointSetup<DefaultServer>(
                     cfg =>
                     {
@@ -63,7 +61,6 @@
                             .Delayed(delayed => delayed.NumberOfRetries(0))
                             .Immediate(immediate => immediate.NumberOfRetries(0));
                     });
-            }
 
             class MyMessageHandler : IHandleMessages<MyMessage>
             {
@@ -73,11 +70,9 @@
 
         class ErrorQueueSpy : EndpointConfigurationBuilder
         {
-            public ErrorQueueSpy()
-            {
+            public ErrorQueueSpy() =>
                 EndpointSetup<DefaultServer>()
                     .CustomEndpointName("error");
-            }
 
             class MyMessageHandler : IHandleMessages<MyMessage>
             {
@@ -96,9 +91,7 @@
 
         class MyMessage : IMessage
         {
-
         }
-
 
         class MyContext : ScenarioContext
         {

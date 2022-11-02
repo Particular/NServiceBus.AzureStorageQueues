@@ -37,8 +37,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
 
         public class MigratedPublisher : EndpointConfigurationBuilder
         {
-            public MigratedPublisher()
-            {
+            public MigratedPublisher() =>
                 EndpointSetup<DefaultPublisher>(c =>
                 {
                     c.ConfigureRouting().EnableMessageDrivenPubSubCompatibilityMode();
@@ -50,13 +49,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                         }
                     });
                 }).IncludeType<TestingInMemorySubscriptionPersistence>();
-            }
         }
 
         public class Subscriber : EndpointConfigurationBuilder
         {
-            public Subscriber()
-            {
+            public Subscriber() =>
                 EndpointSetup(new CustomizedServer(supportsNativeDelayedDelivery: true, supportsPublishSubscribe: false), (c, rd) =>
                 {
                     c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig", new List<PublisherTableEntry>
@@ -65,7 +62,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                     });
                     c.DisableFeature<AutoSubscribe>();
                 });
-            }
 
             public class MyHandler : IHandleMessages<MyEvent>
             {
