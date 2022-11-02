@@ -35,23 +35,21 @@
                 .Done(c => true)
                 .Run();
 
-            QueueMessage[] messages = await destinationQueue.ReceiveMessagesAsync(1).ConfigureAwait(false);
+            QueueMessage[] messages = await destinationQueue.ReceiveMessagesAsync(1);
             var message = messages[0];
-            await destinationQueue.DeleteMessageAsync(message.MessageId, message.PopReceipt).ConfigureAwait(false);
+            await destinationQueue.DeleteMessageAsync(message.MessageId, message.PopReceipt);
 
             var bytes = Convert.FromBase64String(message.MessageText);
-            using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(bytes))))
-            {
-                var token = JToken.ReadFrom(reader);
-                var headers = token["Headers"];
-                var replyTo = headers[Headers.ReplyToAddress];
+            using var reader = new JsonTextReader(new StreamReader(new MemoryStream(bytes)));
+            var token = await JToken.ReadFromAsync(reader);
+            var headers = token["Headers"];
+            var replyTo = headers[Headers.ReplyToAddress];
 
-                var senderEndpointName = AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(SenderEndpoint));
-                var replyToQueueName = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize(senderEndpointName);
+            var senderEndpointName = AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(SenderEndpoint));
+            var replyToQueueName = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize(senderEndpointName);
 
-                StringAssert.AreEqualIgnoringCase(replyToQueueName, ((JValue)token[nameof(MessageWrapper.ReplyToAddress)]).Value.ToString());
-                StringAssert.AreEqualIgnoringCase(replyToQueueName, ((JValue)replyTo).Value.ToString());
-            }
+            StringAssert.AreEqualIgnoringCase(replyToQueueName, ((JValue)token[nameof(MessageWrapper.ReplyToAddress)]).Value.ToString());
+            StringAssert.AreEqualIgnoringCase(replyToQueueName, ((JValue)replyTo).Value.ToString());
         }
 
         public class Context : ScenarioContext

@@ -72,27 +72,25 @@
         static MessageWrapper MyCustomUnwrapper(QueueMessage rawMessage, Guid contextTestRunId)
         {
             var bytes = Convert.FromBase64String(rawMessage.MessageText);
-            using (var stream = new MemoryStream(bytes))
-            using (var streamReader = new StreamReader(stream))
-            using (var textReader = new JsonTextReader(streamReader))
+            using var stream = new MemoryStream(bytes);
+            using var streamReader = new StreamReader(stream);
+            using var textReader = new JsonTextReader(streamReader);
+            var wrapper = jsonSerializer.Deserialize<MessageWrapper>(textReader);
+
+            if (!string.IsNullOrEmpty(wrapper.Id))
             {
-                var wrapper = jsonSerializer.Deserialize<MessageWrapper>(textReader);
-
-                if (!string.IsNullOrEmpty(wrapper.Id))
-                {
-                    return wrapper;
-                }
-
-                return new MessageWrapper
-                {
-                    Id = rawMessage.MessageId,
-                    Headers = new Dictionary<string, string>
-                    {
-                        {TestIndependence.HeaderName, contextTestRunId.ToString()}
-                    },
-                    Body = bytes
-                };
+                return wrapper;
             }
+
+            return new MessageWrapper
+            {
+                Id = rawMessage.MessageId,
+                Headers = new Dictionary<string, string>
+                {
+                    {TestIndependence.HeaderName, contextTestRunId.ToString()}
+                },
+                Body = bytes
+            };
         }
 
         static JsonSerializer jsonSerializer = JsonSerializer.Create();

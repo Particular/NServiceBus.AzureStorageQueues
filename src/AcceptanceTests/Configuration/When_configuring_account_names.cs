@@ -25,7 +25,7 @@
                     new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
                     new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()))));
 
-            Assert.IsTrue(exception.Message.Contains("The mapping of storage accounts connection strings to aliases is enforced but the the alias for the default connection string isn't provided"), "Exception message is missing or incorrect");
+            Assert.That(exception?.Message, Does.Contain("The mapping of storage accounts connection strings to aliases is enforced but the the alias for the default connection string isn't provided"), "Exception message is missing or incorrect");
         }
 
         [Test]

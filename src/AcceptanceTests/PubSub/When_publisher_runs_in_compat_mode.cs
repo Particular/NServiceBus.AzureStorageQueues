@@ -58,7 +58,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                 {
                     c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig", new List<PublisherTableEntry>
                     {
-                        new PublisherTableEntry(typeof(MyEvent), PublisherAddress.CreateFromEndpointName(PublisherEndpoint))
+                        new (typeof(MyEvent), PublisherAddress.CreateFromEndpointName(PublisherEndpoint))
                     });
                     c.DisableFeature<AutoSubscribe>();
                 });

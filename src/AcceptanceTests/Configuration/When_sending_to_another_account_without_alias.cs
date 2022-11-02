@@ -16,14 +16,14 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             var queue = Conventions.EndpointNamingConvention(typeof(Receiver));
 
             var another = Utilities.GetEnvConfiguredConnectionString2();
-            var queueAddress = queue + "@" + another;
+            var queueAddress = $"{queue}@{another}";
 
             var exception = Assert.ThrowsAsync<FormatException>(
                 async () => await Scenario.Define<Context>()
                     .WithEndpoint<Receiver>(c => c.When(s => s.Send<MyMessage>(queueAddress, m => { })))
                     .Run(TimeSpan.FromSeconds(15)));
 
-            Assert.AreEqual("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected. Only aliases are allowed. Provide an alias for the storage account.", exception.Message);
+            Assert.AreEqual("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected. Only aliases are allowed. Provide an alias for the storage account.", exception?.Message);
         }
 
         public class Context : ScenarioContext
