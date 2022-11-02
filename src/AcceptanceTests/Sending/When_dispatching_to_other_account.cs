@@ -75,7 +75,7 @@
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
                     testContext.WasCalled = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }

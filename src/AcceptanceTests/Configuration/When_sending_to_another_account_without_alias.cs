@@ -53,7 +53,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             public Task Handle(MyMessage message, IMessageHandlerContext context)
             {
                 scenarioContext.HandlerCalled = true;
-                return Task.FromResult(0);
+                return Task.CompletedTask;
             }
         }
     }

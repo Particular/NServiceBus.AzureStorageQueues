@@ -60,7 +60,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 public Task Handle(MyEvent @event, IMessageHandlerContext context)
                 {
                     testContext.GotTheEvent = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
 
@@ -73,7 +73,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 public Task Handle(MyOtherEvent @event, IMessageHandlerContext context)
                 {
                     testContext.GotTheOtherEvent = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }

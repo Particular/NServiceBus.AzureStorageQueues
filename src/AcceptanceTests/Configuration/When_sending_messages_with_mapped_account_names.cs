@@ -206,7 +206,7 @@
             public Task Handle(MyCommand message, IMessageHandlerContext context)
             {
                 testContext.Received = true;
-                return Task.FromResult(0);
+                return Task.CompletedTask;
             }
 
             readonly Context testContext;

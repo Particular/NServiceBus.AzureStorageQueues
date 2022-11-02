@@ -79,7 +79,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                         testContext.SubscriberGotIMyEvent = true;
                     }
 
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }

@@ -20,7 +20,7 @@
                     Assert.AreEqual(expectedMessage, exception.Message);
                     c.ExceptionReceived = true;
 
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }))
                 .Done(c => c.ExceptionReceived)
                 .Run();
