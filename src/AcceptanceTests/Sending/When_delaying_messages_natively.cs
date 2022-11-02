@@ -27,7 +27,7 @@
             delayedMessagesTableClient = tableServiceClient.GetTableClient(SenderDelayedMessagesTable);
 
             // There is no explicit Exists method in Azure.Data.Tables, see https://github.com/Azure/azure-sdk-for-net/issues/28392
-            var table = await tableServiceClient.QueryAsync(t => t.Name.Equals(SenderDelayedMessagesTable), 1).FirstOrDefaultAsync().ConfigureAwait(false);
+            var table = await tableServiceClient.QueryAsync(t => t.Name.Equals(SenderDelayedMessagesTable), 1).FirstOrDefaultAsync();
             if (table != null)
             {
                 await foreach (var dte in delayedMessagesTableClient.QueryAsync<TableEntity>())
@@ -100,10 +100,10 @@
                 RowKey = earlier.ToString("yyyyMMddHHmmss")
             };
 
-            var response = await delayedMessagesTableClient.DeleteEntityAsync(original.PartitionKey, original.RowKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var response = await delayedMessagesTableClient.DeleteEntityAsync(original.PartitionKey, original.RowKey, cancellationToken: cancellationToken);
             Assert.That(response.IsError, Is.False);
 
-            response = await delayedMessagesTableClient.UpsertEntityAsync(updated, cancellationToken: cancellationToken).ConfigureAwait(false);
+            response = await delayedMessagesTableClient.UpsertEntityAsync(updated, cancellationToken: cancellationToken);
             Assert.That(response.IsError, Is.False);
         }
 

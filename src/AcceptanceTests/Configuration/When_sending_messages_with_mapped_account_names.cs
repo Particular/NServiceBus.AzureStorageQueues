@@ -32,7 +32,7 @@
         [Test]
         public async Task Is_enabled_and_single_account_is_used_Should_audit_just_queue_name_without_account()
         {
-            var ctx = await SendMessage<ReceiverUsingOneMappedConnectionString>(ReceiverName, Utilities.GetEnvConfiguredConnectionString()).ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingOneMappedConnectionString>(ReceiverName, Utilities.GetEnvConfiguredConnectionString());
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             foreach (var propertyWithSenderName in ctx.AllPropertiesFlattened.Where(property => property.Value.Contains(SenderName)))
@@ -44,7 +44,7 @@
         [Test]
         public async Task Is_enabled_and_sending_to_another_account_Should_audit_fully_qualified_queue()
         {
-            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}", Utilities.GetEnvConfiguredConnectionString2()).ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}", Utilities.GetEnvConfiguredConnectionString2());
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             var excluded = new HashSet<string>
@@ -76,7 +76,7 @@
                 }))
                 .WithEndpoint<TReceiver>()
                 .Done(c => c.Received)
-                .Run().ConfigureAwait(false);
+                .Run();
 
             Assert.IsTrue(ctx.Received);
 
@@ -87,14 +87,14 @@
 
                 var receiverAuditQueue = new QueueClient(destinationConnectionString, AuditName);
 
-                QueueMessage[] rawMessages = await receiverAuditQueue.ReceiveMessagesAsync(1, cancellationToken: cancellationToken).ConfigureAwait(false);
+                QueueMessage[] rawMessages = await receiverAuditQueue.ReceiveMessagesAsync(1, cancellationToken: cancellationToken);
                 if (rawMessages.Length == 0)
                 {
                     Assert.Fail("No message in the audit queue to pick up.");
                 }
                 var rawMessage = rawMessages[0];
 
-                var response = await receiverAuditQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken).ConfigureAwait(false);
+                var response = await receiverAuditQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken);
                 Assert.That(response, Is.Not.Null);
                 Assert.That(response.IsError, Is.False);
 

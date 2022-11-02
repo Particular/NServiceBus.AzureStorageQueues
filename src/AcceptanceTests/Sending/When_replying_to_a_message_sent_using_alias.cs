@@ -20,7 +20,7 @@
                 .WithEndpoint<Sender>(b => b.When((bus, c) => bus.Send(new MyMessage())))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.IsDone)
-                .Run().ConfigureAwait(false);
+                .Run();
 
             Assert.IsTrue(context.ReceiverWasCalled);
             Assert.IsTrue(context.ReplyMessageReceived);

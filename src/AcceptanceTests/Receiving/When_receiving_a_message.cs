@@ -22,7 +22,7 @@
                 {
                     b.DoNotFailOnErrorMessages();
                     b.CustomConfig(config => config.LimitMessageProcessingConcurrencyTo(concurrency));
-                    b.When(async (bus, c) => { await bus.SendLocal(new MyMessage()).ConfigureAwait(false); });
+                    b.When(async (bus, c) => { await bus.SendLocal(new MyMessage()); });
                 })
                 .Done(c => c.Logs.Any(IsPopReceiptLogItem))
                 .Run().ConfigureAwait(false);
@@ -79,7 +79,7 @@
             {
                 if (ctx.ShouldDelay())
                 {
-                    await Task.Delay(HandlingTimeout).ConfigureAwait(false);
+                    await Task.Delay(HandlingTimeout);
                 }
             }
 
