@@ -1,14 +1,12 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
-    using Microsoft.Azure.Cosmos.Table;
+    using global::Azure.Data.Tables;
 
-    class CloudTableClientProvidedByUser : ICloudTableClientProvider
+    class TableServiceClientProvidedByUser : ITableServiceClientProvider
     {
-        public CloudTableClientProvidedByUser(CloudTableClient cloudTableClient)
-        {
-            Client = cloudTableClient;
-        }
+        public TableServiceClientProvidedByUser(TableServiceClient tableServiceClient) =>
+            Client = tableServiceClient;
 
-        public CloudTableClient Client { get; }
+        public TableServiceClient Client { get; }
     }
 }

@@ -40,26 +40,17 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
 
         public class Publisher1 : EndpointConfigurationBuilder
         {
-            public Publisher1()
-            {
-                EndpointSetup<DefaultPublisher>();
-            }
+            public Publisher1() => EndpointSetup<DefaultPublisher>();
         }
 
         public class Publisher2 : EndpointConfigurationBuilder
         {
-            public Publisher2()
-            {
-                EndpointSetup<DefaultPublisher>();
-            }
+            public Publisher2() => EndpointSetup<DefaultPublisher>();
         }
 
         public class Subscriber : EndpointConfigurationBuilder
         {
-            public Subscriber()
-            {
-                EndpointSetup<DefaultServer>();
-            }
+            public Subscriber() => EndpointSetup<DefaultServer>();
 
             public class MyHandler : IHandleMessages<IMyEvent>
             {
@@ -79,7 +70,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                         testContext.SubscriberGotIMyEvent = true;
                     }
 
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }

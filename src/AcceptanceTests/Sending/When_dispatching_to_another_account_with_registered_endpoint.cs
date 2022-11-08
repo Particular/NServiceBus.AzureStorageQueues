@@ -4,8 +4,8 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -18,10 +18,7 @@
         public async Task Account_mapped_should_be_respected()
         {
             var context = await Scenario.Define<Context>()
-                 .WithEndpoint<Endpoint>(b =>
-                 {
-                     b.When((bus, c) => bus.Send(new MyMessage()));
-                 })
+                 .WithEndpoint<Endpoint>(b => b.When((bus, c) => bus.Send(new MyMessage())))
                  .WithEndpoint<Receiver>()
                  .Done(c => c.WasCalled)
                  .Run().ConfigureAwait(false);
@@ -40,20 +37,20 @@
 
         class Endpoint : EndpointConfigurationBuilder
         {
-            public Endpoint()
+            public Endpoint() => EndpointSetup<DefaultServer>(configuration =>
             {
-                EndpointSetup<DefaultServer>(configuration =>
-                {
-                    var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
-                    transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
+                var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
+                transport.AccountRouting.DefaultAccountAlias = DefaultAccountName;
 
-                    var anotherAccount = transport.AccountRouting.AddAccount(AnotherAccountName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
-                    anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Receiver)));
+                var anotherAccount = transport.AccountRouting.AddAccount(
+                    AnotherAccountName,
+                    new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                    new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
+                anotherAccount.AddEndpoint(Conventions.EndpointNamingConvention(typeof(Receiver)));
 
-                    var routing = configuration.ConfigureRouting();
-                    routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
-                });
-            }
+                var routing = configuration.ConfigureRouting();
+                routing.RouteToEndpoint(typeof(MyMessage), typeof(Receiver));
+            });
         }
 
         public class Receiver : EndpointConfigurationBuilder
@@ -67,17 +64,14 @@
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                Context testContext;
+                readonly Context testContext;
 
-                public MyMessageHandler(Context testContext)
-                {
-                    this.testContext = testContext;
-                }
+                public MyMessageHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
                     testContext.WasCalled = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }

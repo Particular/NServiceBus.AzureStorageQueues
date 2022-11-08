@@ -2,7 +2,7 @@
 {
     using global::Azure.Storage.Queues;
 
-    class QueueServiceClientByConnectionString : IQueueServiceClientProvider
+    sealed class QueueServiceClientByConnectionString : IQueueServiceClientProvider
     {
         public QueueServiceClientByConnectionString(string connectionString)
         {

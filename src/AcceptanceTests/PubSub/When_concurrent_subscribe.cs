@@ -35,21 +35,16 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
         public class Publisher : EndpointConfigurationBuilder
         {
-            public Publisher()
-            {
-                EndpointSetup<DefaultPublisher>(c => { });
-            }
+            public Publisher() => EndpointSetup<DefaultPublisher>(c => { });
         }
 
         public class Subscriber : EndpointConfigurationBuilder
         {
-            public Subscriber()
-            {
+            public Subscriber() =>
                 EndpointSetup<DefaultServer>(c =>
                 {
                     c.DisableFeature<AutoSubscribe>();
                 });
-            }
 
             public class MyHandler : IHandleMessages<MyEvent>
             {
@@ -60,7 +55,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 public Task Handle(MyEvent @event, IMessageHandlerContext context)
                 {
                     testContext.GotTheEvent = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
 
@@ -73,7 +68,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 public Task Handle(MyOtherEvent @event, IMessageHandlerContext context)
                 {
                     testContext.GotTheOtherEvent = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }

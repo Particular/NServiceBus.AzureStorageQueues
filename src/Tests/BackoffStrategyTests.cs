@@ -1,7 +1,6 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues.Tests
 {
     using System;
-    using System.Threading;
     using System.Threading.Tasks;
     using AzureStorageQueues;
     using NUnit.Framework;

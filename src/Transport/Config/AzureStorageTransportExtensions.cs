@@ -2,24 +2,27 @@ namespace NServiceBus
 {
     using System;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
-    using Microsoft.Azure.Cosmos.Table;
     using Serialization;
 
     /// <summary>
     /// Adds extensions methods to <see cref="TransportExtensions{T}" /> for configuration purposes.
     /// </summary>
-    public static class AzureStorageTransportExtensions
+    public static partial class AzureStorageTransportExtensions
     {
+        internal const string Note = "As long as the persistence configuration API has not been adjusted to match the transport configuration API keep bumping the versions when working on a new major";
+
         /// <summary>
         /// Configures NServiceBus to use the given transport.
         /// </summary>it
         [PreObsolete(
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0",
-            ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)")]
+            ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> UseTransport<T>(this EndpointConfiguration config)
             where T : AzureStorageQueueTransport
         {
@@ -36,7 +39,8 @@ namespace NServiceBus
         [PreObsolete(
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0",
-            ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)")]
+            ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> UseTransport<T>(this EndpointConfiguration config,
             QueueServiceClient queueServiceClient)
             where T : AzureStorageQueueTransport
@@ -54,13 +58,14 @@ namespace NServiceBus
         [PreObsolete(
             TreatAsErrorFromVersion = "12.0",
             RemoveInVersion = "13.0",
-            ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)")]
+            ReplacementTypeOrMember = "EndpointConfiguration.UseTransport(TransportDefinition)",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> UseTransport<T>(this EndpointConfiguration config,
             QueueServiceClient queueServiceClient, BlobServiceClient blobServiceClient,
-            CloudTableClient cloudTableClient)
+            TableServiceClient tableServiceClient)
             where T : AzureStorageQueueTransport
         {
-            var transport = new AzureStorageQueueTransport(queueServiceClient, blobServiceClient, cloudTableClient);
+            var transport = new AzureStorageQueueTransport(queueServiceClient, blobServiceClient, tableServiceClient);
             var routing = config.UseTransport(transport);
             var settings = new TransportExtensions<AzureStorageQueueTransport>(transport, routing);
 
@@ -73,7 +78,8 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport MessageInvisibleTime property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> MessageInvisibleTime(
             this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
@@ -87,7 +93,8 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport PeekInterval property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> PeekInterval(
             this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
@@ -101,7 +108,8 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport MaximumWaitTimeWhenIdle property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> MaximumWaitTimeWhenIdle(
             this TransportExtensions<AzureStorageQueueTransport> config, TimeSpan value)
         {
@@ -116,7 +124,8 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport QueueNameSanitizer property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> SanitizeQueueNamesWith(
             this TransportExtensions<AzureStorageQueueTransport> config,
             Func<string, string> queueNameSanitizer)
@@ -131,7 +140,8 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport ReceiverBatchSize property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> BatchSize(
             this TransportExtensions<AzureStorageQueueTransport> config, int value)
         {
@@ -145,7 +155,8 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport DegreeOfReceiveParallelism property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> DegreeOfReceiveParallelism(
             this TransportExtensions<AzureStorageQueueTransport> config, int degreeOfReceiveParallelism)
         {
@@ -160,7 +171,8 @@ namespace NServiceBus
             Message =
                 "Configure the transport via the AzureStorageQueueTransport MessageWrapperSerializationDefinition property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport>
             SerializeMessageWrapperWith<TSerializationDefinition>(
                 this TransportExtensions<AzureStorageQueueTransport> config)
@@ -176,7 +188,8 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport MessageUnwrapper property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> UnwrapMessagesWith(
             this TransportExtensions<AzureStorageQueueTransport> config,
             Func<QueueMessage, MessageWrapper> unwrapper)
@@ -186,55 +199,13 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Sets <see cref="QueueServiceClient"/> to be used for messaging operations.
-        /// </summary>
-        [ObsoleteEx(
-            Message =
-                "Provide the QueueServiceClient with the UseTransport<AzureStorageQueues> configuration as a parameter.",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
-        public static TransportExtensions<AzureStorageQueueTransport> UseQueueServiceClient(
-            this TransportExtensions<AzureStorageQueueTransport> config,
-            QueueServiceClient queueServiceClient)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Sets <see cref="QueueServiceClient"/> to be used for delayed delivery feature.
-        /// </summary>
-        [ObsoleteEx(
-            Message =
-                "Provide the BlobServiceClient with the UseTransport<AzureStorageQueues> configuration as a parameter.",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
-        public static TransportExtensions<AzureStorageQueueTransport> UseBlobServiceClient(
-            this TransportExtensions<AzureStorageQueueTransport> config, BlobServiceClient blobServiceClient)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Sets <see cref="CloudTableClient"/> to be used for delayed delivery feature.
-        /// </summary>
-        [ObsoleteEx(
-            Message =
-                "Provide the CloudTableClient with the UseTransport<AzureStorageQueues> configuration as a parameter.",
-            TreatAsErrorFromVersion = "11.0",
-            RemoveInVersion = "12.0")]
-        public static TransportExtensions<AzureStorageQueueTransport> UseCloudTableClient(
-            this TransportExtensions<AzureStorageQueueTransport> config, CloudTableClient cloudTableClient)
-        {
-            throw new Exception();
-        }
-
-        /// <summary>
         /// Sets the flag to disable or enable subscriptions caching.
         /// </summary>
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport Subscription property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> DisableCaching(
             this TransportExtensions<AzureStorageQueueTransport> config)
         {
@@ -249,7 +220,8 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport Subscription property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> CacheInvalidationPeriod(
             this TransportExtensions<AzureStorageQueueTransport> config,
             TimeSpan cacheInvalidationPeriod)
@@ -266,7 +238,8 @@ namespace NServiceBus
             Message =
                 "Configure the transport connection string via the AzureStorageQueueTransport instance constructor",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> ConnectionString(
             this TransportExtensions<AzureStorageQueueTransport> config, string connectionString)
         {
@@ -282,7 +255,8 @@ namespace NServiceBus
             Message =
                 "Configure the transport connection string via the AzureStorageQueueTransport instance constructor",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> ConnectionString(
             this TransportExtensions<AzureStorageQueueTransport> config, Func<string> connectionString)
         {
@@ -297,10 +271,11 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport DelayedDelivery property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static DelayedDeliverySettings DelayedDelivery(
             this TransportExtensions<AzureStorageQueueTransport> config) =>
-            new DelayedDeliverySettings(config.Transport.DelayedDelivery);
+            new(config.Transport.DelayedDelivery);
 
         /// <summary>
         /// Provides access to configure cross account routing.
@@ -308,7 +283,8 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport AccountRouting property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static AccountRoutingSettings AccountRouting(
             this TransportExtensions<AzureStorageQueueTransport> config) => config.Transport.AccountRouting;
 
@@ -319,7 +295,8 @@ namespace NServiceBus
             Message =
                 "Configure the transport via the AzureStorageQueueTransport AccountRouting.DefaultAccountAlias property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> DefaultAccountAlias(
             this TransportExtensions<AzureStorageQueueTransport> config, string alias)
         {
@@ -335,7 +312,8 @@ namespace NServiceBus
         [PreObsolete(
             Message = "Configure the transport via the AzureStorageQueueTransport Subscription property",
             TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0")]
+            RemoveInVersion = "13.0",
+            Note = Note)]
         public static TransportExtensions<AzureStorageQueueTransport> SubscriptionTableName(
             this TransportExtensions<AzureStorageQueueTransport> config, string subscriptionTableName)
         {
@@ -343,16 +321,5 @@ namespace NServiceBus
 
             return config;
         }
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-
-        [ObsoleteEx(
-            Message = "Native publish/subscribe is always enabled in version 11. All endpoints must be updated to use native publish/subscribe before updating to this version.",
-            TreatAsErrorFromVersion = "11",
-            RemoveInVersion = "12")]
-        public static SubscriptionMigrationModeSettings EnableMessageDrivenPubSubCompatibilityMode(this TransportExtensions<AzureStorageQueueTransport> transportExtensions)
-            => throw new NotImplementedException();
-
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

@@ -52,15 +52,12 @@
             {
                 Context testContext;
 
-                public MyMessageHandler(Context testContext)
-                {
-                    this.testContext = testContext;
-                }
+                public MyMessageHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
                     testContext.WasCalled = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }

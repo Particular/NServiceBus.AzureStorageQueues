@@ -7,11 +7,11 @@
     using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using global::Newtonsoft.Json;
     using global::Newtonsoft.Json.Linq;
-    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -32,7 +32,7 @@
         [Test]
         public async Task Is_enabled_and_single_account_is_used_Should_audit_just_queue_name_without_account()
         {
-            var ctx = await SendMessage<ReceiverUsingOneMappedConnectionString>(ReceiverName, Utilities.GetEnvConfiguredConnectionString()).ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingOneMappedConnectionString>(ReceiverName, Utilities.GetEnvConfiguredConnectionString());
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             foreach (var propertyWithSenderName in ctx.AllPropertiesFlattened.Where(property => property.Value.Contains(SenderName)))
@@ -44,7 +44,7 @@
         [Test]
         public async Task Is_enabled_and_sending_to_another_account_Should_audit_fully_qualified_queue()
         {
-            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}", Utilities.GetEnvConfiguredConnectionString2()).ConfigureAwait(false);
+            var ctx = await SendMessage<ReceiverUsingMappedConnectionStrings>($"{ReceiverName}@{AnotherConnectionStringName}", Utilities.GetEnvConfiguredConnectionString2());
             CollectionAssert.IsEmpty(ctx.ContainingRawConnectionString, "Message headers should not include raw connection string");
 
             var excluded = new HashSet<string>
@@ -64,7 +64,7 @@
             }
         }
 
-        async Task<Context> SendMessage<TReceiver>(string destination, string destinationConnectionString, CancellationToken cancellationToken = default)
+        static async Task<Context> SendMessage<TReceiver>(string destination, string destinationConnectionString, CancellationToken cancellationToken = default)
             where TReceiver : EndpointConfigurationBuilder
         {
             var ctx = await Scenario.Define<Context>()
@@ -72,11 +72,11 @@
                 {
                     var options = new SendOptions();
                     options.SetDestination(destination);
-                    return s.Send(new MyCommand(), options);
+                    return s.Send(new MyCommand(), options, cancellationToken);
                 }))
                 .WithEndpoint<TReceiver>()
                 .Done(c => c.Received)
-                .Run().ConfigureAwait(false);
+                .Run();
 
             Assert.IsTrue(ctx.Received);
 
@@ -87,19 +87,22 @@
 
                 var receiverAuditQueue = new QueueClient(destinationConnectionString, AuditName);
 
-                QueueMessage[] rawMessages = await receiverAuditQueue.ReceiveMessagesAsync(1, cancellationToken: cancellationToken).ConfigureAwait(false);
+                QueueMessage[] rawMessages = await receiverAuditQueue.ReceiveMessagesAsync(1, cancellationToken: cancellationToken);
                 if (rawMessages.Length == 0)
                 {
                     Assert.Fail("No message in the audit queue to pick up.");
                 }
                 var rawMessage = rawMessages[0];
-                await receiverAuditQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken).ConfigureAwait(false);
+
+                var response = await receiverAuditQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken);
+                Assert.That(response, Is.Not.Null);
+                Assert.That(response.IsError, Is.False);
 
                 JToken message;
                 var bytes = Convert.FromBase64String(rawMessage.MessageText);
                 using (var reader = new JsonTextReader(new StreamReader(new MemoryStream(bytes))))
                 {
-                    message = JToken.ReadFrom(reader);
+                    message = await JToken.ReadFromAsync(reader, cancellationToken);
                 }
 
                 propertiesFlattened = message.FindProperties(IsSimpleProperty)
@@ -121,10 +124,8 @@
             return ctx;
         }
 
-        static bool IsSimpleProperty(JProperty p)
-        {
-            return p.Value is JValue jValue && jValue.Type != JTokenType.Null;
-        }
+        static bool IsSimpleProperty(JProperty p) =>
+            p.Value is JValue jValue && jValue.Type != JTokenType.Null;
 
         const string SenderName = "mapping-names-sender";
         const string ReceiverName = "mapping-names-receiver";
@@ -147,7 +148,10 @@
                 {
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
+                    transport.AccountRouting.AddAccount(
+                        AnotherConnectionStringName,
+                        new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                        new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
 
                     cfg.UseSerialization<NewtonsoftJsonSerializer>();
                 });
@@ -166,7 +170,10 @@
                     cfg.AuditProcessedMessagesTo(AuditName);
 
                     transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
-                    transport.AccountRouting.AddAccount(DefaultConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient());
+                    transport.AccountRouting.AddAccount(
+                        DefaultConnectionStringName,
+                        new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()),
+                        new TableServiceClient(Utilities.GetEnvConfiguredConnectionString()));
                 });
 
                 CustomEndpointName(ReceiverName);
@@ -183,7 +190,10 @@
 
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = DefaultConnectionStringName;
-                    transport.AccountRouting.AddAccount(AnotherConnectionStringName, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
+                    transport.AccountRouting.AddAccount(
+                        AnotherConnectionStringName,
+                        new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                        new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
                 });
                 CustomEndpointName(ReceiverName);
             }
@@ -191,18 +201,15 @@
 
         class Handler : IHandleMessages<MyCommand>
         {
-            public Handler(Context testContext)
-            {
-                this.testContext = testContext;
-            }
+            public Handler(Context testContext) => this.testContext = testContext;
 
             public Task Handle(MyCommand message, IMessageHandlerContext context)
             {
                 testContext.Received = true;
-                return Task.FromResult(0);
+                return Task.CompletedTask;
             }
 
-            Context testContext;
+            readonly Context testContext;
         }
 
         public class MyCommand : ICommand

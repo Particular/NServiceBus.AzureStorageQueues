@@ -66,36 +66,31 @@
 
         class Receiver : EndpointConfigurationBuilder
         {
-            public Receiver()
-            {
-                EndpointSetup<DefaultServer>();
-            }
+            public Receiver() => EndpointSetup<DefaultServer>();
         }
 
         static MessageWrapper MyCustomUnwrapper(QueueMessage rawMessage, Guid contextTestRunId)
         {
             var bytes = Convert.FromBase64String(rawMessage.MessageText);
-            using (var stream = new MemoryStream(bytes))
-            using (var streamReader = new StreamReader(stream))
-            using (var textReader = new JsonTextReader(streamReader))
+            using var stream = new MemoryStream(bytes);
+            using var streamReader = new StreamReader(stream);
+            using var textReader = new JsonTextReader(streamReader);
+            var wrapper = jsonSerializer.Deserialize<MessageWrapper>(textReader);
+
+            if (!string.IsNullOrEmpty(wrapper.Id))
             {
-                var wrapper = jsonSerializer.Deserialize<MessageWrapper>(textReader);
-
-                if (!string.IsNullOrEmpty(wrapper.Id))
-                {
-                    return wrapper;
-                }
-
-                return new MessageWrapper
-                {
-                    Id = rawMessage.MessageId,
-                    Headers = new Dictionary<string, string>
-                    {
-                        {TestIndependence.HeaderName, contextTestRunId.ToString()}
-                    },
-                    Body = bytes
-                };
+                return wrapper;
             }
+
+            return new MessageWrapper
+            {
+                Id = rawMessage.MessageId,
+                Headers = new Dictionary<string, string>
+                {
+                    {TestIndependence.HeaderName, contextTestRunId.ToString()}
+                },
+                Body = bytes
+            };
         }
 
         static JsonSerializer jsonSerializer = JsonSerializer.Create();
@@ -107,20 +102,17 @@
 
         class MyMessageHandler : IHandleMessages<MyMessage>
         {
-            public MyMessageHandler(Context ctx)
-            {
-                this.ctx = ctx;
-            }
+            public MyMessageHandler(Context testContext) => this.testContext = testContext;
 
             public Task Handle(MyMessage message, IMessageHandlerContext context)
             {
-                ctx.MessageReceived = message;
-                ctx.GotMessage = true;
+                testContext.MessageReceived = message;
+                testContext.GotMessage = true;
 
-                return Task.FromResult(0);
+                return Task.CompletedTask;
             }
 
-            Context ctx;
+            Context testContext;
         }
     }
 }

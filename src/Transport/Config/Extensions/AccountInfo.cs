@@ -3,35 +3,34 @@ namespace NServiceBus
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using Microsoft.Azure.Cosmos.Table;
 
     /// <summary>
     /// An account info instance unifies an alias with a connection string and potentially registered endpoint instances.
     /// </summary>
-    public class AccountInfo
+    public partial class AccountInfo
     {
         /// <summary>
         /// Creates a new instance of an AccountInfo.
         /// </summary>
         /// <remarks>Prefer to use the overload that accepts a <see cref="QueueServiceClient"/>.</remarks>
-        public AccountInfo(string alias, string connectionString) : this(alias, new QueueServiceClient(connectionString), CloudStorageAccount.Parse(connectionString).CreateCloudTableClient())
-        {
+        public AccountInfo(string alias, string connectionString)
+            : this(alias, new QueueServiceClient(connectionString), new TableServiceClient(connectionString)) =>
             ConnectionString = connectionString;
-        }
 
         /// <summary>
         /// Creates a new instance of an AccountInfo.
         /// </summary>
-        public AccountInfo(string alias, QueueServiceClient queueServiceClient, CloudTableClient cloudTableClient)
+        public AccountInfo(string alias, QueueServiceClient queueServiceClient, TableServiceClient tableServiceClient)
         {
             Guard.AgainstNull(nameof(alias), alias);
             Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
-            Guard.AgainstNull(nameof(cloudTableClient), cloudTableClient);
+            Guard.AgainstNull(nameof(tableServiceClient), tableServiceClient);
 
             Alias = alias;
             QueueServiceClient = queueServiceClient;
-            CloudTableClient = cloudTableClient;
+            TableServiceClient = tableServiceClient;
             PublishedEventsByEndpoint = new Dictionary<string, (IEnumerable<Type> publishedEvents, string subscriptionTableName)>();
         }
 
@@ -67,9 +66,9 @@ namespace NServiceBus
         internal QueueServiceClient QueueServiceClient { get; }
 
         /// <summary>
-        /// <see cref="CloudTableClient"/> associated with the account.
+        /// <see cref="TableServiceClient"/> associated with the account.
         /// </summary>
-        internal CloudTableClient CloudTableClient { get; }
+        internal TableServiceClient TableServiceClient { get; }
 
         /// <summary>
         /// Store specific endpoint's information related to the events it might publish and the subscriptions table name.

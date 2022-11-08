@@ -22,7 +22,7 @@
                 .WithEndpoint<DefaultConfigurationEndpoint>(c => c
                     .When(e => e.SendLocal(new MyRequest())))
                 .Done(c => c.InvokedHandler)
-                .Run().ConfigureAwait(false);
+                .Run();
 
             Assert.IsTrue(context.InvokedHandler);
             Assert.IsTrue(context.SerializedWrapper);
@@ -59,7 +59,7 @@
                 public Task Handle(MyRequest message, IMessageHandlerContext context)
                 {
                     scenarioContext.InvokedHandler = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
 
                 Context scenarioContext;

@@ -1,14 +1,16 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
-    using Microsoft.Azure.Cosmos.Table;
+    using global::Azure.Core;
+    using global::Azure.Core.Pipeline;
+    using global::Azure.Data.Tables;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -16,17 +18,22 @@
 
     public class When_delaying_messages_natively : NServiceBusAcceptanceTest
     {
-        CloudTable delayedMessagesTable;
+        TableClient delayedMessagesTableClient;
 
         [SetUp]
         public async Task SetUpLocal()
         {
-            delayedMessagesTable = CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient().GetTableReference(SenderDelayedMessagesTable);
-            if (await delayedMessagesTable.ExistsAsync().ConfigureAwait(false))
+            var tableServiceClient = new TableServiceClient(Utilities.GetEnvConfiguredConnectionString());
+            delayedMessagesTableClient = tableServiceClient.GetTableClient(SenderDelayedMessagesTable);
+
+            // There is no explicit Exists method in Azure.Data.Tables, see https://github.com/Azure/azure-sdk-for-net/issues/28392
+            var table = await tableServiceClient.QueryAsync(t => t.Name.Equals(SenderDelayedMessagesTable), 1).FirstOrDefaultAsync();
+            if (table != null)
             {
-                foreach (var dte in await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null).ConfigureAwait(false))
+                await foreach (var dte in delayedMessagesTableClient.QueryAsync<TableEntity>())
                 {
-                    await delayedMessagesTable.ExecuteAsync(TableOperation.Delete(dte)).ConfigureAwait(false);
+                    var result = await delayedMessagesTableClient.DeleteEntityAsync(dte.PartitionKey, dte.RowKey).ConfigureAwait(false);
+                    Assert.That(result.IsError, Is.False, "Error {0}:{1} trying to delete {2}:{3} from {4} table", result.Status, result.ReasonPhrase, dte.PartitionKey, dte.RowKey, SenderDelayedMessagesTable);
                 }
             }
         }
@@ -34,37 +41,28 @@
         [Test]
         public async Task Should_not_query_frequently_when_no_messages()
         {
-            using (var requests = new CaptureSendingRequests())
-            {
-                var delay = Task.Delay(TimeSpan.FromSeconds(15));
+            var delay = Task.Delay(TimeSpan.FromSeconds(15));
 
-                await Scenario.Define<Context>()
-                    .WithEndpoint<SlowlyPeekingSender>()
-                    .Done(c => delay.IsCompleted)
-                    .Run()
+            var context = await Scenario.Define<Context>()
+                .WithEndpoint<SlowlyPeekingSender>()
+                .Done(c => delay.IsCompleted)
+                .Run()
+                .ConfigureAwait(false);
 
-                    .ConfigureAwait(false);
+            var requestCount = context.CapturedTableServiceRequests
+                .Count(request => request.Contains(SenderDelayedMessagesTable, StringComparison.OrdinalIgnoreCase) &&
+                                  request.Contains("$filter", StringComparison.OrdinalIgnoreCase));
 
-                Func<RequestEventArgs, Uri> map = e => e.Request.RequestUri;
-                var requestCount = requests.Events
-                    .Where(e =>
-                    {
-                        var lowered = map(e).ToString().ToLowerInvariant();
-                        return lowered.Contains(SenderDelayedMessagesTable.ToLowerInvariant()) && lowered.Contains("$filter");
-                    })
-                    .Count();
-
-                // the wait times for next peeks for SlowlyPeekingSender
-                // peek number  |wait (seconds)| cumulative wait (seconds)
-                // 1 | 0 | 0
-                // 2 | 1 | 1
-                // 3 | 2 | 3
-                // 4 | 3 | 6
-                // 5 | 4 | 10
-                // 6 | 5 | 15
-                // 7 | 6 | 21 <- this is the boundary
-                Assert.LessOrEqual(requestCount, 7);
-            }
+            // the wait times for next peeks for SlowlyPeekingSender
+            // peek number  |wait (seconds)| cumulative wait (seconds)
+            // 1 | 0 | 0
+            // 2 | 1 | 1
+            // 3 | 2 | 3
+            // 4 | 3 | 6
+            // 5 | 4 | 10
+            // 6 | 5 | 15
+            // 7 | 6 | 21 <- this is the boundary
+            Assert.LessOrEqual(requestCount, 7);
         }
 
         [Test]
@@ -80,8 +78,9 @@
                     sendOptions.SetDestination("thisisnonexistingqueuename");
                     await session.Send(new MyMessage { Id = c.TestRunId }, sendOptions).ConfigureAwait(false);
 
-                    var delayedMessages = await GetDelayedMessageEntities().ConfigureAwait(false);
-                    await MoveBeforeNow(delayedMessages[0]).ConfigureAwait(false);
+                    var delayedMessage = await delayedMessagesTableClient.QueryAsync<TableEntity>().FirstAsync().ConfigureAwait(false);
+
+                    await MoveBeforeNow(delayedMessage).ConfigureAwait(false);
                 }))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.WasCalled)
@@ -90,31 +89,28 @@
             Assert.True(context.WasCalled, "The message should have been moved to the error queue");
         }
 
-        async Task MoveBeforeNow(ITableEntity dte, CancellationToken cancellationToken = default)
+        async Task MoveBeforeNow(TableEntity original, CancellationToken cancellationToken = default)
         {
             var earlier = DateTimeOffset.UtcNow - TimeSpan.FromMinutes(5);
 
-            var ctx = new OperationContext();
+            var updated = new TableEntity(original)
+            {
+                PartitionKey = earlier.ToString("yyyyMMddHH"),
+                RowKey = earlier.ToString("yyyyMMddHHmmss")
+            };
 
-            var delayedMessageEntity = new DynamicTableEntity();
-            delayedMessageEntity.ReadEntity(dte.WriteEntity(ctx), ctx);
+            var response = await delayedMessagesTableClient.DeleteEntityAsync(original.PartitionKey, original.RowKey, cancellationToken: cancellationToken);
+            Assert.That(response.IsError, Is.False);
 
-            delayedMessageEntity.PartitionKey = earlier.ToString("yyyyMMddHH");
-            delayedMessageEntity.RowKey = earlier.ToString("yyyyMMddHHmmss");
-
-            await delayedMessagesTable.ExecuteAsync(TableOperation.Delete(dte), cancellationToken).ConfigureAwait(false);
-            await delayedMessagesTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), cancellationToken).ConfigureAwait(false);
-        }
-
-        async Task<IList<DynamicTableEntity>> GetDelayedMessageEntities(CancellationToken cancellationToken = default)
-        {
-            return (await delayedMessagesTable.ExecuteQuerySegmentedAsync(new TableQuery(), null, cancellationToken).ConfigureAwait(false)).Results;
+            response = await delayedMessagesTableClient.UpsertEntityAsync(updated, cancellationToken: cancellationToken);
+            Assert.That(response.IsError, Is.False);
         }
 
         public class Context : ScenarioContext
         {
             public bool WasCalled { get; set; }
-            public Stopwatch Stopwatch { get; set; }
+
+            public IEnumerable<string> CapturedTableServiceRequests { get; set; }
         }
 
         public class Sender : EndpointConfigurationBuilder
@@ -138,11 +134,18 @@
 
             public SlowlyPeekingSender()
             {
-                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString());
+                var policy = new CaptureSendingRequestsPolicy();
+                var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString(), tableServiceClientPipelinePolicy: policy);
                 transport.PeekInterval = PeekInterval;
                 transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
 
-                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => { });
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) =>
+                {
+                    var context = rd.ScenarioContext as Context;
+                    Assert.That(context, Is.Not.Null);
+
+                    context.CapturedTableServiceRequests = policy.Requests;
+                });
             }
         }
 
@@ -153,28 +156,19 @@
                 var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString());
                 transport.DelayedDelivery.DelayedDeliveryTableName = SenderDelayedMessagesTable;
 
-                EndpointSetup(new CustomizedServer(transport), (cfg, rd) =>
-                {
-                    cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver)));
-                });
+                EndpointSetup(new CustomizedServer(transport), (cfg, rd) => cfg.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(Receiver))));
             }
         }
 
         public class Receiver : EndpointConfigurationBuilder
         {
-            public Receiver()
-            {
-                EndpointSetup<DefaultServer>();
-            }
+            public Receiver() => EndpointSetup<DefaultServer>();
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                Context testContext;
+                readonly Context testContext;
 
-                public MyMessageHandler(Context testContext)
-                {
-                    this.testContext = testContext;
-                }
+                public MyMessageHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
@@ -193,6 +187,29 @@
         public class MyMessage : IMessage
         {
             public Guid Id { get; set; }
+        }
+
+        /// <summary>
+        /// This policy captures the URI of any request sent using the <see cref="TableServiceClient"/>.  
+        /// Tests that use the <see cref="SlowlyPeekingSender"/> can access the captured requests via the test <see cref="Context"/>.
+        /// </summary>
+        class CaptureSendingRequestsPolicy : HttpPipelinePolicy
+        {
+            public ConcurrentQueue<string> Requests { get; } = new();
+
+            public override void Process(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
+            {
+                CaptureRequest(message);
+                ProcessNext(message, pipeline);
+            }
+
+            public override async ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
+            {
+                CaptureRequest(message);
+                await ProcessNextAsync(message, pipeline);
+            }
+
+            void CaptureRequest(HttpMessage message) => Requests.Enqueue(message.Request.Uri.ToString());
         }
 
         const string SenderDelayedMessagesTable = "NativeDelayedMessagesForSender";

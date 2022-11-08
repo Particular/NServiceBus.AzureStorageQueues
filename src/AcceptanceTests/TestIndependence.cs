@@ -72,7 +72,7 @@ public class TestIndependence
             if (!context.Message.Headers.TryGetValue(HeaderName, out var runId) || runId != testRunId)
             {
                 Console.WriteLine($"Skipping message {context.Message.MessageId} from previous test run");
-                return Task.FromResult(0);
+                return Task.CompletedTask;
             }
 
             return next(context);

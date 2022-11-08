@@ -27,21 +27,16 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
 
         public class Publisher : EndpointConfigurationBuilder
         {
-            public Publisher()
-            {
-                EndpointSetup<DefaultPublisher>(c => { });
-            }
+            public Publisher() => EndpointSetup<DefaultPublisher>(c => { });
         }
 
         public class Subscriber : EndpointConfigurationBuilder
         {
-            public Subscriber()
-            {
+            public Subscriber() =>
                 EndpointSetup<DefaultServer>(c =>
                 {
                     c.Conventions().DefiningEventsAs(t => typeof(object).IsAssignableFrom(t) || typeof(IEvent).IsAssignableFrom(t));
                 });
-            }
 
             public class MyHandler : IHandleMessages<object>
             {
@@ -52,7 +47,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                 public Task Handle(object @event, IMessageHandlerContext context)
                 {
                     testContext.GotTheEvent = true;
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }
             }
         }

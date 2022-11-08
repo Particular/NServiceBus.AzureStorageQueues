@@ -20,7 +20,7 @@
                     Assert.AreEqual(expectedMessage, exception.Message);
                     c.ExceptionReceived = true;
 
-                    return Task.FromResult(0);
+                    return Task.CompletedTask;
                 }))
                 .Done(c => c.ExceptionReceived)
                 .Run();
@@ -33,10 +33,7 @@
 
         public class ReceiverEndPoint : EndpointConfigurationBuilder
         {
-            public ReceiverEndPoint()
-            {
-                EndpointSetup<DefaultServer>();
-            }
+            public ReceiverEndPoint() => EndpointSetup<DefaultServer>();
         }
 
         [TimeToBeReceived("31.00:00:01")]

@@ -3,25 +3,17 @@
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.Azure.Cosmos.Table;
+    using global::Azure.Data.Tables;
 
     class NativeDelayDeliveryPersistence
     {
-        public static NativeDelayDeliveryPersistence Disabled()
-        {
-            return new NativeDelayDeliveryPersistence();
-        }
+        public static NativeDelayDeliveryPersistence Disabled() => new();
 
-        NativeDelayDeliveryPersistence(bool enabled = false)
-        {
-            this.enabled = enabled;
-        }
+        NativeDelayDeliveryPersistence(bool enabled = false) => this.enabled = enabled;
 
-        public NativeDelayDeliveryPersistence(CloudTable delayedMessageStorageTable)
-            : this(enabled: true)
-        {
-            this.delayedMessageStorageTable = delayedMessageStorageTable;
-        }
+        public NativeDelayDeliveryPersistence(TableClient delayedMessageStorageTableClient)
+            : this(enabled: true) =>
+            this.delayedMessageStorageTableClient = delayedMessageStorageTableClient;
 
         public static bool IsDelayedMessage(UnicastTransportOperation operation, out DateTimeOffset dueDate)
         {
@@ -59,10 +51,8 @@
             return null;
         }
 
-        static TimeSpan? ToNullIfNegative(TimeSpan value)
-        {
-            return value <= TimeSpan.Zero ? null : value;
-        }
+        static TimeSpan? ToNullIfNegative(TimeSpan value) =>
+            value <= TimeSpan.Zero ? null : value;
 
         public Task ScheduleAt(UnicastTransportOperation operation, DateTimeOffset date, CancellationToken cancellationToken = default)
         {
@@ -78,10 +68,10 @@
             };
 
             delayedMessageEntity.SetOperation(operation);
-            return delayedMessageStorageTable.ExecuteAsync(TableOperation.Insert(delayedMessageEntity), null, null, cancellationToken);
+            return delayedMessageStorageTableClient.AddEntityAsync(delayedMessageEntity, cancellationToken: cancellationToken);
         }
 
-        CloudTable delayedMessageStorageTable;
-        bool enabled;
+        readonly TableClient delayedMessageStorageTableClient;
+        readonly bool enabled;
     }
 }

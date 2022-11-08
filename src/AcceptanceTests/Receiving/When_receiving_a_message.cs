@@ -22,7 +22,7 @@
                 {
                     b.DoNotFailOnErrorMessages();
                     b.CustomConfig(config => config.LimitMessageProcessingConcurrencyTo(concurrency));
-                    b.When(async (bus, c) => { await bus.SendLocal(new MyMessage()).ConfigureAwait(false); });
+                    b.When(async (bus, c) => { await bus.SendLocal(new MyMessage()); });
                 })
                 .Done(c => c.Logs.Any(IsPopReceiptLogItem))
                 .Run().ConfigureAwait(false);
@@ -43,25 +43,20 @@
 
         class Context : ScenarioContext
         {
-            public bool ShouldDelay()
-            {
-                return Interlocked.Exchange(ref signaled, 1) == 0;
-            }
+            public bool ShouldDelay() => Interlocked.Exchange(ref signaled, 1) == 0;
 
             int signaled;
         }
 
         class Receiver : EndpointConfigurationBuilder
         {
-            public Receiver()
-            {
+            public Receiver() =>
                 EndpointSetup<DefaultServer>(config =>
                 {
                     var transport = config.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.TransportTransactionMode = TransportTransactionMode.ReceiveOnly;
                     transport.MessageInvisibleTime = VisibilityTimeout;
                 });
-            }
         }
 
         public class MyMessage : IMessage
@@ -79,7 +74,7 @@
             {
                 if (ctx.ShouldDelay())
                 {
-                    await Task.Delay(HandlingTimeout).ConfigureAwait(false);
+                    await Task.Delay(HandlingTimeout);
                 }
             }
 

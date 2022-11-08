@@ -4,8 +4,8 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -19,14 +19,12 @@
         {
             var context = await Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b =>
-                {
                     b.When((bus, c) =>
                     {
                         var options = new SendOptions();
                         options.SetDestination($"{Conventions.EndpointNamingConvention(typeof(Receiver))}@{ReceiverAlias}");
                         return bus.Send(new MyMessage(), options);
-                    });
-                })
+                    }))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.ReplyReceived)
                 .Run().ConfigureAwait(false);
@@ -44,14 +42,17 @@
 
         class Sender : EndpointConfigurationBuilder
         {
-            public Sender()
-            {
-                EndpointSetup<DefaultServer>(configuration =>
+            public Sender() => EndpointSetup<DefaultServer>(
+                configuration =>
                 {
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = SenderAlias;
 
-                    var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
+                    var receiverAccountInfo = transport.AccountRouting.AddAccount(
+                        ReceiverAlias,
+                        new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                        new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
+
                     // Route MyMessage messages to the receiver endpoint configured to use receiver alias (on a different storage account)
                     var receiverEndpointName = Conventions.EndpointNamingConvention(typeof(Receiver));
                     receiverAccountInfo.AddEndpoint(receiverEndpointName);
@@ -61,16 +62,12 @@
 
                     configuration.Pipeline.Register(typeof(VerifyReplyMessage), "Verifies the expected reply message has arrived.");
                 });
-            }
 
             class VerifyReplyMessage : Behavior<IIncomingPhysicalMessageContext>
             {
-                Context testContext;
+                readonly Context testContext;
 
-                public VerifyReplyMessage(Context testContext)
-                {
-                    this.testContext = testContext;
-                }
+                public VerifyReplyMessage(Context testContext) => this.testContext = testContext;
 
                 public override Task Invoke(IIncomingPhysicalMessageContext context, Func<Task> next)
                 {

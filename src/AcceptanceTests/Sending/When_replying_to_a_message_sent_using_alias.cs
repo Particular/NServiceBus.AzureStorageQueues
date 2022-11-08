@@ -3,8 +3,8 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
+    using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using Microsoft.Azure.Cosmos.Table;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
@@ -17,13 +17,10 @@
         public async Task Should_work()
         {
             var context = await Scenario.Define<Context>()
-                .WithEndpoint<Sender>(b =>
-                {
-                    b.When((bus, c) => bus.Send(new MyMessage()));
-                })
+                .WithEndpoint<Sender>(b => b.When((bus, c) => bus.Send(new MyMessage())))
                 .WithEndpoint<Receiver>()
                 .Done(c => c.IsDone)
-                .Run().ConfigureAwait(false);
+                .Run();
 
             Assert.IsTrue(context.ReceiverWasCalled);
             Assert.IsTrue(context.ReplyMessageReceived);
@@ -42,14 +39,17 @@
 
         class Sender : EndpointConfigurationBuilder
         {
-            public Sender()
-            {
-                EndpointSetup<DefaultServer>(configuration =>
+            public Sender() => EndpointSetup<DefaultServer>(
+                configuration =>
                 {
                     var transport = configuration.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = SenderAlias;
 
-                    var receiverAccountInfo = transport.AccountRouting.AddAccount(ReceiverAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString2()).CreateCloudTableClient());
+                    var receiverAccountInfo = transport.AccountRouting.AddAccount(
+                        ReceiverAlias,
+                        new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
+                        new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
+
                     // Route MyMessage messages to the receiver endpoint configured to use receiver alias (on a different storage account)
                     var receiverEndpointName = Conventions.EndpointNamingConvention(typeof(Receiver));
                     receiverAccountInfo.AddEndpoint(receiverEndpointName);
@@ -57,16 +57,12 @@
                     configuration.ConfigureRouting()
                         .RouteToEndpoint(typeof(MyMessage), receiverEndpointName);
                 });
-            }
 
             public class MyReplyMessageHandler : IHandleMessages<MyReplyMessage>
             {
-                Context testContext;
+                readonly Context testContext;
 
-                public MyReplyMessageHandler(Context testContext)
-                {
-                    this.testContext = testContext;
-                }
+                public MyReplyMessageHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyReplyMessage message, IMessageHandlerContext context)
                 {
@@ -83,7 +79,11 @@
                 var transport = Utilities.CreateTransportWithDefaultTestsConfiguration(Utilities.GetEnvConfiguredConnectionString2());
                 transport.AccountRouting.DefaultAccountAlias = ReceiverAlias;
 
-                var senderEndpointAccountInfo = transport.AccountRouting.AddAccount(SenderAlias, new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()), CloudStorageAccount.Parse(Utilities.GetEnvConfiguredConnectionString()).CreateCloudTableClient());
+                var senderEndpointAccountInfo = transport.AccountRouting.AddAccount(
+                    SenderAlias,
+                    new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString()),
+                    new TableServiceClient(Utilities.GetEnvConfiguredConnectionString()));
+
                 // Route MyMessage messages to the receiver endpoint configured to use sender alias (on a different storage account)
                 var senderEndpointName = Conventions.EndpointNamingConvention(typeof(Sender));
                 senderEndpointAccountInfo.AddEndpoint(senderEndpointName);
@@ -93,12 +93,9 @@
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {
-                Context testContext;
+                readonly Context testContext;
 
-                public MyMessageHandler(Context testContext)
-                {
-                    this.testContext = testContext;
-                }
+                public MyMessageHandler(Context testContext) => this.testContext = testContext;
 
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
@@ -115,6 +112,5 @@
         public class MyReplyMessage : IMessage
         {
         }
-
     }
 }
