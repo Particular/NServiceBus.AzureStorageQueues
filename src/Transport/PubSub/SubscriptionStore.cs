@@ -35,9 +35,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
 
             var addressResults = await Task.WhenAll(retrieveTasks).ConfigureAwait(false);
-            foreach (var address in addressResults.SelectMany(a => a))
+            foreach (var addressResult in addressResults)
             {
-                addresses.Add(address);
+                addresses.AddRange(addressResult);
             }
 
             return addresses;
