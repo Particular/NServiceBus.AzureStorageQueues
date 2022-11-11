@@ -321,5 +321,21 @@ namespace NServiceBus
 
             return config;
         }
+
+        /// <summary>
+        /// Enables compatibility with endpoints running on message-driven pub-sub
+        /// </summary>
+        /// <param name="transportExtensions">The transport to enable pub-sub compatibility on</param>
+        [PreObsolete(
+            Message = "Native publish/subscribe is always enabled in version 11. All endpoints must be updated to use native publish/subscribe before updating to this version.",
+            TreatAsErrorFromVersion = "12.0",
+            RemoveInVersion = "13.0",
+            Note = "As long as core supports message-driven publish/subscribe migration mode, then the transports must continue to support it too. Keep bumping the versions when working on a new major until core no longer supports message-driven publish/subscribe migration mode.")]
+        public static SubscriptionMigrationModeSettings EnableMessageDrivenPubSubCompatibilityMode(this TransportExtensions<AzureStorageQueueTransport> transportExtensions)
+        {
+            var subscriptionMigrationModeSettings = transportExtensions.Routing().EnableMessageDrivenPubSubCompatibilityMode();
+
+            return subscriptionMigrationModeSettings;
+        }
     }
 }
