@@ -70,7 +70,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return tableClient.DeleteEntityAsync(
                 TopicName.From(eventType),
                 endpointName,
-                new ETag("*"),
+                ETag.All,
                 cancellationToken);
         }
 
