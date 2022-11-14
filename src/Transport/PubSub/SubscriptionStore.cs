@@ -74,11 +74,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 cancellationToken);
         }
 
-        string[] GetTopics(Type messageType) => eventTypeToTopicListMap.GetOrAdd(messageType, GenerateTopics);
+        string[] GetTopics(Type messageType) => eventTypeToTopicListMap.GetOrAdd(messageType, static messageType => GenerateTopics(messageType));
 
         internal static string[] GenerateTopics(Type messageType) =>
             GenerateMessageHierarchy(messageType)
-                .Select(TopicName.From)
+                .Select(static topicName => TopicName.From(topicName))
                 .ToArray();
 
         static IEnumerable<Type> GenerateMessageHierarchy(Type messageType)
