@@ -45,8 +45,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         static async Task<IEnumerable<string>> RetrieveAddresses(string topic, TableClient tableClient, CancellationToken cancellationToken) =>
             await tableClient
-                .QueryAsync<SubscriptionEntity>(e => e.Topic == topic, select: SelectedSubscriptionColumns, cancellationToken: cancellationToken)
-                .Select(e => e.Address)
+                .QueryAsync<SubscriptionEntity>(e => e.Topic == topic, select: AddressColumnFilter, cancellationToken: cancellationToken)
+                .Select(static e => e.Address)
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -105,6 +105,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         readonly ConcurrentDictionary<Type, string[]> eventTypeToTopicListMap = new();
 
-        static readonly IEnumerable<string> SelectedSubscriptionColumns = new[] { nameof(SubscriptionEntity.Address) };
+        static readonly IEnumerable<string> AddressColumnFilter = new[] { nameof(SubscriptionEntity.Address) };
     }
 }
