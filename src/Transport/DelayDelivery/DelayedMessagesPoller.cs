@@ -120,7 +120,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             var now = DateTimeOffset.UtcNow;
 
-            Logger.Debug($"Polling for delayed messages at {now}.");
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.Debug($"Polling for delayed messages at {now}.");
+            }
 
             var filter = $"(PartitionKey le '{DelayedMessageEntity.GetPartitionKey(now)}') and (RowKey le '{DelayedMessageEntity.GetRawRowKeyPrefix(now)}')";
 

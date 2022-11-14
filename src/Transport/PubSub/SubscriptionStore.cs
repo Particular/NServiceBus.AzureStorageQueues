@@ -35,9 +35,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
 
             var addressResults = await Task.WhenAll(retrieveTasks).ConfigureAwait(false);
-            foreach (var address in addressResults.SelectMany(a => a))
+            foreach (var addressResult in addressResults)
             {
-                addresses.Add(address);
+                addresses.AddRange(addressResult);
             }
 
             return addresses;
@@ -45,8 +45,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         static async Task<IEnumerable<string>> RetrieveAddresses(string topic, TableClient tableClient, CancellationToken cancellationToken) =>
             await tableClient
-                .QueryAsync<SubscriptionEntity>(e => e.Topic == topic, cancellationToken: cancellationToken)
-                .Select(e => e.Address)
+                .QueryAsync<SubscriptionEntity>(e => e.Topic == topic, select: AddressColumnFilter, cancellationToken: cancellationToken)
+                .Select(static e => e.Address)
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -70,15 +70,15 @@ namespace NServiceBus.Transport.AzureStorageQueues
             return tableClient.DeleteEntityAsync(
                 TopicName.From(eventType),
                 endpointName,
-                new ETag("*"),
+                ETag.All,
                 cancellationToken);
         }
 
-        string[] GetTopics(Type messageType) => eventTypeToTopicListMap.GetOrAdd(messageType, GenerateTopics);
+        string[] GetTopics(Type messageType) => eventTypeToTopicListMap.GetOrAdd(messageType, static messageType => GenerateTopics(messageType));
 
         internal static string[] GenerateTopics(Type messageType) =>
             GenerateMessageHierarchy(messageType)
-                .Select(TopicName.From)
+                .Select(static topicName => TopicName.From(topicName))
                 .ToArray();
 
         static IEnumerable<Type> GenerateMessageHierarchy(Type messageType)
@@ -104,5 +104,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         }
 
         readonly ConcurrentDictionary<Type, string[]> eventTypeToTopicListMap = new();
+
+        static readonly IEnumerable<string> AddressColumnFilter = new[] { nameof(SubscriptionEntity.Address) };
     }
 }

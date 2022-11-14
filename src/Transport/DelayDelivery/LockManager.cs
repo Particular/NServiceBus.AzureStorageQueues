@@ -10,14 +10,8 @@
     using global::Azure.Storage.Blobs.Specialized;
 
     // Provides a container lease based lock manager.
-    class LockManager
+    sealed class LockManager
     {
-        TimeSpan span;
-        BlobContainerClient containerClient;
-        BlobLeaseClient blobLeaseClient;
-        bool created;
-        BlobLease lease;
-
         public LockManager(BlobContainerClient containerClient, BlobLeaseClient blobLeaseClient, TimeSpan span)
         {
             this.containerClient = containerClient;
@@ -75,7 +69,7 @@
             }
         }
 
-        async Task EnsureContainerExists(CancellationToken cancellationToken)
+        async ValueTask EnsureContainerExists(CancellationToken cancellationToken)
         {
             if (created == false)
             {
@@ -83,5 +77,11 @@
                 created = true;
             }
         }
+
+        readonly TimeSpan span;
+        readonly BlobContainerClient containerClient;
+        readonly BlobLeaseClient blobLeaseClient;
+        bool created;
+        BlobLease lease;
     }
 }
