@@ -90,10 +90,23 @@
             }
         }
 
+        public async Task Move()
+        {
+            // When a CloudQueueMessage is retrieved and is en-queued directly, message's ID and PopReceipt are mutated.
+            // To be able to delete the original message, original message ID and PopReceipt have to be stored aside.
+            var messageId = rawMessage.MessageId;
+            var messagePopReceipt = rawMessage.PopReceipt;
+
+            await errorQueue.SendMessageAsync(rawMessage.Body).ConfigureAwait(false);
+            // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
+            await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt).ConfigureAwait(false);
+        }
+
         readonly QueueClient inputQueue;
         readonly QueueMessage rawMessage;
         readonly QueueClient errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
+        MessageWrapper wrapper;
 
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }

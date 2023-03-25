@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net472;net6.0</TargetFrameworks>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <NoWarn>SYSLIB0011,SYSLIB0021</NoWarn>
   </PropertyGroup>
 
   <!-- Force latest versions -->
