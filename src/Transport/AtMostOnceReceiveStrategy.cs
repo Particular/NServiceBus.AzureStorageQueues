@@ -6,6 +6,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
+    using global::Azure;
     using Logging;
     using Transport;
 
@@ -40,7 +41,16 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 // The exception is pushed through the error pipeline in a fire and forget manner.
                 // There's no call to onCriticalError if errorPipe fails. Exceptions are handled on the transport level.
-                await errorPipe(context).ConfigureAwait(false);
+                try
+                {
+                    await errorPipe(context).ConfigureAwait(false);
+                }
+                catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
+                {
+                    Logger.WarnFormat("Message could not be moved to the error queue because it was too large.", e);
+
+                    await retrieved.Move().ConfigureAwait(false);
+                }
             }
         }
 

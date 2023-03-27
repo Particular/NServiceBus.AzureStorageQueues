@@ -5,6 +5,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using System.Text;
     using System.Threading.Tasks;
     using AcceptanceTesting;
+    using AcceptanceTesting.Customization;
     using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Queues;
     using global::Newtonsoft.Json;
@@ -16,16 +17,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     public class When_receiving_large_message : NServiceBusAcceptanceTest
     {
         [Test]
-        public async Task ShouldConsumeIt()
+        public async Task Should_consume_it()
         {
             var ctx = await Scenario.Define<Context>()
                 .WithEndpoint<Receiver>(b =>
                 {
-                    b.CustomConfig((cfg, context) =>
-                    {
-                        cfg.UseSerialization<NewtonsoftSerializer>();
-                    });
-
                     b.When((bus, c) =>
                     {
                         var connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
@@ -56,32 +52,61 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         var base64Encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wrapperSerialized));
 
                         return queueClient.SendMessageAsync(base64Encoded);
-                    });
+                    }).DoNotFailOnErrorMessages();
                 })
-                .Done(c => c.GotMessage)
+                .WithEndpoint<ErrorSpy>()
+                .Done(c => c.MessageMovedToTheErrorQueue)
                 .Run();
 
-            Assert.True(ctx.GotMessage);
+            Assert.True(ctx.MessageMovedToTheErrorQueue);
         }
 
         class Context : ScenarioContext
         {
-            public bool GotMessage { get; set; }
+            public bool MessageMovedToTheErrorQueue { get; set; }
         }
 
         class Receiver : EndpointConfigurationBuilder
         {
             public Receiver() => EndpointSetup<DefaultServer>(c =>
             {
-                c.AuditProcessedMessagesTo("audit");
+                c.UseSerialization<NewtonsoftJsonSerializer>();
+                c.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(ErrorSpy)));
             });
+
+            public class MyHandler : IHandleMessages<MyMessage>
+            {
+                public Task Handle(MyMessage message, IMessageHandlerContext context)
+                {
+                    throw new InvalidOperationException();
+                }
+            }
         }
 
-        public class MyHandler : IHandleMessages<MyMessage>
+        class ErrorSpy : EndpointConfigurationBuilder
         {
-            public Task Handle(MyMessage message, IMessageHandlerContext context)
+            public ErrorSpy() => EndpointSetup<DefaultServer>(config =>
             {
-                throw new InvalidOperationException();
+                config.UseSerialization<NewtonsoftJsonSerializer>();
+                config.LimitMessageProcessingConcurrencyTo(1);
+            });
+
+            class MyMessageHandler : IHandleMessages<MyMessage>
+            {
+                public MyMessageHandler(Context testContext) => this.testContext = testContext;
+
+                public Task Handle(MyMessage message, IMessageHandlerContext context)
+                {
+                    if (context.MessageHeaders.TryGetValue(TestIndependence.HeaderName, out var testRunId)
+                        && testRunId == testContext.TestRunId.ToString())
+                    {
+                        testContext.MessageMovedToTheErrorQueue = true;
+                    }
+
+                    return Task.CompletedTask;
+                }
+
+                Context testContext;
             }
         }
 

@@ -45,11 +45,11 @@
                 {
                     cfg.CustomConfig(c =>
                     {
-                        c.UseSerialization<NewtonsoftSerializer>();
+                        c.UseSerialization<NewtonsoftJsonSerializer>();
                         var transport = c.UseTransport<AzureStorageQueueTransport>();
                         transport
                             .ConnectionString(connectionString)
-                            .SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftSerializer>>();
+                            .SerializeMessageWrapperWith<TestIndependence.TestIdAppendingSerializationDefinition<NewtonsoftJsonSerializer>>();
 
                         action(transport);
                     });
@@ -93,7 +93,7 @@
             {
                 EndpointSetup<DefaultServer>(c =>
                 {
-                    c.UseSerialization<NewtonsoftSerializer>();
+                    c.UseSerialization<NewtonsoftJsonSerializer>();
                     c.UseTransport<AzureStorageQueueTransport>();
                 });
             }

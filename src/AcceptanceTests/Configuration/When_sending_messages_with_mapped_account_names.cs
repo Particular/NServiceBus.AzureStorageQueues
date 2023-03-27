@@ -137,7 +137,7 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseSerialization<NewtonsoftSerializer>();
+                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
                     cfg.UseTransport<AzureStorageQueueTransport>()
                         .DefaultAccountAlias(DefaultConnectionStringName)
                         .AccountRouting()
@@ -153,7 +153,7 @@
             {
                 EndpointSetup<DefaultPublisher>(cfg =>
                 {
-                    cfg.UseSerialization<NewtonsoftSerializer>();
+                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
                     var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
 
                     Setup(extensions);

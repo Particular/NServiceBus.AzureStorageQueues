@@ -40,7 +40,7 @@
                 var messageId = rawMessage.MessageId;
                 var messagePopReceipt = rawMessage.PopReceipt;
 
-                await errorQueue.SendMessageAsync(rawMessage.MessageText).ConfigureAwait(false);
+                await errorQueue.SendMessageAsync(rawMessage.MessageText, timeToLive: TimeSpan.FromSeconds(-1)).ConfigureAwait(false);
                 // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
                 await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt).ConfigureAwait(false);
 
@@ -97,7 +97,8 @@
             var messageId = rawMessage.MessageId;
             var messagePopReceipt = rawMessage.PopReceipt;
 
-            await errorQueue.SendMessageAsync(rawMessage.Body).ConfigureAwait(false);
+            // no expiry
+            await errorQueue.SendMessageAsync(rawMessage.Body, timeToLive: TimeSpan.FromSeconds(-1)).ConfigureAwait(false);
             // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
             await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt).ConfigureAwait(false);
         }
@@ -106,7 +107,6 @@
         readonly QueueMessage rawMessage;
         readonly QueueClient errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
-        MessageWrapper wrapper;
 
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }

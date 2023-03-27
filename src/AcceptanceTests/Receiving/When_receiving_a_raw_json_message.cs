@@ -24,7 +24,7 @@
                 {
                     b.CustomConfig((cfg, context) =>
                     {
-                        cfg.UseSerialization<NewtonsoftSerializer>();
+                        cfg.UseSerialization<NewtonsoftJsonSerializer>();
                         cfg.ConfigureAsqTransport()
                             .UnwrapMessagesWith(message => MyCustomUnwrapper(message, context.TestRunId));
                     });

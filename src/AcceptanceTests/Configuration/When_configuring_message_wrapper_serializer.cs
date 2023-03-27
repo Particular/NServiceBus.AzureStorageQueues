@@ -44,7 +44,7 @@
             {
                 EndpointSetup<DefaultServer>(e =>
                 {
-                    e.UseSerialization<NewtonsoftSerializer>();
+                    e.UseSerialization<NewtonsoftJsonSerializer>();
                     e.GetSettings().Set("Transport.AzureStorageQueue.MessageWrapperSerializationDefinition", new TestIndependence.TestIdAppendingSerializationDefinition<CustomSerializer>());
                 });
             }
