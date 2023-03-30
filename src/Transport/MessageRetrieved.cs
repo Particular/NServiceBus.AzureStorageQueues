@@ -40,7 +40,7 @@
                 var messageId = rawMessage.Id;
                 var messagePopReceipt = rawMessage.PopReceipt;
 
-                await errorQueue.AddMessageAsync(rawMessage).ConfigureAwait(false);
+                await errorQueue.AddMessageAsync(rawMessage, timeToLive: TimeSpan.FromSeconds(-1)).ConfigureAwait(false);
                 await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt).ConfigureAwait(false);
 
                 throw new SerializationException($"Failed to deserialize message envelope for message with id {messageId}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
@@ -99,7 +99,8 @@
             var messageId = rawMessage.MessageId;
             var messagePopReceipt = rawMessage.PopReceipt;
 
-            await errorQueue.SendMessageAsync(rawMessage.Body).ConfigureAwait(false);
+            // no expiry
+            await errorQueue.SendMessageAsync(rawMessage.Body, timeToLive: TimeSpan.FromSeconds(-1)).ConfigureAwait(false);
             // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
             await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt).ConfigureAwait(false);
         }
@@ -108,7 +109,6 @@
         readonly CloudQueueMessage rawMessage;
         readonly CloudQueue errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
-        MessageWrapper wrapper;
 
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }
