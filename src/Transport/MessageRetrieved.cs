@@ -2,6 +2,7 @@
 {
     using System;
     using System.Runtime.Serialization;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Microsoft.WindowsAzure.Storage;
@@ -40,7 +41,7 @@
                 var messageId = rawMessage.Id;
                 var messagePopReceipt = rawMessage.PopReceipt;
 
-                await errorQueue.AddMessageAsync(rawMessage, timeToLive: TimeSpan.FromSeconds(-1)).ConfigureAwait(false);
+                await errorQueue.AddMessageAsync(rawMessage, TimeSpan.FromSeconds(-1), null, null, null).ConfigureAwait(false);
                 await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt).ConfigureAwait(false);
 
                 throw new SerializationException($"Failed to deserialize message envelope for message with id {messageId}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
@@ -96,11 +97,11 @@
         {
             // When a CloudQueueMessage is retrieved and is en-queued directly, message's ID and PopReceipt are mutated.
             // To be able to delete the original message, original message ID and PopReceipt have to be stored aside.
-            var messageId = rawMessage.MessageId;
+            var messageId = rawMessage.Id;
             var messagePopReceipt = rawMessage.PopReceipt;
 
             // no expiry
-            await errorQueue.SendMessageAsync(rawMessage.Body, timeToLive: TimeSpan.FromSeconds(-1)).ConfigureAwait(false);
+            await errorQueue.AddMessageAsync(rawMessage, TimeSpan.FromSeconds(-1), null, null, null).ConfigureAwait(false);
             // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
             await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt).ConfigureAwait(false);
         }

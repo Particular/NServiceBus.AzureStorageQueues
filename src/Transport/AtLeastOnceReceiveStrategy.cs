@@ -6,8 +6,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
-    using global::Azure;
     using Logging;
+    using Microsoft.WindowsAzure.Storage;
     using Transport;
 
     class AtLeastOnceReceiveStrategy : ReceiveStrategy
@@ -57,7 +57,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 {
                     immediateRetry = await errorPipe(context).ConfigureAwait(false);
                 }
-                catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
+                catch (ArgumentException e) when (e.Message.Contains("65536 bytes"))
                 {
                     Logger.WarnFormat("Message could not be moved to the error queue because it was too large.", e);
 

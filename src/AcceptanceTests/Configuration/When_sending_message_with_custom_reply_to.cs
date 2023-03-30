@@ -101,7 +101,7 @@ namespace NServiceBus.AcceptanceTests.WindowsAzureStorageQueues.Configuration
                 CustomEndpointName("custom-reply-to-sender");
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseSerialization<NewtonsoftSerializer>();
+                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
 
                     var transport = cfg.UseTransport<AzureStorageQueueTransport>()
                         .ConnectionString(() => connectionString);

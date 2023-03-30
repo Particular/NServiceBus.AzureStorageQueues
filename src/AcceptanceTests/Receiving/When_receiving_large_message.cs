@@ -7,12 +7,12 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
     using Azure.Transports.WindowsAzureStorageQueues;
-    using global::Azure.Storage.Queues;
     using global::Newtonsoft.Json;
+    using Microsoft.WindowsAzure.Storage;
+    using Microsoft.WindowsAzure.Storage.Queue;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
-    using Pipeline;
 
     public class When_receiving_large_message : NServiceBusAcceptanceTest
     {
@@ -25,15 +25,17 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     b.When((bus, c) =>
                     {
                         var connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
-                        var queueClient = new QueueClient(connectionString, "receivinglargemessage-receiver");
+                        var account = CloudStorageAccount.Parse(connectionString);
+                        var cloudQueueClient = account.CreateCloudQueueClient();
+                        var queueClient = cloudQueueClient.GetQueueReference("receivinglargemessage-receiver");
 
-                        string contentCloseToLimits = new string('x', 35 * 1024);
+                        var contentCloseToLimits = new string('x', 35 * 1024);
 
                         var message = new MyMessage { SomeProperty = contentCloseToLimits, };
 
                         var messageSerialized = JsonConvert.SerializeObject(message, typeof(MyMessage), Formatting.Indented, new JsonSerializerSettings());
 
-                        string id = Guid.NewGuid().ToString();
+                        var id = Guid.NewGuid().ToString();
                         var wrapper = new MessageWrapper
                         {
                             Id = id,
@@ -49,9 +51,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
                         var wrapperSerialized = JsonConvert.SerializeObject(wrapper, typeof(MessageWrapper), Formatting.Indented, new JsonSerializerSettings());
 
-                        var base64Encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wrapperSerialized));
+                        //var base64Encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wrapperSerialized));
 
-                        return queueClient.SendMessageAsync(base64Encoded);
+                        return queueClient.AddMessageAsync(new CloudQueueMessage(wrapperSerialized));
                     }).DoNotFailOnErrorMessages();
                 })
                 .WithEndpoint<ErrorSpy>()
@@ -103,7 +105,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         testContext.MessageMovedToTheErrorQueue = true;
                     }
 
-                    return Task.CompletedTask;
+                    return Task.FromResult(0);
                 }
 
                 Context testContext;
