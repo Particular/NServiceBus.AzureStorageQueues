@@ -56,8 +56,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .WithEndpoint<ErrorSpy>()
                 .Done(c => c.MessageMovedToTheErrorQueue)
                 .Run();
-
-            Assert.True(ctx.MessageMovedToTheErrorQueue);
         }
 
         class Context : ScenarioContext
