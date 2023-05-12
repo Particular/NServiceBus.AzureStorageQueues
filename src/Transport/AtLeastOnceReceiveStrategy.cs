@@ -6,6 +6,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
+    using global::Azure;
     using Logging;
     using Transport;
 
@@ -56,6 +57,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
                         // Just acknowledge the message as it's handled by the core retry.
                         await retrieved.Ack(cancellationToken).ConfigureAwait(false);
                     }
+                }
+                catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
+                {
+                    Logger.WarnFormat("Message could not be moved to the error queue because it was too large.", e);
+
+                    await retrieved.MoveToErrorQueue(cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception onErrorEx) when (!onErrorEx.IsCausedBy(cancellationToken))
                 {

@@ -6,6 +6,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
+    using global::Azure;
     using Logging;
     using Transport;
 
@@ -43,6 +44,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     // Since this is TransportTransactionMode.None, we really don't care what the result is,
                     // we only need to know whether to call criticalErrorAction or not
                     _ = await onError(context, cancellationToken).ConfigureAwait(false);
+                }
+                catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
+                {
+                    Logger.WarnFormat("Message could not be moved to the error queue because it was too large.", e);
+
+                    await retrieved.MoveToErrorQueue(cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception onErrorEx) when (!onErrorEx.IsCausedBy(cancellationToken))
                 {

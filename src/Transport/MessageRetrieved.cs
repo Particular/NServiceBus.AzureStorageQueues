@@ -36,16 +36,9 @@
             }
             catch (Exception ex)
             {
-                // When a CloudQueueMessage is retrieved and is en-queued directly, message's ID and PopReceipt are mutated.
-                // To be able to delete the original message, original message ID and PopReceipt have to be stored aside.
-                var messageId = rawMessage.MessageId;
-                var messagePopReceipt = rawMessage.PopReceipt;
+                await MoveToErrorQueue(cancellationToken).ConfigureAwait(false);
 
-                await errorQueue.SendMessageAsync(rawMessage.MessageText, cancellationToken).ConfigureAwait(false);
-                // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
-                await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt, cancellationToken).ConfigureAwait(false);
-
-                throw new SerializationException($"Failed to deserialize message envelope for message with id {messageId}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
+                throw new SerializationException($"Failed to deserialize message envelope for message with id {rawMessage.MessageId}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
             }
         }
 
@@ -57,6 +50,21 @@
             AssertVisibilityTimeout();
 
             return inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken);
+        }
+
+        /// <summary>
+        /// Moves the message without expiry to the error queue
+        /// </summary>
+        public async Task MoveToErrorQueue(CancellationToken cancellationToken = default)
+        {
+            // When a CloudQueueMessage is retrieved and is en-queued directly, message's ID and PopReceipt are mutated.
+            // To be able to delete the original message, original message ID and PopReceipt have to be stored aside.
+            var messageId = rawMessage.MessageId;
+            var messagePopReceipt = rawMessage.PopReceipt;
+
+            await errorQueue.SendMessageAsync(rawMessage.Body, timeToLive: TimeSpan.FromSeconds(-1), cancellationToken: cancellationToken).ConfigureAwait(false);
+            // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
+            await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt, cancellationToken).ConfigureAwait(false);
         }
 
         void AssertVisibilityTimeout()
