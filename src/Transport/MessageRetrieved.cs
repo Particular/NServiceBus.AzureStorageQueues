@@ -32,7 +32,8 @@
             try
             {
                 Logger.DebugFormat("Unwrapping message with native ID: '{0}'", rawMessage.MessageId);
-                return unwrapper.Unwrap(rawMessage);
+                unwrappedMessage = unwrapper.Unwrap(rawMessage);
+                return unwrappedMessage;
             }
             catch (Exception ex)
             {
@@ -57,14 +58,28 @@
         /// </summary>
         public async Task MoveToErrorQueue(CancellationToken cancellationToken = default)
         {
+            await TryMoveToErrorQueue(cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task TryMoveToErrorQueue(CancellationToken cancellationToken = default)
+        {
             // When a CloudQueueMessage is retrieved and is en-queued directly, message's ID and PopReceipt are mutated.
             // To be able to delete the original message, original message ID and PopReceipt have to be stored aside.
             var messageId = rawMessage.MessageId;
             var messagePopReceipt = rawMessage.PopReceipt;
 
-            await errorQueue.SendMessageAsync(rawMessage.Body, timeToLive: TimeSpan.FromSeconds(-1), cancellationToken: cancellationToken).ConfigureAwait(false);
-            // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
-            await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await errorQueue.SendMessageAsync(rawMessage.Body, timeToLive: TimeSpan.FromSeconds(-1), cancellationToken: cancellationToken).ConfigureAwait(false);
+                // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
+                await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt, cancellationToken).ConfigureAwait(false);
+            }
+            catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
+            {
+                Logger.WarnFormat($"Message with native ID `{messageId}` could not be moved to the error queue with additional headers because it was too large. Moving to the error queue as is.", e);
+
+                await MoveToErrorQueue(cancellationToken).ConfigureAwait(false);
+            }
         }
 
         void AssertVisibilityTimeout()
@@ -103,6 +118,7 @@
         readonly QueueMessage rawMessage;
         readonly QueueClient errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
+        MessageWrapper unwrappedMessage;
 
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }
