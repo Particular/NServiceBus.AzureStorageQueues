@@ -22,7 +22,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, string receiveAddress, CancellationToken cancellationToken = default)
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
-            var body = message.Body ?? new byte[0];
+            var body = message.Body ?? Array.Empty<byte>();
             var contextBag = new ContextBag();
             try
             {

@@ -27,7 +27,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             await retrieved.Ack(cancellationToken).ConfigureAwait(false);
-            var body = message.Body ?? new byte[0];
+            var body = message.Body ?? Array.Empty<byte>();
             var contextBag = new ContextBag();
             try
             {
