@@ -10,6 +10,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using Logging;
     using Transport;
 
+    /// <summary>
+    /// This corresponds to the RecieveOnly transport transaction mode
+    /// </summary>
     class AtLeastOnceReceiveStrategy : ReceiveStrategy
     {
         public AtLeastOnceReceiveStrategy(OnMessage onMessage, OnError onError, Action<string, Exception, CancellationToken> criticalErrorAction)
@@ -62,7 +65,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 {
                     Logger.WarnFormat($"Message with native ID `{message.Id}` could not be moved to the error queue with additional headers because it was too large. Moving to the error queue as is.", e);
 
-                    await retrieved.MoveToErrorQueue(cancellationToken).ConfigureAwait(false);
+                    await retrieved.MoveToErrorQueue(context, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception onErrorEx) when (!onErrorEx.IsCausedBy(cancellationToken))
                 {

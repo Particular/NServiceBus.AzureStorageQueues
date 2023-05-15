@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using System.IO;
     using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
@@ -9,6 +10,7 @@
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using Logging;
+    using NServiceBus.Faults;
 
     class MessageRetrieved
     {
@@ -32,8 +34,7 @@
             try
             {
                 Logger.DebugFormat("Unwrapping message with native ID: '{0}'", rawMessage.MessageId);
-                unwrappedMessage = unwrapper.Unwrap(rawMessage);
-                return unwrappedMessage;
+                return unwrapper.Unwrap(rawMessage);
             }
             catch (Exception ex)
             {
@@ -58,19 +59,34 @@
         /// </summary>
         public async Task MoveToErrorQueue(CancellationToken cancellationToken = default)
         {
-            await TryMoveToErrorQueue(cancellationToken).ConfigureAwait(false);
-        }
-
-        public async Task TryMoveToErrorQueue(CancellationToken cancellationToken = default)
-        {
             // When a CloudQueueMessage is retrieved and is en-queued directly, message's ID and PopReceipt are mutated.
             // To be able to delete the original message, original message ID and PopReceipt have to be stored aside.
             var messageId = rawMessage.MessageId;
             var messagePopReceipt = rawMessage.PopReceipt;
 
+            await TryMoveToErrorQueue(messageId, messagePopReceipt, rawMessage.Body, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Moves the message without expiry to the error queue with minimal fault headers
+        /// </summary>
+        public async Task MoveToErrorQueue(ErrorContext context, CancellationToken cancellationToken = default)
+        {
+            var unwrappedMessage = await Unwrap(cancellationToken).ConfigureAwait(false);
+
+            unwrappedMessage.Headers.Add(FaultsHeaderKeys.FailedQ, inputQueue.Name);
+            unwrappedMessage.Headers.Add("NServiceBus.ExceptionInfo.ExceptionType", context.Exception.GetType().FullName);
+
+            var body = unwrapper.ReWrap(unwrappedMessage);
+
+            await TryMoveToErrorQueue(rawMessage.MessageId, rawMessage.PopReceipt, body, cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task TryMoveToErrorQueue(string messageId, string messagePopReceipt, BinaryData body, CancellationToken cancellationToken = default)
+        {
             try
             {
-                await errorQueue.SendMessageAsync(rawMessage.Body, timeToLive: TimeSpan.FromSeconds(-1), cancellationToken: cancellationToken).ConfigureAwait(false);
+                await errorQueue.SendMessageAsync(body, timeToLive: TimeSpan.FromSeconds(-1), cancellationToken: cancellationToken).ConfigureAwait(false);
                 // TODO: might not need this as the new SDK doesn't send a message by using the original message. Rather, copies the text only.
                 await inputQueue.DeleteMessageAsync(messageId, messagePopReceipt, cancellationToken).ConfigureAwait(false);
             }
@@ -118,7 +134,6 @@
         readonly QueueMessage rawMessage;
         readonly QueueClient errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
-        MessageWrapper unwrappedMessage;
 
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }
