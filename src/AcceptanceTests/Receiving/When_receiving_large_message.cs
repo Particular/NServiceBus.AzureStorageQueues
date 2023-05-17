@@ -11,12 +11,14 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using global::Newtonsoft.Json;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using NServiceBus.Faults;
     using NUnit.Framework;
 
     public class When_receiving_large_message : NServiceBusAcceptanceTest
     {
         [Test]
-        public async Task Should_consume_it()
+        // msg size very close  to limit , so when an exception happens, we  cannot add error queue headers, we send only the raw message body to the error queue
+        public async Task Should_consume_it_without_the_error_headers_when_message_size_very_close_to_limit()
         {
             var ctx = await Scenario.Define<Context>()
                 .WithEndpoint<Receiver>(b =>
@@ -56,11 +58,62 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .WithEndpoint<ErrorSpy>()
                 .Done(c => c.MessageMovedToTheErrorQueue)
                 .Run();
+            Assert.IsFalse(ctx.IsFailedQHeaderPresent);
+            Assert.IsFalse(ctx.IsExceptionTypeHeaderPresent);
+        }
+
+        [Test]
+        // msg size close  to limit , so when an exception happens, we  can only add 2 headers before sending to error queue
+        public async Task Should_consume_it_with_only_two_error_headers_when_message_size_close_to_limit()
+        {
+            var ctx = await Scenario.Define<Context>()
+                .WithEndpoint<Receiver>(b =>
+                {
+                    b.When((bus, c) =>
+                    {
+                        var connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
+                        var queueClient = new QueueClient(connectionString, "receivinglargemessage-receiver");
+
+                        string contentCloseToLimits = new string('x', 33 * 1024);
+
+                        var message = new MyMessage { SomeProperty = contentCloseToLimits, };
+
+                        var messageSerialized = JsonConvert.SerializeObject(message, typeof(MyMessage), Formatting.Indented, new JsonSerializerSettings());
+
+                        string id = Guid.NewGuid().ToString();
+                        var wrapper = new MessageWrapper
+                        {
+                            Id = id,
+                            Body = Encoding.UTF8.GetBytes(messageSerialized),
+                            Headers = new Dictionary<string, string>
+                            {
+                         { Headers.EnclosedMessageTypes, $"{typeof(MyMessage).AssemblyQualifiedName}" },
+                         { Headers.MessageId, id },
+                         { Headers.CorrelationId, id },
+                         {TestIndependence.HeaderName, c.TestRunId.ToString()}
+                            }
+                        };
+
+                        var wrapperSerialized = JsonConvert.SerializeObject(wrapper, typeof(MessageWrapper), Formatting.Indented, new JsonSerializerSettings());
+
+                        var base64Encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wrapperSerialized));
+
+                        return queueClient.SendMessageAsync(base64Encoded);
+                    }).DoNotFailOnErrorMessages();
+                })
+                .WithEndpoint<ErrorSpy>()
+                .Done(c => c.MessageMovedToTheErrorQueue)
+                .Run();
+            Assert.IsTrue(ctx.IsFailedQHeaderPresent);
+            Assert.IsTrue(ctx.IsExceptionTypeHeaderPresent);
         }
 
         class Context : ScenarioContext
         {
             public bool MessageMovedToTheErrorQueue { get; set; }
+            public bool IsFailedQHeaderPresent { get; set; }
+            public bool IsExceptionTypeHeaderPresent { get; set; }
+
         }
 
         class Receiver : EndpointConfigurationBuilder
@@ -99,7 +152,16 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     {
                         testContext.MessageMovedToTheErrorQueue = true;
                     }
-
+                    if (context.MessageHeaders.ContainsKey(FaultsHeaderKeys.FailedQ)
+                        && testRunId == testContext.TestRunId.ToString())
+                    {
+                        testContext.IsFailedQHeaderPresent = true;
+                    }
+                    if (context.MessageHeaders.ContainsKey("NServiceBus.ExceptionInfo.ExceptionType")
+                        && testRunId == testContext.TestRunId.ToString())
+                    {
+                        testContext.IsExceptionTypeHeaderPresent = true;
+                    }
                     return Task.CompletedTask;
                 }
 
