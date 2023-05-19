@@ -14,9 +14,10 @@
 
     class MessageRetrieved
     {
-        public MessageRetrieved(IMessageEnvelopeUnwrapper unwrapper, QueueMessage rawMessage, QueueClient inputQueue, QueueClient errorQueue)
+        public MessageRetrieved(IMessageEnvelopeUnwrapper unwrapper, MessageWrapperSerializer serializer, QueueMessage rawMessage, QueueClient inputQueue, QueueClient errorQueue)
         {
             this.unwrapper = unwrapper;
+            this.serializer = serializer;
             this.errorQueue = errorQueue;
             this.rawMessage = rawMessage;
             this.inputQueue = inputQueue;
@@ -77,7 +78,7 @@
             unwrappedMessage.Headers.Add(FaultsHeaderKeys.FailedQ, inputQueue.Name);
             unwrappedMessage.Headers.Add("NServiceBus.ExceptionInfo.ExceptionType", context.Exception.GetType().FullName);
 
-            var body = unwrapper.ReWrap(unwrappedMessage);
+            var body = ReWrap(unwrappedMessage);
 
             await TryMoveToErrorQueue(rawMessage.MessageId, rawMessage.PopReceipt, body, cancellationToken).ConfigureAwait(false);
         }
@@ -130,11 +131,22 @@
             }
         }
 
+        BinaryData ReWrap(MessageWrapper wrapper)
+        {
+            using (var stream = new MemoryStream())
+            {
+                serializer.Serialize(wrapper, stream);
+
+                var bytes = stream.ToArray();
+                return BinaryData.FromString(Convert.ToBase64String(bytes));
+            }
+        }
+
         readonly QueueClient inputQueue;
         readonly QueueMessage rawMessage;
         readonly QueueClient errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
-
+        readonly MessageWrapperSerializer serializer;
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }
 

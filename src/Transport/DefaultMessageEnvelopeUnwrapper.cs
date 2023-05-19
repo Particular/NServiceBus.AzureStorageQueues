@@ -1,7 +1,6 @@
 namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
-    using System.IO;
     using System.Runtime.Serialization;
     using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Queues.Models;
@@ -35,17 +34,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
             m.Headers[Headers.MessageIntent] = m.MessageIntent.ToString(); // message intent extension method
 
             return m;
-        }
-
-        public BinaryData ReWrap(MessageWrapper wrapper)
-        {
-            using (var stream = new MemoryStream())
-            {
-                messageWrapperSerializer.Serialize(wrapper, stream);
-
-                var bytes = stream.ToArray();
-                return BinaryData.FromString(Convert.ToBase64String(bytes));
-            }
         }
 
         MessageWrapperSerializer messageWrapperSerializer;
