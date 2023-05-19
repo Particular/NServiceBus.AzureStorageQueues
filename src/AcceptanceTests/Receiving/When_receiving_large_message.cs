@@ -28,7 +28,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         var connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
                         var queueClient = new QueueClient(connectionString, "receivinglargemessage-receiver");
 
-                        string contentCloseToLimits = new string('x', 35 * 1024);
+                        //This value is fine tuned to ensure adding the 2 error headers make the message too large
+                        string contentCloseToLimits = new string('x', (35 * 1024) + 425);
 
                         var message = new MyMessage { SomeProperty = contentCloseToLimits, };
 
@@ -58,8 +59,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .WithEndpoint<ErrorSpy>()
                 .Done(c => c.MessageMovedToTheErrorQueue)
                 .Run();
-            Assert.IsFalse(ctx.IsFailedQHeaderPresent);
-            Assert.IsFalse(ctx.IsExceptionTypeHeaderPresent);
+
+            Assert.IsFalse(ctx.IsFailedQHeaderPresent, "IsFailedQHeaderPresent");
+            Assert.IsFalse(ctx.IsExceptionTypeHeaderPresent, "IsExceptionTypeHeaderPresent");
         }
 
         [Test]
@@ -74,7 +76,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         var connectionString = Testing.Utilities.GetEnvConfiguredConnectionString();
                         var queueClient = new QueueClient(connectionString, "receivinglargemessage-receiver");
 
-                        string contentCloseToLimits = new string('x', 33 * 1024);
+                        string contentCloseToLimits = new string('x', (35 * 1024) + 400);
 
                         var message = new MyMessage { SomeProperty = contentCloseToLimits, };
 
@@ -104,8 +106,9 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .WithEndpoint<ErrorSpy>()
                 .Done(c => c.MessageMovedToTheErrorQueue)
                 .Run();
-            Assert.IsTrue(ctx.IsFailedQHeaderPresent);
-            Assert.IsTrue(ctx.IsExceptionTypeHeaderPresent);
+
+            Assert.IsTrue(ctx.IsFailedQHeaderPresent, "IsFailedQHeaderPresent");
+            Assert.IsTrue(ctx.IsExceptionTypeHeaderPresent, "IsExceptionTypeHeaderPresent");
         }
 
         class Context : ScenarioContext
@@ -162,6 +165,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                     {
                         testContext.IsExceptionTypeHeaderPresent = true;
                     }
+
                     return Task.CompletedTask;
                 }
 
