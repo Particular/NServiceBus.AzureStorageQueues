@@ -36,6 +36,9 @@ installer/[F|f]iles
 installer/[C|c]ustom[A|a]ctions
 installer/ServiceControl-cache
 
+__azurite*
+__queuestorage__/*
+
 # Created by https://www.gitignore.io
 
 ### VisualStudio ###
