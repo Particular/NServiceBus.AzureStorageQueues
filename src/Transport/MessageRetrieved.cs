@@ -1,7 +1,6 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
-    using System.IO;
     using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
@@ -11,6 +10,7 @@
     using global::Azure.Storage.Queues.Models;
     using Logging;
     using NServiceBus.Faults;
+    using NServiceBus.Transport.AzureStorageQueues.Utils;
 
     class MessageRetrieved
     {
@@ -133,13 +133,8 @@
 
         BinaryData ReWrap(MessageWrapper wrapper)
         {
-            using (var stream = new MemoryStream())
-            {
-                serializer.Serialize(wrapper, stream);
-
-                var bytes = stream.ToArray();
-                return BinaryData.FromString(Convert.ToBase64String(bytes));
-            }
+            string base64String = MessageWrapperHelper.ConvertToBase64String(wrapper, serializer);
+            return BinaryData.FromString(base64String);
         }
 
         readonly QueueClient inputQueue;
