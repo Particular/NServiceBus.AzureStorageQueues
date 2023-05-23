@@ -39,7 +39,7 @@
             }
             catch (Exception ex)
             {
-                await MoveToErrorQueue(cancellationToken).ConfigureAwait(false);
+                await MoveToErrorQueueWithoutModification(cancellationToken).ConfigureAwait(false);
 
                 throw new SerializationException($"Failed to deserialize message envelope for message with id {rawMessage.MessageId}. Make sure the configured serializer is used across all endpoints or configure the message wrapper serializer for this endpoint using the `SerializeMessageWrapperWith` extension on the transport configuration. Please refer to the Azure Storage Queue Transport configuration documentation for more details.", ex);
             }
@@ -58,20 +58,20 @@
         /// <summary>
         /// Moves the message without expiry to the error queue
         /// </summary>
-        public async Task MoveToErrorQueue(CancellationToken cancellationToken = default)
+        public async Task MoveToErrorQueueWithoutModification(CancellationToken cancellationToken = default)
         {
             // When a CloudQueueMessage is retrieved and is en-queued directly, message's ID and PopReceipt are mutated.
             // To be able to delete the original message, original message ID and PopReceipt have to be stored aside.
             var messageId = rawMessage.MessageId;
             var messagePopReceipt = rawMessage.PopReceipt;
 
-            await TryMoveToErrorQueue(messageId, messagePopReceipt, rawMessage.Body, cancellationToken).ConfigureAwait(false);
+            await MoveToErrorQueue(messageId, messagePopReceipt, rawMessage.Body, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
         /// Moves the message without expiry to the error queue with minimal fault headers
         /// </summary>
-        public async Task MoveToErrorQueue(ErrorContext context, CancellationToken cancellationToken = default)
+        public async Task MoveToErrorQueueWithMinimalFaultHeaders(ErrorContext context, CancellationToken cancellationToken = default)
         {
             var unwrappedMessage = await Unwrap(cancellationToken).ConfigureAwait(false);
 
@@ -80,10 +80,10 @@
 
             var body = ReWrap(unwrappedMessage);
 
-            await TryMoveToErrorQueue(rawMessage.MessageId, rawMessage.PopReceipt, body, cancellationToken).ConfigureAwait(false);
+            await MoveToErrorQueue(rawMessage.MessageId, rawMessage.PopReceipt, body, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task TryMoveToErrorQueue(string messageId, string messagePopReceipt, BinaryData body, CancellationToken cancellationToken = default)
+        public async Task MoveToErrorQueue(string messageId, string messagePopReceipt, BinaryData body, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -95,7 +95,7 @@
             {
                 Logger.WarnFormat($"Message with native ID `{messageId}` could not be moved to the error queue with additional headers because it was too large. Moving to the error queue as is.", e);
 
-                await MoveToErrorQueue(cancellationToken).ConfigureAwait(false);
+                await MoveToErrorQueueWithoutModification(cancellationToken).ConfigureAwait(false);
             }
         }
 

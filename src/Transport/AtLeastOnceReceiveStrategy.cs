@@ -65,7 +65,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 {
                     Logger.WarnFormat($"Message with native ID `{message.Id}` could not be moved to the error queue with additional headers because it was too large. Moving to the error queue as is.", e);
 
-                    await retrieved.MoveToErrorQueue(context, cancellationToken).ConfigureAwait(false);
+                    await retrieved.MoveToErrorQueueWithMinimalFaultHeaders(context, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception onErrorEx) when (!onErrorEx.IsCausedBy(cancellationToken))
                 {
