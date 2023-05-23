@@ -17,7 +17,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     public class When_receiving_large_message : NServiceBusAcceptanceTest
     {
         [Test]
-        // msg size very close  to limit , so when an exception happens, we  cannot add error queue headers, we send only the raw message body to the error queue
         public async Task Should_consume_it_without_the_error_headers_when_message_size_very_close_to_limit()
         {
             var ctx = await Scenario.Define<Context>()
@@ -65,7 +64,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         }
 
         [Test]
-        // msg size close  to limit , so when an exception happens, we  can only add 2 headers before sending to error queue
         public async Task Should_consume_it_with_only_two_error_headers_when_message_size_close_to_limit()
         {
             var ctx = await Scenario.Define<Context>()
