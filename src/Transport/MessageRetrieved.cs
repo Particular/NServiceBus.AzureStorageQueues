@@ -35,7 +35,8 @@
             try
             {
                 Logger.DebugFormat("Unwrapping message with native ID: '{0}'", rawMessage.MessageId);
-                return unwrapper.Unwrap(rawMessage);
+                unwrappedMessage ??= unwrapper.Unwrap(rawMessage);
+                return unwrappedMessage;
             }
             catch (Exception ex)
             {
@@ -142,6 +143,7 @@
         readonly QueueClient errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
         readonly MessageWrapperSerializer serializer;
+        MessageWrapper unwrappedMessage;
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }
 
