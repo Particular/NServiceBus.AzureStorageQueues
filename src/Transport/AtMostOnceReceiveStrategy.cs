@@ -6,11 +6,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
+    using global::Azure;
     using Logging;
     using Transport;
 
     /// <summary>
     /// At-most-once receive strategy receives at most once, acking first, then processing the message.
+    /// This corresponds to the Unreliable/None transport transaction mode
     /// If the pipeline fails, the message is not processed any longer. No first or second level retries are executed.
     /// </summary>
     class AtMostOnceReceiveStrategy : ReceiveStrategy
@@ -26,7 +28,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             await retrieved.Ack(cancellationToken).ConfigureAwait(false);
-            var body = message.Body ?? new byte[0];
+            var body = message.Body ?? Array.Empty<byte>();
             var contextBag = new ContextBag();
             try
             {
@@ -37,12 +39,19 @@ namespace NServiceBus.Transport.AzureStorageQueues
             {
                 Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
 
+                var context = CreateErrorContext(retrieved, message, ex, body, receiveAddress, contextBag);
+
                 try
                 {
-                    var context = CreateErrorContext(retrieved, message, ex, body, receiveAddress, contextBag);
                     // Since this is TransportTransactionMode.None, we really don't care what the result is,
                     // we only need to know whether to call criticalErrorAction or not
                     _ = await onError(context, cancellationToken).ConfigureAwait(false);
+                }
+                catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
+                {
+                    Logger.WarnFormat($"Message with native ID `{message.Id}` could not be moved to the error queue with additional headers because it was too large. Moving to the error queue as is.", e);
+
+                    await retrieved.MoveToErrorQueueWithMinimalFaultHeaders(context, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception onErrorEx) when (!onErrorEx.IsCausedBy(cancellationToken))
                 {
