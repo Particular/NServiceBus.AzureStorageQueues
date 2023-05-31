@@ -389,7 +389,7 @@ namespace NServiceBus
 
             var subscriptionManager = new SubscriptionManager(subscriptionStore, hostSettings.Name, receiveAddress);
 
-            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, QueueAddressGenerator, receiveSettings.PurgeOnStartup, MessageInvisibleTime);
+            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, QueueAddressGenerator, serializer, receiveSettings.PurgeOnStartup, MessageInvisibleTime);
 
             return (receiveSettings.Id, new MessageReceiver(
                 receiveSettings.Id,
