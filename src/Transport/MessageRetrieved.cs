@@ -129,17 +129,20 @@
                 throw;
             }
         }
+
         BinaryData ReWrap(MessageWrapper wrapper)
         {
             string base64String = MessageWrapperHelper.ConvertToBase64String(wrapper, serializer);
             return BinaryData.FromString(base64String);
         }
+
         readonly QueueClient inputQueue;
         readonly QueueMessage rawMessage;
         readonly QueueClient errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
         readonly MessageWrapperSerializer serializer;
         MessageWrapper unwrappedMessage;
+
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }
 
