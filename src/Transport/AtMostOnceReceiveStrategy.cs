@@ -6,6 +6,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
+    using global::Azure;
     using Logging;
     using Transport;
 
@@ -21,11 +22,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.errorPipe = errorPipe;
         }
 
-        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message)
+        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken = default)
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             await retrieved.Ack().ConfigureAwait(false);
-            var body = message.Body ?? new byte[0];
+            var body = message.Body ?? Array.Empty<byte>();
 
             try
             {
@@ -37,10 +38,18 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
 
                 var context = CreateErrorContext(retrieved, message, ex, body);
+                try
+                {
+                    // The exception is pushed through the error pipeline in a fire and forget manner.
+                    // There's no call to onCriticalError if errorPipe fails. Exceptions are handled on the transport level.
+                    await errorPipe(context).ConfigureAwait(false);
+                }
+                catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
+                {
+                    Logger.WarnFormat($"Message with native ID `{message.Id}` could not be moved to the error queue with additional headers because it was too large. Moving to the error queue as is.", e);
 
-                // The exception is pushed through the error pipeline in a fire and forget manner.
-                // There's no call to onCriticalError if errorPipe fails. Exceptions are handled on the transport level.
-                await errorPipe(context).ConfigureAwait(false);
+                    await retrieved.MoveToErrorQueueWithMinimalFaultHeaders(context, cancellationToken).ConfigureAwait(false);
+                }
             }
         }
 

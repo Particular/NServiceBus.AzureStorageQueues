@@ -1,13 +1,14 @@
 namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Transport;
 
     abstract class ReceiveStrategy
     {
-        public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message);
+        public abstract Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken = default);
 
         public static ReceiveStrategy BuildReceiveStrategy(Func<MessageContext, Task> pipe, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, TransportTransactionMode transactionMode, CriticalError criticalError)
         {

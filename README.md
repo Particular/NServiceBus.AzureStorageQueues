@@ -11,4 +11,5 @@ The Azure Storage Queues transport for NServiceBus enables the use of the Azure 
 
 Follow these steps to run the acceptance tests locally:
 * Add a new environment variable `Transport.UseSpecific` with the value `AzureStorageQueueTransport`
-* Add a new environment variable `AzureStorageQueueTransport.ConnectionString` containing a connection string to your Azure storage account or use `UseDevelopmentStorage=true` to use the [Azure Storage Emulator](https://azure.microsoft.com/en-us/documentation/articles/storage-use-emulator/) (make sure to start it before you run the tests).
+* Add a new environment variable `AzureStorageQueueTransport.ConnectionString` containing a connection string to your Azure storage account or use `UseDevelopmentStorage=true` to use the [Azurite emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite) (make sure to start it before you run the tests).
+* Additionally, [Microsoft Azure Storage Explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer) is an useful free tool that can allow you to view and manage the contents of the Azurite emulator as well as Azure Storage accounts in the cloud.
