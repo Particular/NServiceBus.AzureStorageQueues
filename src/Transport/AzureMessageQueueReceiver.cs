@@ -10,11 +10,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IQueueServiceClientProvider queueServiceClientProvider, QueueAddressGenerator addressGenerator, bool purgeOnStartup, TimeSpan messageInvisibleTime)
+        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IQueueServiceClientProvider queueServiceClientProvider, QueueAddressGenerator addressGenerator, MessageWrapperSerializer serializer, bool purgeOnStartup, TimeSpan messageInvisibleTime)
         {
             this.unwrapper = unwrapper;
             queueServiceClient = queueServiceClientProvider.Client;
             this.addressGenerator = addressGenerator;
+            this.serializer = serializer;
             PurgeOnStartup = purgeOnStartup;
             MessageInvisibleTime = messageInvisibleTime;
         }
@@ -56,7 +57,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             foreach (var rawMessage in rawMessages)
             {
-                receivedMessages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue, errorQueue));
+                receivedMessages.Add(new MessageRetrieved(unwrapper, serializer, rawMessage, inputQueue, errorQueue));
             }
 
             await backoffStrategy.OnBatch(receivedMessages.Count, cancellationToken).ConfigureAwait(false);
@@ -65,7 +66,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         IMessageEnvelopeUnwrapper unwrapper;
 
         QueueAddressGenerator addressGenerator;
-
+        MessageWrapperSerializer serializer;
         QueueClient inputQueue;
         QueueClient errorQueue;
         QueueServiceClient queueServiceClient;

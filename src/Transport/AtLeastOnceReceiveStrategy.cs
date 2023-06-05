@@ -6,9 +6,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
+    using global::Azure;
     using Logging;
     using Transport;
 
+    /// <summary>
+    /// This corresponds to the RecieveOnly transport transaction mode
+    /// </summary>
     class AtLeastOnceReceiveStrategy : ReceiveStrategy
     {
         public AtLeastOnceReceiveStrategy(OnMessage onMessage, OnError onError, Action<string, Exception, CancellationToken> criticalErrorAction)
@@ -21,7 +25,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, string receiveAddress, CancellationToken cancellationToken = default)
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
-            var body = message.Body ?? new byte[0];
+            var body = message.Body ?? Array.Empty<byte>();
             var contextBag = new ContextBag();
             try
             {
@@ -56,6 +60,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
                         // Just acknowledge the message as it's handled by the core retry.
                         await retrieved.Ack(cancellationToken).ConfigureAwait(false);
                     }
+                }
+                catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
+                {
+                    Logger.WarnFormat($"Message with native ID `{message.Id}` could not be moved to the error queue with additional headers because it was too large. Moving to the error queue as is.", e);
+
+                    await retrieved.MoveToErrorQueueWithMinimalFaultHeaders(context, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception onErrorEx) when (!onErrorEx.IsCausedBy(cancellationToken))
                 {
