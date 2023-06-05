@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -14,6 +13,7 @@
     using global::Azure.Storage.Queues;
     using Logging;
     using NServiceBus.AzureStorageQueues;
+    using NServiceBus.Transport.AzureStorageQueues.Utils;
     using Performance.TimeToBeReceived;
     using Transport;
     using Unicast.Queuing;
@@ -180,15 +180,7 @@
 
         Task Send(MessageWrapper wrapper, QueueClient sendQueue, TimeSpan timeToBeReceived)
         {
-            string base64String;
-
-            using (var stream = new MemoryStream())
-            {
-                serializer.Serialize(wrapper, stream);
-
-                var bytes = stream.ToArray();
-                base64String = Convert.ToBase64String(bytes);
-            }
+            string base64String = MessageWrapperHelper.ConvertToBase64String(wrapper, serializer);
 
             return sendQueue.SendMessageAsync(base64String, timeToLive: timeToBeReceived);
         }

@@ -10,11 +10,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IProvideQueueServiceClient queueServiceClientProvider, QueueAddressGenerator addressGenerator)
+        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IProvideQueueServiceClient queueServiceClientProvider, QueueAddressGenerator addressGenerator, MessageWrapperSerializer serializer)
         {
             this.unwrapper = unwrapper;
             queueServiceClient = queueServiceClientProvider.Client;
             this.addressGenerator = addressGenerator;
+            this.serializer = serializer;
         }
 
         /// <summary>
@@ -55,7 +56,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             // ReSharper disable once LoopCanBeConvertedToQuery
             foreach (var rawMessage in rawMessages)
             {
-                receivedMessages.Add(new MessageRetrieved(unwrapper, rawMessage, inputQueue, errorQueue));
+                receivedMessages.Add(new MessageRetrieved(unwrapper, serializer, rawMessage, inputQueue, errorQueue));
             }
 
             await backoffStrategy.OnBatch(receivedMessages.Count, token).ConfigureAwait(false);
@@ -64,7 +65,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         IMessageEnvelopeUnwrapper unwrapper;
 
         QueueAddressGenerator addressGenerator;
-
+        MessageWrapperSerializer serializer;
         QueueClient inputQueue;
         QueueClient errorQueue;
         QueueServiceClient queueServiceClient;

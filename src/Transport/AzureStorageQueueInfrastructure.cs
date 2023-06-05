@@ -1,8 +1,8 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
-    using System.Globalization;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Security.Cryptography;
     using System.Text;
     using System.Threading.Tasks;
@@ -230,7 +230,7 @@
                 {
                     var unwrapper = settings.HasSetting<IMessageEnvelopeUnwrapper>() ? settings.GetOrDefault<IMessageEnvelopeUnwrapper>() : new DefaultMessageEnvelopeUnwrapper(serializer);
 
-                    var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, addressGenerator)
+                    var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, addressGenerator, serializer)
                     {
                         MessageInvisibleTime = messageInvisibleTime,
                     };

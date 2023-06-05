@@ -6,9 +6,13 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
+    using global::Azure;
     using Logging;
     using Transport;
 
+    /// <summary>
+    /// This corresponds to the RecieveOnly transport transaction mode
+    /// </summary>
     class AtLeastOnceReceiveStrategy : ReceiveStrategy
     {
         public AtLeastOnceReceiveStrategy(Func<MessageContext, Task> pipeline, Func<ErrorContext, Task<ErrorHandleResult>> errorPipe, CriticalError criticalError)
@@ -18,10 +22,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
             this.criticalError = criticalError;
         }
 
-        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message)
+        public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, CancellationToken cancellationToken = default)
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
-            var body = message.Body ?? new byte[0];
+            var body = message.Body ?? Array.Empty<byte>();
             try
             {
                 using (var tokenSource = new CancellationTokenSource())
@@ -55,6 +59,24 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 try
                 {
                     immediateRetry = await errorPipe(context).ConfigureAwait(false);
+                    if (immediateRetry == ErrorHandleResult.RetryRequired)
+                    {
+                        // For an immediate retry, the error is logged and the message is returned to the queue to preserve the DequeueCount.
+                        // There is no in memory retry as scale-out scenarios would be handled improperly.
+                        Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline. The message will be requeued", ex);
+                        await retrieved.Nack().ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        // Just acknowledge the message as it's handled by the core retry.
+                        await retrieved.Ack().ConfigureAwait(false);
+                    }
+                }
+                catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
+                {
+                    Logger.WarnFormat($"Message with native ID `{message.Id}` could not be moved to the error queue with additional headers because it was too large. Moving to the error queue as is.", e);
+
+                    await retrieved.MoveToErrorQueueWithMinimalFaultHeaders(context, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -65,18 +87,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     return;
                 }
 
-                if (immediateRetry == ErrorHandleResult.RetryRequired)
-                {
-                    // For an immediate retry, the error is logged and the message is returned to the queue to preserve the DequeueCount.
-                    // There is no in memory retry as scale-out scenarios would be handled improperly.
-                    Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline. The message will be requeued", ex);
-                    await retrieved.Nack().ConfigureAwait(false);
-                }
-                else
-                {
-                    // Just acknowledge the message as it's handled by the core retry.
-                    await retrieved.Ack().ConfigureAwait(false);
-                }
             }
         }
 
