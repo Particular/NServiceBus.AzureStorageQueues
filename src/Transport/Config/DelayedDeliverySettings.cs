@@ -13,11 +13,9 @@ namespace NServiceBus
 
         /// <summary>Override the default table name used for storing delayed messages.</summary>
         /// <param name="delayedMessagesTableName">New table name.</param>
-        [PreObsolete(
-            Message = "Configure the transport via the AzureStorageQueueTransport DelayedDelivery.DelayedDeliveryTableName property",
-            TreatAsErrorFromVersion = "12.0",
-            RemoveInVersion = "13.0",
-            Note = AzureStorageTransportExtensions.Note)]
+        [PreObsolete("https://github.com/Particular/NServiceBus/issues/6811",
+            ReplacementTypeOrMember = "AzureStorageQueueTransport DelayedDelivery.DelayedDeliveryTableName",
+            Note = "Should not be converted to an ObsoleteEx until API mismatch described in issue is resolved.")]
         public void UseTableName(string delayedMessagesTableName)
             => transportDelayedDelivery.DelayedDeliveryTableName = delayedMessagesTableName;
     }
