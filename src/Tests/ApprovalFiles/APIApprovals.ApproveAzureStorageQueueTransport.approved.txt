@@ -7,9 +7,6 @@ namespace NServiceBus
     {
         public AccountInfo(string alias, string connectionString) { }
         public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient) { }
-        [System.Obsolete("Use the constructor overload that accepts a TableServiceClient. The member curren" +
-            "tly throws a NotImplementedException. Will be removed in version 13.0.0.", true)]
-        public AccountInfo(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, object cloudTableClient) { }
         public string Alias { get; }
         public string ConnectionString { get; }
         public NServiceBus.AccountInfo AddEndpoint(string endpointName, System.Collections.Generic.IEnumerable<System.Type> publishedEvents = null, string subscriptionTableName = null) { }
@@ -17,23 +14,13 @@ namespace NServiceBus
     public class AccountRoutingSettings
     {
         public string DefaultAccountAlias { get; set; }
-        [System.Obsolete("Account aliases using connection strings have been deprecated. Use the AddAccount" +
-            " overload that accepts a QueueServiceClient instance. The member currently throw" +
-            "s a NotImplementedException. Will be removed in version 13.0.0.", true)]
-        public NServiceBus.AccountInfo AddAccount(string alias, string connectionString) { }
         public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient) { }
-        [System.Obsolete("Use AddAccount that accepts a TableServiceClient. The member currently throws a N" +
-            "otImplementedException. Will be removed in version 13.0.0.", true)]
-        public NServiceBus.AccountInfo AddAccount(string alias, Azure.Storage.Queues.QueueServiceClient queueServiceClient, object cloudTableClient) { }
     }
     public class AzureStorageQueueTransport : NServiceBus.Transport.TransportDefinition, NServiceBus.Routing.IMessageDrivenSubscriptionTransport
     {
         public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient) { }
         public AzureStorageQueueTransport(string connectionString, bool useNativeDelayedDeliveries = true) { }
         public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient) { }
-        [System.Obsolete("Use the constructor overload that accepts a TableServiceClient. The member curren" +
-            "tly throws a NotImplementedException. Will be removed in version 13.0.0.", true)]
-        public AzureStorageQueueTransport(Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, object cloudTableClient) { }
         public NServiceBus.AccountRoutingSettings AccountRouting { get; }
         public int? DegreeOfReceiveParallelism { get; set; }
         public NServiceBus.NativeDelayedDeliverySettings DelayedDelivery { get; }
@@ -47,10 +34,6 @@ namespace NServiceBus
         public NServiceBus.SubscriptionSettings Subscriptions { get; }
         public override System.Collections.Generic.IReadOnlyCollection<NServiceBus.TransportTransactionMode> GetSupportedTransactionModes() { }
         public override System.Threading.Tasks.Task<NServiceBus.Transport.TransportInfrastructure> Initialize(NServiceBus.Transport.HostSettings hostSettings, NServiceBus.Transport.ReceiveSettings[] receiversSettings, string[] sendingAddresses, System.Threading.CancellationToken cancellationToken = default) { }
-        [System.Obsolete("Inject the ITransportAddressResolver type to access the address translation mecha" +
-            "nism at runtime. See the NServiceBus version 8 upgrade guide for further details" +
-            ". Will be removed in version 13.0.0.", true)]
-        public override string ToTransportAddress(NServiceBus.Transport.QueueAddress address) { }
     }
     public static class AzureStorageTransportExtensions
     {
@@ -72,20 +55,11 @@ namespace NServiceBus
             where TSerializationDefinition : NServiceBus.Serialization.SerializationDefinition, new () { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> SubscriptionTableName(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, string subscriptionTableName) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UnwrapMessagesWith(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, System.Func<Azure.Storage.Queues.Models.QueueMessage, NServiceBus.Azure.Transports.WindowsAzureStorageQueues.MessageWrapper> unwrapper) { }
-        [System.Obsolete("Provide the TableServiceClient with the UseTransport<AzureStorageQueues> configur" +
-            "ation as a parameter. The member currently throws a NotImplementedException. Wil" +
-            "l be removed in version 13.0.0.", true)]
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseCloudTableClient(this NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> config, object cloudTableClient) { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseTransport<T>(this NServiceBus.EndpointConfiguration config)
             where T : NServiceBus.AzureStorageQueueTransport { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseTransport<T>(this NServiceBus.EndpointConfiguration config, Azure.Storage.Queues.QueueServiceClient queueServiceClient)
             where T : NServiceBus.AzureStorageQueueTransport { }
         public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseTransport<T>(this NServiceBus.EndpointConfiguration config, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, Azure.Data.Tables.TableServiceClient tableServiceClient)
-            where T : NServiceBus.AzureStorageQueueTransport { }
-        [System.Obsolete("Use `Provide the TableServiceClient with the UseTransport<AzureStorageQueues> con" +
-            "figuration as a parameter.` instead. The member currently throws a NotImplemente" +
-            "dException. Will be removed in version 13.0.0.", true)]
-        public static NServiceBus.TransportExtensions<NServiceBus.AzureStorageQueueTransport> UseTransport<T>(this NServiceBus.EndpointConfiguration config, Azure.Storage.Queues.QueueServiceClient queueServiceClient, Azure.Storage.Blobs.BlobServiceClient blobServiceClient, object cloudTableClient)
             where T : NServiceBus.AzureStorageQueueTransport { }
     }
     public class DelayedDeliverySettings : NServiceBus.Configuration.AdvancedExtensibility.ExposeSettings

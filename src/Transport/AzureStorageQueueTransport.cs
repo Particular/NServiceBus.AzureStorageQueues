@@ -22,12 +22,11 @@ namespace NServiceBus
     using Transport;
     using Transport.AzureStorageQueues;
     using Unicast.Messages;
-    using QueueAddress = Transport.QueueAddress;
 
     /// <summary>
     /// Transport definition for AzureStorageQueue
     /// </summary>
-    public partial class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
+    public class AzureStorageQueueTransport : TransportDefinition, IMessageDrivenSubscriptionTransport
     {
         internal AzureStorageQueueTransport()
             : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: true, supportsPublishSubscribe: false, supportsTTBR: true)
@@ -305,15 +304,6 @@ namespace NServiceBus
 
             return infrastructure;
         }
-
-        /// <inheritdoc />
-        [ObsoleteEx(Message = "Inject the ITransportAddressResolver type to access the address translation mechanism at runtime. See the NServiceBus version 8 upgrade guide for further details.",
-            TreatAsErrorFromVersion = "12",
-            RemoveInVersion = "13")]
-#pragma warning disable CS0672 // Member overrides obsolete member
-        public override string ToTransportAddress(QueueAddress address)
-            => AzureStorageQueueInfrastructure.TranslateAddress(address, QueueAddressGenerator);
-#pragma warning restore CS0672 // Member overrides obsolete member
 
         void ValidateReceiversSettings(ReceiveSettings[] receivers)
         {
