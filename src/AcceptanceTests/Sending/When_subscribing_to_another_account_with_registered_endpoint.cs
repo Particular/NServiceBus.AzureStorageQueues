@@ -7,8 +7,7 @@
     using Features;
     using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using NServiceBus.AcceptanceTesting.EndpointTemplates;
     using NUnit.Framework;
     using Testing;
 

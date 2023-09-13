@@ -6,8 +6,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
     using AcceptanceTesting.Customization;
     using AcceptanceTests;
     using Features;
+    using NServiceBus.AcceptanceTesting.EndpointTemplates;
     using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
 
     public class When_subscriber_runs_in_compat_mode : NServiceBusAcceptanceTest

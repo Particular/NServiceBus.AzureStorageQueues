@@ -6,8 +6,7 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Azure.Transports.WindowsAzureStorageQueues;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using NServiceBus.AcceptanceTesting.EndpointTemplates;
     using MessageInterfaces;
     using Serialization;
     using NUnit.Framework;

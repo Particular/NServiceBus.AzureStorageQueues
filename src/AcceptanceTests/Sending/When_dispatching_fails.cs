@@ -6,8 +6,7 @@
     using AcceptanceTesting;
     using global::Azure.Core;
     using global::Azure.Core.Pipeline;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using NServiceBus.AcceptanceTesting.EndpointTemplates;
     using NUnit.Framework;
     using Testing;
     using LogLevel = Logging.LogLevel;

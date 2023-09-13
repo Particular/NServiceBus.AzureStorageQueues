@@ -5,8 +5,7 @@
     using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using NServiceBus.AcceptanceTesting.EndpointTemplates;
     using NUnit.Framework;
 
     public class When_receiving_a_message : NServiceBusAcceptanceTest

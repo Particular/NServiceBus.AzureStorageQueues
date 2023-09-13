@@ -7,8 +7,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using AcceptanceTesting.Support;
     using Configuration.AdvancedExtensibility;
     using Features;
+    using NServiceBus.AcceptanceTesting.EndpointTemplates;
     using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.Routing.MessageDrivenSubscriptions;
     using NUnit.Framework;
     using Conventions = AcceptanceTesting.Customization.Conventions;

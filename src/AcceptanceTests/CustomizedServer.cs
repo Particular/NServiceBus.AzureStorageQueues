@@ -1,6 +1,6 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using NServiceBus.AcceptanceTesting.EndpointTemplates;
     using Testing;
 
     public class CustomizedServer : DefaultServer

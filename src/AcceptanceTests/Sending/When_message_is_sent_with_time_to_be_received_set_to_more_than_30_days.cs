@@ -3,8 +3,7 @@
     using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using NServiceBus.AcceptanceTesting.EndpointTemplates;
     using NUnit.Framework;
 
     public class When_message_is_sent_with_time_to_be_received_set_to_more_than_30_days : NServiceBusAcceptanceTest

@@ -9,8 +9,7 @@
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using global::Newtonsoft.Json;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using NServiceBus.AcceptanceTesting.EndpointTemplates;
     using Azure.Transports.WindowsAzureStorageQueues;
     using NUnit.Framework;
     using Testing;

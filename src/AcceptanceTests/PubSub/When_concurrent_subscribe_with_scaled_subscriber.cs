@@ -3,8 +3,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Features;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
+    using NServiceBus.AcceptanceTesting.EndpointTemplates;
     using NUnit.Framework;
 
     public class When_concurrent_subscribe_with_scaled_subscriber : NServiceBusAcceptanceTest
