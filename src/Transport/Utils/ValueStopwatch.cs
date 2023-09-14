@@ -1,38 +1,37 @@
-#pragma warning disable SA1636
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-#pragma warning restore SA1636
 
-namespace NServiceBus.Transport.AzureStorageQueues.Utils;
-
-using System;
-using System.Diagnostics;
-
-// https://github.com/dotnet/aspnetcore/blob/master/src/Shared/ValueStopwatch/ValueStopwatch.cs
-struct ValueStopwatch
+namespace NServiceBus.Transport.AzureStorageQueues.Utils
 {
-    static readonly double TimestampToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
+    using System;
+    using System.Diagnostics;
 
-    long startTimestamp;
-
-    public bool IsActive => startTimestamp != 0;
-
-    ValueStopwatch(long startTimestamp) => this.startTimestamp = startTimestamp;
-
-    public static ValueStopwatch StartNew() => new(Stopwatch.GetTimestamp());
-
-    public TimeSpan GetElapsedTime()
+    // https://github.com/dotnet/aspnetcore/blob/master/src/Shared/ValueStopwatch/ValueStopwatch.cs
+    struct ValueStopwatch
     {
-        // Start timestamp can't be zero in an initialized ValueStopwatch. It would have to be literally the first thing executed when the machine boots to be 0.
-        // So it being 0 is a clear indication of default(ValueStopwatch)
-        if (!IsActive)
-        {
-            throw new InvalidOperationException("An uninitialized, or 'default', ValueStopwatch cannot be used to get elapsed time.");
-        }
+        static readonly double TimestampToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
 
-        var end = Stopwatch.GetTimestamp();
-        var timestampDelta = end - startTimestamp;
-        var ticks = (long)(TimestampToTicks * timestampDelta);
-        return new TimeSpan(ticks);
+        long startTimestamp;
+
+        public bool IsActive => startTimestamp != 0;
+
+        ValueStopwatch(long startTimestamp) => this.startTimestamp = startTimestamp;
+
+        public static ValueStopwatch StartNew() => new(Stopwatch.GetTimestamp());
+
+        public TimeSpan GetElapsedTime()
+        {
+            // Start timestamp can't be zero in an initialized ValueStopwatch. It would have to be literally the first thing executed when the machine boots to be 0.
+            // So it being 0 is a clear indication of default(ValueStopwatch)
+            if (!IsActive)
+            {
+                throw new InvalidOperationException("An uninitialized, or 'default', ValueStopwatch cannot be used to get elapsed time.");
+            }
+
+            var end = Stopwatch.GetTimestamp();
+            var timestampDelta = end - startTimestamp;
+            var ticks = (long)(TimestampToTicks * timestampDelta);
+            return new TimeSpan(ticks);
+        }
     }
 }
