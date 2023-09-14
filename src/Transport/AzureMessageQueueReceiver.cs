@@ -54,25 +54,33 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         internal async Task Receive(int batchSize, List<MessageRetrieved> receivedMessages, BackoffStrategy backoffStrategy, CancellationToken cancellationToken = default)
         {
-            Logger.DebugFormat("Getting messages from queue with max batch size of {0}", batchSize);
-            Response<QueueMessage[]> rawMessagesResponse = await inputQueue.ReceiveMessagesAsync(batchSize, MessageInvisibleTime, cancellationToken).ConfigureAwait(false);
-
-            // https://learn.microsoft.com/en-us/rest/api/storageservices/get-messages#response-headers
-            // UTC values and formatted as described in RFC 1123.
-            // The RFC1123 pattern reflects a defined standard, and the property is read-only. Therefore, it is always the same, regardless of the culture.
-            if ((rawMessagesResponse.GetRawResponse().Headers
-                    .TryGetValue("Date", out var serverResponseUtcDateTimeAsString) &&
-                DateTimeOffset.TryParseExact(serverResponseUtcDateTimeAsString, "r", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var serverResponseUtcDateTime)) == false)
+            if (Logger.IsDebugEnabled)
             {
-                serverResponseUtcDateTime = DateTimeOffset.UtcNow;
+                Logger.DebugFormat("Getting messages from queue with max batch size of {0}", batchSize);
             }
 
+            var rawMessagesResponse = await inputQueue.ReceiveMessagesAsync(batchSize, MessageInvisibleTime, cancellationToken).ConfigureAwait(false);
+            DateTimeOffset serverResponseUtcDateTime = GetServerResponseTimeOrDefault(rawMessagesResponse);
             foreach (var rawMessage in rawMessagesResponse.Value)
             {
                 receivedMessages.Add(new MessageRetrieved(unwrapper, serializer, rawMessage, serverResponseUtcDateTime, inputQueue, errorQueue));
             }
-
             await backoffStrategy.OnBatch(receivedMessages.Count, cancellationToken).ConfigureAwait(false);
+        }
+
+        static DateTimeOffset GetServerResponseTimeOrDefault(NullableResponse<QueueMessage[]> rawMessagesResponse)
+        {
+            // https://learn.microsoft.com/en-us/rest/api/storageservices/get-messages#response-headers
+            // UTC values and formatted as described in RFC 1123.
+            // The RFC1123 pattern reflects a defined standard, and the property is read-only. Therefore, it is always the same, regardless of the culture.
+            var responseHeaders = rawMessagesResponse.GetRawResponse().Headers;
+            if ((responseHeaders.TryGetValue("Date", out var serverResponseUtcDateTimeAsString) &&
+                 DateTimeOffset.TryParseExact(serverResponseUtcDateTimeAsString, "r", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind,
+                     out var serverResponseUtcDateTime)) == false)
+            {
+                serverResponseUtcDateTime = DateTimeOffset.UtcNow;
+            }
+            return serverResponseUtcDateTime;
         }
 
         IMessageEnvelopeUnwrapper unwrapper;
