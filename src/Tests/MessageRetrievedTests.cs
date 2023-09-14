@@ -25,7 +25,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
 
             var messageRetrieved = new MessageRetrieved(null, null, message, DateTimeOffset.UtcNow, null, null);
 
-            await Task.Delay(10);
+            await Task.Delay(200);
 
             Assert.ThrowsAsync<LeaseTimeoutException>(async () => await messageRetrieved.Ack());
         }
@@ -47,7 +47,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
 
             var messageRetrieved = new MessageRetrieved(null, null, message, DateTimeOffset.UtcNow, null, null);
 
-            await Task.Delay(10);
+            await Task.Delay(200);
 
             Assert.ThrowsAsync<LeaseTimeoutException>(async () => await messageRetrieved.Nack());
         }
