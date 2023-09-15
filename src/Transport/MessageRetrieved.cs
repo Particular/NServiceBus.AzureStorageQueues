@@ -110,7 +110,9 @@
                 return;
             }
 
-            var visibleIn = rawMessage.NextVisibleOn.Value - (messageReceivedTime + timeProvider.GetElapsedTime(startTimestamp));
+            var processingTime = timeProvider.GetElapsedTime(startTimestamp);
+            var processedAtAccordingToServer = messageReceivedTime + processingTime;
+            var visibleIn = rawMessage.NextVisibleOn.Value - processedAtAccordingToServer;
             if (visibleIn < TimeSpan.Zero)
             {
                 throw new LeaseTimeoutException(rawMessage, visibilityTimeoutExceededBy: -visibleIn);
