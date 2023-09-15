@@ -5,6 +5,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using BitFaster.Caching.Lru;
     using Extensibility;
     using global::Azure;
     using Logging;
@@ -24,7 +25,26 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, string receiveAddress, CancellationToken cancellationToken = default)
         {
-            Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
+            if (messagesFailedToAck.TryGet(message.Id, out _))
+            {
+                try
+                {
+                    await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                    messagesFailedToAck.TryRemove(message.Id);
+                }
+                catch (LeaseTimeoutException ex)
+                {
+                    Logger.Warn($"Failed acknowledge the message with native ID `{message.Id}`. The message will be available again when the visibility timeout expires.", ex);
+                }
+
+                return;
+            }
+
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
+            }
+
             var body = message.Body ?? Array.Empty<byte>();
             var contextBag = new ContextBag();
             try
@@ -34,10 +54,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 await retrieved.Ack(cancellationToken).ConfigureAwait(false);
             }
-            catch (LeaseTimeoutException)
+            catch (LeaseTimeoutException ex)
             {
-                // The lease has expired and cannot be used any longer to Ack or Nack the message.
-                // see original issue: https://github.com/Azure/azure-storage-net/issues/285
+                Logger.Warn($"Failed acknowledge the message with native ID `{message.Id}`. The message was returned to the queue and will be available again when the visibility timeout expires.", ex);
+                messagesFailedToAck.AddOrUpdate(message.Id, true);
                 throw;
             }
             catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
@@ -50,15 +70,27 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                     if (errorHandleResult == ErrorHandleResult.RetryRequired)
                     {
-                        // For an immediate retry, the error is logged and the message is returned to the queue to preserve the DequeueCount.
-                        // There is no in memory retry as scale-out scenarios would be handled improperly.
-                        Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline. The message will be requeued", ex);
-                        await retrieved.Nack(cancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            await retrieved.Nack(cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (LeaseTimeoutException leaseNackException)
+                        {
+                            Logger.Warn($"Failed to release visibility timeout after message with native ID `{message.Id}`. The message will be available again when the visibility timeout expires.", leaseNackException);
+                            throw;
+                        }
                     }
                     else
                     {
-                        // Just acknowledge the message as it's handled by the core retry.
-                        await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (LeaseTimeoutException leaseAckException)
+                        {
+                            Logger.Warn($"Failed acknowledge the message with native ID `{message.Id}`. The message was returned to the queue and will be available again when the visibility timeout expires.", leaseAckException);
+                            messagesFailedToAck.AddOrUpdate(message.Id, true);
+                        }
                     }
                 }
                 catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
@@ -86,6 +118,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly OnMessage onMessage;
         readonly OnError onError;
         readonly Action<string, Exception, CancellationToken> criticalErrorAction;
+        // TODO align with concurrency?
+        readonly FastConcurrentLru<string, bool> messagesFailedToAck = new(1000);
 
         static readonly ILog Logger = LogManager.GetLogger<ReceiveStrategy>();
     }
