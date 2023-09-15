@@ -31,7 +31,7 @@ namespace NServiceBus
             Alias = alias;
             QueueServiceClient = queueServiceClient;
             TableServiceClient = tableServiceClient;
-            PublishedEventsByEndpoint = new Dictionary<string, (IEnumerable<Type> publishedEvents, string subscriptionTableName)>();
+            PublishedEventsByEndpoint = [];
         }
 
         /// <summary>

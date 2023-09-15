@@ -2,20 +2,26 @@ namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::Azure;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using Logging;
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IQueueServiceClientProvider queueServiceClientProvider, QueueAddressGenerator addressGenerator, MessageWrapperSerializer serializer, bool purgeOnStartup, TimeSpan messageInvisibleTime)
+        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper,
+            IQueueServiceClientProvider queueServiceClientProvider, QueueAddressGenerator addressGenerator,
+            MessageWrapperSerializer serializer, TimeProvider timeProvider, bool purgeOnStartup,
+            TimeSpan messageInvisibleTime)
         {
             this.unwrapper = unwrapper;
             queueServiceClient = queueServiceClientProvider.Client;
             this.addressGenerator = addressGenerator;
             this.serializer = serializer;
+            this.timeProvider = timeProvider;
             PurgeOnStartup = purgeOnStartup;
             MessageInvisibleTime = messageInvisibleTime;
         }
@@ -52,21 +58,41 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         internal async Task Receive(int batchSize, List<MessageRetrieved> receivedMessages, BackoffStrategy backoffStrategy, CancellationToken cancellationToken = default)
         {
-            Logger.DebugFormat("Getting messages from queue with max batch size of {0}", batchSize);
-            QueueMessage[] rawMessages = await inputQueue.ReceiveMessagesAsync(batchSize, MessageInvisibleTime, cancellationToken).ConfigureAwait(false);
-
-            foreach (var rawMessage in rawMessages)
+            if (Logger.IsDebugEnabled)
             {
-                receivedMessages.Add(new MessageRetrieved(unwrapper, serializer, rawMessage, inputQueue, errorQueue));
+                Logger.DebugFormat("Getting messages from queue with max batch size of {0}", batchSize);
+            }
+
+            var rawMessagesResponse = await inputQueue.ReceiveMessagesAsync(batchSize, MessageInvisibleTime, cancellationToken).ConfigureAwait(false);
+            DateTimeOffset serverResponseUtcDateTime = GetServerResponseTimeOrDefault(rawMessagesResponse);
+            foreach (var rawMessage in rawMessagesResponse.Value)
+            {
+                receivedMessages.Add(new MessageRetrieved(unwrapper, serializer, rawMessage, inputQueue, errorQueue, serverResponseUtcDateTime, timeProvider));
             }
 
             await backoffStrategy.OnBatch(receivedMessages.Count, cancellationToken).ConfigureAwait(false);
+        }
+
+        static DateTimeOffset GetServerResponseTimeOrDefault(NullableResponse<QueueMessage[]> rawMessagesResponse)
+        {
+            // https://learn.microsoft.com/en-us/rest/api/storageservices/get-messages#response-headers
+            // UTC values and formatted as described in RFC 1123.
+            // The RFC1123 pattern reflects a defined standard, and the property is read-only. Therefore, it is always the same, regardless of the culture.
+            var responseHeaders = rawMessagesResponse.GetRawResponse().Headers;
+            if ((responseHeaders.TryGetValue("Date", out var serverResponseUtcDateTimeAsString) &&
+                 DateTimeOffset.TryParseExact(serverResponseUtcDateTimeAsString, "r", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind,
+                     out var serverResponseUtcDateTime)) == false)
+            {
+                serverResponseUtcDateTime = DateTimeOffset.UtcNow;
+            }
+            return serverResponseUtcDateTime;
         }
 
         IMessageEnvelopeUnwrapper unwrapper;
 
         QueueAddressGenerator addressGenerator;
         MessageWrapperSerializer serializer;
+        readonly TimeProvider timeProvider;
         QueueClient inputQueue;
         QueueClient errorQueue;
         QueueServiceClient queueServiceClient;

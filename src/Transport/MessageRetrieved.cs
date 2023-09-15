@@ -14,13 +14,16 @@
 
     class MessageRetrieved
     {
-        public MessageRetrieved(IMessageEnvelopeUnwrapper unwrapper, MessageWrapperSerializer serializer, QueueMessage rawMessage, QueueClient inputQueue, QueueClient errorQueue)
+        public MessageRetrieved(IMessageEnvelopeUnwrapper unwrapper, MessageWrapperSerializer serializer, QueueMessage rawMessage, QueueClient inputQueue, QueueClient errorQueue, DateTimeOffset messageReceivedTime, TimeProvider timeProvider)
         {
             this.unwrapper = unwrapper;
             this.serializer = serializer;
             this.errorQueue = errorQueue;
             this.rawMessage = rawMessage;
+            this.messageReceivedTime = messageReceivedTime;
+            this.timeProvider = timeProvider;
             this.inputQueue = inputQueue;
+            startTimestamp = this.timeProvider.GetTimestamp();
         }
 
         public long DequeueCount => rawMessage.DequeueCount;
@@ -102,14 +105,17 @@
 
         void AssertVisibilityTimeout()
         {
-            if (rawMessage.NextVisibleOn != null)
+            if (rawMessage.NextVisibleOn == null)
             {
-                var visibleIn = rawMessage.NextVisibleOn.Value - DateTimeOffset.UtcNow;
-                if (visibleIn < TimeSpan.Zero)
-                {
-                    var visibilityTimeoutExceededBy = -visibleIn;
-                    throw new LeaseTimeoutException(rawMessage, visibilityTimeoutExceededBy);
-                }
+                return;
+            }
+
+            var processingTime = timeProvider.GetElapsedTime(startTimestamp);
+            var processedAtAccordingToServer = messageReceivedTime + processingTime;
+            var visibleIn = rawMessage.NextVisibleOn.Value - processedAtAccordingToServer;
+            if (visibleIn < TimeSpan.Zero)
+            {
+                throw new LeaseTimeoutException(rawMessage, visibilityTimeoutExceededBy: -visibleIn);
             }
         }
 
@@ -143,6 +149,9 @@
         readonly QueueClient errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
         readonly MessageWrapperSerializer serializer;
+        readonly DateTimeOffset messageReceivedTime;
+        readonly long startTimestamp;
+        readonly TimeProvider timeProvider;
         MessageWrapper unwrappedMessage;
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }

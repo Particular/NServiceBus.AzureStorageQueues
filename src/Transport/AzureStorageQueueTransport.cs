@@ -379,7 +379,7 @@ namespace NServiceBus
 
             var subscriptionManager = new SubscriptionManager(subscriptionStore, hostSettings.Name, receiveAddress);
 
-            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, QueueAddressGenerator, serializer, receiveSettings.PurgeOnStartup, MessageInvisibleTime);
+            var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, QueueAddressGenerator, serializer, TimeProvider, receiveSettings.PurgeOnStartup, MessageInvisibleTime);
 
             return (receiveSettings.Id, new MessageReceiver(
                 receiveSettings.Id,
@@ -548,6 +548,8 @@ namespace NServiceBus
                 return queueAddressGenerator;
             }
         }
+
+        internal TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 
         internal const string SerializerSettingsKey = "MainSerializer";
         readonly TransportTransactionMode[] supportedTransactionModes = new[] { TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly };
