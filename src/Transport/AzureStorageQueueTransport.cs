@@ -549,7 +549,7 @@ namespace NServiceBus
             }
         }
 
-        internal TimeProvider TimeProvider { get; set; }
+        internal TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 
         internal const string SerializerSettingsKey = "MainSerializer";
         readonly TransportTransactionMode[] supportedTransactionModes = new[] { TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly };
