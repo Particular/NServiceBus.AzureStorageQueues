@@ -2,6 +2,7 @@
 {
     using System.Runtime.CompilerServices;
     using AcceptanceTesting.Support;
+    using NServiceBus.AcceptanceTesting;
 
     public partial class TestSuiteConstraints : ITestSuiteConstraints
     {
