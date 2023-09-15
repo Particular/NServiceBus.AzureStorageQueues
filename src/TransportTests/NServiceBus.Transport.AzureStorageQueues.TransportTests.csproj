@@ -21,6 +21,9 @@
 
   <ItemGroup>
     <Compile Include="..\AcceptanceTests\BackwardsCompatibleQueueNameSanitizerForTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PkgNServiceBus_TransportTests_Sources)' != ''">
     <Compile Remove="$(PkgNServiceBus_TransportTests_Sources)\**\ExceptionExtensions.cs" />
   </ItemGroup>
 
