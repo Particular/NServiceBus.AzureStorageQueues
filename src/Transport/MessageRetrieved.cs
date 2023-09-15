@@ -14,15 +14,16 @@
 
     class MessageRetrieved
     {
-        public MessageRetrieved(IMessageEnvelopeUnwrapper unwrapper, MessageWrapperSerializer serializer, QueueMessage rawMessage, DateTimeOffset messageReceivedTime, QueueClient inputQueue, QueueClient errorQueue)
+        public MessageRetrieved(IMessageEnvelopeUnwrapper unwrapper, MessageWrapperSerializer serializer, QueueMessage rawMessage, QueueClient inputQueue, QueueClient errorQueue, DateTimeOffset messageReceivedTime, TimeProvider timeProvider)
         {
             this.unwrapper = unwrapper;
             this.serializer = serializer;
             this.errorQueue = errorQueue;
             this.rawMessage = rawMessage;
             this.messageReceivedTime = messageReceivedTime;
+            this.timeProvider = timeProvider;
             this.inputQueue = inputQueue;
-            this.valueStopWatch = ValueStopwatch.StartNew();
+            startTimestamp = this.timeProvider.GetTimestamp();
         }
 
         public long DequeueCount => rawMessage.DequeueCount;
@@ -109,7 +110,7 @@
                 return;
             }
 
-            var visibleIn = rawMessage.NextVisibleOn.Value - (messageReceivedTime + valueStopWatch.GetElapsedTime());
+            var visibleIn = rawMessage.NextVisibleOn.Value - (messageReceivedTime + timeProvider.GetElapsedTime(startTimestamp));
             if (visibleIn < TimeSpan.Zero)
             {
                 throw new LeaseTimeoutException(rawMessage, visibilityTimeoutExceededBy: -visibleIn);
@@ -143,13 +144,14 @@
 
         readonly QueueClient inputQueue;
         readonly QueueMessage rawMessage;
-        readonly DateTimeOffset messageReceivedTime;
         readonly QueueClient errorQueue;
         readonly IMessageEnvelopeUnwrapper unwrapper;
         readonly MessageWrapperSerializer serializer;
+        readonly DateTimeOffset messageReceivedTime;
+        readonly long startTimestamp;
+        readonly TimeProvider timeProvider;
         MessageWrapper unwrappedMessage;
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
-        ValueStopwatch valueStopWatch;
     }
 
     class LeaseTimeoutException : Exception

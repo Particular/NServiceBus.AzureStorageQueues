@@ -12,12 +12,16 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class AzureMessageQueueReceiver
     {
-        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper, IQueueServiceClientProvider queueServiceClientProvider, QueueAddressGenerator addressGenerator, MessageWrapperSerializer serializer, bool purgeOnStartup, TimeSpan messageInvisibleTime)
+        public AzureMessageQueueReceiver(IMessageEnvelopeUnwrapper unwrapper,
+            IQueueServiceClientProvider queueServiceClientProvider, QueueAddressGenerator addressGenerator,
+            MessageWrapperSerializer serializer, TimeProvider timeProvider, bool purgeOnStartup,
+            TimeSpan messageInvisibleTime)
         {
             this.unwrapper = unwrapper;
             queueServiceClient = queueServiceClientProvider.Client;
             this.addressGenerator = addressGenerator;
             this.serializer = serializer;
+            this.timeProvider = timeProvider;
             PurgeOnStartup = purgeOnStartup;
             MessageInvisibleTime = messageInvisibleTime;
         }
@@ -63,8 +67,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             DateTimeOffset serverResponseUtcDateTime = GetServerResponseTimeOrDefault(rawMessagesResponse);
             foreach (var rawMessage in rawMessagesResponse.Value)
             {
-                receivedMessages.Add(new MessageRetrieved(unwrapper, serializer, rawMessage, serverResponseUtcDateTime, inputQueue, errorQueue));
+                receivedMessages.Add(new MessageRetrieved(unwrapper, serializer, rawMessage, inputQueue, errorQueue, serverResponseUtcDateTime, timeProvider));
             }
+
             await backoffStrategy.OnBatch(receivedMessages.Count, cancellationToken).ConfigureAwait(false);
         }
 
@@ -87,6 +92,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         QueueAddressGenerator addressGenerator;
         MessageWrapperSerializer serializer;
+        readonly TimeProvider timeProvider;
         QueueClient inputQueue;
         QueueClient errorQueue;
         QueueServiceClient queueServiceClient;
