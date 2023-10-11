@@ -127,9 +127,9 @@
         }
 
         readonly QueueAddressGenerator addressGenerator;
-        readonly Dictionary<string, AccountInfo> aliasToAccountInfoMap = new();
-        readonly Dictionary<QueueAddress, AccountInfo> registeredEndpoints = new();
-        readonly Dictionary<Type, (AccountInfo, string)> typeToSubscriptionInformation = new();
+        readonly Dictionary<string, AccountInfo> aliasToAccountInfoMap = [];
+        readonly Dictionary<QueueAddress, AccountInfo> registeredEndpoints = [];
+        readonly Dictionary<Type, (AccountInfo, string)> typeToSubscriptionInformation = [];
         readonly string defaultConnectionStringAlias;
 
         // kind of a wildcard for the local account info

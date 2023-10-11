@@ -30,7 +30,7 @@
         }
 
         public UnicastTransportOperation GetOperation() =>
-            new(new OutgoingMessage(MessageId, Deserialize<Dictionary<string, string>>(Headers), Body), Destination, new DispatchProperties());
+            new(new OutgoingMessage(MessageId, Deserialize<Dictionary<string, string>>(Headers), Body), Destination, []);
 
         public string PartitionKey { get; set; }
 

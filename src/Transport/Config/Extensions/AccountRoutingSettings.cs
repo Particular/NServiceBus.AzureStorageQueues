@@ -48,7 +48,7 @@
             return accountInfo;
         }
 
-        internal Dictionary<string, AccountInfo> Mappings = new();
+        internal Dictionary<string, AccountInfo> Mappings = [];
         string defaultAccountAlias = string.Empty;
     }
 }
