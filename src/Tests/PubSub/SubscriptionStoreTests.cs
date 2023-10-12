@@ -37,7 +37,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         [Test]
         public async Task Subscribe_should_create_topics()
         {
-            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, tableServiceClient));
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, [], new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var subscriptionStore = new SubscriptionStore(settings);
 
@@ -65,7 +65,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         public async Task Subscribe_with_mapped_events_should_create_topics()
         {
             var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "subscriber",
-                tableClient.Name, new Dictionary<string, AccountInfo>(),
+                tableClient.Name, [],
                 new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var publisherAccount = new AccountInfo("publisher", queueServiceClient, tableServiceClient);
@@ -101,7 +101,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         [Test]
         public async Task Unsubscribe_should_delete_topics()
         {
-            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, tableServiceClient));
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, [], new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var subscriptionStore = new SubscriptionStore(settings);
 
@@ -123,7 +123,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         public async Task Unsubscribe_with_mapped_events_should_delete_topics()
         {
             var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "subscriber",
-                tableClient.Name, new Dictionary<string, AccountInfo>(),
+                tableClient.Name, [],
                 new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var publisherAccount = new AccountInfo("publisher", queueServiceClient, tableServiceClient);
@@ -159,7 +159,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         [Test]
         public async Task GetSubscribers()
         {
-            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, tableServiceClient));
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, [], new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var subscriptionStore = new SubscriptionStore(settings);
 
@@ -175,7 +175,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         [Test]
         public async Task GetSubscribers_supports_polymorphism()
         {
-            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, new Dictionary<string, AccountInfo>(), new AccountInfo("", queueServiceClient, tableServiceClient));
+            var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "default", tableClient.Name, [], new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var subscriptionStore = new SubscriptionStore(settings);
 
@@ -191,7 +191,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         public async Task GetSubscribers_with_mapped_events()
         {
             var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "subscriber",
-                tableClient.Name, new Dictionary<string, AccountInfo>(),
+                tableClient.Name, [],
                 new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var publisherAccount = new AccountInfo("publisher", queueServiceClient, tableServiceClient);
@@ -214,7 +214,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         public async Task GetSubscribers_with_mapped_events_supports_polymorphism()
         {
             var settings = new AzureStorageAddressingSettings(new QueueAddressGenerator(s => s), "subscriber",
-                tableClient.Name, new Dictionary<string, AccountInfo>(),
+                tableClient.Name, [],
                 new AccountInfo("", queueServiceClient, tableServiceClient));
 
             var publisherAccount = new AccountInfo("publisher", queueServiceClient, tableServiceClient);
