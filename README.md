@@ -1,6 +1,6 @@
 # NServiceBus.AzureStorageQueues
 
-This package enables the use of the Azure Storage Queues service as the underlying transport used by NServiceBus.
+NServiceBus.AzureStorageQueues enables the use of the Azure Storage Queues service as the underlying transport used by NServiceBus.
 
 It is part of the [Particular Service Platform](https://particular.net/service-platform), which includes [NServiceBus](https://particular.net/nservicebus) and tools to build, monitor, and debug distributed systems.
 
