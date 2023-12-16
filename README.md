@@ -1,10 +1,10 @@
 # NServiceBus.AzureStorageQueues
 
-NServiceBus.AzureStorageQueues enables the use of the Azure Storage Queues service as the underlying transport used by NServiceBus.
+NServiceBus.AzureStorageQueues enables the use of [Azure Storage Queues](https://learn.microsoft.com/en-us/azure/storage/queues/storage-queues-introduction) as the underlying transport used by NServiceBus.
 
 It is part of the [Particular Service Platform](https://particular.net/service-platform), which includes [NServiceBus](https://particular.net/nservicebus) and tools to build, monitor, and debug distributed systems.
 
-See the [Azure Storage Queues Transport documentation](https://docs.particular.net/nservicebus/azure-storage-queues/) and [Azure Storage Queue Transport sample](https://docs.particular.net/samples/azure/storage-queues/) for more details on how to use it.
+See the [Azure Storage Queues Transport documentation](https://docs.particular.net/nservicebus/azure-storage-queues/) for more details on how to use it.
 
 ## Running tests locally
 
