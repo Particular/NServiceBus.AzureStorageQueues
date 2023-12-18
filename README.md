@@ -1,13 +1,12 @@
-# Azure Storage Queues Transport for NServiceBus
+# NServiceBus.AzureStorageQueues
 
-The Azure Storage Queues transport for NServiceBus enables the use of the Azure Storage Queues service as the underlying transport used by NServiceBus.
+NServiceBus.AzureStorageQueues enables the use of [Azure Storage Queues](https://learn.microsoft.com/en-us/azure/storage/queues/storage-queues-introduction) as the underlying transport used by NServiceBus.
 
-## Documentation
+It is part of the [Particular Service Platform](https://particular.net/service-platform), which includes [NServiceBus](https://particular.net/nservicebus) and tools to build, monitor, and debug distributed systems.
 
-* [Azure Transport](https://docs.particular.net/nservicebus/azure-storage-queues/)
-* [Samples](https://docs.particular.net/samples/azure/storage-queues/)
+See the [Azure Storage Queues Transport documentation](https://docs.particular.net/nservicebus/azure-storage-queues/) for more details on how to use it.
 
-## How to test locally
+## Running tests locally
 
 To run the tests locally, add a new environment variable `AzureStorageQueueTransport_ConnectionString` containing a connection string to your Azure storage account or the connection string `UseDevelopmentStorage=true` to use the [Azurite emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite) (ensure it is started before you run the tests).
 
