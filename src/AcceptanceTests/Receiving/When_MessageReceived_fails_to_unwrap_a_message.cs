@@ -53,7 +53,7 @@
                 EndpointSetup(new CustomizedServer(transport), (config, rd) =>
                 {
                     config.SendFailedMessagesTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(ErrorSpy)));
-                    config.UseSerialization<NewtonsoftJsonSerializer>();
+                    config.UseSerialization<SystemJsonSerializer>();
                     config.LimitMessageProcessingConcurrencyTo(1);
                 });
             }
@@ -70,7 +70,7 @@
 
                 EndpointSetup(new CustomizedServer(transport), (config, rd) =>
                 {
-                    config.UseSerialization<NewtonsoftJsonSerializer>();
+                    config.UseSerialization<SystemJsonSerializer>();
                 });
             }
 

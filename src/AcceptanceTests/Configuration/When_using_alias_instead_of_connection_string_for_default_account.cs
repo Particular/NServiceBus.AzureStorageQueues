@@ -64,7 +64,7 @@
             public SenderEndpoint() =>
                 EndpointSetup<DefaultServer>(endpointConfiguration =>
                 {
-                    endpointConfiguration.UseSerialization<NewtonsoftJsonSerializer>();
+                    endpointConfiguration.UseSerialization<SystemJsonSerializer>();
                     var transport = endpointConfiguration.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.AccountRouting.DefaultAccountAlias = "defaultAlias";
                 });

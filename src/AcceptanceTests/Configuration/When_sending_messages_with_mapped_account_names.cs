@@ -65,7 +65,7 @@
         }
 
         static async Task<Context> SendMessage<TReceiver>(string destination, string destinationConnectionString, CancellationToken cancellationToken = default)
-            where TReceiver : EndpointConfigurationBuilder
+            where TReceiver : EndpointConfigurationBuilder, new()
         {
             var ctx = await Scenario.Define<Context>()
                 .WithEndpoint<Sender>(b => b.When(s =>
@@ -153,7 +153,7 @@
                         new QueueServiceClient(Utilities.GetEnvConfiguredConnectionString2()),
                         new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
 
-                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
+                    cfg.UseSerialization<SystemJsonSerializer>();
                 });
                 CustomEndpointName(SenderName);
             }
@@ -166,7 +166,7 @@
                 var transport = new AzureStorageQueueTransport(Utilities.GetEnvConfiguredConnectionString2(), useNativeDelayedDeliveries: false);
                 EndpointSetup(new CustomizedServer(transport), (cfg, runDescriptor) =>
                 {
-                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
+                    cfg.UseSerialization<SystemJsonSerializer>();
                     cfg.AuditProcessedMessagesTo(AuditName);
 
                     transport.AccountRouting.DefaultAccountAlias = AnotherConnectionStringName;
@@ -185,7 +185,7 @@
             {
                 EndpointSetup<DefaultPublisher>(cfg =>
                 {
-                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
+                    cfg.UseSerialization<SystemJsonSerializer>();
                     cfg.AuditProcessedMessagesTo(AuditName);
 
                     var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
