@@ -10,7 +10,6 @@
     using global::Azure.Storage.Queues.Models;
     using Logging;
     using NServiceBus.Faults;
-    using NServiceBus.Transport.AzureStorageQueues.Utils;
 
     class MessageRetrieved
     {

@@ -1,7 +1,6 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
-    using Utils;
 
     readonly struct QueueAddress : IEquatable<QueueAddress>
     {

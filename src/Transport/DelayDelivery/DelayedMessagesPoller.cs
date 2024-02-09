@@ -11,7 +11,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Blobs.Specialized;
     using Logging;
-    using NServiceBus.AzureStorageQueues.Utils;
     using Transport;
 
     class DelayedMessagesPoller
