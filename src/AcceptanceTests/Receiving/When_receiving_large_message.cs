@@ -8,7 +8,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using AcceptanceTesting.Customization;
     using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Queues;
-    using global::Newtonsoft.Json;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.Faults;

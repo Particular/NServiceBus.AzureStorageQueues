@@ -10,8 +10,6 @@
     using global::Azure.Data.Tables;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
-    using global::Newtonsoft.Json;
-    using global::Newtonsoft.Json.Linq;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
