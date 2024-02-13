@@ -56,10 +56,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
             public Subscriber() =>
                 EndpointSetup(new CustomizedServer(supportsNativeDelayedDelivery: true, supportsPublishSubscribe: false), (c, rd) =>
                 {
-                    c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig", new List<PublisherTableEntry>
-                    {
+                    c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig",
+                    [
                         new (typeof(MyEvent), PublisherAddress.CreateFromEndpointName(PublisherEndpoint))
-                    });
+                    ]);
                     c.DisableFeature<AutoSubscribe>();
                 });
 

@@ -37,10 +37,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                  {
                      b.CustomConfig(c =>
                      {
-                         c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig", new List<PublisherTableEntry>
-                         {
+                         c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig",
+                         [
                             new PublisherTableEntry(typeof(MyEvent), PublisherAddress.CreateFromEndpointName(PublisherEndpoint))
-                         });
+                         ]);
                      });
                      b.When(async (session, ctx) =>
                      {

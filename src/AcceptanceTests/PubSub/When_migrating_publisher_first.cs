@@ -1,7 +1,6 @@
 namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Support;
@@ -37,10 +36,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                  {
                      b.CustomConfig(c =>
                      {
-                         c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig", new List<PublisherTableEntry>
-                         {
+                         c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig",
+                         [
                             new PublisherTableEntry(typeof(MyEvent), PublisherAddress.CreateFromEndpointName(PublisherEndpoint))
-                         });
+                         ]);
                      });
                      b.When(async (session, ctx) =>
                      {
@@ -69,10 +68,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                      b.CustomConfig(c =>
                      {
                          c.GetSettings().Set("NServiceBus.Transport.AzureStorageQueues.DisableNativePubSub", true);
-                         c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig", new List<PublisherTableEntry>
-                         {
+                         c.GetSettings().GetOrCreate<Publishers>().AddOrReplacePublishers("LegacyConfig",
+                         [
                             new PublisherTableEntry(typeof(MyEvent), PublisherAddress.CreateFromEndpointName(PublisherEndpoint))
-                         });
+                         ]);
                      });
                      b.When(async (session, ctx) =>
                      {
