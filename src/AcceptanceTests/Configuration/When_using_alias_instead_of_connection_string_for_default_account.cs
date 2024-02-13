@@ -10,7 +10,7 @@
 
     public class When_using_alias_instead_of_connection_string_for_default_account : NServiceBusAcceptanceTest
     {
-        QueueClient destinationQueue;
+        readonly QueueClient destinationQueue;
 
         public When_using_alias_instead_of_connection_string_for_default_account()
         {

@@ -1,13 +1,13 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
-    using global::Azure.Storage.Queues;
-    using global::Azure.Storage.Queues.Models;
-    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-    using NUnit.Framework;
     using System;
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::Azure.Storage.Queues;
+    using global::Azure.Storage.Queues.Models;
+    using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using NUnit.Framework;
 
     class RawMessageReceiver
     {
@@ -28,11 +28,12 @@
 
                 if (rawMessages.Length == 0)
                 {
-                    Assert.Fail("No message in the audit queue to pick up.");
+                    Assert.Fail("No message in the queue for RawMessageReceiver to pick up.");
                 }
-                var rawMessage = rawMessages[0];
 
+                var rawMessage = rawMessages[0];
                 var response = await queueClient.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken);
+
                 Assert.That(response, Is.Not.Null);
                 Assert.That(response.IsError, Is.False);
 

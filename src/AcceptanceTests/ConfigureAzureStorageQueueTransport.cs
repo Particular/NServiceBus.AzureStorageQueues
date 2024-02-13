@@ -45,8 +45,6 @@ public class ConfigureEndpointAzureStorageQueueTransport : IConfigureEndpointTes
             Assert.Ignore("Ignored since this scenario is not supported by ASQ.");
         }
 
-        configuration.UseSerialization<XmlSerializer>();
-
         configuration.Pipeline.Register("test-independence-skip", typeof(TestIndependence.SkipBehavior), "Skips messages from other runs");
         configuration.Pipeline.Register("test-independence-stamp", typeof(TestIndependence.StampOutgoingBehavior), "Stamps outgoing messages from this run");
 
