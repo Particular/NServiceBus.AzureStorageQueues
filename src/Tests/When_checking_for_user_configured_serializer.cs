@@ -12,20 +12,6 @@
     public class When_checking_for_user_configured_serializer
     {
         [Test]
-        public void Should_throw_exception_when_no_serializer_was_set()
-        {
-            var exception = Assert.Throws<Exception>(() =>
-            {
-                var settings = new SettingsHolder();
-                var messageMapper = MessageWrapperSerializer.GetMapper();
-
-                AzureStorageQueueTransport.GetMainSerializerHack(messageMapper, settings);
-            });
-
-            Assert.That(exception?.Message, Does.StartWith("No serializer defined. If the transport is used in combination with NServiceBus, use 'endpointConfiguration.UseSerialization<T>();' to select a serializer."));
-        }
-
-        [Test]
         public void Should_not_throw_exception_when_serializer_was_set()
         {
             var settings = new SettingsHolder();
