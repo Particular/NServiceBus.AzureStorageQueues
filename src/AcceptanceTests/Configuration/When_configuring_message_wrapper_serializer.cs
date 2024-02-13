@@ -42,8 +42,6 @@
             {
                 EndpointSetup<DefaultServer>(e =>
                 {
-                    e.UseSerialization<SystemJsonSerializer>();
-
                     var transport = e.ConfigureTransport<AzureStorageQueueTransport>();
                     transport.MessageWrapperSerializationDefinition = new TestIndependence.TestIdAppendingSerializationDefinition<CustomSerializer>();
                 });

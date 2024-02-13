@@ -351,14 +351,7 @@ namespace NServiceBus
 
         internal static IMessageSerializer GetMainSerializerHack(IMessageMapper mapper, IReadOnlySettings settings)
         {
-            if (!settings.TryGet<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey, out var serializerSettingsTuple))
-            {
-                throw new Exception("No serializer defined. If the transport is used in combination with NServiceBus, " +
-                                    "use 'endpointConfiguration.UseSerialization<T>();' to select a serializer. " +
-                                    "If you are upgrading, install the `NServiceBus.Newtonsoft.Json` NuGet package " +
-                                    "and consult the upgrade guide for further information. If the transport is used in isolation, " +
-                                    "set a HostSettings.CoreSettings to an empty SettingsHolder instance before starting the transport.");
-            }
+            var serializerSettingsTuple = settings.Get<Tuple<SerializationDefinition, SettingsHolder>>(SerializerSettingsKey);
 
             var (definition, _) = serializerSettingsTuple;
 

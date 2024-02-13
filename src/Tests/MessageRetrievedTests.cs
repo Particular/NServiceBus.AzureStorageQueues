@@ -2,8 +2,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Threading.Tasks;
     using global::Azure.Storage.Queues.Models;
     using NUnit.Framework;
 
