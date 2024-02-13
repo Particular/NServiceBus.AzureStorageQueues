@@ -2,13 +2,12 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
     using System.Collections.Generic;
-    using System.Text;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
     using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Queues;
-    using global::Newtonsoft.Json;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.Faults;
@@ -31,14 +30,13 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         string contentCloseToLimits = new string('x', (35 * 1024) + 425);
 
                         var message = new MyMessage { SomeProperty = contentCloseToLimits, };
-
-                        var messageSerialized = JsonConvert.SerializeObject(message, typeof(MyMessage), Formatting.Indented, new JsonSerializerSettings());
+                        var messageSerialized = JsonSerializer.SerializeToUtf8Bytes(message);
 
                         string id = Guid.NewGuid().ToString();
                         var wrapper = new MessageWrapper
                         {
                             Id = id,
-                            Body = Encoding.UTF8.GetBytes(messageSerialized),
+                            Body = messageSerialized,
                             Headers = new Dictionary<string, string>
                             {
                                 { Headers.EnclosedMessageTypes, $"{typeof(MyMessage).AssemblyQualifiedName}" },
@@ -48,9 +46,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                             }
                         };
 
-                        var wrapperSerialized = JsonConvert.SerializeObject(wrapper, typeof(MessageWrapper), Formatting.Indented, new JsonSerializerSettings());
-
-                        var base64Encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wrapperSerialized));
+                        var wrapperSerialized = JsonSerializer.SerializeToUtf8Bytes(wrapper);
+                        var base64Encoded = Convert.ToBase64String(wrapperSerialized);
 
                         return queueClient.SendMessageAsync(base64Encoded);
                     }).DoNotFailOnErrorMessages();
@@ -77,14 +74,13 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         string contentCloseToLimits = new string('x', (35 * 1024) + 400);
 
                         var message = new MyMessage { SomeProperty = contentCloseToLimits, };
-
-                        var messageSerialized = JsonConvert.SerializeObject(message, typeof(MyMessage), Formatting.Indented, new JsonSerializerSettings());
+                        var messageSerialized = JsonSerializer.SerializeToUtf8Bytes(message);
 
                         string id = Guid.NewGuid().ToString();
                         var wrapper = new MessageWrapper
                         {
                             Id = id,
-                            Body = Encoding.UTF8.GetBytes(messageSerialized),
+                            Body = messageSerialized,
                             Headers = new Dictionary<string, string>
                             {
                          { Headers.EnclosedMessageTypes, $"{typeof(MyMessage).AssemblyQualifiedName}" },
@@ -94,9 +90,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                             }
                         };
 
-                        var wrapperSerialized = JsonConvert.SerializeObject(wrapper, typeof(MessageWrapper), Formatting.Indented, new JsonSerializerSettings());
-
-                        var base64Encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wrapperSerialized));
+                        var wrapperSerialized = JsonSerializer.SerializeToUtf8Bytes(wrapper);
+                        var base64Encoded = Convert.ToBase64String(wrapperSerialized);
 
                         return queueClient.SendMessageAsync(base64Encoded);
                     }).DoNotFailOnErrorMessages();
@@ -121,7 +116,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public Receiver() => EndpointSetup<DefaultServer>(c =>
             {
-                c.UseSerialization<NewtonsoftJsonSerializer>();
                 c.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(ErrorSpy)));
             });
 
@@ -138,7 +132,6 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public ErrorSpy() => EndpointSetup<DefaultServer>(config =>
             {
-                config.UseSerialization<NewtonsoftJsonSerializer>();
                 config.LimitMessageProcessingConcurrencyTo(1);
             });
 

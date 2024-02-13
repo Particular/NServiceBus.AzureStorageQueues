@@ -9,8 +9,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Queues;
     using Logging;
-    using NServiceBus.AzureStorageQueues;
-    using NServiceBus.Transport.AzureStorageQueues.Utils;
     using Transport;
     using Unicast.Queuing;
 

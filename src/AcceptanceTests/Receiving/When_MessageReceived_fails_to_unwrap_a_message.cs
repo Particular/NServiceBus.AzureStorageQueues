@@ -53,7 +53,6 @@
                 EndpointSetup(new CustomizedServer(transport), (config, rd) =>
                 {
                     config.SendFailedMessagesTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(ErrorSpy)));
-                    config.UseSerialization<NewtonsoftJsonSerializer>();
                     config.LimitMessageProcessingConcurrencyTo(1);
                 });
             }
@@ -68,10 +67,7 @@
                     QueueNameSanitizer = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize
                 };
 
-                EndpointSetup(new CustomizedServer(transport), (config, rd) =>
-                {
-                    config.UseSerialization<NewtonsoftJsonSerializer>();
-                });
+                EndpointSetup(new CustomizedServer(transport), (config, rd) => { });
             }
 
             class MyMessageHandler : IHandleMessages<MyMessage>

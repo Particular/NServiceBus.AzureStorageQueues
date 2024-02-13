@@ -45,8 +45,6 @@
                 {
                     cfg.CustomConfig(c =>
                     {
-                        c.UseSerialization<NewtonsoftJsonSerializer>();
-
                         var transport = c.ConfigureTransport<AzureStorageQueueTransport>();
                         customizeTransport(transport);
                     });
@@ -77,7 +75,7 @@
 
         class Receiver : EndpointConfigurationBuilder
         {
-            public Receiver() => EndpointSetup<DefaultServer>(c => c.UseSerialization<NewtonsoftJsonSerializer>());
+            public Receiver() => EndpointSetup<DefaultServer>();
 
             public class MyMessageHandler : IHandleMessages<MyMessage>
             {

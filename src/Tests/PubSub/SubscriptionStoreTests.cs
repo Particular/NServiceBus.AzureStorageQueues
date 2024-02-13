@@ -1,7 +1,6 @@
 namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
     using global::Azure.Data.Tables;
