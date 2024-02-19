@@ -58,4 +58,4 @@ jobs:
           connection-string-name: AzureStorageQueueTransport_ConnectionString_2
           tag: ASQTransport
       - name: Run tests
-        uses: Particular/run-tests-action@v1.6.0
+        uses: Particular/run-tests-action@v1.7.0
