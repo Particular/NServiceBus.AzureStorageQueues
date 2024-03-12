@@ -143,8 +143,6 @@ namespace NServiceBus
             Guard.AgainstNull(nameof(receiversSettings), receiversSettings);
             Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
 
-            ValidateReceiversSettings(receiversSettings);
-
             var localAccountInfo = new AccountInfo("", queueServiceClientProvider.Client, tableServiceClientProvider.Client);
 
             var azureStorageAddressing = new AzureStorageAddressingSettings(QueueAddressGenerator,
@@ -232,6 +230,15 @@ namespace NServiceBus
                     ?? hostSettings.CoreSettings?.GetOrDefault<string>(ErrorQueueSettings.SettingsKey)
                     ?? receiversSettings.Select(settings => settings.ErrorQueue).FirstOrDefault();
 
+                var isSendOnly = receiversSettings.Length == 0;
+                if (isSendOnly && string.IsNullOrWhiteSpace(nativeDelayedDeliveryErrorQueue))
+                {
+                    throw new Exception("Send only endpoints require a native delayed poison queue." +
+                                        " Configure a user defined poison queue for delayed deliveries by using the" +
+                                        $" {nameof(AzureStorageQueueTransport)}.{nameof(DelayedDelivery)}" +
+                                        $".{nameof(DelayedDelivery.DelayedDeliveryPoisonQueue)} property.");
+                }
+
                 nativeDelayedDeliveryProcessor = new NativeDelayedDeliveryProcessor(
                         dispatcher,
                         delayedMessagesStorageTableClient,
@@ -303,18 +310,6 @@ namespace NServiceBus
             });
 
             return infrastructure;
-        }
-
-        void ValidateReceiversSettings(ReceiveSettings[] receivers)
-        {
-            var isSendOnly = receivers.Length == 0;
-            if (SupportsDelayedDelivery && isSendOnly && string.IsNullOrWhiteSpace(DelayedDelivery.DelayedDeliveryPoisonQueue))
-            {
-                throw new Exception("Send only endpoints require a native delayed poison queue." +
-                                    " Configure a user defined poison queue for delayed deliveries by using the" +
-                                    $" {nameof(AzureStorageQueueTransport)}.{nameof(DelayedDelivery)}" +
-                                    $".{nameof(DelayedDelivery.DelayedDeliveryPoisonQueue)} property.");
-            }
         }
 
         static async Task<TableClient> EnsureNativeDelayedDeliveryTable(string endpointName, string delayedDeliveryTableName, TableServiceClient tableServiceClient, bool setupInfrastructure, CancellationToken cancellationToken)
