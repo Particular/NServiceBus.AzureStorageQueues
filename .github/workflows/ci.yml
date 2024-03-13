@@ -58,7 +58,7 @@ jobs:
           connection-string-name: AzureStorageQueueTransport_ConnectionString
           tag: ASQTransport
       - name: Setup Azure Storage Account 2
-        uses: Particular/setup-azurestorage-action@v1.1.0
+        uses: Particular/setup-azurestorage-action@v1.2.0
         with:
           connection-string-name: AzureStorageQueueTransport_ConnectionString_2
           tag: ASQTransport
