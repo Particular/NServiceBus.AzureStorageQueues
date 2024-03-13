@@ -12,6 +12,7 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
+    using NServiceBus.Configuration.AdvancedExtensibility;
     using NUnit.Framework;
 
     public class When_receiving_a_raw_json_message : NServiceBusAcceptanceTest
@@ -24,6 +25,8 @@
                 {
                     b.CustomConfig((cfg, context) =>
                     {
+                        // Hack to get serializer settings in unwrapper to use TypeNameHandling.Auto
+                        cfg.GetSettings().Set("NServiceBus.Newtonsoft.Json.Settings", new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
                         cfg.UseSerialization<NewtonsoftJsonSerializer>();
                         cfg.ConfigureAsqTransport()
                             .UnwrapMessagesWith(message => MyCustomUnwrapper(message, context.TestRunId));
