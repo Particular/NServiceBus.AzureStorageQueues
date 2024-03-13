@@ -121,7 +121,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public Receiver() => EndpointSetup<DefaultServer>(c =>
             {
-                c.UseSerialization<NewtonsoftSerializer>();
+                c.UseSerialization<NewtonsoftJsonSerializer>();
                 c.SendFailedMessagesTo(Conventions.EndpointNamingConvention(typeof(ErrorSpy)));
             });
 
@@ -138,7 +138,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         {
             public ErrorSpy() => EndpointSetup<DefaultServer>(config =>
             {
-                config.UseSerialization<NewtonsoftSerializer>();
+                config.UseSerialization<NewtonsoftJsonSerializer>();
                 config.LimitMessageProcessingConcurrencyTo(1);
             });
 

@@ -6,9 +6,9 @@
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using MessageInterfaces;
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
-    using MessageInterfaces;
     using NServiceBus.Configuration.AdvancedExtensibility;
     using NServiceBus.Serialization;
     using NUnit.Framework;
@@ -43,7 +43,7 @@
             {
                 EndpointSetup<DefaultServer>(e =>
                 {
-                    e.UseSerialization<NewtonsoftSerializer>();
+                    e.UseSerialization<NewtonsoftJsonSerializer>();
                     e.GetSettings().Set("Transport.AzureStorageQueue.MessageWrapperSerializationDefinition", new TestIndependence.TestIdAppendingSerializationDefinition<CustomSerializer>());
                 });
             }

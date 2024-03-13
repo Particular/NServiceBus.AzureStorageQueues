@@ -6,12 +6,12 @@
     using System.Linq;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using NServiceBus.AcceptanceTests;
-    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
     using global::Newtonsoft.Json;
     using global::Newtonsoft.Json.Linq;
+    using NServiceBus.AcceptanceTests;
+    using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NUnit.Framework;
 
     public class When_sending_messages_with_mapped_account_names : NServiceBusAcceptanceTest
@@ -137,7 +137,7 @@
             {
                 EndpointSetup<DefaultServer>(cfg =>
                 {
-                    cfg.UseSerialization<NewtonsoftSerializer>();
+                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
                     cfg.UseTransport<AzureStorageQueueTransport>()
                         .DefaultAccountAlias(DefaultConnectionStringName)
                         .AccountRouting()
@@ -153,7 +153,7 @@
             {
                 EndpointSetup<DefaultPublisher>(cfg =>
                 {
-                    cfg.UseSerialization<NewtonsoftSerializer>();
+                    cfg.UseSerialization<NewtonsoftJsonSerializer>();
                     var extensions = cfg.UseTransport<AzureStorageQueueTransport>();
 
                     Setup(extensions);
