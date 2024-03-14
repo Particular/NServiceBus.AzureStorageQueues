@@ -12,7 +12,6 @@
     using NServiceBus.AcceptanceTests;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
-    using NServiceBus.Configuration.AdvancedExtensibility;
     using NUnit.Framework;
 
     public class When_receiving_a_raw_json_message : NServiceBusAcceptanceTest
