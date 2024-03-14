@@ -25,9 +25,9 @@
                 {
                     b.CustomConfig((cfg, context) =>
                     {
-                        // Hack to get serializer settings in unwrapper to use TypeNameHandling.Auto
-                        cfg.GetSettings().Set("NServiceBus.Newtonsoft.Json.Settings", new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
-                        cfg.UseSerialization<NewtonsoftJsonSerializer>();
+                        // Need to use TypeNameHandling.Auto to be able to deserialize raw JSON with embedded "$type"
+                        var serialization = cfg.UseSerialization<NewtonsoftJsonSerializer>();
+                        serialization.Settings(new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
                         cfg.ConfigureAsqTransport()
                             .UnwrapMessagesWith(message => MyCustomUnwrapper(message, context.TestRunId));
                     });
