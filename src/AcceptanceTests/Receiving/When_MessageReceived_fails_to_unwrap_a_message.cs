@@ -47,7 +47,7 @@
                 EndpointSetup<DefaultServer>(config =>
                 {
                     config.SendFailedMessagesTo(AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(ErrorSpy)));
-                    config.UseSerialization<NewtonsoftSerializer>();
+                    config.UseSerialization<NewtonsoftJsonSerializer>();
                     config.LimitMessageProcessingConcurrencyTo(1);
                     var transport = config.ConfigureAsqTransport();
                     transport.UnwrapMessagesWith(message => throw new Exception("Custom unwrapper failed"));
@@ -63,7 +63,7 @@
                 EndpointSetup<DefaultServer>(config =>
                 {
                     var transport = config.ConfigureAsqTransport();
-                    config.UseSerialization<NewtonsoftSerializer>();
+                    config.UseSerialization<NewtonsoftJsonSerializer>();
                     transport.DelayedDelivery().DisableDelayedDelivery();
                 });
             }
