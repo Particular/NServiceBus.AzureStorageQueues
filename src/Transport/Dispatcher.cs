@@ -27,8 +27,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             int totalNumberOfOperations = outgoingMessages.UnicastTransportOperations.Count + outgoingMessages.MulticastTransportOperations.Count;
 
+#pragma warning disable PS0025 // Dictionary keys should implement IEquatable<T> - Constructor includes IEqualityComparer
             var unicastOperations = new HashSet<UnicastTransportOperation>(totalNumberOfOperations, MessageIdAndDestinationEqualityComparer.Instance);
             unicastOperations.AddRange(outgoingMessages.UnicastTransportOperations);
+#pragma warning restore PS0025 // Dictionary keys should implement IEquatable<T>
 
             foreach (var multicastTransportOperation in outgoingMessages.MulticastTransportOperations)
             {
