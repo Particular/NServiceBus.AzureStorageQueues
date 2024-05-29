@@ -58,7 +58,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                         var sendOptions = new SendOptions();
                         sendOptions.RouteToThisEndpoint();
                         sendOptions.DelayDeliveryWith(TimeSpan.FromMilliseconds(500));
-                        return session.Send(new MyCommand());
+                        return session.Send(new MyCommand(), sendOptions);
                     });
                 })
                 .WithEndpoint<Subscriber>(b =>
