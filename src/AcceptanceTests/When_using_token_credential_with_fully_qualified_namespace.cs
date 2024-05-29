@@ -5,6 +5,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AzureStorageQueues;
+    using global::Azure.Core.Diagnostics;
     using global::Azure.Data.Tables;
     using global::Azure.Identity;
     using global::Azure.Storage.Blobs;
@@ -31,12 +32,17 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         [Test]
         public async Task Should_work()
         {
+            using var listener = AzureEventSourceListener.CreateConsoleLogger();
+
             var context = await Scenario.Define<Context>()
                 .WithEndpoint<Publisher>(b =>
                 {
                     b.CustomConfig(c =>
                     {
-                        var defaultAzureCredential = new DefaultAzureCredential();
+                        var defaultAzureCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+                        {
+                            Diagnostics = { IsLoggingEnabled = true }
+                        });
                         var transport = new AzureStorageQueueTransport(new QueueServiceClient(
                                 new Uri(string.Format(baseUrlTemplate, "queue")),
                                 defaultAzureCredential),
@@ -59,7 +65,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 {
                     b.CustomConfig(c =>
                     {
-                        var defaultAzureCredential = new DefaultAzureCredential();
+                        var defaultAzureCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+                        {
+                            Diagnostics = { IsLoggingEnabled = true }
+                        });
                         var transport = new AzureStorageQueueTransport(new QueueServiceClient(
                                 new Uri(
                                     $"https://{connectionStringSettings[ConnectionStringParser.AccountNameSettingString]}.queue.{connectionStringSettings[ConnectionStringParser.EndpointSuffixSettingString]}"),
