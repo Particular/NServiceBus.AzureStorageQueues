@@ -1,11 +1,9 @@
 namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AzureStorageQueues;
-    using global::Azure.Core.Diagnostics;
     using global::Azure.Data.Tables;
     using global::Azure.Identity;
     using global::Azure.Storage.Blobs;
@@ -17,14 +15,13 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 
     public class When_using_token_credential_with_uri : NServiceBusAcceptanceTest
     {
-        IDictionary<string, string> connectionStringSettings;
         string baseUrlTemplate;
 
         [SetUp]
         public void Setup()
         {
             var connectionString = Utilities.GetEnvConfiguredConnectionString();
-            connectionStringSettings = ConnectionStringParser.ParseStringIntoSettings(connectionString, s => { });
+            var connectionStringSettings = ConnectionStringParser.ParseStringIntoSettings(connectionString, s => { });
 
             baseUrlTemplate = $"https://{connectionStringSettings[ConnectionStringParser.AccountNameSettingString]}.{{0}}.{connectionStringSettings[ConnectionStringParser.EndpointSuffixSettingString]}";
         }
@@ -32,26 +29,13 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         [Test]
         public async Task Should_work()
         {
-            using var listener = AzureEventSourceListener.CreateConsoleLogger();
-
             var context = await Scenario.Define<Context>()
                 .WithEndpoint<Publisher>(b =>
                 {
                     b.CustomConfig(c =>
                     {
-                        var defaultAzureCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
-                        {
-                            Diagnostics = { IsLoggingEnabled = true }
-                        });
-                        var transport = new AzureStorageQueueTransport(new QueueServiceClient(
-                                new Uri(string.Format(baseUrlTemplate, "queue")),
-                                defaultAzureCredential),
-                            new BlobServiceClient(new Uri(string.Format(baseUrlTemplate, "blob")),
-                                defaultAzureCredential),
-                            new TableServiceClient(new Uri(string.Format(baseUrlTemplate, "table")),
-                                defaultAzureCredential));
-                        var transportWithDefaults = Utilities.SetTransportDefaultTestsConfiguration(transport);
-                        c.UseTransport(transportWithDefaults);
+                        var transport = CreateTransportWithDefaultAzureCredential();
+                        c.UseTransport(transport);
                     });
                     b.When(session =>
                     {
@@ -65,26 +49,24 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 {
                     b.CustomConfig(c =>
                     {
-                        var defaultAzureCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
-                        {
-                            Diagnostics = { IsLoggingEnabled = true }
-                        });
-                        var transport = new AzureStorageQueueTransport(new QueueServiceClient(
-                                new Uri(
-                                    $"https://{connectionStringSettings[ConnectionStringParser.AccountNameSettingString]}.queue.{connectionStringSettings[ConnectionStringParser.EndpointSuffixSettingString]}"),
-                                defaultAzureCredential),
-                            new BlobServiceClient(new Uri($"https://{connectionStringSettings[ConnectionStringParser.AccountNameSettingString]}.blob.{connectionStringSettings[ConnectionStringParser.EndpointSuffixSettingString]}"),
-                                defaultAzureCredential),
-                            new TableServiceClient(new Uri($"https://{connectionStringSettings[ConnectionStringParser.AccountNameSettingString]}.table.{connectionStringSettings[ConnectionStringParser.EndpointSuffixSettingString]}"),
-                                defaultAzureCredential));
-                        var transportWithDefaults = Utilities.SetTransportDefaultTestsConfiguration(transport);
-                        c.UseTransport(transportWithDefaults);
+                        var transport = CreateTransportWithDefaultAzureCredential();
+                        c.UseTransport(transport);
                     });
                 })
                 .Done(c => c.SubscriberGotEvent)
                 .Run();
 
             Assert.True(context.SubscriberGotEvent);
+        }
+
+        AzureStorageQueueTransport CreateTransportWithDefaultAzureCredential()
+        {
+            var defaultAzureCredential = new DefaultAzureCredential();
+            var transport = new AzureStorageQueueTransport(new QueueServiceClient(new Uri(string.Format(baseUrlTemplate, "queue")), defaultAzureCredential),
+                new BlobServiceClient(new Uri(string.Format(baseUrlTemplate, "blob")), defaultAzureCredential),
+                new TableServiceClient(new Uri(string.Format(baseUrlTemplate, "table")), defaultAzureCredential));
+
+            return Utilities.SetTransportDefaultTestsConfiguration(transport);
         }
 
         public class Context : ScenarioContext
