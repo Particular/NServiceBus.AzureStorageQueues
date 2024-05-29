@@ -62,10 +62,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
         AzureStorageQueueTransport CreateTransportWithDefaultAzureCredential()
         {
             var defaultAzureCredential = new DefaultAzureCredential();
-            var transport = new AzureStorageQueueTransport(new QueueServiceClient(new Uri(string.Format(baseUrlTemplate, "queue")), defaultAzureCredential),
+            var transport = new AzureStorageQueueTransport(
+                new QueueServiceClient(new Uri(string.Format(baseUrlTemplate, "queue")), defaultAzureCredential),
                 new BlobServiceClient(new Uri(string.Format(baseUrlTemplate, "blob")), defaultAzureCredential),
-                new TableServiceClient(new Uri(string.Format(baseUrlTemplate, "table")), defaultAzureCredential));
-
+                new TableServiceClient(new Uri(string.Format(baseUrlTemplate, "table")), defaultAzureCredential)
+            );
             return Utilities.SetTransportDefaultTestsConfiguration(transport);
         }
 
