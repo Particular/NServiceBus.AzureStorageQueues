@@ -371,7 +371,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         /// <param name="connectionString">The string to parse.</param>
         /// <param name="error">Error reporting delegate.</param>
         /// <returns>Tokenized collection.</returns>
-        static IDictionary<string, string> ParseStringIntoSettings(string connectionString, Action<string> error)
+        internal static IDictionary<string, string> ParseStringIntoSettings(string connectionString, Action<string> error)
         {
             IDictionary<string, string> settings = new Dictionary<string, string>();
             string[] splitted = connectionString.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
