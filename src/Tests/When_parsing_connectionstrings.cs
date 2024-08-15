@@ -43,8 +43,8 @@
         [TestCase(default(string))]
         public void Should_not_parse_whitespace_queue_name(string name)
         {
-            Assert.IsFalse(QueueAddress.TryParse(name, false, out var queue));
-            Assert.IsFalse(queue.HasValue);
+            Assert.That(QueueAddress.TryParse(name, false, out var queue), Is.False);
+            Assert.That(queue.HasValue, Is.False);
         }
     }
 }

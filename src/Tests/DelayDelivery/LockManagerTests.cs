@@ -35,7 +35,7 @@
             var manager2 = GetLockManager(id);
 
             await manager1.TryLockOrRenew().ConfigureAwait(false);
-            Assert.IsFalse(await manager2.TryLockOrRenew().ConfigureAwait(false));
+            Assert.That(await manager2.TryLockOrRenew().ConfigureAwait(false), Is.False);
         }
 
         [Test]

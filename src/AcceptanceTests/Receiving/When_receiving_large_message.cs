@@ -56,8 +56,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .Done(c => c.MessageMovedToTheErrorQueue)
                 .Run();
 
-            Assert.IsFalse(ctx.IsFailedQHeaderPresent, "IsFailedQHeaderPresent");
-            Assert.IsFalse(ctx.IsExceptionTypeHeaderPresent, "IsExceptionTypeHeaderPresent");
+            Assert.That(ctx.IsFailedQHeaderPresent, Is.False, "IsFailedQHeaderPresent");
+            Assert.That(ctx.IsExceptionTypeHeaderPresent, Is.False, "IsExceptionTypeHeaderPresent");
         }
 
         [Test]
