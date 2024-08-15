@@ -67,7 +67,7 @@
                 .Done(c => c.Received)
                 .Run();
 
-            Assert.IsTrue(ctx.Received);
+            Assert.That(ctx.Received, Is.True);
 
             return await RawMessageReceiver.Receive(destinationConnectionString, AuditQueueName, ctx.TestRunId.ToString(), cancellationToken);
         }

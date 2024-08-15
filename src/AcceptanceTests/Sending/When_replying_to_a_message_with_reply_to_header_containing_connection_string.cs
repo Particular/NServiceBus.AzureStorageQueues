@@ -29,7 +29,7 @@
                 .Done(c => c.ReplyReceived)
                 .Run().ConfigureAwait(false);
 
-            Assert.IsTrue(context.ReplyReceived);
+            Assert.That(context.ReplyReceived, Is.True);
         }
 
         const string SenderAlias = "sender";
