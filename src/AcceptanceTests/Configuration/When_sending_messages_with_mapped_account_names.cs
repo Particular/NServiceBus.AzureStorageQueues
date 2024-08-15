@@ -31,10 +31,13 @@
 
             var envelope = await SendMessage<ReceiverUsingOneMappedConnectionString>(connectionString, ReceiverName);
 
-            Assert.That(envelope.Headers.Values.Any(v => v.Contains(connectionString)), Is.False, "Message headers should not include the raw connection string");
-            Assert.That(envelope.Headers[Headers.OriginatingEndpoint], Is.EqualTo(SenderName));
-            Assert.That(envelope.ReplyToAddress, Is.EqualTo(SenderName));
-            Assert.That(envelope.Headers[Headers.ReplyToAddress], Is.EqualTo(SenderName));
+            Assert.Multiple(() =>
+            {
+                Assert.That(envelope.Headers.Values.Any(v => v.Contains(connectionString)), Is.False, "Message headers should not include the raw connection string");
+                Assert.That(envelope.Headers[Headers.OriginatingEndpoint], Is.EqualTo(SenderName));
+                Assert.That(envelope.ReplyToAddress, Is.EqualTo(SenderName));
+                Assert.That(envelope.Headers[Headers.ReplyToAddress], Is.EqualTo(SenderName));
+            });
         }
 
         [Test]
@@ -44,13 +47,19 @@
 
             var envelope = await SendMessage<ReceiverUsingMappedConnectionStrings>(connectionString, $"{ReceiverName}@{AnotherConnectionStringName}");
 
-            Assert.That(envelope.Headers.Values.Any(v => v.Contains(connectionString)), Is.False, "Message headers should not include the raw connection string");
-            Assert.That(envelope.Headers[Headers.OriginatingEndpoint], Is.EqualTo(SenderName));
+            Assert.Multiple(() =>
+            {
+                Assert.That(envelope.Headers.Values.Any(v => v.Contains(connectionString)), Is.False, "Message headers should not include the raw connection string");
+                Assert.That(envelope.Headers[Headers.OriginatingEndpoint], Is.EqualTo(SenderName));
+            });
 
             var replyToAddress = $"{SenderName}@{DefaultConnectionStringName}";
 
-            Assert.That(envelope.Headers[Headers.ReplyToAddress], Is.EqualTo(replyToAddress));
-            Assert.That(envelope.ReplyToAddress, Is.EqualTo(replyToAddress));
+            Assert.Multiple(() =>
+            {
+                Assert.That(envelope.Headers[Headers.ReplyToAddress], Is.EqualTo(replyToAddress));
+                Assert.That(envelope.ReplyToAddress, Is.EqualTo(replyToAddress));
+            });
         }
 
         static async Task<MessageWrapper> SendMessage<TReceiver>(string destinationConnectionString, string destination, CancellationToken cancellationToken = default)

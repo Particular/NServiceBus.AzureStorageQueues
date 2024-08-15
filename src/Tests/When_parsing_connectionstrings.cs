@@ -13,8 +13,11 @@
             const string queueAddressAsString = "myqueue@alias";
             var q = QueueAddress.Parse(queueAddressAsString);
 
-            Assert.That(q.QueueName, Is.EqualTo("myqueue"));
-            Assert.That(q.Alias, Is.EqualTo("alias"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(q.QueueName, Is.EqualTo("myqueue"));
+                Assert.That(q.Alias, Is.EqualTo("alias"));
+            });
         }
 
         [Test]
@@ -34,8 +37,11 @@
 
             var address = QueueAddress.Parse(queue, true);
 
-            Assert.That(address.QueueName, Is.EqualTo(queueName));
-            Assert.That(address.Alias, Is.EqualTo(connectionString));
+            Assert.Multiple(() =>
+            {
+                Assert.That(address.QueueName, Is.EqualTo(queueName));
+                Assert.That(address.Alias, Is.EqualTo(connectionString));
+            });
         }
 
         [TestCase("@accountName")]
@@ -43,8 +49,11 @@
         [TestCase(default(string))]
         public void Should_not_parse_whitespace_queue_name(string name)
         {
-            Assert.That(QueueAddress.TryParse(name, false, out var queue), Is.False);
-            Assert.That(queue.HasValue, Is.False);
+            Assert.Multiple(() =>
+            {
+                Assert.That(QueueAddress.TryParse(name, false, out var queue), Is.False);
+                Assert.That(queue.HasValue, Is.False);
+            });
         }
     }
 }

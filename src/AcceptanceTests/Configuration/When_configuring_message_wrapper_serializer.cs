@@ -24,9 +24,12 @@
                 .Done(c => c.InvokedHandler)
                 .Run();
 
-            Assert.That(context.InvokedHandler, Is.True);
-            Assert.That(context.SerializedWrapper, Is.True);
-            Assert.That(context.DeserializedWrapper, Is.True);
+            Assert.Multiple(() =>
+            {
+                Assert.That(context.InvokedHandler, Is.True);
+                Assert.That(context.SerializedWrapper, Is.True);
+                Assert.That(context.DeserializedWrapper, Is.True);
+            });
         }
 
         class Context : ScenarioContext

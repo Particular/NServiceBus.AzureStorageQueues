@@ -37,8 +37,11 @@
 
             var replyToAddress = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize(senderEndpointName);
 
-            Assert.That(envelope.ReplyToAddress, Is.EqualTo(replyToAddress));
-            Assert.That(envelope.Headers[Headers.ReplyToAddress], Is.EqualTo(replyToAddress));
+            Assert.Multiple(() =>
+            {
+                Assert.That(envelope.ReplyToAddress, Is.EqualTo(replyToAddress));
+                Assert.That(envelope.Headers[Headers.ReplyToAddress], Is.EqualTo(replyToAddress));
+            });
         }
 
         public class Context : ScenarioContext

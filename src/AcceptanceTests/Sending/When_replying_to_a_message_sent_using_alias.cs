@@ -22,8 +22,11 @@
                 .Done(c => c.IsDone)
                 .Run();
 
-            Assert.That(context.ReceiverWasCalled, Is.True);
-            Assert.That(context.ReplyMessageReceived, Is.True);
+            Assert.Multiple(() =>
+            {
+                Assert.That(context.ReceiverWasCalled, Is.True);
+                Assert.That(context.ReplyMessageReceived, Is.True);
+            });
         }
 
         const string SenderAlias = "sender";
