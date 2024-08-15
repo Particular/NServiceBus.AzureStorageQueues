@@ -13,8 +13,8 @@
             const string queueAddressAsString = "myqueue@alias";
             var q = QueueAddress.Parse(queueAddressAsString);
 
-            Assert.That("myqueue", Is.EqualTo(q.QueueName));
-            Assert.That("alias", Is.EqualTo(q.Alias));
+            Assert.That(q.QueueName, Is.EqualTo("myqueue"));
+            Assert.That(q.Alias, Is.EqualTo("alias"));
         }
 
         [Test]
