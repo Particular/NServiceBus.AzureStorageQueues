@@ -16,7 +16,7 @@
         {
             var ctx = await RunScenario();
 
-            Assert.IsNotNull(ctx.Headers);
+            Assert.That(ctx.Headers, Is.Not.Null);
             CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.ExceptionInfo.ExceptionType");
             CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.ExceptionInfo.HelpLink");
             CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.ExceptionInfo.Message");
@@ -30,7 +30,7 @@
         {
             var ctx = await RunScenario();
 
-            Assert.IsNotNull(ctx.Headers);
+            Assert.That(ctx.Headers, Is.Not.Null);
             CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.FailedQ");
             Assert.That(ctx.Headers["NServiceBus.FailedQ"], Is.EqualTo("notexist"));
         }
