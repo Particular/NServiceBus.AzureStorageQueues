@@ -33,7 +33,7 @@
                 await foreach (var dte in delayedMessagesTableClient.QueryAsync<TableEntity>())
                 {
                     var result = await delayedMessagesTableClient.DeleteEntityAsync(dte.PartitionKey, dte.RowKey).ConfigureAwait(false);
-                    Assert.That(result.IsError, Is.False, "Error {0}:{1} trying to delete {2}:{3} from {4} table", result.Status, result.ReasonPhrase, dte.PartitionKey, dte.RowKey, SenderDelayedMessagesTable);
+                    Assert.That(result.IsError, Is.False, $"Error {result.Status}:{result.ReasonPhrase} trying to delete {dte.PartitionKey}:{dte.RowKey} from {SenderDelayedMessagesTable} table");
                 }
             }
         }
