@@ -62,7 +62,7 @@
             // 5 | 4 | 10
             // 6 | 5 | 15
             // 7 | 6 | 21 <- this is the boundary
-            Assert.LessOrEqual(requestCount, 7);
+            Assert.That(requestCount, Is.LessThanOrEqualTo(7));
         }
 
         [Test]
