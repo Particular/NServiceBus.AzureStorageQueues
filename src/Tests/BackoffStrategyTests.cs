@@ -23,7 +23,7 @@
 
             var lowerBoundary = (int)(peekInterval.TotalMilliseconds * (emptyBatchCount - 1));
             var delay = Task.Delay(lowerBoundary);
-            Assert.AreSame(delay, await Task.WhenAny(strategy.OnBatch(0), delay));
+            Assert.That(await Task.WhenAny(strategy.OnBatch(0), delay), Is.SameAs(delay));
         }
 
         [Test]
