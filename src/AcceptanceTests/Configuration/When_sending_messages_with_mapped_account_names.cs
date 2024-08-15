@@ -31,7 +31,7 @@
 
             var envelope = await SendMessage<ReceiverUsingOneMappedConnectionString>(connectionString, ReceiverName);
 
-            Assert.False(envelope.Headers.Values.Any(v => v.Contains(connectionString)), "Message headers should not include the raw connection string");
+            Assert.That(envelope.Headers.Values.Any(v => v.Contains(connectionString)), Is.False, "Message headers should not include the raw connection string");
             Assert.AreEqual(SenderName, envelope.Headers[Headers.OriginatingEndpoint]);
             Assert.AreEqual(SenderName, envelope.ReplyToAddress);
             Assert.AreEqual(SenderName, envelope.Headers[Headers.ReplyToAddress]);
@@ -44,7 +44,7 @@
 
             var envelope = await SendMessage<ReceiverUsingMappedConnectionStrings>(connectionString, $"{ReceiverName}@{AnotherConnectionStringName}");
 
-            Assert.False(envelope.Headers.Values.Any(v => v.Contains(connectionString)), "Message headers should not include the raw connection string");
+            Assert.That(envelope.Headers.Values.Any(v => v.Contains(connectionString)), Is.False, "Message headers should not include the raw connection string");
             Assert.AreEqual(SenderName, envelope.Headers[Headers.OriginatingEndpoint]);
 
             var replyToAddress = $"{SenderName}@{DefaultConnectionStringName}";
