@@ -39,7 +39,7 @@
 
             var task = strategy.OnBatch(1);
 
-            Assert.True(task.IsCompleted);
+            Assert.That(task.IsCompleted, Is.True);
         }
     }
 }

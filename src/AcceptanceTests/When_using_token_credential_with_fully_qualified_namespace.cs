@@ -56,7 +56,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .Done(c => c.SubscriberGotEvent)
                 .Run();
 
-            Assert.True(context.SubscriberGotEvent);
+            Assert.That(context.SubscriberGotEvent, Is.True);
         }
 
         AzureStorageQueueTransport CreateTransportWithDefaultAzureCredential()

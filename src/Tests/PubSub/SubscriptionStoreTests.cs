@@ -56,8 +56,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
                 typeof(MyOtherUnrelatedEvent).FullName,
             }, topics);
 
-            Assert.True(entities.All(e => e.RowKey == "endpointName"), "The row key must match the endpoint name");
-            Assert.True(entities.All(e => e["Address"].ToString() == "localaddress"), "The address must match the local address");
+            Assert.That(entities.All(e => e.RowKey == "endpointName"), Is.True, "The row key must match the endpoint name");
+            Assert.That(entities.All(e => e["Address"].ToString() == "localaddress"), Is.True, "The address must match the local address");
         }
 
         [Test]

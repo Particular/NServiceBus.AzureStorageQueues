@@ -23,7 +23,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                 .Done(c => c.GotTheEvent)
                 .Run(TimeSpan.FromSeconds(30));
 
-            Assert.True(publisherMigrated.GotTheEvent);
+            Assert.That(publisherMigrated.GotTheEvent, Is.True);
         }
 
         public class Context : ScenarioContext

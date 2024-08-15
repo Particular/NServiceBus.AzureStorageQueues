@@ -86,7 +86,7 @@
                 .Done(c => c.WasCalled)
                 .Run().ConfigureAwait(false);
 
-            Assert.True(context.WasCalled, "The message should have been moved to the error queue");
+            Assert.That(context.WasCalled, Is.True, "The message should have been moved to the error queue");
         }
 
         async Task MoveBeforeNow(TableEntity original, CancellationToken cancellationToken = default)
