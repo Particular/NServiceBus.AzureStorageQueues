@@ -176,7 +176,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
             var expectedString = string.Join(";", expected.Select(x => x.BatchSize));
             var resultString = string.Join(";", result.Select(x => x.BatchSize));
 
-            CollectionAssert.AreEquivalent(expected, result, $"Expected: {expectedString}\r\nResult: {resultString}");
+            Assert.That(result, Is.EquivalentTo(expected), $"Expected: {expectedString}\r\nResult: {resultString}");
         }
 
         [Test]
@@ -188,7 +188,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
             var expectedString = string.Join(";", expected.Select(x => x.BatchSize));
             var resultString = string.Join(";", result.Select(x => x.BatchSize));
 
-            CollectionAssert.AreEquivalent(expected, result, $"Expected: {expectedString}\r\nResult: {resultString}");
+            Assert.That(result, Is.EquivalentTo(expected), $"Expected: {expectedString}\r\nResult: {resultString}");
         }
 
         [Test]
@@ -200,7 +200,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
             var expectedString = string.Join(";", expected.Select(x => x.BatchSize));
             var resultString = string.Join(";", result.Select(x => x.BatchSize));
 
-            CollectionAssert.AreEquivalent(expected, result, $"Expected: {expectedString}\r\nResult: {resultString}");
+            Assert.That(result, Is.EquivalentTo(expected), $"Expected: {expectedString}\r\nResult: {resultString}");
         }
 
         [Test]
@@ -212,7 +212,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
             var expectedString = string.Join(";", expected.Select(x => x.BatchSize));
             var resultString = string.Join(";", result.Select(x => x.BatchSize));
 
-            CollectionAssert.AreEquivalent(expected, result, $"Expected: {expectedString}\r\nResult: {resultString}");
+            Assert.That(result, Is.EquivalentTo(expected), $"Expected: {expectedString}\r\nResult: {resultString}");
         }
     }
 }

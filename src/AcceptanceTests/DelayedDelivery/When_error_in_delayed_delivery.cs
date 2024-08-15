@@ -17,12 +17,12 @@
             var ctx = await RunScenario();
 
             Assert.That(ctx.Headers, Is.Not.Null);
-            CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.ExceptionInfo.ExceptionType");
-            CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.ExceptionInfo.HelpLink");
-            CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.ExceptionInfo.Message");
-            CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.ExceptionInfo.Source");
-            CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.ExceptionInfo.StackTrace");
-            CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.TimeOfFailure");
+            Assert.That(ctx.Headers.Keys, Has.Member("NServiceBus.ExceptionInfo.ExceptionType"));
+            Assert.That(ctx.Headers.Keys, Has.Member("NServiceBus.ExceptionInfo.HelpLink"));
+            Assert.That(ctx.Headers.Keys, Has.Member("NServiceBus.ExceptionInfo.Message"));
+            Assert.That(ctx.Headers.Keys, Has.Member("NServiceBus.ExceptionInfo.Source"));
+            Assert.That(ctx.Headers.Keys, Has.Member("NServiceBus.ExceptionInfo.StackTrace"));
+            Assert.That(ctx.Headers.Keys, Has.Member("NServiceBus.TimeOfFailure"));
         }
 
         [Test]
@@ -31,7 +31,7 @@
             var ctx = await RunScenario();
 
             Assert.That(ctx.Headers, Is.Not.Null);
-            CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.FailedQ");
+            Assert.That(ctx.Headers.Keys, Has.Member("NServiceBus.FailedQ"));
             Assert.That(ctx.Headers["NServiceBus.FailedQ"], Is.EqualTo("notexist"));
         }
 
