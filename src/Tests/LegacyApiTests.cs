@@ -38,16 +38,16 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
             transport.DelayedDelivery().UseTableName(expectedDelayedDeliveryTableName);
             transport.AccountRouting().DefaultAccountAlias = expectedDefaultAccountAlias;
 
-            Assert.AreEqual(expectedMessageInvisibleTime, transport.Transport.MessageInvisibleTime);
-            Assert.AreEqual(expectedPeekInterval, transport.Transport.PeekInterval);
-            Assert.AreEqual(expectedMaximumWaitTimeWhenIdle, transport.Transport.MaximumWaitTimeWhenIdle);
+            Assert.That(transport.Transport.MessageInvisibleTime, Is.EqualTo(expectedMessageInvisibleTime));
+            Assert.That(transport.Transport.PeekInterval, Is.EqualTo(expectedPeekInterval));
+            Assert.That(transport.Transport.MaximumWaitTimeWhenIdle, Is.EqualTo(expectedMaximumWaitTimeWhenIdle));
             // Assert.AreEqual(expectedQueueNameSanitizer, transport.AsqTransport.QueueNameSanitizer);
-            Assert.AreEqual(expectedBatchSize, transport.Transport.ReceiverBatchSize);
-            Assert.AreEqual(expectedDegreeOfReceiveParallelism, transport.Transport.DegreeOfReceiveParallelism);
-            Assert.AreEqual(typeof(XmlSerializer), transport.Transport.MessageWrapperSerializationDefinition.GetType());
-            Assert.AreEqual(expectedMessagesUnwrapper, transport.Transport.MessageUnwrapper);
-            Assert.AreEqual(expectedDelayedDeliveryTableName, transport.Transport.DelayedDelivery.DelayedDeliveryTableName);
-            Assert.AreEqual(expectedDefaultAccountAlias, transport.Transport.AccountRouting.DefaultAccountAlias);
+            Assert.That(transport.Transport.ReceiverBatchSize, Is.EqualTo(expectedBatchSize));
+            Assert.That(transport.Transport.DegreeOfReceiveParallelism, Is.EqualTo(expectedDegreeOfReceiveParallelism));
+            Assert.That(transport.Transport.MessageWrapperSerializationDefinition.GetType(), Is.EqualTo(typeof(XmlSerializer)));
+            Assert.That(transport.Transport.MessageUnwrapper, Is.EqualTo(expectedMessagesUnwrapper));
+            Assert.That(transport.Transport.DelayedDelivery.DelayedDeliveryTableName, Is.EqualTo(expectedDelayedDeliveryTableName));
+            Assert.That(transport.Transport.AccountRouting.DefaultAccountAlias, Is.EqualTo(expectedDefaultAccountAlias));
         }
     }
 }

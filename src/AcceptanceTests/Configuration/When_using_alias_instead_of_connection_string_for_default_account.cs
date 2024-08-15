@@ -33,12 +33,12 @@
 
             var senderEndpointName = AcceptanceTesting.Customization.Conventions.EndpointNamingConvention(typeof(SenderEndpoint));
 
-            Assert.AreEqual(senderEndpointName, envelope.Headers[Headers.OriginatingEndpoint]);
+            Assert.That(envelope.Headers[Headers.OriginatingEndpoint], Is.EqualTo(senderEndpointName));
 
             var replyToAddress = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize(senderEndpointName);
 
-            Assert.AreEqual(replyToAddress, envelope.ReplyToAddress);
-            Assert.AreEqual(replyToAddress, envelope.Headers[Headers.ReplyToAddress]);
+            Assert.That(envelope.ReplyToAddress, Is.EqualTo(replyToAddress));
+            Assert.That(envelope.Headers[Headers.ReplyToAddress], Is.EqualTo(replyToAddress));
         }
 
         public class Context : ScenarioContext

@@ -13,8 +13,8 @@
             const string queueAddressAsString = "myqueue@alias";
             var q = QueueAddress.Parse(queueAddressAsString);
 
-            Assert.AreEqual(q.QueueName, "myqueue");
-            Assert.AreEqual(q.Alias, "alias");
+            Assert.That("myqueue", Is.EqualTo(q.QueueName));
+            Assert.That("alias", Is.EqualTo(q.Alias));
         }
 
         [Test]
@@ -34,8 +34,8 @@
 
             var address = QueueAddress.Parse(queue, true);
 
-            Assert.AreEqual(queueName, address.QueueName);
-            Assert.AreEqual(connectionString, address.Alias);
+            Assert.That(address.QueueName, Is.EqualTo(queueName));
+            Assert.That(address.Alias, Is.EqualTo(connectionString));
         }
 
         [TestCase("@accountName")]

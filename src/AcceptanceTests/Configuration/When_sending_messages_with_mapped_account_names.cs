@@ -32,9 +32,9 @@
             var envelope = await SendMessage<ReceiverUsingOneMappedConnectionString>(connectionString, ReceiverName);
 
             Assert.That(envelope.Headers.Values.Any(v => v.Contains(connectionString)), Is.False, "Message headers should not include the raw connection string");
-            Assert.AreEqual(SenderName, envelope.Headers[Headers.OriginatingEndpoint]);
-            Assert.AreEqual(SenderName, envelope.ReplyToAddress);
-            Assert.AreEqual(SenderName, envelope.Headers[Headers.ReplyToAddress]);
+            Assert.That(envelope.Headers[Headers.OriginatingEndpoint], Is.EqualTo(SenderName));
+            Assert.That(envelope.ReplyToAddress, Is.EqualTo(SenderName));
+            Assert.That(envelope.Headers[Headers.ReplyToAddress], Is.EqualTo(SenderName));
         }
 
         [Test]
@@ -45,12 +45,12 @@
             var envelope = await SendMessage<ReceiverUsingMappedConnectionStrings>(connectionString, $"{ReceiverName}@{AnotherConnectionStringName}");
 
             Assert.That(envelope.Headers.Values.Any(v => v.Contains(connectionString)), Is.False, "Message headers should not include the raw connection string");
-            Assert.AreEqual(SenderName, envelope.Headers[Headers.OriginatingEndpoint]);
+            Assert.That(envelope.Headers[Headers.OriginatingEndpoint], Is.EqualTo(SenderName));
 
             var replyToAddress = $"{SenderName}@{DefaultConnectionStringName}";
 
-            Assert.AreEqual(replyToAddress, envelope.Headers[Headers.ReplyToAddress]);
-            Assert.AreEqual(replyToAddress, envelope.ReplyToAddress);
+            Assert.That(envelope.Headers[Headers.ReplyToAddress], Is.EqualTo(replyToAddress));
+            Assert.That(envelope.ReplyToAddress, Is.EqualTo(replyToAddress));
         }
 
         static async Task<MessageWrapper> SendMessage<TReceiver>(string destinationConnectionString, string destination, CancellationToken cancellationToken = default)

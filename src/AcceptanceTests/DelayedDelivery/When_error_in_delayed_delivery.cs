@@ -32,7 +32,7 @@
 
             Assert.IsNotNull(ctx.Headers);
             CollectionAssert.Contains(ctx.Headers.Keys, "NServiceBus.FailedQ");
-            Assert.AreEqual("notexist", ctx.Headers["NServiceBus.FailedQ"]);
+            Assert.That(ctx.Headers["NServiceBus.FailedQ"], Is.EqualTo("notexist"));
         }
 
         Task<MyContext> RunScenario(CancellationToken cancellationToken = default) => Scenario.Define<MyContext>()

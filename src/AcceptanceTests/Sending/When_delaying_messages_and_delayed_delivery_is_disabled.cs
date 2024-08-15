@@ -28,7 +28,7 @@
                     .Done(ctx => true)
                     .Run());
 
-            Assert.AreEqual("Cannot delay delivery of messages when there is no infrastructure support for delayed messages.", exception.Message, "Exception message does not match");
+            Assert.That(exception.Message, Is.EqualTo("Cannot delay delivery of messages when there is no infrastructure support for delayed messages."), "Exception message does not match");
 
             Assert.That(context.WasCalled, Is.False, "Endpoint's handler should never be invoked.");
         }
