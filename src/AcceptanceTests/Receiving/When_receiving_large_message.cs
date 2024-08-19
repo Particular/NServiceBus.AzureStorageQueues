@@ -56,8 +56,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .Done(c => c.MessageMovedToTheErrorQueue)
                 .Run();
 
-            Assert.IsFalse(ctx.IsFailedQHeaderPresent, "IsFailedQHeaderPresent");
-            Assert.IsFalse(ctx.IsExceptionTypeHeaderPresent, "IsExceptionTypeHeaderPresent");
+            Assert.Multiple(() =>
+            {
+                Assert.That(ctx.IsFailedQHeaderPresent, Is.False, "IsFailedQHeaderPresent");
+                Assert.That(ctx.IsExceptionTypeHeaderPresent, Is.False, "IsExceptionTypeHeaderPresent");
+            });
         }
 
         [Test]
@@ -100,8 +103,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .Done(c => c.MessageMovedToTheErrorQueue)
                 .Run();
 
-            Assert.IsTrue(ctx.IsFailedQHeaderPresent, "IsFailedQHeaderPresent");
-            Assert.IsTrue(ctx.IsExceptionTypeHeaderPresent, "IsExceptionTypeHeaderPresent");
+            Assert.Multiple(() =>
+            {
+                Assert.That(ctx.IsFailedQHeaderPresent, Is.True, "IsFailedQHeaderPresent");
+                Assert.That(ctx.IsExceptionTypeHeaderPresent, Is.True, "IsExceptionTypeHeaderPresent");
+            });
         }
 
         class Context : ScenarioContext

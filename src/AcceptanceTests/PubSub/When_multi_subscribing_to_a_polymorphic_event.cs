@@ -28,8 +28,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                 .Done(c => c.SubscriberGotIMyEvent && c.SubscriberGotMyEvent2)
                 .Run();
 
-            Assert.True(context.SubscriberGotIMyEvent);
-            Assert.True(context.SubscriberGotMyEvent2);
+            Assert.Multiple(() =>
+            {
+                Assert.That(context.SubscriberGotIMyEvent, Is.True);
+                Assert.That(context.SubscriberGotMyEvent2, Is.True);
+            });
         }
 
         public class Context : ScenarioContext

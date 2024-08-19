@@ -41,7 +41,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                 .Done(c => c.EventReceived >= 1)
                 .Run();
 
-            Assert.AreEqual(1, context.EventReceived);
+            Assert.That(context.EventReceived, Is.EqualTo(1));
         }
 
         public class Context : ScenarioContext

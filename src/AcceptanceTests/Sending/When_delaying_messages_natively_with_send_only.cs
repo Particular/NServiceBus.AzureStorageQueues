@@ -27,7 +27,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 await foreach (var dte in delayedMessagesTableClient.QueryAsync<TableEntity>())
                 {
                     var result = await delayedMessagesTableClient.DeleteEntityAsync(dte.PartitionKey, dte.RowKey).ConfigureAwait(false);
-                    Assert.That(result.IsError, Is.False, "Error {0}:{1} trying to delete {2}:{3} from {4} table", result.Status, result.ReasonPhrase, dte.PartitionKey, dte.RowKey, SenderDelayedMessagesTable);
+                    Assert.That(result.IsError, Is.False, $"Error {result.Status}:{result.ReasonPhrase} trying to delete {dte.PartitionKey}:{dte.RowKey} from {SenderDelayedMessagesTable} table");
                 }
             }
         }
@@ -56,7 +56,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .Done(c => c.WasCalled)
                 .Run().ConfigureAwait(false);
 
-            Assert.True(context.WasCalled, "The message should have been moved to the error queue");
+            Assert.That(context.WasCalled, Is.True, "The message should have been moved to the error queue");
         }
 
         async Task MoveBeforeNow(TableEntity original, CancellationToken cancellationToken = default)

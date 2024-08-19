@@ -50,14 +50,17 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
                 .ConfigureAwait(false);
             var topics = entities.Select(x => x.PartitionKey).ToList();
 
-            CollectionAssert.AreEqual(new[]
+            Assert.That(topics, Is.EqualTo(new[]
             {
                 typeof(MyOtherEvent).FullName,
                 typeof(MyOtherUnrelatedEvent).FullName,
-            }, topics);
+            }).AsCollection);
 
-            Assert.True(entities.All(e => e.RowKey == "endpointName"), "The row key must match the endpoint name");
-            Assert.True(entities.All(e => e["Address"].ToString() == "localaddress"), "The address must match the local address");
+            Assert.Multiple(() =>
+            {
+                Assert.That(entities.All(e => e.RowKey == "endpointName"), Is.True, "The row key must match the endpoint name");
+                Assert.That(entities.All(e => e["Address"].ToString() == "localaddress"), Is.True, "The address must match the local address");
+            });
         }
 
         [Test]
@@ -82,19 +85,19 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
                 .ToListAsync()
                 .ConfigureAwait(false);
 
-            CollectionAssert.AreEqual(new[]
+            Assert.That(entities.Select(x => x.PartitionKey).ToList(), Is.EqualTo(new[]
             {
                 typeof(MyEventPublishedOnAnotherAccount).FullName,
                 typeof(MyOtherEvent).FullName,
                 typeof(MyOtherUnrelatedEvent).FullName
-            }, entities.Select(x => x.PartitionKey).ToList());
+            }).AsCollection);
 
-            CollectionAssert.AreEqual(new[]
+            Assert.That(entities.Select(x => x["Address"].ToString()).ToList(), Is.EqualTo(new[]
             {
                 "subscriberAddress@subscriber",
                 "subscriberAddress",
                 "subscriberAddress"
-            }, entities.Select(x => x["Address"].ToString()).ToList());
+            }).AsCollection);
         }
 
         [Test]
@@ -115,7 +118,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
                 .ToListAsync()
                 .ConfigureAwait(false);
 
-            CollectionAssert.AreEqual(new[] { typeof(MyOtherUnrelatedEvent).FullName }, topics);
+            Assert.That(topics, Is.EqualTo(new[] { typeof(MyOtherUnrelatedEvent).FullName }).AsCollection);
         }
 
         [Test]
@@ -142,17 +145,17 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
                 .ToListAsync()
                 .ConfigureAwait(false);
 
-            CollectionAssert.AreEqual(new[]
+            Assert.That(entities.Select(x => x.PartitionKey).ToList(), Is.EqualTo(new[]
             {
                 typeof(MyOtherEvent).FullName,
                 typeof(MyOtherUnrelatedEvent).FullName,
-            }, entities.Select(x => x.PartitionKey).ToList());
+            }).AsCollection);
 
-            CollectionAssert.AreEqual(new[]
+            Assert.That(entities.Select(x => x["Address"].ToString()).ToList(), Is.EqualTo(new[]
             {
                 "subscriberAddress",
                 "subscriberAddress"
-            }, entities.Select(x => x["Address"].ToString()).ToList());
+            }).AsCollection);
         }
 
         [Test]
@@ -168,7 +171,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
             var subcribers =
                 await subscriptionStore.GetSubscribers(typeof(MyOtherEvent));
 
-            CollectionAssert.AreEqual(new[] { "subscriberAddress" }, subcribers);
+            Assert.That(subcribers, Is.EqualTo(new[] { "subscriberAddress" }).AsCollection);
         }
 
         [Test]
@@ -183,7 +186,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
             var subcribers =
                 await subscriptionStore.GetSubscribers(typeof(MyOtherEvent));
 
-            CollectionAssert.AreEqual(new[] { "subscriberAddress" }, subcribers);
+            Assert.That(subcribers, Is.EqualTo(new[] { "subscriberAddress" }).AsCollection);
         }
 
         [Test]
@@ -206,7 +209,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
             var subcribers =
                 await subscriptionStore.GetSubscribers(typeof(MyEventPublishedOnAnotherAccount));
 
-            CollectionAssert.AreEqual(new[] { "subscriberAddress@subscriber" }, subcribers);
+            Assert.That(subcribers, Is.EqualTo(new[] { "subscriberAddress@subscriber" }).AsCollection);
         }
 
         [Test]
@@ -227,7 +230,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
             var subcribers =
                 await subscriptionStore.GetSubscribers(typeof(MyOtherEvent));
 
-            CollectionAssert.AreEqual(new[] { "subscriberAddress@subscriber" }, subcribers);
+            Assert.That(subcribers, Is.EqualTo(new[] { "subscriberAddress@subscriber" }).AsCollection);
         }
 
         [Test]

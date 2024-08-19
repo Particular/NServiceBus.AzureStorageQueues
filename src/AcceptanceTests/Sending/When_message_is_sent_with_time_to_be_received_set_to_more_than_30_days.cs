@@ -17,7 +17,7 @@
                 {
                     var exception = Assert.ThrowsAsync<InvalidOperationException>(() => bus.SendLocal(new MessageNotToBeSent()));
                     var expectedMessage = $"TimeToBeReceived is set to more than 30 days for message type '{typeof(MessageNotToBeSent).FullName}'.";
-                    Assert.AreEqual(expectedMessage, exception.Message);
+                    Assert.That(exception.Message, Is.EqualTo(expectedMessage));
                     c.ExceptionReceived = true;
 
                     return Task.CompletedTask;

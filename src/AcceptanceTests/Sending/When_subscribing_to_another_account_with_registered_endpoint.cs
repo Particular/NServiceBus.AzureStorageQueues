@@ -27,7 +27,7 @@
                  .Done(c => c.WasCalled)
                  .Run().ConfigureAwait(false);
 
-            Assert.IsTrue(context.WasCalled);
+            Assert.That(context.WasCalled, Is.True);
         }
 
         const string SubscriberAccount = "subscriber";
