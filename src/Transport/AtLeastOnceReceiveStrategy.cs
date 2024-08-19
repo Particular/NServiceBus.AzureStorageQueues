@@ -5,6 +5,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using BitFaster.Caching.Lru;
     using Extensibility;
     using global::Azure;
     using Logging;
@@ -27,22 +28,32 @@ namespace NServiceBus.Transport.AzureStorageQueues
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             var body = message.Body ?? Array.Empty<byte>();
             var contextBag = new ContextBag();
+            var nativeMessageId = message.Id;
+            if (messagesToBeDeleted.TryGet(nativeMessageId, out _))
+            {
+                await DeleteMessage(retrieved, nativeMessageId, cancellationToken).ConfigureAwait(false);
+                return;
+            }
             try
             {
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), receiveAddress, contextBag);
                 await onMessage(pushContext, cancellationToken).ConfigureAwait(false);
 
-                await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                // await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                await DeleteMessage(retrieved, nativeMessageId, cancellationToken).ConfigureAwait(false);
             }
-            catch (LeaseTimeoutException)
-            {
-                // The lease has expired and cannot be used any longer to Ack or Nack the message.
-                // see original issue: https://github.com/Azure/azure-storage-net/issues/285
-                throw;
-            }
+            //catch (LeaseTimeoutException)
+            //{
+            //    // The lease has expired and cannot be used any longer to Ack or Nack the message.
+            //    // see original issue: https://github.com/Azure/azure-storage-net/issues/285
+            //    // throw;
+            //    //set visibility time out to zero and return back to queue
+            //    await retrieved.Nack(cancellationToken).ConfigureAwait(false);
+            //}
             catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
-                var context = CreateErrorContext(retrieved, message, ex, body, receiveAddress, contextBag);
+                var deliveryAttempts = GetDeliveryAttempts(nativeMessageId);
+                var context = CreateErrorContext(message, ex, body, receiveAddress, contextBag, deliveryAttempts);
 
                 try
                 {
@@ -83,6 +94,38 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
         }
 
+
+        async Task DeleteMessage(MessageRetrieved retrieved, string nativeMessageId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+            }
+            catch (LeaseTimeoutException ex)
+            {
+                Logger.Error($"Failed to delete message with native ID '{nativeMessageId}' because the handler execution time exceeded the visibility timeout. Increase the length of the timeout on the queue. The message was returned to the queue.", ex);
+
+                messagesToBeDeleted.AddOrUpdate(nativeMessageId, true);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Failed to delete message with native ID '{nativeMessageId}'. The message will be returned to the queue when the visibility timeout expires.", ex);
+
+                messagesToBeDeleted.AddOrUpdate(nativeMessageId, true);
+            }
+        }
+
+
+        int GetDeliveryAttempts(string nativeMessageId)
+        {
+            var attempts = deliveryAttempts.GetOrAdd(nativeMessageId, k => 0);
+            attempts++;
+            deliveryAttempts.AddOrUpdate(nativeMessageId, attempts);
+
+            return attempts;
+        }
+        readonly FastConcurrentLru<string, int> deliveryAttempts = new(1_000);
+        readonly FastConcurrentLru<string, bool> messagesToBeDeleted = new(1_000);
         readonly OnMessage onMessage;
         readonly OnError onError;
         readonly Action<string, Exception, CancellationToken> criticalErrorAction;

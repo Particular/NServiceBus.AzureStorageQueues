@@ -25,5 +25,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
             var context = new ErrorContext(ex, message.Headers, message.Id, body, new TransportTransaction(), Convert.ToInt32(retrieved.DequeueCount), receiveAddress, contextBag);
             return context;
         }
+        protected static ErrorContext CreateErrorContext(MessageWrapper message, Exception ex, byte[] body, string receiveAddress, ContextBag contextBag, int deliveryAttempts)
+        {
+            var context = new ErrorContext(ex, message.Headers, message.Id, body, new TransportTransaction(), deliveryAttempts, receiveAddress, contextBag);
+            return context;
+        }
     }
 }

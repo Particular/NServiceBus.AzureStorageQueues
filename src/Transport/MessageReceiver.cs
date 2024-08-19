@@ -214,7 +214,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             catch (Exception ex)
             {
-                Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
+                Logger.Error("Azure Storage Queue transport failed pushing a message through pipeline", ex);
             }
             finally
             {
