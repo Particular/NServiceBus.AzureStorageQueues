@@ -198,16 +198,32 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     Logger.DebugFormat("Unwrapped message ID: '{0}'", message.Id);
                 }
 
-                await receiveStrategy.Receive(retrieved, message, ReceiveAddress, processingCancellationToken).ConfigureAwait(false);
+                //await receiveStrategy.Receive(retrieved, message, ReceiveAddress, processingCancellationToken).ConfigureAwait(false);
+
+                try
+                {
+                    await receiveStrategy.Receive(retrieved, message, ReceiveAddress, processingCancellationToken).ConfigureAwait(false);
+                }
+#pragma warning disable PS0019 // Do not catch Exception without considering OperationCanceledException - handling is the same for OCE
+                catch (Exception ex)
+#pragma warning restore PS0019 // Do not catch Exception without considering OperationCanceledException - handling is the same for OCE
+                {
+                    Logger.Debug("Returning message to queue...", ex);
+
+                    await retrieved.ReturnMessageToQueue(processingCancellationToken).ConfigureAwait(false);
+
+                    throw;
+                }
+
             }
             catch (Exception ex) when (ex.IsCausedBy(processingCancellationToken))
             {
                 Logger.Debug("Message receiving canceled.", ex);
             }
-            catch (LeaseTimeoutException ex)
-            {
-                Logger.Warn("Dispatching the message took longer than a visibility timeout. The message will reappear in the queue and will be obtained again.", ex);
-            }
+            //catch (LeaseTimeoutException ex)
+            //{
+            //    Logger.Warn("Dispatching the message took longer than a visibility timeout. The message will reappear in the queue and will be obtained again.", ex);
+            //}
             catch (SerializationException ex)
             {
                 Logger.Error(ex.Message, ex);

@@ -28,7 +28,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             var body = message.Body ?? Array.Empty<byte>();
             var contextBag = new ContextBag();
-            var nativeMessageId = message.Id;
+            var nativeMessageId = retrieved.NativeMessageId;
             if (messagesToBeDeleted.TryGet(nativeMessageId, out _))
             {
                 await DeleteMessage(retrieved, nativeMessageId, cancellationToken).ConfigureAwait(false);
@@ -37,6 +37,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
             try
             {
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), receiveAddress, contextBag);
+                // var pushContext = new MessageContext(nativeMessageId, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), receiveAddress, contextBag);
+
                 await onMessage(pushContext, cancellationToken).ConfigureAwait(false);
 
                 // await retrieved.Ack(cancellationToken).ConfigureAwait(false);
@@ -64,7 +66,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
                         // For an immediate retry, the error is logged and the message is returned to the queue to preserve the DequeueCount.
                         // There is no in memory retry as scale-out scenarios would be handled improperly.
                         Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline. The message will be requeued", ex);
-                        await retrieved.Nack(cancellationToken).ConfigureAwait(false);
+                        //await retrieved.Nack(cancellationToken).ConfigureAwait(false);
+                        await retrieved.ReturnMessageToQueue(cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
@@ -81,15 +84,15 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 catch (Exception onErrorEx) when (!onErrorEx.IsCausedBy(cancellationToken))
                 {
                     criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", onErrorEx, cancellationToken);
-
-                    try
-                    {
-                        await retrieved.Nack(cancellationToken).ConfigureAwait(false);
-                    }
-                    catch (Exception nackEx) when (!nackEx.IsCausedBy(cancellationToken))
-                    {
-                        Logger.Warn($"Failed to release visibility timeout after message with native ID `{message.Id}` failed to execute recoverability policy. The message will be available again when the visibility timeout expires.", nackEx);
-                    }
+                    await retrieved.ReturnMessageToQueue(cancellationToken).ConfigureAwait(false);
+                    //try
+                    //{
+                    //    await retrieved.Nack(cancellationToken).ConfigureAwait(false);
+                    //}
+                    //catch (Exception nackEx) when (!nackEx.IsCausedBy(cancellationToken))
+                    //{
+                    //    Logger.Warn($"Failed to release visibility timeout after message with native ID `{message.Id}` failed to execute recoverability policy. The message will be available again when the visibility timeout expires.", nackEx);
+                    //}
                 }
             }
         }
@@ -99,7 +102,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             try
             {
-                await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                await retrieved.DeleteMessage(cancellationToken).ConfigureAwait(false);
             }
             catch (LeaseTimeoutException ex)
             {
@@ -107,7 +110,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 messagesToBeDeleted.AddOrUpdate(nativeMessageId, true);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
                 Logger.Warn($"Failed to delete message with native ID '{nativeMessageId}'. The message will be returned to the queue when the visibility timeout expires.", ex);
 

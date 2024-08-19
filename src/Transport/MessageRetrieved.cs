@@ -26,7 +26,7 @@
         }
 
         public long DequeueCount => rawMessage.DequeueCount;
-
+        public string NativeMessageId => rawMessage.MessageId;
         /// <summary>
         /// Unwraps the raw message body.
         /// </summary>
@@ -57,7 +57,10 @@
 
             return inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken);
         }
-
+        public Task DeleteMessage(CancellationToken cancellationToken = default)
+        {
+            return inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken);
+        }
         /// <summary>
         /// Moves the message without expiry to the error queue
         /// </summary>
@@ -136,13 +139,28 @@
                 throw;
             }
         }
-
+        public async Task ReturnMessageToQueue(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // the simplest solution to push the message back is to update its visibility timeout to 0 which is ok according to the API:
+                // https://msdn.microsoft.com/en-us/library/azure/hh452234.aspx
+                await inputQueue.UpdateMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, visibilityTimeout: TimeSpan.Zero, cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+            catch (LeaseTimeoutException ex)
+            {
+                Logger.WarnFormat($"Failed to return message with native ID '{rawMessage.MessageId}' to the queue because the visibility timeout has expired. The message has already been returned to the queue.", ex);
+            }
+            catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
+            {
+                Logger.WarnFormat($"Failed to return message with native ID '{rawMessage.MessageId}' to the queue. The message will return to the queue after the visibility timeout expires.", ex);
+            }
+        }
         BinaryData ReWrap(MessageWrapper wrapper)
         {
             string base64String = MessageWrapperHelper.ConvertToBase64String(wrapper, serializer);
             return BinaryData.FromString(base64String);
         }
-
         readonly QueueClient inputQueue;
         readonly QueueMessage rawMessage;
         readonly QueueClient errorQueue;
