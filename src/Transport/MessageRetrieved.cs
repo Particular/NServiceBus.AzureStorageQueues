@@ -57,8 +57,11 @@
 
             return inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken);
         }
+#pragma warning disable PS0018 // Do not add CancellationToken parameter - delete should not be cancellable
         public Task DeleteMessage(CancellationToken cancellationToken = default)
+#pragma warning restore PS0018 //  Do not add CancellationToken parameter - delete should not be cancellable
         {
+
             return inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken);
         }
         /// <summary>
@@ -139,8 +142,11 @@
                 throw;
             }
         }
+#pragma warning disable PS0018 //Cancellation token intentionally not passed because cancellation shouldn't stop messages from being returned to the queue
         public async Task ReturnMessageToQueue(CancellationToken cancellationToken = default)
+#pragma warning restore PS0018
         {
+
             try
             {
                 // the simplest solution to push the message back is to update its visibility timeout to 0 which is ok according to the API:
