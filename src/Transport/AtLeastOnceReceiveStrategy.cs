@@ -71,10 +71,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
                         await retrieved.ReturnMessageToQueue(cancellationToken).ConfigureAwait(false);
                         return false;
                     }
-                    else
-                    {
-                        //
-                    }
                 }
                 catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
                 {
