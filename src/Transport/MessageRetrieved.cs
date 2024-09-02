@@ -26,7 +26,7 @@
         }
 
         public long DequeueCount => rawMessage.DequeueCount;
-
+        public string NativeMessageId => rawMessage.MessageId;
         /// <summary>
         /// Unwraps the raw message body.
         /// </summary>
@@ -136,7 +136,6 @@
                 throw;
             }
         }
-
         BinaryData ReWrap(MessageWrapper wrapper)
         {
             string base64String = MessageWrapperHelper.ConvertToBase64String(wrapper, serializer);

@@ -5,6 +5,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using BitFaster.Caching.Lru;
     using Extensibility;
     using global::Azure;
     using Logging;
@@ -27,6 +28,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             var body = message.Body ?? Array.Empty<byte>();
             var contextBag = new ContextBag();
+            if (messagesToBeDeleted.TryGet(retrieved.NativeMessageId, out _))
+            {
+                await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                return;
+            }
             try
             {
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), receiveAddress, contextBag);
@@ -34,16 +40,19 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                 await retrieved.Ack(cancellationToken).ConfigureAwait(false);
             }
-            catch (LeaseTimeoutException)
+            catch (LeaseTimeoutException ex)
             {
                 // The lease has expired and cannot be used any longer to Ack or Nack the message.
                 // see original issue: https://github.com/Azure/azure-storage-net/issues/285
-                throw;
+                //throw;
+                Logger.Warn("Dispatching the message took longer than a visibility timeout. The message will reappear in the queue and will be obtained again.", ex);
+                messagesToBeDeleted.AddOrUpdate(retrieved.NativeMessageId, true);
             }
             catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
-                var context = CreateErrorContext(retrieved, message, ex, body, receiveAddress, contextBag);
-
+                var deliveryAttempts = GetDeliveryAttempts(retrieved.NativeMessageId);
+                //var context = CreateErrorContext(retrieved, message, ex, body, receiveAddress, contextBag);
+                var context = CreateErrorContext(retrieved, message, ex, body, receiveAddress, contextBag, deliveryAttempts);
                 try
                 {
                     var errorHandleResult = await onError(context, cancellationToken).ConfigureAwait(false);
@@ -78,10 +87,21 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     catch (Exception nackEx) when (!nackEx.IsCausedBy(cancellationToken))
                     {
                         Logger.Warn($"Failed to release visibility timeout after message with native ID `{message.Id}` failed to execute recoverability policy. The message will be available again when the visibility timeout expires.", nackEx);
+                        messagesToBeDeleted.AddOrUpdate(retrieved.NativeMessageId, true);
                     }
                 }
             }
         }
+        int GetDeliveryAttempts(string nativeMessageId)
+        {
+            var attempts = deliveryAttempts.GetOrAdd(nativeMessageId, k => 0);
+            attempts++;
+            deliveryAttempts.AddOrUpdate(nativeMessageId, attempts);
+
+            return attempts;
+        }
+        readonly FastConcurrentLru<string, int> deliveryAttempts = new(1_000);
+        readonly FastConcurrentLru<string, bool> messagesToBeDeleted = new(1_000);
 
         readonly OnMessage onMessage;
         readonly OnError onError;
