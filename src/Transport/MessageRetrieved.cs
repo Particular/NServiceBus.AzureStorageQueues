@@ -51,11 +51,18 @@
         /// <summary>
         /// Acknowledges the successful processing of the message.
         /// </summary>
-        public Task Ack(CancellationToken cancellationToken = default)
+        public async Task Ack(CancellationToken cancellationToken = default)
         {
             AssertVisibilityTimeout();
 
-            return inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken);
+            try
+            {
+                await inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken).ConfigureAwait(false);
+            }
+            catch (RequestFailedException ex) when (ex.ErrorCode == QueueErrorCode.MessageNotFound)
+            {
+                throw new LeaseTimeoutException(rawMessage, visibilityTimeoutExceededBy: TimeSpan.Zero);
+            }
         }
 
         /// <summary>
