@@ -59,6 +59,8 @@
             {
                 await inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, cancellationToken).ConfigureAwait(false);
             }
+            // AssertVisibilityTimeout might suffer from clock drifts, so we need to handle the case when the message is not found
+            // which might indicate the message visibility timeout has expired.
             catch (RequestFailedException ex) when (ex.ErrorCode == QueueErrorCode.MessageNotFound)
             {
                 throw new LeaseTimeoutException(rawMessage, visibilityTimeoutExceededBy: TimeSpan.Zero);

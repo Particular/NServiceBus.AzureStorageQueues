@@ -43,7 +43,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             catch (LeaseTimeoutException)
             {
-                messagesToBeAcked.AddOrUpdate(message.Id, true);
+                TrackMessageToBeCompletedOnNextReceive();
             }
             catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
@@ -69,7 +69,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                         }
                         catch (LeaseTimeoutException)
                         {
-                            messagesToBeAcked.AddOrUpdate(message.Id, true);
+                            TrackMessageToBeCompletedOnNextReceive();
                         }
                     }
                 }
@@ -93,6 +93,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     }
                 }
             }
+
+            return;
+
+            void TrackMessageToBeCompletedOnNextReceive() =>
+                // The raw message ID might not be stable across retries, so we use the message wrapper ID instead.
+                messagesToBeAcked.AddOrUpdate(message.Id, true);
         }
 
         readonly OnMessage onMessage;
