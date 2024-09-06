@@ -5,6 +5,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Threading;
     using System.Threading.Tasks;
     using Azure.Transports.WindowsAzureStorageQueues;
+    using BitFaster.Caching.Lru;
     using Extensibility;
     using global::Azure;
     using Logging;
@@ -24,6 +25,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public override async Task Receive(MessageRetrieved retrieved, MessageWrapper message, string receiveAddress, CancellationToken cancellationToken = default)
         {
+            if (messagesToBeAcked.TryGet(message.Id, out _))
+            {
+                await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             var body = message.Body ?? Array.Empty<byte>();
             var contextBag = new ContextBag();
@@ -36,9 +43,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             catch (LeaseTimeoutException)
             {
-                // The lease has expired and cannot be used any longer to Ack or Nack the message.
-                // see original issue: https://github.com/Azure/azure-storage-net/issues/285
-                throw;
+                messagesToBeAcked.AddOrUpdate(message.Id, true);
             }
             catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
@@ -57,8 +62,15 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     }
                     else
                     {
-                        // Just acknowledge the message as it's handled by the core retry.
-                        await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            // Just acknowledge the message as it's handled by the core retry.
+                            await retrieved.Ack(cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (LeaseTimeoutException)
+                        {
+                            messagesToBeAcked.AddOrUpdate(message.Id, true);
+                        }
                     }
                 }
                 catch (RequestFailedException e) when (e.Status == 413 && e.ErrorCode == "RequestBodyTooLarge")
@@ -86,6 +98,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         readonly OnMessage onMessage;
         readonly OnError onError;
         readonly Action<string, Exception, CancellationToken> criticalErrorAction;
+        readonly FastConcurrentLru<string, bool> messagesToBeAcked = new(1_000);
 
         static readonly ILog Logger = LogManager.GetLogger<ReceiveStrategy>();
     }
