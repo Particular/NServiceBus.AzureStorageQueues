@@ -32,7 +32,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
 
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
-            var body = message.Body ?? Array.Empty<byte>();
+            var body = message.Body ?? [];
             var contextBag = new ContextBag();
             try
             {
