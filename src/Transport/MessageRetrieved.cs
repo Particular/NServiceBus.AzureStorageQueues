@@ -146,6 +146,8 @@
             }
         }
 
+        public static implicit operator QueueMessage(MessageRetrieved messageRetrieved) => messageRetrieved.rawMessage;
+
         BinaryData ReWrap(MessageWrapper wrapper)
         {
             string base64String = MessageWrapperHelper.ConvertToBase64String(wrapper, serializer);
