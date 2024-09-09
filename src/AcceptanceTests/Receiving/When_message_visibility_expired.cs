@@ -18,7 +18,17 @@
         public async Task Should_complete_message_on_next_receive_when_pipeline_successful()
         {
             var ctx = await Scenario.Define<Context>()
-                .WithEndpoint<Receiver>(b => b.When((session, _) => session.SendLocal(new MyMessage())))
+                .WithEndpoint<Receiver>(b =>
+                {
+                    b.CustomConfig(c =>
+                    {
+                        // Limiting the concurrency for this test to make sure messages that are made available again are 
+                        // not concurrently processed. This is not necessary for the test to pass but it makes
+                        // reasoning about the test easier.
+                        c.LimitMessageProcessingConcurrencyTo(1);
+                    });
+                    b.When((session, _) => session.SendLocal(new MyMessage()));
+                })
                 .Done(c => c.MessageId is not null && c.Logs.Any(l => WasMarkedAsSuccessfullyCompleted(l, c)))
                 .Run();
 
@@ -41,6 +51,11 @@
                     {
                         var recoverability = c.Recoverability();
                         recoverability.AddUnrecoverableException<InvalidOperationException>();
+
+                        // Limiting the concurrency for this test to make sure messages that are made available again are 
+                        // not concurrently processed. This is not necessary for the test to pass but it makes
+                        // reasoning about the test easier.
+                        c.LimitMessageProcessingConcurrencyTo(1);
                     });
                     b.When((session, _) => session.SendLocal(new MyMessage()));
                 })
@@ -82,10 +97,9 @@
                 var receiverQueue = BackwardsCompatibleQueueNameSanitizerForTests.Sanitize(Conventions.EndpointNamingConvention(typeof(Receiver)));
                 var queueClient = new QueueClient(Utilities.GetEnvConfiguredConnectionString(), receiverQueue);
                 var rawMessage = context.Extensions.Get<QueueMessage>();
-                // By setting the visibility timeout to a second, the message will be "immediately available" for retrieval again and effectively the message pump
-                // has lost the message visibility timeout because any ACK or NACK will be rejected by the storage service. The second was chosen
-                // to make sure there is some gap between the message is available again because the transport does heavy polling and concurrent fetching by default.
-                await queueClient.UpdateMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, visibilityTimeout: TimeSpan.FromSeconds(1), cancellationToken: context.CancellationToken);
+                // By setting the visibility timeout zero, the message will be "immediately available" for retrieval again and effectively the message pump
+                // has lost the message visibility timeout because any ACK or NACK will be rejected by the storage service.
+                await queueClient.UpdateMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt, visibilityTimeout: TimeSpan.Zero, cancellationToken: context.CancellationToken);
 
                 testContext.MessageId = context.MessageId;
 
