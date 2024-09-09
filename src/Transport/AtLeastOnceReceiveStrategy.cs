@@ -70,7 +70,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                     {
                         // For an immediate retry, the error is logged and the message is returned to the queue to preserve the DequeueCount.
                         // There is no in memory retry as scale-out scenarios would be handled improperly.
-                        Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline. The message will be requeued", ex);
+                        Logger.Debug("Azure Storage Queue transport failed pushing a message through pipeline. The message will be requeued", ex);
                         await retrieved.Nack(cancellationToken).ConfigureAwait(false);
                     }
                     else
