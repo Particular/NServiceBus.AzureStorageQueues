@@ -164,10 +164,6 @@
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }
 
-    class LeaseTimeoutException : Exception
-    {
-        public LeaseTimeoutException(QueueMessage rawMessage, TimeSpan visibilityTimeoutExceededBy) : base($"The pop receipt of the cloud queue message '{rawMessage.MessageId}' is invalid as it exceeded the next visible time by '{visibilityTimeoutExceededBy}'.")
-        {
-        }
-    }
+    sealed class LeaseTimeoutException(QueueMessage rawMessage, TimeSpan visibilityTimeoutExceededBy)
+        : Exception($"The pop receipt of the cloud queue message '{rawMessage.MessageId}' is invalid as it exceeded the next visible time by '{visibilityTimeoutExceededBy}'.");
 }
