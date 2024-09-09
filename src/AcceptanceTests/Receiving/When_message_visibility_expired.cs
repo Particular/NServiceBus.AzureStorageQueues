@@ -64,7 +64,13 @@
 
         class Receiver : EndpointConfigurationBuilder
         {
-            public Receiver() => EndpointSetup<DefaultServer>();
+            public Receiver() => EndpointSetup<DefaultServer>(c =>
+            {
+                var transport = c.ConfigureTransport<AzureStorageQueueTransport>();
+                // Explicitly setting the transport transaction mode to ReceiveOnly because the message 
+                // tracking only is implemented for this mode.
+                transport.TransportTransactionMode = TransportTransactionMode.ReceiveOnly;
+            });
         }
 
         public class MyMessage : IMessage;
