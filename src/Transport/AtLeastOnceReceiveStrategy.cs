@@ -92,9 +92,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
                     await retrieved.MoveToErrorQueueWithMinimalFaultHeaders(context, cancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception onErrorEx) when (!onErrorEx.IsCausedBy(cancellationToken))
+                catch (Exception e) when (!e.IsCausedBy(cancellationToken))
                 {
-                    criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", onErrorEx, cancellationToken);
+                    criticalErrorAction($"Failed to execute recoverability policy for message with native ID: `{message.Id}`", e, cancellationToken);
 
                     try
                     {
