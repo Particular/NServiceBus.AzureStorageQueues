@@ -30,7 +30,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             {
                 try
                 {
-                    Logger.DebugFormat("Received message (ID: '{0}') was marked as successfully completed. Trying to immediately acknowledge the message.", message.Id);
+                    Logger.DebugFormat("Received message (ID: '{0}') was marked as successfully completed. Trying to immediately acknowledge the message without invoking the pipeline.", message.Id);
                     await retrieved.Ack(cancellationToken).ConfigureAwait(false);
                 }
                 // Doing a more generous catch here to make sure we are not losing the ID and can mark it to be completed another time
