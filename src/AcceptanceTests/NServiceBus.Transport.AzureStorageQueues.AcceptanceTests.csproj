@@ -9,7 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Transport\NServiceBus.Transport.AzureStorageQueues.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Azure.Data.Tables" Version="12.9.0" />
     <PackageReference Include="Azure.Identity" Version="1.12.0" />
