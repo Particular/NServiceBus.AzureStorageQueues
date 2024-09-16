@@ -33,7 +33,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
             var messageRetrieved1 = new MessageRetrieved(null, null, rawMessageThatIsExpired, fakeQueueClient, null, DateTimeOffset.UtcNow, TimeProvider.System);
             var messageWrapper1 = new MessageWrapper { Id = messageId, Headers = [] };
 
-            await receiveStrategy.Receive(messageRetrieved1, messageWrapper1, "queue");
+            Assert.ThrowsAsync<LeaseTimeoutException>(async () => await receiveStrategy.Receive(messageRetrieved1, messageWrapper1, "queue"));
 
             var rawMessageThatIsValid = QueuesModelFactory.QueueMessage("RawMessageId2", "PopReceipt2", "", 1, nextVisibleOn: DateTimeOffset.UtcNow.Add(TimeSpan.FromSeconds(30)));
             var messageRetrieved2 = new MessageRetrieved(null, null, rawMessageThatIsValid, fakeQueueClient, null, DateTimeOffset.UtcNow, TimeProvider.System);
@@ -50,7 +50,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
         }
 
         [Test]
-        public async Task Should_rethrow_on_next_receive_when_message_could_not_be_completed()
+        public void Should_rethrow_on_next_receive_when_message_could_not_be_completed()
         {
             var fakeQueueClient = new FakeQueueClient();
 
@@ -62,7 +62,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
             var messageRetrieved1 = new MessageRetrieved(null, null, rawMessageThatIsExpired, fakeQueueClient, null, DateTimeOffset.UtcNow, TimeProvider.System);
             var messageWrapper1 = new MessageWrapper { Id = messageId, Headers = [] };
 
-            await receiveStrategy.Receive(messageRetrieved1, messageWrapper1, "queue");
+            Assert.ThrowsAsync<LeaseTimeoutException>(async () => await receiveStrategy.Receive(messageRetrieved1, messageWrapper1, "queue"));
 
             fakeQueueClient.DeleteMessageCallback = () => throw new RequestFailedException(404, "MessageNotFound", QueueErrorCode.MessageNotFound.ToString(), null);
 
@@ -87,7 +87,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests
             var messageRetrieved1 = new MessageRetrieved(null, null, rawMessageThatIsExpired, fakeQueueClient, null, DateTimeOffset.UtcNow, TimeProvider.System);
             var messageWrapper1 = new MessageWrapper { Id = messageId, Headers = [] };
 
-            await receiveStrategy.Receive(messageRetrieved1, messageWrapper1, "queue");
+            Assert.ThrowsAsync<LeaseTimeoutException>(async () => await receiveStrategy.Receive(messageRetrieved1, messageWrapper1, "queue"));
 
             fakeQueueClient.DeleteMessageCallback = () => throw new RequestFailedException(404, "MessageNotFound", QueueErrorCode.MessageNotFound.ToString(), null);
 

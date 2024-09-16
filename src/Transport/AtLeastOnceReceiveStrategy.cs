@@ -57,6 +57,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             catch (LeaseTimeoutException)
             {
                 TrackMessageToBeCompletedOnNextReceive();
+                throw;
             }
             catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
             {
@@ -83,6 +84,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
                         catch (LeaseTimeoutException)
                         {
                             TrackMessageToBeCompletedOnNextReceive();
+                            throw;
                         }
                     }
                 }
