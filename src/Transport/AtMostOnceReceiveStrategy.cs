@@ -7,6 +7,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
     using global::Azure;
+    using global::Azure.Storage.Queues.Models;
     using Logging;
     using Transport;
 
@@ -28,8 +29,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
         {
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             await retrieved.Ack(cancellationToken).ConfigureAwait(false);
-            var body = message.Body ?? Array.Empty<byte>();
+            var body = message.Body ?? [];
             var contextBag = new ContextBag();
+            contextBag.Set<QueueMessage>(retrieved);
+
             try
             {
                 var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), receiveAddress, contextBag);
