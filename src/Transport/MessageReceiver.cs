@@ -6,6 +6,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
+    using Azure.Transports.WindowsAzureStorageQueues;
     using Logging;
 
     class MessageReceiver : IMessageReceiver
@@ -190,9 +191,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         async Task ProcessMessageSwallowExceptionsAndReleaseConcurrencyLimiter(MessageRetrieved retrieved, CancellationToken processingCancellationToken)
         {
+            MessageWrapper message = null;
             try
             {
-                var message = await retrieved.Unwrap(processingCancellationToken).ConfigureAwait(false);
+                message = await retrieved.Unwrap(processingCancellationToken).ConfigureAwait(false);
                 if (Logger.IsDebugEnabled)
                 {
                     Logger.DebugFormat("Unwrapped message ID: '{0}'", message.Id);
@@ -202,11 +204,11 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             catch (Exception ex) when (ex.IsCausedBy(processingCancellationToken))
             {
-                Logger.Debug("Message receiving canceled.", ex);
+                Logger.Debug($"Message (ID: '{message?.Id ?? "Unavailable"}') receiving canceled.", ex);
             }
             catch (LeaseTimeoutException ex)
             {
-                Logger.Warn("Dispatching the message took longer than a visibility timeout. The message will reappear in the queue and will be obtained again.", ex);
+                Logger.Warn($"Dispatching the message (ID: '{message?.Id ?? "Unavailable"}') took longer than a visibility timeout. The message will reappear in the queue and will be obtained again.", ex);
             }
             catch (SerializationException ex)
             {
@@ -214,7 +216,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
             catch (Exception ex)
             {
-                Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
+                Logger.Warn($"Azure Storage Queue transport failed pushing a message (ID: '{message?.Id ?? "Unavailable"}') through pipeline", ex);
             }
             finally
             {
