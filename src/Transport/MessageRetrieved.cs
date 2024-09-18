@@ -47,12 +47,22 @@
         /// <summary>
         /// Acknowledges the successful processing of the message.
         /// </summary>
-        public Task Ack()
+        public async Task Ack()
         {
             AssertVisibilityTimeout();
 
-            return inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt);
+            try
+            {
+                await inputQueue.DeleteMessageAsync(rawMessage.MessageId, rawMessage.PopReceipt).ConfigureAwait(false);
+            }
+            // AssertVisibilityTimeout might suffer from clock drifts, so we need to handle the case when the message is not found
+            // which might indicate the message visibility timeout has expired.
+            catch (RequestFailedException ex) when (ex.ErrorCode == QueueErrorCode.MessageNotFound)
+            {
+                throw new LeaseTimeoutException(rawMessage, visibilityTimeoutExceededBy: TimeSpan.Zero);
+            }
         }
+
         /// <summary>
         /// Moves the message without expiry to the error queue
         /// </summary>
@@ -101,7 +111,7 @@
         {
             if (rawMessage.NextVisibleOn != null)
             {
-                var visibleIn = rawMessage.NextVisibleOn.Value - DateTimeOffset.Now;
+                var visibleIn = rawMessage.NextVisibleOn.Value - DateTimeOffset.UtcNow;
                 if (visibleIn < TimeSpan.Zero)
                 {
                     var visibilityTimeoutExceededBy = -visibleIn;
@@ -109,11 +119,7 @@
                 }
             }
         }
-        BinaryData ReWrap(MessageWrapper wrapper)
-        {
-            string base64String = MessageWrapperHelper.ConvertToBase64String(wrapper, serializer);
-            return BinaryData.FromString(base64String);
-        }
+
         /// <summary>
         /// Rejects the message requeueing it in the queue.
         /// </summary>
@@ -133,6 +139,14 @@
             }
         }
 
+        public static implicit operator QueueMessage(MessageRetrieved messageRetrieved) => messageRetrieved.rawMessage;
+
+        BinaryData ReWrap(MessageWrapper wrapper)
+        {
+            string base64String = MessageWrapperHelper.ConvertToBase64String(wrapper, serializer);
+            return BinaryData.FromString(base64String);
+        }
+
         readonly QueueClient inputQueue;
         readonly QueueMessage rawMessage;
         readonly QueueClient errorQueue;
@@ -142,7 +156,7 @@
         static ILog Logger = LogManager.GetLogger<MessageRetrieved>();
     }
 
-    class LeaseTimeoutException : Exception
+    sealed class LeaseTimeoutException : Exception
     {
         public LeaseTimeoutException(QueueMessage rawMessage, TimeSpan visibilityTimeoutExceededBy) : base($"The pop receipt of the cloud queue message '{rawMessage.MessageId}' is invalid as it exceeded the next visible time by '{visibilityTimeoutExceededBy}'.")
         {

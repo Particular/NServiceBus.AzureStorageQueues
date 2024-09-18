@@ -8,27 +8,30 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
-  <!-- Force latest versions -->
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Queues" Version="12.11.1" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.13.1" />
-    <PackageReference Include="GitHubActionsTestLogger" Version="2.3.3" />
+    <ProjectReference Include="..\Transport\NServiceBus.Transport.AzureStorageQueues.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.21.2" />
+    <PackageReference Include="Azure.Storage.Queues" Version="12.19.1" />
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
-    <PackageReference Include="Particular.Approvals" Version="0.3.0" />
+    <PackageReference Include="BitFaster.Caching" Version="2.5.2" />
     <PackageReference Include="NServiceBus" Version="7.4.4" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
-    <PackageReference Include="NUnit" Version="3.14.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="Particular.Approvals" Version="1.0.0" />
     <!-- PublicApiGenerator should be locked to the version 9.x as verions 10.x and later does not support .NET Framework 4.5.2 -->
     <PackageReference Include="PublicApiGenerator" Version="[9.3.0, 10.0.0)" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
+    <PackageReference Include="GitHubActionsTestLogger" Version="2.4.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Transport\NServiceBus.Transport.AzureStorageQueues.csproj" />
+    <Compile Include="..\AcceptanceTests\Utils.cs" Link="Utils.cs" />
   </ItemGroup>
 
 </Project>

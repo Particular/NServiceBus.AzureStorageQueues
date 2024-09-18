@@ -7,6 +7,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using Azure.Transports.WindowsAzureStorageQueues;
     using Extensibility;
     using global::Azure;
+    using global::Azure.Storage.Queues.Models;
     using Logging;
     using Transport;
 
@@ -27,17 +28,19 @@ namespace NServiceBus.Transport.AzureStorageQueues
             Logger.DebugFormat("Pushing received message (ID: '{0}') through pipeline.", message.Id);
             await retrieved.Ack().ConfigureAwait(false);
             var body = message.Body ?? Array.Empty<byte>();
+            var contextBag = new ContextBag();
+            contextBag.Set<QueueMessage>(retrieved);
 
             try
             {
-                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new CancellationTokenSource(), new ContextBag());
+                var pushContext = new MessageContext(message.Id, new Dictionary<string, string>(message.Headers), body, new TransportTransaction(), new CancellationTokenSource(), contextBag);
                 await pipeline(pushContext).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 Logger.Warn("Azure Storage Queue transport failed pushing a message through pipeline", ex);
 
-                var context = CreateErrorContext(retrieved, message, ex, body);
+                var context = CreateErrorContext(retrieved, message, ex, body, contextBag);
                 try
                 {
                     // The exception is pushed through the error pipeline in a fire and forget manner.
