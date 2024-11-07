@@ -88,6 +88,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public async Task StopReceive(CancellationToken cancellationToken = default)
         {
+            if (messagePumpCancellationTokenSource == null)
+            {
+                // already stopped or never started
+                return;
+            }
+
             Logger.Debug($"Stopping MessageReceiver {Id}");
             messagePumpCancellationTokenSource?.Cancel();
 
