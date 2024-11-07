@@ -95,9 +95,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
 
             Logger.Debug($"Stopping MessageReceiver {Id}");
-            messagePumpCancellationTokenSource?.Cancel();
+            await messagePumpCancellationTokenSource.CancelAsync().ConfigureAwait(false);
 
-            using (cancellationToken.Register(() => messageProcessingCancellationTokenSource?.Cancel()))
+            await using (cancellationToken.Register(() => messageProcessingCancellationTokenSource?.Cancel()))
             {
                 await Task.WhenAll(messagePumpTasks).ConfigureAwait(false);
 
@@ -122,8 +122,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
             concurrencyLimiter.Dispose();
 
-            messageProcessingCancellationTokenSource?.Dispose();
-            messagePumpCancellationTokenSource?.Dispose();
+            messageProcessingCancellationTokenSource.Dispose();
+            messagePumpCancellationTokenSource.Dispose();
+            messagePumpCancellationTokenSource = null;
             messagePumpTasks = null;
         }
 
