@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System.Collections.ObjectModel;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -16,8 +17,13 @@
             this.nativeDelayedDeliveryProcessor = nativeDelayedDeliveryProcessor;
         }
 
-        public override Task Shutdown(CancellationToken cancellationToken = default)
-            => nativeDelayedDeliveryProcessor.Stop(cancellationToken);
+        public override async Task Shutdown(CancellationToken cancellationToken = default)
+        {
+            await Task.WhenAll(Receivers.Values.Select(pump => pump.StopReceive(cancellationToken)))
+                .ConfigureAwait(false);
+            await nativeDelayedDeliveryProcessor.Stop(cancellationToken)
+                .ConfigureAwait(false);
+        }
 
         public override string ToTransportAddress(Transport.QueueAddress address)
             => TranslateAddress(address, transport.QueueAddressGenerator);
@@ -28,12 +34,12 @@
 
             if (address.Discriminator != null)
             {
-                queue.Append("-" + address.Discriminator);
+                queue.Append($"-{address.Discriminator}");
             }
 
             if (address.Qualifier != null)
             {
-                queue.Append("-" + address.Qualifier);
+                queue.Append($"-{address.Qualifier}");
             }
 
             return addressGenerator.GetQueueName(queue.ToString());
