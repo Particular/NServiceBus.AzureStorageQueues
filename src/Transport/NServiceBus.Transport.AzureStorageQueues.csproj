@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Data.Tables" Version="[12.7.0, 13.0.0)" />
+    <PackageReference Include="Azure.Data.Tables" Version="12.9.1" />
     <PackageReference Include="Azure.Storage.Queues" Version="[12.11.1, 13.0.0)" />
     <PackageReference Include="Azure.Storage.Blobs" Version="[12.13.1, 13.0.0)" />
     <PackageReference Include="NServiceBus" Version="[8.0.0, 9.0.0)" />
