@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.DelayedDelivery
 {
     using System;
+    using System.Buffers.Text;
     using System.Collections.Generic;
     using System.Text.Json;
     using System.Threading;
@@ -12,7 +13,7 @@
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NUnit.Framework;
 
-    class Nativedelayed : NServiceBusAcceptanceTest
+    class Native_message_delayed_retry : NServiceBusAcceptanceTest
     {
         [Test]
         public async Task Should_handle_delayed_delivery_of_native_message()
@@ -54,7 +55,9 @@
                         var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                         transport.MessageUnwrapper = message =>
                         {
-                            return new MessageWrapper
+                            return Base64.IsValid(message.MessageText)
+                            ? null
+                            : new MessageWrapper
                             {
                                 Id = message.MessageId,
                                 Body = message.Body.ToArray(),
