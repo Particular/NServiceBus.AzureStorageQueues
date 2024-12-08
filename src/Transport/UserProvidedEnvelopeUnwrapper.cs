@@ -6,17 +6,15 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
     class UserProvidedEnvelopeUnwrapper : IMessageEnvelopeUnwrapper
     {
-        public UserProvidedEnvelopeUnwrapper(Func<QueueMessage, MessageWrapper> unwrapper)
+        public UserProvidedEnvelopeUnwrapper(Func<QueueMessage, MessageWrapper> unwrapper, DefaultMessageEnvelopeUnwrapper defaultUnwrapper)
         {
             this.unwrapper = unwrapper;
+            this.defaultUnwrapper = defaultUnwrapper;
         }
 
-        public MessageWrapper Unwrap(QueueMessage rawMessage)
-        {
+        public MessageWrapper Unwrap(QueueMessage rawMessage) => unwrapper(rawMessage) ?? defaultUnwrapper.Unwrap(rawMessage);
 
-            return unwrapper(rawMessage);
-        }
-
-        Func<QueueMessage, MessageWrapper> unwrapper;
+        readonly Func<QueueMessage, MessageWrapper> unwrapper;
+        readonly DefaultMessageEnvelopeUnwrapper defaultUnwrapper;
     }
 }
