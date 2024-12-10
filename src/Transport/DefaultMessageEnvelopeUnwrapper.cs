@@ -1,10 +1,9 @@
 namespace NServiceBus.Transport.AzureStorageQueues
 {
     using System;
-    using System.Buffers.Text;
     using System.Buffers;
+    using System.Buffers.Text;
     using System.Runtime.Serialization;
-    using System.Text.Json;
     using Azure.Transports.WindowsAzureStorageQueues;
     using global::Azure.Storage.Queues.Models;
     using Logging;
