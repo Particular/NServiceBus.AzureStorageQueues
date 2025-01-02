@@ -12,6 +12,7 @@
     using NServiceBus.AcceptanceTests.EndpointTemplates;
     using NServiceBus.Azure.Transports.WindowsAzureStorageQueues;
     using NUnit.Framework;
+    using Testing;
 
     class Native_message_delayed_retry : NServiceBusAcceptanceTest
     {
@@ -33,7 +34,7 @@
                         Content = $"Hello from native sender @ {DateTimeOffset.UtcNow}"
                     };
 
-                    var queueClient = new QueueClient("UseDevelopmentStorage=true", "native-integration-asq");
+                    var queueClient = new QueueClient(Utilities.GetEnvConfiguredConnectionString(), "native-integration-asq");
                     await queueClient.CreateIfNotExistsAsync();
 
                     var serializedMessage = JsonSerializer.Serialize(nativeMessage);
