@@ -381,9 +381,10 @@ namespace NServiceBus
             MessageWrapperSerializer serializer,
             Action<string, Exception, CancellationToken> criticalErrorAction, ISubscriptionStore subscriptionStore)
         {
+            var defaultUnwrapper = new DefaultMessageEnvelopeUnwrapper(serializer);
             var unwrapper = MessageUnwrapper != null
-                ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper)
-                : new DefaultMessageEnvelopeUnwrapper(serializer);
+                ? (IMessageEnvelopeUnwrapper)new UserProvidedEnvelopeUnwrapper(MessageUnwrapper, defaultUnwrapper)
+                : defaultUnwrapper;
 
             var receiveAddress = AzureStorageQueueInfrastructure.TranslateAddress(receiveSettings.ReceiveAddress, QueueAddressGenerator);
 
