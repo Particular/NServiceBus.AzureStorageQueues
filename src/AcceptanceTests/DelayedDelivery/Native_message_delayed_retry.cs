@@ -3,6 +3,7 @@
     using System;
     using System.Buffers.Text;
     using System.Collections.Generic;
+    using System.Text;
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
@@ -53,10 +54,11 @@
                         cfg.Recoverability()
                             .Delayed(delayed => delayed.NumberOfRetries(1).TimeIncrease(TimeSpan.FromSeconds(1)))
                             .Immediate(immediate => immediate.NumberOfRetries(0));
+                        cfg.UseSerialization<SystemJsonSerializer>();
                         var transport = cfg.ConfigureTransport<AzureStorageQueueTransport>();
                         transport.MessageUnwrapper = message =>
                         {
-                            return Base64.IsValid(message.MessageText)
+                            return Base64.DecodeFromUtf8InPlace(Encoding.UTF8.GetBytes(message.MessageText), out int _) == System.Buffers.OperationStatus.Done
                             ? null
                             : new MessageWrapper
                             {
@@ -80,7 +82,7 @@
 
                 public Task Handle(NativeMessage message, IMessageHandlerContext context)
                 {
-                    if (context.MessageHeaders.GetValueOrDefault(Headers.DelayedRetries) == "1")
+                    if (context.MessageHeaders.TryGetValue(Headers.DelayedRetries, out string value) && value == "1")
                     {
                         scenarioContext.IsDone = true;
                     }
