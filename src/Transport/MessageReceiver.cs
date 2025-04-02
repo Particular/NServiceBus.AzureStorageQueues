@@ -132,10 +132,9 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public void Dispose()
         {
-            concurrencyLimiter.Dispose();
-
-            messageProcessingCancellationTokenSource.Dispose();
-            messagePumpCancellationTokenSource.Dispose();
+            concurrencyLimiter?.Dispose();
+            messageProcessingCancellationTokenSource?.Dispose();
+            messagePumpCancellationTokenSource?.Dispose();
             messagePumpCancellationTokenSource = null;
         }
 
