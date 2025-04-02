@@ -9,7 +9,8 @@ namespace NServiceBus.Transport.AzureStorageQueues
     using Azure.Transports.WindowsAzureStorageQueues;
     using Logging;
 
-    class MessageReceiver : IMessageReceiver
+    [Janitor.SkipWeaving]
+    class MessageReceiver : IMessageReceiver, IDisposable
     {
         public MessageReceiver(string id,
             TransportTransactionMode requiredTransactionMode,
@@ -88,44 +89,54 @@ namespace NServiceBus.Transport.AzureStorageQueues
 
         public async Task StopReceive(CancellationToken cancellationToken = default)
         {
-            if (messagePumpCancellationTokenSource == null)
+            try
             {
-                // already stopped or never started
-                return;
-            }
-
-            Logger.Debug($"Stopping MessageReceiver {Id}");
-            await messagePumpCancellationTokenSource.CancelAsync().ConfigureAwait(false);
-
-            await using (cancellationToken.Register(() => messageProcessingCancellationTokenSource?.Cancel()))
-            {
-                await Task.WhenAll(messagePumpTasks).ConfigureAwait(false);
-
-                while (concurrencyLimiter.CurrentCount != maximumConcurrency)
+                if (messagePumpCancellationTokenSource == null)
                 {
-                    // We are deliberately not forwarding the cancellation token here because
-                    // this loop is our way of waiting for all pending messaging operations
-                    // to participate in cooperative cancellation or not.
-                    // We do not want to rudely abort them because the cancellation token has been canceled.
-                    // This allows us to preserve the same behaviour in v8 as in v7 in that,
-                    // if CancellationToken.None is passed to this method,
-                    // the method will only return when all in flight messages have been processed.
-                    // If, on the other hand, a non-default CancellationToken is passed,
-                    // all message processing operations have the opportunity to
-                    // participate in cooperative cancellation.
-                    // If we ever require a method of stopping the endpoint such that
-                    // all message processing is canceled immediately,
-                    // we can provide that as a separate feature.
-                    await Task.Delay(50, CancellationToken.None).ConfigureAwait(false);
+                    // already stopped or never started
+                    return;
+                }
+
+                Logger.Debug($"Stopping MessageReceiver {Id}");
+                await messagePumpCancellationTokenSource.CancelAsync().ConfigureAwait(false);
+
+                await using (cancellationToken.Register(() => messageProcessingCancellationTokenSource?.Cancel()))
+                {
+                    await Task.WhenAll(messagePumpTasks).ConfigureAwait(false);
+
+                    while (concurrencyLimiter.CurrentCount != maximumConcurrency)
+                    {
+                        // We are deliberately not forwarding the cancellation token here because
+                        // this loop is our way of waiting for all pending messaging operations
+                        // to participate in cooperative cancellation or not.
+                        // We do not want to rudely abort them because the cancellation token has been canceled.
+                        // This allows us to preserve the same behaviour in v8 as in v7 in that,
+                        // if CancellationToken.None is passed to this method,
+                        // the method will only return when all in flight messages have been processed.
+                        // If, on the other hand, a non-default CancellationToken is passed,
+                        // all message processing operations have the opportunity to
+                        // participate in cooperative cancellation.
+                        // If we ever require a method of stopping the endpoint such that
+                        // all message processing is canceled immediately,
+                        // we can provide that as a separate feature.
+                        await Task.Delay(50, CancellationToken.None).ConfigureAwait(false);
+                    }
                 }
             }
+            finally
+            {
+                Dispose();
+                messagePumpTasks = null;
+            }
+        }
 
+        public void Dispose()
+        {
             concurrencyLimiter.Dispose();
 
             messageProcessingCancellationTokenSource.Dispose();
             messagePumpCancellationTokenSource.Dispose();
             messagePumpCancellationTokenSource = null;
-            messagePumpTasks = null;
         }
 
         [DebuggerNonUserCode]
@@ -172,7 +183,6 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 try
 #pragma warning restore PS0021 // Highlight when a try block passes multiple cancellation tokens
                 {
-
                     await azureMessageQueueReceiver.Receive(batchSizeForReceive, receivedMessages, backoffStrategy, pumpCancellationToken).ConfigureAwait(false);
                     circuitBreaker.Success();
 
