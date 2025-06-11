@@ -17,7 +17,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public string ReplyToAddress { get; set; }
 
         [Obsolete("Legacy property for backwards compatibility.", error: false)]
-        [DoNotWarnAboutObsoleteUsage]
         public TimeSpan TimeToBeReceived { get; set; }
 
         public Dictionary<string, string> Headers { get; set; }
