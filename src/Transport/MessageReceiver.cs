@@ -115,6 +115,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
             }
 
             concurrencyLimiter.Dispose();
+            circuitBreaker.Dispose();
 
             messageProcessingCancellationTokenSource?.Dispose();
             messagePumpCancellationTokenSource?.Dispose();
