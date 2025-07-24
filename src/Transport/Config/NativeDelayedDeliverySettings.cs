@@ -25,21 +25,21 @@ namespace NServiceBus
         /// </summary>
         public string DelayedDeliveryTableName
         {
-            get => delayedDeliveryTableName;
+            get;
             set
             {
                 Guard.AgainstNullAndEmpty(nameof(DelayedDeliveryTableName), value);
 
                 if (delayedDeliveryTableNameRegex.IsMatch(value) == false)
                 {
-                    throw new ArgumentException($"{nameof(DelayedDeliveryTableName)} must match the following regular expression '{delayedDeliveryTableNameRegex}'");
+                    throw new ArgumentException(
+                        $"{nameof(DelayedDeliveryTableName)} must match the following regular expression '{delayedDeliveryTableNameRegex}'");
                 }
 
-                delayedDeliveryTableName = value.ToLower();
+                field = value.ToLower();
             }
         }
 
-        string delayedDeliveryTableName;
         static readonly Regex delayedDeliveryTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
     }
 }

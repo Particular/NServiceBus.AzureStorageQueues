@@ -18,7 +18,7 @@ namespace NServiceBus
         /// <remarks>All endpoints in a given account need to agree on that name in order for them to be able to subscribe to and publish events.</remarks>
         public string SubscriptionTableName
         {
-            get => subscriptionTableName ?? DefaultSubscriptionTableName;
+            get => field ?? DefaultSubscriptionTableName;
             set
             {
                 Guard.AgainstNullAndEmpty(nameof(SubscriptionTableName), value);
@@ -28,39 +28,28 @@ namespace NServiceBus
                     throw new ArgumentException($"{nameof(SubscriptionTableName)} must match the following regular expression '{subscriptionTableNameRegex}'");
                 }
 
-                subscriptionTableName = value.ToLower();
+                field = value.ToLower();
             }
         }
 
         /// <summary>
-        /// Cache subscriptions for a given <see cref="TimeSpan" />.
+        /// Cache subscriptions for a given <see cref="TimeSpan" />. Defaults to 5 seconds.
         /// </summary>
         public TimeSpan CacheInvalidationPeriod
         {
-            get => cacheInvalidationPeriod;
+            get;
             set
             {
                 Guard.AgainstNegativeAndZero(nameof(CacheInvalidationPeriod), value);
-                cacheInvalidationPeriod = value;
+                field = value;
             }
-        }
+        } = TimeSpan.FromSeconds(5);
 
         /// <summary>
         ///     Do not cache subscriptions.
         /// </summary>
         public bool DisableCaching { get; set; } = false;
 
-
-        /// <summary>
-        ///     Default to 5 seconds caching. If a system is under load that prevent doing an extra roundtrip for each Publish
-        ///     operation. If
-        ///     a system is not under load, doing an extra roundtrip every 5 seconds is not a problem and 5 seconds is small enough
-        ///     value that
-        ///     people accepts as we always say that subscription operation is not instantaneous.
-        /// </summary>
-        TimeSpan cacheInvalidationPeriod = TimeSpan.FromSeconds(5);
-
-        string subscriptionTableName;
         internal const string DefaultSubscriptionTableName = "subscriptions";
         static readonly Regex subscriptionTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
     }
