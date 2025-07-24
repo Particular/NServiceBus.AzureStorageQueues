@@ -28,21 +28,18 @@ namespace NServiceBus.Transport.AzureStorageQueues
     /// </summary>
     sealed class StorageUri : IEquatable<StorageUri>
     {
-        Uri primaryUri;
-        Uri secondaryUri;
-
         /// <summary>
         /// The endpoint for the primary location for the storage account.
         /// </summary>
         /// <value>The <see cref="Uri"/> for the primary endpoint.</value>
         public Uri PrimaryUri
         {
-            get => primaryUri;
+            get;
 
-            private set
+            private init
             {
                 AssertAbsoluteUri(value);
-                primaryUri = value;
+                field = value;
             }
         }
 
@@ -52,12 +49,12 @@ namespace NServiceBus.Transport.AzureStorageQueues
         /// <value>The <see cref="Uri"/> for the secondary endpoint.</value>
         public Uri SecondaryUri
         {
-            get => secondaryUri;
+            get;
 
-            private set
+            private init
             {
                 AssertAbsoluteUri(value);
-                secondaryUri = value;
+                field = value;
             }
         }
 

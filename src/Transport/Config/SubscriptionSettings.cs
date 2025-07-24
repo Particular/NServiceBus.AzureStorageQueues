@@ -18,7 +18,7 @@ namespace NServiceBus
         /// <remarks>All endpoints in a given account need to agree on that name in order for them to be able to subscribe to and publish events.</remarks>
         public string SubscriptionTableName
         {
-            get => subscriptionTableName ?? DefaultSubscriptionTableName;
+            get => field ?? DefaultSubscriptionTableName;
             set
             {
                 Guard.AgainstNullAndEmpty(nameof(SubscriptionTableName), value);
@@ -28,39 +28,34 @@ namespace NServiceBus
                     throw new ArgumentException($"{nameof(SubscriptionTableName)} must match the following regular expression '{subscriptionTableNameRegex}'");
                 }
 
-                subscriptionTableName = value.ToLower();
+                field = value.ToLower();
             }
         }
 
         /// <summary>
         /// Cache subscriptions for a given <see cref="TimeSpan" />.
         /// </summary>
+        /// <remarks>
+        /// Defaults to 5 seconds. This reduces the need for a roundtrip on every Publish operation, which is beneficial under load.
+        /// When the system is not under load, performing a roundtrip every 5 seconds is acceptable.
+        /// A 5-second cache duration strikes a good balance—short enough to be acceptable given that subscription propagation
+        /// is not instantaneous.
+        /// </remarks>
         public TimeSpan CacheInvalidationPeriod
         {
-            get => cacheInvalidationPeriod;
+            get;
             set
             {
                 Guard.AgainstNegativeAndZero(nameof(CacheInvalidationPeriod), value);
-                cacheInvalidationPeriod = value;
+                field = value;
             }
-        }
+        } = TimeSpan.FromSeconds(5);
 
         /// <summary>
         ///     Do not cache subscriptions.
         /// </summary>
         public bool DisableCaching { get; set; } = false;
 
-
-        /// <summary>
-        ///     Default to 5 seconds caching. If a system is under load that prevent doing an extra roundtrip for each Publish
-        ///     operation. If
-        ///     a system is not under load, doing an extra roundtrip every 5 seconds is not a problem and 5 seconds is small enough
-        ///     value that
-        ///     people accepts as we always say that subscription operation is not instantaneous.
-        /// </summary>
-        TimeSpan cacheInvalidationPeriod = TimeSpan.FromSeconds(5);
-
-        string subscriptionTableName;
         internal const string DefaultSubscriptionTableName = "subscriptions";
         static readonly Regex subscriptionTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
     }

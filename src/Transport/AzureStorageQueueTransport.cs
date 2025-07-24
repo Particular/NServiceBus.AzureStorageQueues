@@ -184,7 +184,7 @@ namespace NServiceBus
                 var tempSettingsHolder = new SettingsHolder();
                 const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.CreateInstance;
                 var conventions = tempSettingsHolder.GetOrCreate<Conventions>();
-                var registry = (MessageMetadataRegistry)Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, new object[] { new Func<Type, bool>(t => conventions.IsMessageType(t)), true }, CultureInfo.InvariantCulture);
+                var registry = (MessageMetadataRegistry)Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, [new Func<Type, bool>(t => conventions.IsMessageType(t)), true], CultureInfo.InvariantCulture);
 
                 tempSettingsHolder.Set(registry);
                 serializerSettingsHolder = tempSettingsHolder;
@@ -397,54 +397,57 @@ namespace NServiceBus
         /// </summary>
         public TimeSpan MessageInvisibleTime
         {
-            get => messageInvisibleTime;
+            get;
             set
             {
                 if (value < TimeSpan.FromSeconds(1) || value > TimeSpan.FromDays(7))
                 {
-                    throw new ArgumentOutOfRangeException(nameof(MessageInvisibleTime), value, "Value must be between 1 second and 7 days.");
+                    throw new ArgumentOutOfRangeException(nameof(MessageInvisibleTime), value,
+                        "Value must be between 1 second and 7 days.");
                 }
-                messageInvisibleTime = value;
+
+                field = value;
             }
-        }
+        } = TimeSpan.FromSeconds(30);
 
         /// <summary>
         /// The amount of time to add to the time to wait before checking for a new message
         /// </summary>
         public TimeSpan PeekInterval
         {
-            get => peekInterval;
+            get;
             set
             {
                 Guard.AgainstNegativeAndZero(nameof(PeekInterval), value);
-                peekInterval = value;
+                field = value;
             }
-        }
+        } = TimeSpan.FromMilliseconds(125);
 
         /// <summary>
         /// The maximum amount of time, in milliseconds, that the transport will wait before checking for a new message
         /// </summary>
         public TimeSpan MaximumWaitTimeWhenIdle
         {
-            get => maximumWaitTimeWhenIdle;
+            get;
             set
             {
                 if (value < TimeSpan.FromMilliseconds(100) || value > TimeSpan.FromSeconds(60))
                 {
-                    throw new ArgumentOutOfRangeException(nameof(MaximumWaitTimeWhenIdle), value, "Value must be between 100ms and 60 seconds.");
+                    throw new ArgumentOutOfRangeException(nameof(MaximumWaitTimeWhenIdle), value,
+                        "Value must be between 100ms and 60 seconds.");
                 }
 
-                maximumWaitTimeWhenIdle = value;
+                field = value;
             }
-        }
+        } = TimeSpan.FromSeconds(30);
 
         /// <summary>
         /// Defines a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
-        /// <remarks>By default no sanitization is performed.</remarks>
+        /// <remarks>By default, no sanitization is performed.</remarks>
         /// </summary>
         public Func<string, string> QueueNameSanitizer
         {
-            get => queueNameSanitizer;
+            get;
             set
             {
                 Guard.AgainstNull(nameof(QueueNameSanitizer), value);
@@ -461,23 +464,25 @@ namespace NServiceBus
                     }
                 }
 
-                queueNameSanitizer = queueNameSanitizerWrapper;
+                field = queueNameSanitizerWrapper;
             }
-        }
+        } = entityName => entityName;
 
         /// <summary>
         /// Controls how many messages should be read from the queue at once
         /// </summary>
         public int? ReceiverBatchSize
         {
-            get => receiverBatchSize;
+            get;
             set
             {
                 if (value is < 1 or > 32)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(ReceiverBatchSize), value, "Batch size must be between 1 and 32 messages.");
+                    throw new ArgumentOutOfRangeException(nameof(ReceiverBatchSize), value,
+                        "Batch size must be between 1 and 32 messages.");
                 }
-                receiverBatchSize = value;
+
+                field = value;
             }
         }
 
@@ -486,17 +491,18 @@ namespace NServiceBus
         /// </summary>
         public int? DegreeOfReceiveParallelism
         {
-            get => degreeOfReceiveParallelism;
+            get;
             set
             {
                 const int maxDegreeOfReceiveParallelism = 32;
 
-                if (degreeOfReceiveParallelism is < 1 or > maxDegreeOfReceiveParallelism)
+                if (field is < 1 or > maxDegreeOfReceiveParallelism)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(DegreeOfReceiveParallelism), value, $"DegreeOfParallelism must be between 1 and {maxDegreeOfReceiveParallelism}.");
+                    throw new ArgumentOutOfRangeException(nameof(DegreeOfReceiveParallelism), value,
+                        $"DegreeOfParallelism must be between 1 and {maxDegreeOfReceiveParallelism}.");
                 }
 
-                degreeOfReceiveParallelism = value;
+                field = value;
             }
         }
 
@@ -510,11 +516,11 @@ namespace NServiceBus
         /// </summary>
         public Func<QueueMessage, MessageWrapper> MessageUnwrapper
         {
-            get => messageUnwrapper;
+            get;
             set
             {
                 Guard.AgainstNull(nameof(MessageUnwrapper), value);
-                messageUnwrapper = value;
+                field = value;
             }
         }
 
@@ -532,31 +538,22 @@ namespace NServiceBus
         /// Define routing between Azure Storage accounts and map them to a logical alias instead of using bare
         /// connection strings.
         /// </summary>
-        public AccountRoutingSettings AccountRouting { get; } = new AccountRoutingSettings();
+        public AccountRoutingSettings AccountRouting { get; } = new();
 
         internal QueueAddressGenerator QueueAddressGenerator
         {
             get
             {
-                queueAddressGenerator ??= new QueueAddressGenerator(QueueNameSanitizer);
-                return queueAddressGenerator;
+                field ??= new QueueAddressGenerator(QueueNameSanitizer);
+                return field;
             }
         }
 
         internal TimeProvider TimeProvider { get; set; } = TimeProvider.System;
-
         internal const string SerializerSettingsKey = "MainSerializer";
-        readonly TransportTransactionMode[] supportedTransactionModes = new[] { TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly };
-        TimeSpan messageInvisibleTime = TimeSpan.FromSeconds(30);
-        TimeSpan peekInterval = TimeSpan.FromMilliseconds(125);
-        TimeSpan maximumWaitTimeWhenIdle = TimeSpan.FromSeconds(30);
-        Func<string, string> queueNameSanitizer = entityName => entityName;
-        QueueAddressGenerator queueAddressGenerator;
+        readonly TransportTransactionMode[] supportedTransactionModes = [TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly];
         IQueueServiceClientProvider queueServiceClientProvider;
         IBlobServiceClientProvider blobServiceClientProvider;
         ITableServiceClientProvider tableServiceClientProvider;
-        int? receiverBatchSize;
-        int? degreeOfReceiveParallelism;
-        Func<QueueMessage, MessageWrapper> messageUnwrapper;
     }
 }
