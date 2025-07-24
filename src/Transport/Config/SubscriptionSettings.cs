@@ -33,14 +33,8 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Cache subscriptions for a given <see cref="TimeSpan" />.
+        /// Cache subscriptions for a given <see cref="TimeSpan" />. Defaults to 5 seconds.
         /// </summary>
-        /// <remarks>
-        /// Defaults to 5 seconds. This reduces the need for a roundtrip on every Publish operation, which is beneficial under load.
-        /// When the system is not under load, performing a roundtrip every 5 seconds is acceptable.
-        /// A 5-second cache duration strikes a good balance—short enough to be acceptable given that subscription propagation
-        /// is not instantaneous.
-        /// </remarks>
         public TimeSpan CacheInvalidationPeriod
         {
             get;
