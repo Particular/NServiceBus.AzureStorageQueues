@@ -6,6 +6,7 @@ namespace NServiceBus
     using global::Azure.Storage.Blobs;
     using global::Azure.Storage.Queues;
     using global::Azure.Storage.Queues.Models;
+    using Particular.Obsoletes;
     using Serialization;
 
     /// <summary>
