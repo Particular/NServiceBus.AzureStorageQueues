@@ -1,6 +1,7 @@
 namespace NServiceBus
 {
     using Configuration.AdvancedExtensibility;
+    using Particular.Obsoletes;
     using Settings;
 
     /// <summary>Configures native delayed delivery.</summary>
