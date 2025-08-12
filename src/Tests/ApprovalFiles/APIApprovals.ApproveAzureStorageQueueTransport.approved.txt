@@ -96,7 +96,6 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
         public NServiceBus.MessageIntent MessageIntent { get; set; }
         public bool Recoverable { get; set; }
         public string ReplyToAddress { get; set; }
-        [System.Obsolete("Legacy property for backwards compatibility.", false)]
         public System.TimeSpan TimeToBeReceived { get; set; }
     }
 }

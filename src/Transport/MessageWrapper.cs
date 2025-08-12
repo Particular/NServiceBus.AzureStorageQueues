@@ -2,7 +2,7 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 {
     using System;
     using System.Collections.Generic;
-
+    using System.ComponentModel;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     [Serializable]
@@ -16,8 +16,11 @@ namespace NServiceBus.Azure.Transports.WindowsAzureStorageQueues
 
         public string ReplyToAddress { get; set; }
 
-        // Defining an obsoletion path for this has been raised on https://github.com/Particular/NServiceBus.AzureStorageQueues/issues/1318
-        [Obsolete("Legacy property for backwards compatibility.", error: false)]
+        /// <summary>
+        /// Legacy property for backwards compatibility.
+        /// The transport does not does use this property for any reason, but removing it could cause serialization problems.
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public TimeSpan TimeToBeReceived { get; set; }
 
         public Dictionary<string, string> Headers { get; set; }
