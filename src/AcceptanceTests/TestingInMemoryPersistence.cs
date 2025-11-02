@@ -15,23 +15,17 @@
     using Unicast.Subscriptions;
     using Unicast.Subscriptions.MessageDrivenSubscriptions;
 
-    public class TestingInMemoryPersistence : PersistenceDefinition
+    public class TestingInMemoryPersistence : PersistenceDefinition, IPersistenceDefinitionFactory<TestingInMemoryPersistence>
     {
-        internal TestingInMemoryPersistence()
-        {
-            Supports<StorageType.Subscriptions>(s =>
-            {
-                s.EnableFeatureByDefault<TestingInMemorySubscriptionPersistence>();
-            });
-        }
+        TestingInMemoryPersistence() =>
+            Supports<StorageType.Subscriptions, TestingInMemorySubscriptionPersistence>();
+
+        static TestingInMemoryPersistence IPersistenceDefinitionFactory<TestingInMemoryPersistence>.Create() => new();
     }
 
     public static class InMemoryPersistenceExtensions
     {
-        public static void UseStorage(this PersistenceExtensions<TestingInMemoryPersistence> extensions, TestingInMemorySubscriptionStorage storageInstance)
-        {
-            extensions.GetSettings().Set("InMemoryPersistence.StorageInstance", storageInstance);
-        }
+        public static void UseStorage(this PersistenceExtensions<TestingInMemoryPersistence> extensions, TestingInMemorySubscriptionStorage storageInstance) => extensions.GetSettings().Set("InMemoryPersistence.StorageInstance", storageInstance);
     }
 
     public class TestingInMemorySubscriptionPersistence : Features.Feature
@@ -57,10 +51,7 @@
             return Task.FromResult(true);
         }
 
-        static string BuildKey(Subscriber subscriber)
-        {
-            return $"{subscriber.TransportAddress ?? ""}_{subscriber.Endpoint ?? ""}";
-        }
+        static string BuildKey(Subscriber subscriber) => $"{subscriber.TransportAddress ?? ""}_{subscriber.Endpoint ?? ""}";
 
         public Task Unsubscribe(Subscriber subscriber, MessageType messageType, ContextBag context, CancellationToken cancellationToken = default)
         {
@@ -81,6 +72,6 @@
             return Task.FromResult(subscribers);
         }
 
-        ConcurrentDictionary<MessageType, ConcurrentDictionary<string, Subscriber>> storage = new ConcurrentDictionary<MessageType, ConcurrentDictionary<string, Subscriber>>();
+        readonly ConcurrentDictionary<MessageType, ConcurrentDictionary<string, Subscriber>> storage = new();
     }
 }
