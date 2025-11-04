@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.14.2" />
-    <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="10.0.0-alpha.8" />
+    <PackageReference Include="NServiceBus.AcceptanceTests.Sources" Version="10.0.0-alpha.10" />
   </ItemGroup>
 
 </Project>
