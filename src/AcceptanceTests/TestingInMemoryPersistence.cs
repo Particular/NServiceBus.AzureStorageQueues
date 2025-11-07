@@ -30,10 +30,6 @@
 
     public class TestingInMemorySubscriptionPersistence : Features.Feature
     {
-        internal TestingInMemorySubscriptionPersistence()
-        {
-        }
-
         protected override void Setup(FeatureConfigurationContext context)
         {
             var storageInstance = context.Settings.GetOrDefault<TestingInMemorySubscriptionStorage>("InMemoryPersistence.StorageInstance");
