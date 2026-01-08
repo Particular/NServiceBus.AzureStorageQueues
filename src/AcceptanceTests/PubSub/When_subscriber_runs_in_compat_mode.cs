@@ -1,6 +1,5 @@
 namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
 {
-    using System;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using AcceptanceTesting.Customization;
@@ -20,8 +19,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
             var publisherMigrated = await Scenario.Define<Context>()
                 .WithEndpoint<LegacyPublisher>(b => b.When(c => c.SubscribedMessageDriven, (session, ctx) => session.Publish(new MyEvent())))
                 .WithEndpoint<MigratedSubscriber>(b => b.When((session, ctx) => session.Subscribe<MyEvent>()))
-                .Done(c => c.GotTheEvent)
-                .Run(TimeSpan.FromSeconds(30));
+                .Run();
 
             Assert.That(publisherMigrated.GotTheEvent, Is.True);
         }
@@ -67,6 +65,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                 public Task Handle(MyEvent @event, IMessageHandlerContext context)
                 {
                     testContext.GotTheEvent = true;
+                    testContext.MarkAsCompleted();
                     return Task.CompletedTask;
                 }
             }

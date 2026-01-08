@@ -12,9 +12,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
         public async Task It_should_still_deliver()
         {
             var context = await Scenario.Define<Context>()
-                .WithEndpoint<Publisher>(b => b.When(c => c.EndpointsStarted, session => session.Publish(new MyEvent())))
+                .WithEndpoint<Publisher>(b => b.When(session => session.Publish(new MyEvent())))
                 .WithEndpoint<Subscriber>(b => { })
-                .Done(c => c.GotTheEvent)
                 .Run();
 
             Assert.That(context.GotTheEvent, Is.True);
@@ -47,6 +46,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                 public Task Handle(object @event, IMessageHandlerContext context)
                 {
                     testContext.GotTheEvent = true;
+                    testContext.MarkAsCompleted();
                     return Task.CompletedTask;
                 }
             }

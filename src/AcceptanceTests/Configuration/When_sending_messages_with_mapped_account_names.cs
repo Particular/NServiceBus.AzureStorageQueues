@@ -73,8 +73,7 @@
                     return s.Send(new MyCommand(), options, cancellationToken);
                 }))
                 .WithEndpoint<TReceiver>()
-                .Done(c => c.Received)
-                .Run();
+                .Run(cancellationToken);
 
             Assert.That(ctx.Received, Is.True);
 
@@ -90,8 +89,6 @@
         class Context : ScenarioContext
         {
             public bool Received { get; set; }
-
-            public string MessageText { get; set; }
         }
 
         class Sender : EndpointConfigurationBuilder
@@ -156,6 +153,7 @@
             public Task Handle(MyCommand message, IMessageHandlerContext context)
             {
                 testContext.Received = true;
+                testContext.MarkAsCompleted();
                 return Task.CompletedTask;
             }
 

@@ -14,12 +14,12 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
             Requires.NativePubSubSupport();
 
             var context = await Scenario.Define<Context>()
-                .WithEndpoint<Publisher1>(b => b.When(c => c.EndpointsStarted, (session, c) =>
+                .WithEndpoint<Publisher1>(b => b.When((session, c) =>
                 {
                     c.AddTrace("Publishing MyEvent1");
                     return session.Publish(new MyEvent1());
                 }))
-                .WithEndpoint<Publisher2>(b => b.When(c => c.EndpointsStarted, (session, c) =>
+                .WithEndpoint<Publisher2>(b => b.When((session, c) =>
                 {
                     c.AddTrace("Publishing MyEvent2");
                     return session.Publish(new MyEvent2());
@@ -39,6 +39,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
         {
             public bool SubscriberGotIMyEvent { get; set; }
             public bool SubscriberGotMyEvent2 { get; set; }
+
+            public void MaybeMarkAsCompleted() => MarkAsCompleted(SubscriberGotIMyEvent, SubscriberGotMyEvent2);
         }
 
         public class Publisher1 : EndpointConfigurationBuilder
@@ -73,21 +75,16 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
                         testContext.SubscriberGotIMyEvent = true;
                     }
 
+                    testContext.MaybeMarkAsCompleted();
                     return Task.CompletedTask;
                 }
             }
         }
 
-        public class MyEvent1 : IMyEvent
-        {
-        }
+        public class MyEvent1 : IMyEvent;
 
-        public class MyEvent2 : IMyEvent
-        {
-        }
+        public class MyEvent2 : IMyEvent;
 
-        public interface IMyEvent : IEvent
-        {
-        }
+        public interface IMyEvent : IEvent;
     }
 }

@@ -1,10 +1,7 @@
 namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
 {
-    using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
     using AcceptanceTesting;
-    using AcceptanceTesting.Support;
     using Configuration.AdvancedExtensibility;
     using Features;
     using NServiceBus.AcceptanceTests;
@@ -48,15 +45,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                      });
                  })
                 .Done(c => c.GotTheEvent)
-                .Run(TimeSpan.FromSeconds(30));
+                .Run();
 
             Assert.That(beforeMigration.GotTheEvent, Is.True);
 
             //Subscriber migrated and in compatibility mode.
-            var subscriberMigratedRunSettings = new RunSettings
-            {
-                TestExecutionTimeout = TimeSpan.FromSeconds(30)
-            };
             var subscriberMigrated = await Scenario.Define<Context>()
                 .WithEndpoint(new Publisher(supportsPublishSubscribe: false), b =>
                  {
@@ -82,15 +75,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                      });
                  })
                 .Done(c => c.GotTheEvent && c.SubscribedNative) //we ensure the subscriber did subscriber with the native mechanism
-                .Run(subscriberMigratedRunSettings);
+                .Run();
 
             Assert.That(subscriberMigrated.GotTheEvent, Is.True);
 
             //Publisher migrated and in compatibility mode
-            var publisherMigratedRunSettings = new RunSettings
-            {
-                TestExecutionTimeout = TimeSpan.FromSeconds(30)
-            };
             var publisherMigrated = await Scenario.Define<Context>()
                 .WithEndpoint(new Publisher(supportsPublishSubscribe: true), b =>
                  {
@@ -117,7 +106,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                      });
                  })
                 .Done(c => c.GotTheEvent)
-                .Run(publisherMigratedRunSettings);
+                .Run();
 
             Assert.That(publisherMigrated.GotTheEvent, Is.True);
 
@@ -125,11 +114,11 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             var compatModeDisabled = await Scenario.Define<Context>()
                 .WithEndpoint(new Publisher(supportsPublishSubscribe: true), b =>
                  {
-                     b.When(c => c.EndpointsStarted, (session, ctx) => session.Publish(new MyEvent()));
+                     b.When((session, ctx) => session.Publish(new MyEvent()));
                  })
                 .WithEndpoint(new Subscriber(supportsPublishSubscribe: true), c => { })
                 .Done(c => c.GotTheEvent)
-                .Run(TimeSpan.FromSeconds(30));
+                .Run();
 
             Assert.That(compatModeDisabled.GotTheEvent, Is.True);
         }

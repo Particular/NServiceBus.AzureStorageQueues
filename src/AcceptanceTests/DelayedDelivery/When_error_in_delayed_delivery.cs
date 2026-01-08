@@ -35,7 +35,7 @@
             Assert.That(ctx.Headers["NServiceBus.FailedQ"], Is.EqualTo("notexist"));
         }
 
-        Task<MyContext> RunScenario(CancellationToken cancellationToken = default) => Scenario.Define<MyContext>()
+        Task<MyContext> RunScenario() => Scenario.Define<MyContext>()
             .WithEndpoint<SampleEndpoint>(endpoint => endpoint
                 .DoNotFailOnErrorMessages()
                 .When(session =>
@@ -43,11 +43,10 @@
                     var sendOptions = new SendOptions();
                     sendOptions.SetDestination("notexist");
                     sendOptions.DelayDeliveryWith(TimeSpan.FromSeconds(2));
-                    return session.Send(new MyMessage(), sendOptions, cancellationToken);
+                    return session.Send(new MyMessage(), sendOptions);
                 })
             )
             .WithEndpoint<ErrorQueueSpy>()
-            .Done(context => !cancellationToken.IsCancellationRequested && context.IsDone)
             .Run();
 
         class SampleEndpoint : EndpointConfigurationBuilder
@@ -83,7 +82,7 @@
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
                     scenarioContext.Headers = context.MessageHeaders;
-                    scenarioContext.IsDone = true;
+                    scenarioContext.MarkAsCompleted();
                     return Task.CompletedTask;
                 }
             }
@@ -95,7 +94,6 @@
 
         class MyContext : ScenarioContext
         {
-            public bool IsDone { get; set; }
             public IReadOnlyDictionary<string, string> Headers { get; set; }
         }
     }
