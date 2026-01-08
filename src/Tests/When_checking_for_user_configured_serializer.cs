@@ -15,10 +15,9 @@
         public void Should_not_throw_exception_when_serializer_was_set()
         {
             var settings = new SettingsHolder();
-            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.CreateInstance;
-
             var conventions = settings.GetOrCreate<Conventions>();
-            var registry = (MessageMetadataRegistry)Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, new object[] { new Func<Type, bool>(t => conventions.IsMessageType(t)), true }, CultureInfo.InvariantCulture);
+            var registry = new MessageMetadataRegistry();
+            registry.Initialize(conventions.IsMessageType, true);
 
             settings.Set(registry);
 
