@@ -5,7 +5,6 @@ namespace NServiceBus
     using System.Collections.ObjectModel;
     using System.Globalization;
     using System.Linq;
-    using System.Reflection;
     using System.Security.Cryptography;
     using System.Text;
     using System.Threading;
@@ -182,9 +181,9 @@ namespace NServiceBus
                 //https://github.com/Particular/NServiceBus.AzureStorageQueues/issues/524
 
                 var tempSettingsHolder = new SettingsHolder();
-                const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.CreateInstance;
                 var conventions = tempSettingsHolder.GetOrCreate<Conventions>();
-                var registry = (MessageMetadataRegistry)Activator.CreateInstance(typeof(MessageMetadataRegistry), flags, null, [new Func<Type, bool>(t => conventions.IsMessageType(t)), true], CultureInfo.InvariantCulture);
+                var registry = new MessageMetadataRegistry();
+                registry.Initialize(conventions.IsMessageType, true);
 
                 tempSettingsHolder.Set(registry);
                 serializerSettingsHolder = tempSettingsHolder;

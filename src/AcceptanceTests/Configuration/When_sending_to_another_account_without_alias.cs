@@ -21,7 +21,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
             var exception = Assert.ThrowsAsync<FormatException>(
                 async () => await Scenario.Define<Context>()
                     .WithEndpoint<Receiver>(c => c.When(s => s.Send<MyMessage>(queueAddress, m => { })))
-                    .Run(TimeSpan.FromSeconds(15)));
+                    .Run());
 
             Assert.That(exception?.Message, Is.EqualTo("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected. Only aliases are allowed. Provide an alias for the storage account."));
         }

@@ -39,7 +39,7 @@
                     new TableServiceClient(Utilities.GetEnvConfiguredConnectionString2()));
             });
 
-        static Task Configure(Action<AzureStorageQueueTransport> customizeTransport, CancellationToken cancellationToken = default) =>
+        static Task Configure(Action<AzureStorageQueueTransport> customizeTransport) =>
             Scenario.Define<Context>()
                 .WithEndpoint<SendOnlyEndpoint>(cfg =>
                 {
@@ -53,20 +53,16 @@
                     {
                         var options = new SendOptions();
                         options.SetDestination("ConfiguringAccountNames.Receiver");
-                        return bus.Send(new MyMessage(), options, cancellationToken);
+                        return bus.Send(new MyMessage(), options);
                     });
                 })
                 .WithEndpoint<Receiver>()
-                .Done(c => c.WasCalled)
                 .Run();
 
         const string Default = "default";
         const string Another = "another";
 
-        class Context : ScenarioContext
-        {
-            public bool WasCalled { get; set; }
-        }
+        class Context : ScenarioContext;
 
         class SendOnlyEndpoint : EndpointConfigurationBuilder
         {
@@ -85,7 +81,7 @@
 
                 public Task Handle(MyMessage message, IMessageHandlerContext context)
                 {
-                    testContext.WasCalled = true;
+                    testContext.MarkAsCompleted();
                     return Task.CompletedTask;
                 }
             }

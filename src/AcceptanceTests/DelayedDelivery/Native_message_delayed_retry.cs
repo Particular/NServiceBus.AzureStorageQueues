@@ -4,7 +4,6 @@
     using System.Buffers.Text;
     using System.Collections.Generic;
     using System.Text.Json;
-    using System.Threading;
     using System.Threading.Tasks;
     using AcceptanceTesting;
     using global::Azure.Storage.Queues;
@@ -19,30 +18,27 @@
         [Test]
         public async Task Should_handle_delayed_delivery_of_native_message()
         {
-            var ctx = await RunScenario();
+            var ctx = await Scenario.Define<MyContext>()
+                .WithEndpoint<SampleEndpoint>(endpoint => endpoint
+                    .DoNotFailOnErrorMessages()
+                    .When(async session =>
+                    {
+                        var nativeMessage = new NativeMessage
+                        {
+                            Content = $"Hello from native sender @ {DateTimeOffset.UtcNow}"
+                        };
+
+                        var queueClient = new QueueClient(Utilities.GetEnvConfiguredConnectionString(), "native-integration-asq");
+                        await queueClient.CreateIfNotExistsAsync();
+
+                        var serializedMessage = JsonSerializer.Serialize(nativeMessage);
+                        await queueClient.SendMessageAsync(serializedMessage);
+                    })
+                )
+                .Run();
 
             Assert.That(ctx.IsDone, Is.True);
         }
-
-        Task<MyContext> RunScenario(CancellationToken cancellationToken = default) => Scenario.Define<MyContext>()
-            .WithEndpoint<SampleEndpoint>(endpoint => endpoint
-                .DoNotFailOnErrorMessages()
-                .When(async session =>
-                {
-                    var nativeMessage = new NativeMessage
-                    {
-                        Content = $"Hello from native sender @ {DateTimeOffset.UtcNow}"
-                    };
-
-                    var queueClient = new QueueClient(Utilities.GetEnvConfiguredConnectionString(), "native-integration-asq");
-                    await queueClient.CreateIfNotExistsAsync();
-
-                    var serializedMessage = JsonSerializer.Serialize(nativeMessage);
-                    await queueClient.SendMessageAsync(serializedMessage);
-                })
-            )
-            .Done(context => !cancellationToken.IsCancellationRequested && context.IsDone)
-            .Run();
 
         class SampleEndpoint : EndpointConfigurationBuilder
         {
@@ -72,17 +68,14 @@
                     })
                 .CustomEndpointName("native-integration-asq");
 
-            class MyMessageHandler : IHandleMessages<NativeMessage>
+            class MyMessageHandler(MyContext scenarioContext) : IHandleMessages<NativeMessage>
             {
-                MyContext scenarioContext;
-
-                public MyMessageHandler(MyContext scenarioContext) => this.scenarioContext = scenarioContext;
-
                 public Task Handle(NativeMessage message, IMessageHandlerContext context)
                 {
                     if (context.MessageHeaders.GetValueOrDefault(Headers.DelayedRetries) == "1")
                     {
                         scenarioContext.IsDone = true;
+                        scenarioContext.MarkAsCompleted();
                     }
                     throw new Exception("Failing over to delay retry");
                 }
