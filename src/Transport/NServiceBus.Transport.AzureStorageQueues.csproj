@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Data.Tables" Version="12.11.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
-    <PackageReference Include="Azure.Storage.Queues" Version="12.24.0" />
+    <PackageReference Include="Azure.Storage.Queues" Version="12.25.0" />
     <PackageReference Include="BitFaster.Caching" Version="2.5.4" />
     <PackageReference Include="NServiceBus" Version="10.0.0-alpha.24" />
   </ItemGroup>
