@@ -28,7 +28,7 @@ namespace NServiceBus
             get;
             set
             {
-                Guard.AgainstNullAndEmpty(nameof(DelayedDeliveryTableName), value);
+                ArgumentException.ThrowIfNullOrEmpty(value, nameof(DelayedDeliveryTableName));
 
                 if (delayedDeliveryTableNameRegex.IsMatch(value) == false)
                 {

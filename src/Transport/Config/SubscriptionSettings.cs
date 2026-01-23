@@ -21,7 +21,7 @@ namespace NServiceBus
             get => field ?? DefaultSubscriptionTableName;
             set
             {
-                Guard.AgainstNullAndEmpty(nameof(SubscriptionTableName), value);
+                ArgumentException.ThrowIfNullOrEmpty(value, nameof(SubscriptionTableName));
 
                 if (subscriptionTableNameRegex.IsMatch(value) == false)
                 {
@@ -40,7 +40,7 @@ namespace NServiceBus
             get;
             set
             {
-                Guard.AgainstNegativeAndZero(nameof(CacheInvalidationPeriod), value);
+                ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero, nameof(CacheInvalidationPeriod));
                 field = value;
             }
         } = TimeSpan.FromSeconds(5);

@@ -114,7 +114,7 @@ namespace NServiceBus.Transport.AzureStorageQueues
         /// <returns>Returns <c>true</c> if the Uri uses path style addressing; otherwise, <c>false</c>.</returns>
         internal static bool UsePathStyleAddressing(Uri uri)
         {
-            Guard.AgainstNull(nameof(uri), uri);
+            ArgumentNullException.ThrowIfNull(uri);
 
             if (uri.HostNameType != UriHostNameType.Dns)
             {

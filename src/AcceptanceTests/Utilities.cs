@@ -61,7 +61,7 @@
 
         static void ThrowIfPremiumEndpointConnectionString(string connectionString)
         {
-            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+            ArgumentException.ThrowIfNullOrEmpty(connectionString);
 
             if (connectionString.Contains("https://localhost") ||
                 connectionString.Contains(".table.cosmosdb.") ||
