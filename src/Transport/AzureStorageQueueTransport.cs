@@ -35,7 +35,7 @@ namespace NServiceBus
 
         internal void LegacyAPIShimSetConnectionString(string connectionString)
         {
-            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+            ArgumentException.ThrowIfNullOrEmpty(connectionString);
 
             queueServiceClientProvider = new QueueServiceClientByConnectionString(connectionString);
             if (SupportsDelayedDelivery)
@@ -51,7 +51,7 @@ namespace NServiceBus
         public AzureStorageQueueTransport(string connectionString, bool useNativeDelayedDeliveries = true)
             : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: useNativeDelayedDeliveries, supportsPublishSubscribe: true, supportsTTBR: true)
         {
-            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+            ArgumentException.ThrowIfNullOrEmpty(connectionString);
 
             queueServiceClientProvider = new QueueServiceClientByConnectionString(connectionString);
 
@@ -72,7 +72,7 @@ namespace NServiceBus
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient)
             : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: false, supportsPublishSubscribe: true, supportsTTBR: true)
         {
-            Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
+            ArgumentNullException.ThrowIfNull(queueServiceClient);
 
             queueServiceClientProvider = new QueueServiceClientProvidedByUser(queueServiceClient);
         }
@@ -83,9 +83,9 @@ namespace NServiceBus
         public AzureStorageQueueTransport(QueueServiceClient queueServiceClient, BlobServiceClient blobServiceClient, TableServiceClient tableServiceClient)
             : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery: true, supportsPublishSubscribe: true, supportsTTBR: true)
         {
-            Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
-            Guard.AgainstNull(nameof(blobServiceClient), blobServiceClient);
-            Guard.AgainstNull(nameof(tableServiceClient), tableServiceClient);
+            ArgumentNullException.ThrowIfNull(queueServiceClient);
+            ArgumentNullException.ThrowIfNull(blobServiceClient);
+            ArgumentNullException.ThrowIfNull(tableServiceClient);
 
             queueServiceClientProvider = new QueueServiceClientProvidedByUser(queueServiceClient);
             blobServiceClientProvider = new BlobServiceClientProvidedByUser(blobServiceClient);
@@ -98,7 +98,7 @@ namespace NServiceBus
         internal AzureStorageQueueTransport(string connectionString, bool supportsDelayedDelivery, bool supportsPublishSubscribe)
             : base(TransportTransactionMode.ReceiveOnly, supportsDelayedDelivery, supportsPublishSubscribe, true)
         {
-            Guard.AgainstNullAndEmpty(nameof(connectionString), connectionString);
+            ArgumentException.ThrowIfNullOrEmpty(connectionString);
 
             queueServiceClientProvider = new QueueServiceClientByConnectionString(connectionString);
 
@@ -138,9 +138,9 @@ namespace NServiceBus
                                     "to configure the client connection string.");
             }
 
-            Guard.AgainstNull(nameof(hostSettings), hostSettings);
-            Guard.AgainstNull(nameof(receiversSettings), receiversSettings);
-            Guard.AgainstNull(nameof(sendingAddresses), sendingAddresses);
+            ArgumentNullException.ThrowIfNull(hostSettings);
+            ArgumentNullException.ThrowIfNull(receiversSettings);
+            ArgumentNullException.ThrowIfNull(sendingAddresses);
 
             ValidateReceiversSettings(receiversSettings);
 
@@ -417,7 +417,7 @@ namespace NServiceBus
             get;
             set
             {
-                Guard.AgainstNegativeAndZero(nameof(PeekInterval), value);
+                ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero, nameof(PeekInterval));
                 field = value;
             }
         } = TimeSpan.FromMilliseconds(125);
@@ -449,7 +449,7 @@ namespace NServiceBus
             get;
             set
             {
-                Guard.AgainstNull(nameof(QueueNameSanitizer), value);
+                ArgumentNullException.ThrowIfNull(value, nameof(QueueNameSanitizer));
 
                 string queueNameSanitizerWrapper(string entityName)
                 {
@@ -518,7 +518,7 @@ namespace NServiceBus
             get;
             set
             {
-                Guard.AgainstNull(nameof(MessageUnwrapper), value);
+                ArgumentNullException.ThrowIfNull(value, nameof(MessageUnwrapper));
                 field = value;
             }
         }

@@ -24,9 +24,9 @@ namespace NServiceBus
         /// </summary>
         public AccountInfo(string alias, QueueServiceClient queueServiceClient, TableServiceClient tableServiceClient)
         {
-            Guard.AgainstNull(nameof(alias), alias);
-            Guard.AgainstNull(nameof(queueServiceClient), queueServiceClient);
-            Guard.AgainstNull(nameof(tableServiceClient), tableServiceClient);
+            ArgumentNullException.ThrowIfNull(alias);
+            ArgumentNullException.ThrowIfNull(queueServiceClient);
+            ArgumentNullException.ThrowIfNull(tableServiceClient);
 
             Alias = alias;
             QueueServiceClient = queueServiceClient;
