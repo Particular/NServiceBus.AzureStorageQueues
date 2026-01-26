@@ -28,8 +28,10 @@ namespace NServiceBus.Transport.AzureStorageQueues
     /// </summary>
     sealed class StorageUri : IEquatable<StorageUri>
     {
+#if !NET10_0_OR_GREATER
         Uri primaryUri;
         Uri secondaryUri;
+#endif
 
         /// <summary>
         /// The endpoint for the primary location for the storage account.
@@ -37,12 +39,22 @@ namespace NServiceBus.Transport.AzureStorageQueues
         /// <value>The <see cref="Uri"/> for the primary endpoint.</value>
         public Uri PrimaryUri
         {
+#if NET10_0_OR_GREATER
+            get;
+#else
             get => primaryUri;
+#endif
+
 
             private set
             {
                 AssertAbsoluteUri(value);
+#if NET10_0_OR_GREATER
+                field = value;
+#else
                 primaryUri = value;
+#endif
+
             }
         }
 
@@ -52,12 +64,22 @@ namespace NServiceBus.Transport.AzureStorageQueues
         /// <value>The <see cref="Uri"/> for the secondary endpoint.</value>
         public Uri SecondaryUri
         {
+#if NET10_0_OR_GREATER
+            get;
+#else
             get => secondaryUri;
+#endif
+
 
             private set
             {
                 AssertAbsoluteUri(value);
+#if NET10_0_OR_GREATER
+                field = value;
+#else
                 secondaryUri = value;
+#endif
+
             }
         }
 
