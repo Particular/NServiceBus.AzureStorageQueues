@@ -1,0 +1,4 @@
+ignore:
+  # 
+  - test: ComponentShouldTargetDotNetLtsVersion
+    path: src/Transport/NServiceBus.Transport.AzureStorageQueues.csproj
