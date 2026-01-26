@@ -29,7 +29,7 @@
 
             var items = ctx.Logs.Where(IsPopReceiptLogItem).ToArray();
 
-            CollectionAssert.IsNotEmpty(items);
+            Assert.That(items, Is.Not.Empty);
         }
 
         static bool IsPopReceiptLogItem(ScenarioContext.LogItem item)

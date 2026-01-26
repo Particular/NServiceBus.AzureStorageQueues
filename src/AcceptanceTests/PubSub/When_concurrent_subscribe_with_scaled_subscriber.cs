@@ -27,8 +27,8 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                 .Done(c => c.GotTheEvent && c.GotTheOtherEvent)
                 .Run();
 
-            Assert.True(context.GotTheEvent);
-            Assert.True(context.GotTheOtherEvent);
+            Assert.That(context.GotTheEvent, Is.True);
+            Assert.That(context.GotTheOtherEvent, Is.True);
         }
 
         public class Context : ScenarioContext
