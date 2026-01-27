@@ -512,7 +512,7 @@ namespace NServiceBus
 #endif
             }
 #if NET10_0_OR_GREATER
-        } = entityName => entityName;
+        } = (entityName) => entityName;
 #else
         }
 #endif
@@ -651,7 +651,7 @@ namespace NServiceBus
         TimeSpan messageInvisibleTime = TimeSpan.FromSeconds(30);
         TimeSpan peekInterval = TimeSpan.FromMilliseconds(125);
         TimeSpan maximumWaitTimeWhenIdle = TimeSpan.FromSeconds(30);
-        Func<string, string> queueNameSanitizer = entityName => entityName;
+        Func<string, string> queueNameSanitizer = (entityName) => entityName;
         QueueAddressGenerator queueAddressGenerator;
         int? receiverBatchSize;
         int? degreeOfReceiveParallelism;
