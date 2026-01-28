@@ -397,36 +397,67 @@ namespace NServiceBus
         /// </summary>
         public TimeSpan MessageInvisibleTime
         {
+#if NET10_0_OR_GREATER
+            get;
+#else
             get => messageInvisibleTime;
+#endif
+
             set
             {
                 if (value < TimeSpan.FromSeconds(1) || value > TimeSpan.FromDays(7))
                 {
                     throw new ArgumentOutOfRangeException(nameof(MessageInvisibleTime), value, "Value must be between 1 second and 7 days.");
                 }
+#if NET10_0_OR_GREATER
+                field = value;
+#else
                 messageInvisibleTime = value;
+#endif
             }
+#if NET10_0_OR_GREATER
+        } = TimeSpan.FromSeconds(30);
+#else
         }
+#endif
 
         /// <summary>
         /// The amount of time to add to the time to wait before checking for a new message
         /// </summary>
         public TimeSpan PeekInterval
         {
+#if NET10_0_OR_GREATER
+            get;
+#else
             get => peekInterval;
+#endif
+
             set
             {
                 Guard.AgainstNegativeAndZero(nameof(PeekInterval), value);
+#if NET10_0_OR_GREATER
+                field = value;
+#else
                 peekInterval = value;
+#endif
             }
+#if NET10_0_OR_GREATER
+        } = TimeSpan.FromMilliseconds(125);
+#else
         }
+#endif
 
         /// <summary>
         /// The maximum amount of time, in milliseconds, that the transport will wait before checking for a new message
         /// </summary>
         public TimeSpan MaximumWaitTimeWhenIdle
         {
+#if NET10_0_OR_GREATER
+            get;
+#else
             get => maximumWaitTimeWhenIdle;
+#endif
+
             set
             {
                 if (value < TimeSpan.FromMilliseconds(100) || value > TimeSpan.FromSeconds(60))
@@ -434,9 +465,18 @@ namespace NServiceBus
                     throw new ArgumentOutOfRangeException(nameof(MaximumWaitTimeWhenIdle), value, "Value must be between 100ms and 60 seconds.");
                 }
 
+#if NET10_0_OR_GREATER
+                field = value;
+#else
                 maximumWaitTimeWhenIdle = value;
+#endif
+
             }
+#if NET10_0_OR_GREATER
+        } = TimeSpan.FromSeconds(30);
+#else
         }
+#endif
 
         /// <summary>
         /// Defines a queue name sanitizer to apply to queue names not compliant wth Azure Storage Queue naming rules.
@@ -444,7 +484,12 @@ namespace NServiceBus
         /// </summary>
         public Func<string, string> QueueNameSanitizer
         {
+#if NET10_0_OR_GREATER
+            get;
+#else
             get => queueNameSanitizer;
+#endif
+
             set
             {
                 Guard.AgainstNull(nameof(QueueNameSanitizer), value);
@@ -460,24 +505,42 @@ namespace NServiceBus
                         throw new Exception("Registered queue name sanitizer threw an exception.", ex);
                     }
                 }
-
+#if NET10_0_OR_GREATER
+                field = queueNameSanitizerWrapper;
+#else
                 queueNameSanitizer = queueNameSanitizerWrapper;
+#endif
             }
+#if NET10_0_OR_GREATER
+        } = (entityName) => entityName;
+#else
         }
+#endif
 
         /// <summary>
         /// Controls how many messages should be read from the queue at once
         /// </summary>
         public int? ReceiverBatchSize
         {
+#if NET10_0_OR_GREATER
+            get;
+#else
             get => receiverBatchSize;
+#endif
+
             set
             {
                 if (value is < 1 or > 32)
                 {
                     throw new ArgumentOutOfRangeException(nameof(ReceiverBatchSize), value, "Batch size must be between 1 and 32 messages.");
                 }
+
+#if NET10_0_OR_GREATER
+                field = value;
+#else
                 receiverBatchSize = value;
+#endif
+
             }
         }
 
@@ -486,7 +549,25 @@ namespace NServiceBus
         /// </summary>
         public int? DegreeOfReceiveParallelism
         {
+#if NET10_0_OR_GREATER
+            get;
+#else
             get => degreeOfReceiveParallelism;
+#endif
+
+#if NET10_0_OR_GREATER
+            set
+            {
+                const int maxDegreeOfReceiveParallelism = 32;
+
+                if (field is < 1 or > maxDegreeOfReceiveParallelism)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(DegreeOfReceiveParallelism), value, $"DegreeOfParallelism must be between 1 and {maxDegreeOfReceiveParallelism}.");
+                }
+
+                field = value;
+            }
+#else
             set
             {
                 const int maxDegreeOfReceiveParallelism = 32;
@@ -498,6 +579,7 @@ namespace NServiceBus
 
                 degreeOfReceiveParallelism = value;
             }
+#endif
         }
 
         /// <summary>
@@ -510,11 +592,21 @@ namespace NServiceBus
         /// </summary>
         public Func<QueueMessage, MessageWrapper> MessageUnwrapper
         {
+#if NET10_0_OR_GREATER
+            get;
+#else
             get => messageUnwrapper;
+#endif
+
             set
             {
                 Guard.AgainstNull(nameof(MessageUnwrapper), value);
+#if NET10_0_OR_GREATER
+                field = value;
+#else
                 messageUnwrapper = value;
+#endif
+
             }
         }
 
@@ -538,8 +630,13 @@ namespace NServiceBus
         {
             get
             {
+#if NET10_0_OR_GREATER
+                field ??= new QueueAddressGenerator(QueueNameSanitizer);
+                return field;
+#else
                 queueAddressGenerator ??= new QueueAddressGenerator(QueueNameSanitizer);
                 return queueAddressGenerator;
+#endif
             }
         }
 
@@ -547,16 +644,18 @@ namespace NServiceBus
 
         internal const string SerializerSettingsKey = "MainSerializer";
         readonly TransportTransactionMode[] supportedTransactionModes = new[] { TransportTransactionMode.None, TransportTransactionMode.ReceiveOnly };
-        TimeSpan messageInvisibleTime = TimeSpan.FromSeconds(30);
-        TimeSpan peekInterval = TimeSpan.FromMilliseconds(125);
-        TimeSpan maximumWaitTimeWhenIdle = TimeSpan.FromSeconds(30);
-        Func<string, string> queueNameSanitizer = entityName => entityName;
-        QueueAddressGenerator queueAddressGenerator;
         IQueueServiceClientProvider queueServiceClientProvider;
         IBlobServiceClientProvider blobServiceClientProvider;
         ITableServiceClientProvider tableServiceClientProvider;
+#if !NET10_0_OR_GREATER
+        TimeSpan messageInvisibleTime = TimeSpan.FromSeconds(30);
+        TimeSpan peekInterval = TimeSpan.FromMilliseconds(125);
+        TimeSpan maximumWaitTimeWhenIdle = TimeSpan.FromSeconds(30);
+        Func<string, string> queueNameSanitizer = (entityName) => entityName;
+        QueueAddressGenerator queueAddressGenerator;
         int? receiverBatchSize;
         int? degreeOfReceiveParallelism;
         Func<QueueMessage, MessageWrapper> messageUnwrapper;
+#endif
     }
 }

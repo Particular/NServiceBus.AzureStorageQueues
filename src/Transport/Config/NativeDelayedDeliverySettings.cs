@@ -25,7 +25,11 @@ namespace NServiceBus
         /// </summary>
         public string DelayedDeliveryTableName
         {
+#if NET10_0_OR_GREATER
+            get;
+#else
             get => delayedDeliveryTableName;
+#endif
             set
             {
                 Guard.AgainstNullAndEmpty(nameof(DelayedDeliveryTableName), value);
@@ -34,12 +38,18 @@ namespace NServiceBus
                 {
                     throw new ArgumentException($"{nameof(DelayedDeliveryTableName)} must match the following regular expression '{delayedDeliveryTableNameRegex}'");
                 }
-
+#if NET10_0_OR_GREATER
+                field = value.ToLower();
+#else
                 delayedDeliveryTableName = value.ToLower();
+#endif
+
             }
         }
-
+#if !NET10_0_OR_GREATER
         string delayedDeliveryTableName;
+#endif
+
         static readonly Regex delayedDeliveryTableNameRegex = new Regex(@"^[A-Za-z][A-Za-z0-9]{2,62}$", RegexOptions.Compiled);
     }
 }
