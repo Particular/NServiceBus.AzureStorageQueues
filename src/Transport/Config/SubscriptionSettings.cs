@@ -19,7 +19,7 @@ namespace NServiceBus
         public string SubscriptionTableName
         {
 #if NET10_0_OR_GREATER
-            get => field ?? DefaultSubscriptionTableName;
+            get;
 #else
             get => subscriptionTableName ?? DefaultSubscriptionTableName;
 #endif
@@ -37,9 +37,12 @@ namespace NServiceBus
 #else
                 subscriptionTableName = value.ToLower();
 #endif
-
             }
+#if NET10_0_OR_GREATER
+        } = DefaultSubscriptionTableName;
+#else
         }
+#endif
 
         /// <summary>
         /// Cache subscriptions for a given <see cref="TimeSpan" />.
