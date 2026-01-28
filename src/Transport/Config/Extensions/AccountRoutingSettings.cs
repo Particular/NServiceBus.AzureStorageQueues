@@ -19,10 +19,13 @@
         /// <summary>
         /// Get or set the default account alias.
         /// </summary>
-#if NET10_0_OR_GREATER
         public string DefaultAccountAlias
         {
+#if NET10_0_OR_GREATER
             get;
+#else
+            get => defaultAccountAlias;
+#endif
             set
             {
                 if (string.IsNullOrWhiteSpace(value))
@@ -30,24 +33,19 @@
                     throw new ArgumentException("Should not be null or white space", nameof(DefaultAccountAlias));
                 }
 
+#if NET10_0_OR_GREATER
                 field = value;
+#else
+                defaultAccountAlias = value;
+#endif
+
             }
+#if NET10_0_OR_GREATER
         } = string.Empty;
 #else
-        public string DefaultAccountAlias
-        {
-            get => defaultAccountAlias;
-            set
-            {
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    throw new ArgumentException("Should not be null or white space", nameof(DefaultAccountAlias));
-                }
-
-                defaultAccountAlias = value;
-            }
         }
 #endif
+
 
         /// <summary>
         /// Adds the mapping between the <paramref alias="alias" /> its <paramref alias="QueueServiceClient" /> and <paramref alias="CloudTableClient" />.

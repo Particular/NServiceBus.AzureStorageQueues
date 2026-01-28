@@ -30,7 +30,7 @@
                     .Done(c => c.WasCalled)
                     .Run().ConfigureAwait(false));
 
-            Assert.That(exception.Message, Does.Contain("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected. Only aliases are allowed. Provide an alias for the storage account."));
+            Assert.That(exception.Message, Is.EqualTo("An attempt to use an address with a connection string using the 'destination@connectionstring' format was detected. Only aliases are allowed. Provide an alias for the storage account."));
         }
 
         const string Alias = "another";
