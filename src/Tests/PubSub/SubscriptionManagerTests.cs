@@ -15,7 +15,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         [Test]
         public async Task Should_subscribe_all_event_types()
         {
-            var subscriptionStore = new RecordingSubscriptionStore();
+            var subscriptionStore = new SubscriptionStore();
             var subscriptionManager = new SubscriptionManager(subscriptionStore, "MyEndpoint", "myendpoint", new StartupDiagnosticEntries());
 
             await subscriptionManager.SubscribeAll(
@@ -28,7 +28,7 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         [Test]
         public async Task Should_succeed_with_no_events()
         {
-            var subscriptionStore = new RecordingSubscriptionStore();
+            var subscriptionStore = new SubscriptionStore();
             var subscriptionManager = new SubscriptionManager(subscriptionStore, "MyEndpoint", "myendpoint", new StartupDiagnosticEntries());
 
             await subscriptionManager.SubscribeAll([], new ContextBag());
@@ -37,9 +37,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.Tests.PubSub
         }
 
         class MyEvent1;
+
         class MyEvent2;
 
-        class RecordingSubscriptionStore: ISubscriptionStore
+        class SubscriptionStore : ISubscriptionStore
         {
             public List<Type> SubscribedTypes { get; } = [];
 
