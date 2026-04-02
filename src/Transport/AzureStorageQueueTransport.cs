@@ -224,10 +224,11 @@ namespace NServiceBus
             var dispatcher = new Dispatcher(QueueAddressGenerator, azureStorageAddressing, serializer, nativeDelayedDeliveryPersistence, subscriptionStore);
 
             object delayedDeliveryProcessorDiagnosticSection = new { };
+            string nativeDelayedDeliveryErrorQueue = null;
             var nativeDelayedDeliveryProcessor = NativeDelayedDeliveryProcessor.Disabled();
             if (SupportsDelayedDelivery)
             {
-                var nativeDelayedDeliveryErrorQueue = DelayedDelivery.DelayedDeliveryPoisonQueue
+                nativeDelayedDeliveryErrorQueue = DelayedDelivery.DelayedDeliveryPoisonQueue
                     ?? hostSettings.CoreSettings?.GetOrDefault<string>(ErrorQueueSettings.SettingsKey)
                     ?? receiversSettings.Select(settings => settings.ErrorQueue).FirstOrDefault();
 
@@ -301,7 +302,56 @@ namespace NServiceBus
                 MessageInvisibleTime
             });
 
+            WriteManifest(hostSettings.StartupDiagnostic, receiversSettings, sendingAddresses, delayedMessagesStorageTableClient?.Name, nativeDelayedDeliveryErrorQueue);
+
             return infrastructure;
+        }
+
+        void WriteManifest(StartupDiagnosticEntries startupDiagnostic, ReceiveSettings[] receiversSettings, string[] sendingAddresses, string delayedDeliveryTableName, string delayedDeliveryPoisonQueue)
+        {
+            startupDiagnostic.Add("Manifest-ASQSettings", new
+            {
+                MessageInvisibleTime = MessageInvisibleTime.ToString(),
+                ReceiverBatchSize = ReceiverBatchSize?.ToString() ?? "default",
+                DegreeOfReceiveParallelism = DegreeOfReceiveParallelism?.ToString() ?? "default",
+                MaximumWaitTimeWhenIdle = MaximumWaitTimeWhenIdle.ToString(),
+                PeekInterval = PeekInterval.ToString()
+            });
+
+            startupDiagnostic.Add("Manifest-Topology", new
+            {
+                PubSubEnabled = SupportsPublishSubscribe,
+                SubscriptionTableName = SupportsPublishSubscribe ? Subscriptions.SubscriptionTableName : null,
+                SubscriptionCaching = new
+                {
+                    IsEnabled = SupportsPublishSubscribe && !Subscriptions.DisableCaching,
+                    CacheInvalidationPeriod = SupportsPublishSubscribe && !Subscriptions.DisableCaching
+                        ? Subscriptions.CacheInvalidationPeriod.ToString()
+                        : null
+                },
+                AccountRouting = new
+                {
+                    DefaultAccountAlias = string.IsNullOrEmpty(AccountRouting.DefaultAccountAlias) ? null : AccountRouting.DefaultAccountAlias,
+                    MappedAccounts = AccountRouting.Mappings.Keys.ToArray()
+                }
+            });
+
+            startupDiagnostic.Add("Manifest-InputQueues", receiversSettings
+                .Select(s => AzureStorageQueueInfrastructure.TranslateAddress(s.ReceiveAddress, QueueAddressGenerator).ToLower())
+                .ToArray());
+
+            startupDiagnostic.Add("Manifest-SendingQueues", sendingAddresses
+                .Select(a => QueueAddressGenerator.GetQueueName(a).ToLower())
+                .ToArray());
+
+            if (SupportsDelayedDelivery)
+            {
+                startupDiagnostic.Add("Manifest-NativeDelayedDelivery", new
+                {
+                    DelayedDeliveryTableName = delayedDeliveryTableName,
+                    PoisonQueue = delayedDeliveryPoisonQueue
+                });
+            }
         }
 
         void ValidateReceiversSettings(ReceiveSettings[] receivers)
@@ -370,7 +420,7 @@ namespace NServiceBus
 
             var receiveAddress = AzureStorageQueueInfrastructure.TranslateAddress(receiveSettings.ReceiveAddress, QueueAddressGenerator);
 
-            var subscriptionManager = new SubscriptionManager(subscriptionStore, hostSettings.Name, receiveAddress);
+            var subscriptionManager = new SubscriptionManager(subscriptionStore, hostSettings.Name, receiveAddress, hostSettings.StartupDiagnostic);
 
             var receiver = new AzureMessageQueueReceiver(unwrapper, queueServiceClientProvider, QueueAddressGenerator, serializer, TimeProvider, receiveSettings.PurgeOnStartup, MessageInvisibleTime);
 
