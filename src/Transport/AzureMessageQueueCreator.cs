@@ -34,8 +34,7 @@
             }
             catch (RequestFailedException ex)
             {
-                //// https://msdn.microsoft.com/en-us/library/azure/dd179446.aspx
-
+                // https://msdn.microsoft.com/en-us/library/azure/dd179446.aspx
                 if (ex.Status == 409)
                 {
                     if (ex.ErrorCode == QueueErrorCode.QueueAlreadyExists)
@@ -44,7 +43,6 @@
                     }
                 }
 
-                // TODO: should we throw with Message or Message+ErrorCode
                 throw new RequestFailedException($"Failed to create queue: {queueName}, because {ex.Status}-{ex.Message}.", ex);
             }
             catch (Exception ex) when (!ex.IsCausedBy(cancellationToken))
