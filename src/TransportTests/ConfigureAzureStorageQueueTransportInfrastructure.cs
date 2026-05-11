@@ -2,17 +2,13 @@
 using System.Threading;
 using System.Threading.Tasks;
 using NServiceBus;
-using NServiceBus.Logging;
 using NServiceBus.Transport;
-using NServiceBus.Transport.AzureStorageQueues.TransportTests;
 using NServiceBus.TransportTests;
 
 public class ConfigureAzureStorageQueueTransportInfrastructure : IConfigureTransportInfrastructure
 {
     public TransportDefinition CreateTransportDefinition()
     {
-        LogManager.UseFactory(new ConsoleLoggerFactory());
-
         var connectionStringEnvVarName = "AzureStorageQueueTransport_ConnectionString";
         var connectionString = Environment.GetEnvironmentVariable(connectionStringEnvVarName);
         if (string.IsNullOrWhiteSpace(connectionString))
