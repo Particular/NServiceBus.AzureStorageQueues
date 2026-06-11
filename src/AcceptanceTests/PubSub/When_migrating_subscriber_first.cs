@@ -64,7 +64,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                  {
                      b.CustomConfig(c =>
                      {
+#pragma warning disable CS0618 // Type or member is obsolete
+                         // When message-driven compatibility mode is obsoleted with an error this test can be removed
                          var compatModeSettings = c.ConfigureRouting().EnableMessageDrivenPubSubCompatibilityMode();
+#pragma warning restore CS0618 // Type or member is obsolete
                          compatModeSettings.RegisterPublisher(typeof(MyEvent), PublisherEndpoint);
                      });
                      b.When(async (session, ctx) =>
@@ -86,7 +89,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                      b.CustomConfig(c =>
                      {
                          c.UsePersistence<TestingInMemoryPersistence, StorageType.Subscriptions>().UseStorage(subscriptionStorage);
+#pragma warning disable CS0618 // Type or member is obsolete
+                         // When message-driven compatibility mode is obsoleted with an error this test can be removed
                          c.ConfigureRouting().EnableMessageDrivenPubSubCompatibilityMode();
+#pragma warning restore CS0618 // Type or member is obsolete
                      });
                      b.When(c => c.SubscribedMessageDriven && c.SubscribedNative, (session, ctx) => session.Publish(new MyEvent()));
                  })
@@ -95,7 +101,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests
                  {
                      b.CustomConfig(c =>
                      {
+#pragma warning disable CS0618 // Type or member is obsolete
+                         // When message-driven compatibility mode is obsoleted with an error this test can be removed
                          var compatModeSettings = c.ConfigureRouting().EnableMessageDrivenPubSubCompatibilityMode();
+#pragma warning restore CS0618 // Type or member is obsolete
                          // not needed but left here to enforce duplicates
                          compatModeSettings.RegisterPublisher(typeof(MyEvent), PublisherEndpoint);
                      });

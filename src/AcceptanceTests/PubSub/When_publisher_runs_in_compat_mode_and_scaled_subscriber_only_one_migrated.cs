@@ -61,7 +61,10 @@ namespace NServiceBus.Transport.AzureStorageQueues.AcceptanceTests.PubSub
             public Publisher() =>
                 EndpointSetup<DefaultPublisher>(c =>
                 {
+#pragma warning disable CS0618 // Type or member is obsolete
+                    // When message-driven compatibility mode is obsoleted with an error this test can be removed
                     c.ConfigureRouting().EnableMessageDrivenPubSubCompatibilityMode();
+#pragma warning restore CS0618 // Type or member is obsolete
 
                     c.OnEndpointSubscribed<Context>((s, context) =>
                     {
