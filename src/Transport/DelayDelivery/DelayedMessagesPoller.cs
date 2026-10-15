@@ -63,6 +63,16 @@ namespace NServiceBus.Transport.AzureStorageQueues
                 catch (Exception ex)
                 {
                     Logger.Warn("Failed to fetch delayed messages from the storage", ex);
+
+                    try
+                    {
+                        await BackoffOnError(cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception backoffEx) when (backoffEx.IsCausedBy(cancellationToken))
+                    {
+                        Logger.Debug("Operation canceled while stopping delayed messages poller.", backoffEx);
+                        break;
+                    }
                 }
             }
 
